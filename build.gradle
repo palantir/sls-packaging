@@ -1,0 +1,55 @@
+plugins {
+    id 'com.gradle.plugin-publish' version '0.9.1'
+    id 'com.palantir.git-version' version '0.1.3'
+    id 'eclipse'
+    id 'groovy'
+    id 'idea'
+}
+
+task createClasspathManifest {
+    def outputDir = file("$buildDir/$name")
+
+    inputs.files sourceSets.main.runtimeClasspath
+    outputs.dir outputDir
+
+    doLast {
+        outputDir.mkdirs()
+        file("$outputDir/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join("\n")
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
+    testCompile gradleTestKit()
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.3') {
+        exclude module: 'groovy-all'
+    }
+    testCompile files(createClasspathManifest)
+}
+
+group 'com.palantir.gradle.javadist'
+version gitVersion()
+
+pluginBundle {
+    website = 'https://github.com/palantir/gradle-java-distribution'
+    vcsUrl = 'https://github.com/palantir/gradle-java-distribution'
+    description = 'Creates a distributable package containing libraries and scripts necessary to easily deploy and run a Java project.'
+    tags = ['distribution', 'application']
+
+    plugins {
+        dockerPlugin {
+            id = 'com.palantir.java-distribution'
+            displayName = 'Palantir Java Distribution'
+        }
+    }
+}
+
+publishPlugins.onlyIf {
+    project.version ==~ /\d+\.\d+\.\d+/
+}
