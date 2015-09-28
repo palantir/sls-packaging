@@ -33,7 +33,8 @@ start)
     fi
     printf "%-50s" "Running '$SERVICE'..."
     
-    # ensure pid directory exists
+    # ensure log and pid directories exist
+    mkdir -p "var/log"
     mkdir -p "var/run"
     PID=$(service/bin/$SERVICE $ARGS > var/log/$SERVICE-startup.log 2>&1 & echo $!)
     sleep 1
