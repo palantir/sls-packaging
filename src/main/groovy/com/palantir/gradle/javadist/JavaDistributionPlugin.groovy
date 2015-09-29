@@ -21,8 +21,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 
-import com.google.common.collect.ImmutableMap
-
 class JavaDistributionPlugin implements Plugin<Project> {
 
     void apply(Project project) {
@@ -41,9 +39,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
             EmitFiles.replaceVars(
                 JavaDistributionPlugin.class.getResourceAsStream('/init.sh'),
                 Paths.get("${project.buildDir}/scripts/init.sh"),
-                ImmutableMap.of(
-                    '@serviceName@', ext.serviceName,
-                    '@args@',  ext.args.iterator().join(' ')))
+                ['@serviceName@': ext.serviceName,
+                 '@args@':  ext.args.iterator().join(' ')])
             .toFile()
             .setExecutable(true)
         }
@@ -54,9 +51,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
             EmitFiles.replaceVars(
                 JavaDistributionPlugin.class.getResourceAsStream('/manifest.yaml'),
                 Paths.get("${project.buildDir}/deployment/manifest.yaml"),
-                ImmutableMap.of(
-                    '@serviceName@', ext.serviceName,
-                    '@serviceVersion@',  project.version))
+                ['@serviceName@': ext.serviceName,
+                 '@serviceVersion@': project.version])
             .toFile()
             .setExecutable(true)
         }

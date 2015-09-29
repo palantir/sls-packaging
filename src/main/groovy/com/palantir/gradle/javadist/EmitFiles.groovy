@@ -15,11 +15,10 @@
  */
 package com.palantir.gradle.javadist
 
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Map.Entry
-
-import com.google.common.base.Charsets
 
 class EmitFiles {
 
@@ -34,7 +33,7 @@ class EmitFiles {
         dest.getParent().toFile().mkdirs()
 
         // write content
-        return Files.write(dest, text.getBytes(Charsets.UTF_8))
+        return Files.write(dest, text.getBytes(Charset.forName("UTF-8")))
     }
 
 }
