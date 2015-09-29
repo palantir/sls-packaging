@@ -24,6 +24,12 @@ ARGS="@args@"
 SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../" && pwd)}
 cd "$SERVICE_HOME"
 
+is_process_active() {
+   local PID=$1
+   ps $PID > /dev/null;
+   echo $?
+}
+
 case $ACTION in
 start)
     $0 status > /dev/null 2>&1
@@ -38,7 +44,7 @@ start)
     mkdir -p "var/run"
     PID=$(service/bin/$SERVICE $ARGS > var/log/$SERVICE-startup.log 2>&1 & echo $!)
     sleep 1
-    if [ -d /proc/$PID ]; then
+    if [ $(is_process_active $PID) -eq 0 ]; then
         echo $PID > $PIDFILE
         printf "%s\n" "Ok"
         exit 0
@@ -51,8 +57,8 @@ status)
     printf "%-50s" "Checking '$SERVICE'..."
     if [ -f $PIDFILE ]; then
         PID=$(cat $PIDFILE)
-        if [[ -d /proc/$PID ]]; then
-            cat /proc/$PID/cmdline | grep -q "$SERVICE"
+        if [[ $(is_process_active $PID) -eq 0 ]]; then
+            ps -o command $PID | grep -q "$SERVICE"
             if [[ $? == 0 ]]; then
                 printf "%s\n" "Running"
                 exit 0
