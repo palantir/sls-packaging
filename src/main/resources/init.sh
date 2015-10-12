@@ -93,6 +93,10 @@ stop)
         exit 0
     fi
 ;;
+restart)
+    $0 stop
+    $0 start
+;;
 *)
     echo "Usage: $0 {status|start|stop}"
     exit 1
