@@ -22,7 +22,7 @@ class RunTask extends JavaExec {
     public void configure(DistributionExtension ext) {
         setClasspath(project.sourceSets.main.runtimeClasspath)
         setMain(ext.mainClass)
-        if (ext.hasProperty("args")) {
+        if (!ext.args.isEmpty()) {
             setArgs(ext.args)
         }
     }
