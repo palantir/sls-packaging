@@ -46,10 +46,10 @@ start)
     sleep 1
     if [ $(is_process_active $PID) -eq 0 ]; then
         echo $PID > $PIDFILE
-        printf "%s\n" "Ok"
+        printf "%s\n" "Started ($PID)"
         exit 0
     else
-        printf "%s\n" "Fail"
+        printf "%s\n" "Failed"
         exit 1
     fi
 ;;
@@ -60,7 +60,7 @@ status)
         if [[ $(is_process_active $PID) -eq 0 ]]; then
             ps -o command $PID | grep -q "$SERVICE"
             if [[ $? == 0 ]]; then
-                printf "%s\n" "Running"
+                printf "%s\n" "Running ($PID)"
                 exit 0
             fi
         fi
@@ -84,12 +84,12 @@ stop)
             exit 1
         else
             rm -f $PIDFILE
-            printf "%s\n" "Ok"
+            printf "%s\n" "Stopped ($PID)"
             exit 0
         fi
     else
         rm -f $PIDFILE
-        printf "%s\n" "Not running"
+        printf "%s\n" "Service not running"
         exit 0
     fi
 ;;
@@ -98,6 +98,6 @@ restart)
     service/bin/init.sh start
 ;;
 *)
-    echo "Usage: $0 {status|start|stop}"
+    echo "Usage: $0 {status|start|stop|restart}"
     exit 1
 esac

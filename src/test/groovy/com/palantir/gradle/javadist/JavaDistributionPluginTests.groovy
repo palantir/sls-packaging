@@ -78,12 +78,12 @@ class JavaDistributionPluginTests extends Specification {
         new File(projectDir, 'dist/service-name-0.1').exists()
 
         // try all of the service commands
-        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Ok\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
         readFully('dist/service-name-0.1/var/log/service-name-startup.log').equals('Test started\n')
-        exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
-            /(?m)Stopping 'service-name'\.\.\.\s+Ok\nRunning 'service-name'\.\.\.\s+Ok\n/
-        exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Ok\n/
+            /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
 
         // check manifest was created
         new File(projectDir, 'build/deployment/manifest.yaml').exists()
