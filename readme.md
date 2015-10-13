@@ -1,5 +1,7 @@
 Java Distribution Gradle Plugin
 ================================
+[![Build Status](https://travis-ci.org/palantir/gradle-java-distribution.svg?branch=develop)](https://travis-ci.org/palantir/gradle-java-distribution)
+
 Similar to the standard application plugin, this plugin facilitates packaging
 Gradle projects for easy distribution and execution. This distribution chooses
 different packaging conventions that attempt to split immutable files from
