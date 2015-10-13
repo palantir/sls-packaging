@@ -32,13 +32,13 @@ is_process_active() {
 
 case $ACTION in
 start)
-    $0 status > /dev/null 2>&1
+    service/bin/init.sh status > /dev/null 2>&1
     if [[ $? == 0 ]]; then
         echo "Process is already running"
         exit 1
     fi
     printf "%-50s" "Running '$SERVICE'..."
-    
+
     # ensure log and pid directories exist
     mkdir -p "var/log"
     mkdir -p "var/run"
@@ -73,12 +73,12 @@ status)
 ;;
 stop)
     printf "%-50s" "Stopping '$SERVICE'..."
-    $0 status > /dev/null 2>&1
+    service/bin/init.sh status > /dev/null 2>&1
     if [[ $? == 0 ]]; then
         PID=$(cat $PIDFILE)
         kill $PID
         sleep 4
-        $0 status > /dev/null 2>&1
+        service/bin/init.sh status > /dev/null 2>&1
         if [[ $? == 0 ]]; then
             printf "%s\n" "Failed"
             exit 1
@@ -94,8 +94,8 @@ stop)
     fi
 ;;
 restart)
-    $0 stop
-    $0 start
+    service/bin/init.sh stop
+    service/bin/init.sh start
 ;;
 *)
     echo "Usage: $0 {status|start|stop}"
