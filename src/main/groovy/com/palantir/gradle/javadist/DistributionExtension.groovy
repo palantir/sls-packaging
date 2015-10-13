@@ -19,7 +19,7 @@ class DistributionExtension {
 
     private String serviceName
     private String mainClass
-    private List<String> args
+    private List<String> args = []
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
