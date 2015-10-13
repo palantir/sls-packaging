@@ -15,6 +15,8 @@
  */
 package com.palantir.gradle.javadist
 
+import java.nio.file.Files
+
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -31,31 +33,79 @@ class JavaDistributionPluginTests extends Specification {
     File projectDir
     File buildFile
 
-    def 'check plugin creates scripts and tgz' () {
+    def 'produce distribution bundle and check start, stop and restart behavior' () {
         given:
         buildFile << '''
             apply plugin: 'com.palantir.java-distribution'
+            apply plugin: 'java'
+
+            version '0.1'
 
             distribution {
                 serviceName 'service-name'
-                mainClass 'nebula.hello.HelloWorld'
-                args 'server', 'var/conf/service.yml'
+                mainClass 'test.Test'
             }
+
+            sourceCompatibility = '1.7'
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+        temporaryFolder.newFolder('src', 'main', 'java', 'test')
+        temporaryFolder.newFile('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) throws InterruptedException {
+                System.out.println("Test started");
+                java.lang.Thread.sleep(100000);
+            }
+        }
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = with('distTar').build()
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
 
         then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
         buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        new File(projectDir, 'build/scripts/service-name').exists()
-        new File(projectDir, 'build/scripts/init.sh').exists()
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        // check content was extracted
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // try all of the service commands
+        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Ok\n/
+        readFully('dist/service-name-0.1/var/log/service-name-startup.log').equals('Test started\n')
+        exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
+            /(?m)Stopping 'service-name'\.\.\.\s+Ok\nRunning 'service-name'\.\.\.\s+Ok\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Ok\n/
+
+        // check manifest was created
         new File(projectDir, 'build/deployment/manifest.yaml').exists()
-        new File(projectDir, 'build/distributions/service-name.tgz').exists()
+        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
+        manifest.contains('productName: service-name\n')
+        manifest.contains('productVersion: 0.1\n')
     }
 
-    private GradleRunner with(String... tasks) {
+    private String readFully(String file) {
+        return new String(Files.readAllBytes(projectDir.toPath().resolve(file)))
+    }
+
+    private GradleRunner run(String... tasks) {
         GradleRunner.create().withProjectDir(projectDir).withArguments(tasks)
+    }
+
+    private String exec(String... tasks) {
+        StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
+        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        proc.consumeProcessOutput(sout, serr)
+        proc.waitFor()
+        return sout.toString()
     }
 
     def setup() {
