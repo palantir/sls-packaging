@@ -33,6 +33,10 @@ class DistTarTask extends Tar {
             into "${archiveRootDir}/var"
         }
 
+        from("${project.projectDir}/deployment") {
+            into "${archiveRootDir}/deployment"
+        }
+
         from("${project.projectDir}/service") {
             into "${archiveRootDir}/service"
         }
