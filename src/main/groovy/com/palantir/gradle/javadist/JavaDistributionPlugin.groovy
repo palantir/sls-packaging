@@ -52,7 +52,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
                 JavaDistributionPlugin.class.getResourceAsStream('/manifest.yaml'),
                 Paths.get("${project.buildDir}/deployment/manifest.yaml"),
                 ['@serviceName@': ext.serviceName,
-                 '@serviceVersion@': project.version])
+                 '@serviceVersion@': String.valueOf(project.version)])
             .toFile()
             .setExecutable(true)
         }
