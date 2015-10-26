@@ -32,12 +32,15 @@ class JavaDistributionPluginTests extends Specification {
 
     File projectDir
     File buildFile
+    List<File> pluginClasspath
 
     def 'produce distribution bundle and check start, stop and restart behavior' () {
         given:
         buildFile << '''
-            apply plugin: 'com.palantir.java-distribution'
-            apply plugin: 'java'
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
 
             version '0.1'
 
@@ -97,7 +100,10 @@ class JavaDistributionPluginTests extends Specification {
     }
 
     private GradleRunner run(String... tasks) {
-        GradleRunner.create().withProjectDir(projectDir).withArguments(tasks)
+        GradleRunner.create()
+            .withPluginClasspath(pluginClasspath)
+            .withProjectDir(projectDir)
+            .withArguments(tasks)
     }
 
     private String exec(String... tasks) {
@@ -117,18 +123,9 @@ class JavaDistributionPluginTests extends Specification {
             throw new IllegalStateException("Did not find plugin classpath resource, run `testClasses` build task.")
         }
 
-        def pluginClasspath = pluginClasspathResource.readLines()
+        pluginClasspath = pluginClasspathResource.readLines()
             .collect { it.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
-        buildFile << """
-            buildscript {
-                dependencies {
-                    classpath files($pluginClasspath)
-                }
-            }
-        """.stripIndent()
+            .collect { new File(it) }
     }
 
 }
