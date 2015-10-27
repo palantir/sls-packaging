@@ -36,28 +36,8 @@ class JavaDistributionPluginTests extends Specification {
 
     def 'produce distribution bundle and check start, stop and restart behavior' () {
         given:
-        buildFile << '''
-            plugins {
-                id 'com.palantir.java-distribution'
-                id 'java'
-            }
+        createUntarBuildFile(buildFile)
 
-            version '0.1'
-
-            distribution {
-                serviceName 'service-name'
-                mainClass 'test.Test'
-            }
-
-            sourceCompatibility = '1.7'
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
-        '''.stripIndent()
         temporaryFolder.newFolder('src', 'main', 'java', 'test')
         temporaryFolder.newFile('src/main/java/test/Test.java') << '''
         package test;
@@ -93,6 +73,57 @@ class JavaDistributionPluginTests extends Specification {
         String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
+    }
+
+    def 'produce distribution bundle and check var/log and var/run are excluded' () {
+        given:
+        createUntarBuildFile(buildFile)
+
+        temporaryFolder.newFolder('var', 'log')
+        temporaryFolder.newFile('var/log/service-name.log')
+        temporaryFolder.newFolder('var', 'run')
+        temporaryFolder.newFile('var/run/service-name.pid')
+        temporaryFolder.newFolder('var', 'conf')
+        temporaryFolder.newFile('var/conf/service-name.yml')
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        // check content was extracted
+        new File(projectDir, 'dist/service-name-0.1').exists()
+        !new File(projectDir, 'dist/service-name-0.1/var/log').exists()
+        !new File(projectDir, 'dist/service-name-0.1/var/run').exists()
+        new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
+    }
+
+    private def createUntarBuildFile(buildFile) {
+        buildFile << '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
+
+            version '0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+            }
+
+            sourceCompatibility = '1.7'
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
     }
 
     private String readFully(String file) {

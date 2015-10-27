@@ -31,6 +31,8 @@ class DistTarTask extends Tar {
 
         from("${project.projectDir}/var") {
             into "${archiveRootDir}/var"
+            exclude 'log'
+            exclude 'run'
         }
 
         from("${project.projectDir}/service") {
