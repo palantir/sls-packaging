@@ -62,10 +62,13 @@ class JavaDistributionPluginTests extends Specification {
 
         // try all of the service commands
         exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        sleep 5000
         readFully('dist/service-name-0.1/var/log/service-name-startup.log').equals('Test started\n')
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
+        sleep 5000
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
             /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        sleep 5000
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
 
         // check manifest was created
@@ -99,6 +102,61 @@ class JavaDistributionPluginTests extends Specification {
         !new File(projectDir, 'dist/service-name-0.1/var/log').exists()
         !new File(projectDir, 'dist/service-name-0.1/var/run').exists()
         new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
+    }
+
+    def 'produce distribution bundle with a non-string version object' () {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
+
+            class MyVersion {
+                String version
+
+                MyVersion(String version) {
+                    this.version = version
+                }
+
+                String toString() {
+                    return this.version
+                }
+            }
+
+            version new MyVersion('0.1')
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+            }
+
+            sourceCompatibility = '1.7'
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        // check content was extracted
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // check manifest was created
+        new File(projectDir, 'build/deployment/manifest.yaml').exists()
+        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
+        manifest.contains('productName: service-name\n')
+        manifest.contains('productVersion: 0.1\n')
     }
 
     private def createUntarBuildFile(buildFile) {

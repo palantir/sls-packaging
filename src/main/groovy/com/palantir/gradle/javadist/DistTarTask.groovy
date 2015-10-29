@@ -27,7 +27,7 @@ class DistTarTask extends Tar {
 
     public void configure(DistributionExtension ext) {
         baseName = ext.serviceName
-        String archiveRootDir = ext.serviceName + '-' + project.version
+        String archiveRootDir = ext.serviceName + '-' + String.valueOf(project.version)
 
         from("${project.projectDir}/var") {
             into "${archiveRootDir}/var"
