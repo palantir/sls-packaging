@@ -159,6 +159,37 @@ class JavaDistributionPluginTests extends Specification {
         manifest.contains('productVersion: 0.1\n')
     }
 
+    def 'produce distribution bundle with files in deployment/' () {
+        given:
+        createUntarBuildFile(buildFile)
+
+        String deploymentConfiguration = 'log: service-name.log'
+        temporaryFolder.newFolder('deployment')
+        temporaryFolder.newFile('deployment/manifest.yaml') << 'invalid manifest'
+        temporaryFolder.newFile('deployment/configuration.yaml') << deploymentConfiguration
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // clobbers deployment/manifest.yaml
+        new File(projectDir, 'dist/service-name-0.1/deployment/manifest.yaml').exists()
+        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
+        manifest.contains('productName: service-name\n')
+        manifest.contains('productVersion: 0.1\n')
+
+        // check files in deployment/ copied successfully
+        new File(projectDir, 'dist/service-name-0.1/deployment/configuration.yaml').exists()
+        String configuration = readFully('dist/service-name-0.1/deployment/configuration.yaml')
+        configuration.equals(deploymentConfiguration)
+    }
+
     private def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
