@@ -190,6 +190,26 @@ class JavaDistributionPluginTests extends Specification {
         configuration.equals(deploymentConfiguration)
     }
 
+    def 'produce distribution bundle with start script that passes default JVM options' () {
+        given:
+        createUntarBuildFile(buildFile)
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // check start script uses default JVM options
+        new File(projectDir, 'dist/service-name-0.1/service/bin/service-name').exists()
+        String startScript = readFully('dist/service-name-0.1/service/bin/service-name')
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+    }
+
     private def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
@@ -202,6 +222,7 @@ class JavaDistributionPluginTests extends Specification {
             distribution {
                 serviceName 'service-name'
                 mainClass 'test.Test'
+                defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
             }
 
             sourceCompatibility = '1.7'

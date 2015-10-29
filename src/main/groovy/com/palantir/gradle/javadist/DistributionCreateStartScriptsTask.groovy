@@ -41,6 +41,12 @@ class DistributionCreateStartScriptsTask extends CreateStartScripts {
         return ext.serviceName
     }
 
+    @Input
+    @Override
+    public List<String> getDefaultJvmOpts() {
+        return ext.defaultJvmOpts
+    }
+
     @OutputDirectory
     @Override
     public File getOutputDir() {
