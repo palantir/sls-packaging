@@ -20,6 +20,7 @@ class DistributionExtension {
     private String serviceName
     private String mainClass
     private List<String> args = []
+    private List<String> defaultJvmOpts = []
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -33,6 +34,10 @@ class DistributionExtension {
         this.args = Arrays.asList(args)
     }
 
+    public List<String> defaultJvmOpts(String... defaultJvmOpts) {
+        this.defaultJvmOpts = Arrays.asList(defaultJvmOpts)
+    }
+
     public String getServiceName() {
         return serviceName;
     }
@@ -43,6 +48,10 @@ class DistributionExtension {
 
     public List<String> getArgs() {
         return args;
+    }
+
+    public List<String> getDefaultJvmOpts() {
+        return defaultJvmOpts;
     }
 
 }
