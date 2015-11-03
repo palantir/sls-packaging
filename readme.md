@@ -41,6 +41,13 @@ program for a default run configuration:
         mainClass 'com.palantir.foo.bar.MyServiceMainClass'
         args 'server', 'var/conf/my-service.yml'
     }
+    
+The `distribution` block offers the following options:
+
+ * `serviceName` the name of this service, used to construct the final artifact's file name.
+ * `mainClass` class containing the entry point to start the program.
+ * (optional) `args` a list of arguments to supply when running `start`.
+ * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
 
 Packaging
 ---------
