@@ -48,6 +48,12 @@ class DistTarTask extends Tar {
             from(project.configurations.runtime)
         }
 
+        if (ext.isEnableManifestClasspath()) {
+            into("${archiveRootDir}/service/lib") {
+                from(project.tasks.getByName("manifestClasspathJar"))
+            }
+        }
+
         into("${archiveRootDir}/service/bin") {
             from("${project.buildDir}/scripts")
             fileMode = 0755

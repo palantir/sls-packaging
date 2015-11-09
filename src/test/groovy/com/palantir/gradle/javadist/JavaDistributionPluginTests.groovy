@@ -210,6 +210,26 @@ class JavaDistributionPluginTests extends Specification {
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
+    def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {
+        given:
+        createUntarBuildFile(buildFile)
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1/service/bin/service-name.bat').exists()
+        String startScript = readFully('dist/service-name-0.1/service/bin/service-name.bat')
+        startScript.contains("-manifest-classpath-0.1.jar")
+        !startScript.contains("-classpath \"%CLASSPATH%\"")
+        new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
+            .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
+    }
+
     private def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
@@ -223,6 +243,7 @@ class JavaDistributionPluginTests extends Specification {
                 serviceName 'service-name'
                 mainClass 'test.Test'
                 defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
+                enableManifestClasspath true
             }
 
             sourceCompatibility = '1.7'

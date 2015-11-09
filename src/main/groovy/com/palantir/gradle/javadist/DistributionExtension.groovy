@@ -21,6 +21,7 @@ class DistributionExtension {
     private String mainClass
     private List<String> args = []
     private List<String> defaultJvmOpts = []
+    private boolean enableManifestClasspath = false
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -38,6 +39,10 @@ class DistributionExtension {
         this.defaultJvmOpts = Arrays.asList(defaultJvmOpts)
     }
 
+    public void enableManifestClasspath(boolean enableManifestClasspath) {
+        this.enableManifestClasspath = enableManifestClasspath
+    }
+
     public String getServiceName() {
         return serviceName;
     }
@@ -52,6 +57,10 @@ class DistributionExtension {
 
     public List<String> getDefaultJvmOpts() {
         return defaultJvmOpts;
+    }
+
+    public boolean isEnableManifestClasspath() {
+        return enableManifestClasspath;
     }
 
 }
