@@ -15,11 +15,11 @@
  */
 package com.palantir.gradle.javadist
 
-import java.nio.file.Paths
-
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+
+import java.nio.file.Paths
 
 class JavaDistributionPlugin implements Plugin<Project> {
 
@@ -29,9 +29,32 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         DistributionExtension ext = project.extensions.create('distribution', DistributionExtension)
 
+        // Specify classpath using pathing jar rather than command line argument on Windows, since
+        // Windows path sizes are limited.
+        ManifestClasspathJarTask manifestClasspathJar =
+            project.tasks.create("manifestClasspathJar", ManifestClasspathJarTask)
+        manifestClasspathJar.setOnlyIf {
+            ext.isEnableManifestClasspath()
+        }
+
         Task startScripts = project.tasks.create('createStartScripts', DistributionCreateStartScriptsTask, {
             description = "Generates standard Java start scripts."
-        })
+        }) << {
+            if (ext.isEnableManifestClasspath()) {
+                // Replace standard classpath with pathing jar in order to circumnavigate length limits:
+                // https://issues.gradle.org/browse/GRADLE-2992
+                def winScriptFile = project.file getWindowsScript()
+                def winFileText = winScriptFile.text
+
+                // Remove too-long-classpath and use pathing jar instead
+                winFileText = winFileText.replaceAll('set CLASSPATH=.*', 'rem CLASSPATH declaration removed.')
+                winFileText = winFileText.replaceAll(
+                    '("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)',
+                    '$1%APP_HOME%\\\\lib\\\\' + manifestClasspathJar.archiveName + '$2')
+
+                winScriptFile.text = winFileText
+            }
+        }
 
         Task initScript = project.tasks.create('createInitScript', {
             description = "Generates daemonizing init.sh script."
@@ -59,7 +82,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         DistTarTask distTar = project.tasks.create('distTar', DistTarTask, {
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
-            dependsOn startScripts, initScript, manifest
+            dependsOn startScripts, initScript, manifest, manifestClasspathJar
         })
 
         RunTask run = project.tasks.create('run', RunTask, {
@@ -67,6 +90,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
         })
 
         project.afterEvaluate {
+            manifestClasspathJar.configure(ext)
             startScripts.configure(ext)
             distTar.configure(ext)
             run.configure(ext)

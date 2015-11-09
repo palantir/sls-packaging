@@ -13,11 +13,12 @@ content of the package. The package will follow this structure:
 
     [service-name]-[service-version]/
         deployment/
-            manifest.yaml        # simple package manifest
+            manifest.yaml            # simple package manifest
         service/
             bin/
-                [service-name]   # start script
-                init.sh          # daemonizing script
+                [service-name]       # start script
+                [service-name.bat]   # Windows start script
+                init.sh              # daemonizing script
             lib/
                 [jars]
         var/
@@ -41,13 +42,17 @@ program for a default run configuration:
         mainClass 'com.palantir.foo.bar.MyServiceMainClass'
         args 'server', 'var/conf/my-service.yml'
     }
-    
+
 The `distribution` block offers the following options:
 
  * `serviceName` the name of this service, used to construct the final artifact's file name.
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
+ * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
+   classpath is omitted from the generated Windows start script and instead infered
+   from a JAR file whose MANIFEST contains the classpath entries
+
 
 Packaging
 ---------
