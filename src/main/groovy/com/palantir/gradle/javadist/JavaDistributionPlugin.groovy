@@ -18,6 +18,7 @@ package com.palantir.gradle.javadist
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.util.GUtil
 
 import java.nio.file.Paths
 
@@ -60,10 +61,17 @@ class JavaDistributionPlugin implements Plugin<Project> {
             description = "Generates daemonizing init.sh script."
         }) << {
             EmitFiles.replaceVars(
+                    JavaDistributionPlugin.class.getResourceAsStream('/wrapper.conf'),
+                    Paths.get("${project.buildDir}/" + ext.wrapperConfPath),
+                    ['@applicationNameOpts@': GUtil.toConstant(ext.serviceName)+ '_OPTS'])
+            .toFile()
+
+            EmitFiles.replaceVars(
                 JavaDistributionPlugin.class.getResourceAsStream('/init.sh'),
                 Paths.get("${project.buildDir}/scripts/init.sh"),
                 ['@serviceName@': ext.serviceName,
-                 '@args@':  ext.args.iterator().join(' ')])
+                 '@args@':  ext.args.iterator().join(' '),
+                 '@wrapperConfigPath@': ext.wrapperConfPath ])
             .toFile()
             .setExecutable(true)
         }

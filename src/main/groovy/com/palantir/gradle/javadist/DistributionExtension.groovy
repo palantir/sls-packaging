@@ -21,6 +21,7 @@ class DistributionExtension {
     private String mainClass
     private List<String> args = []
     private List<String> defaultJvmOpts = []
+    private String wrapperConfPath = "bin/wrapper.conf"
     private boolean enableManifestClasspath = false
 
     public void serviceName(String serviceName) {
@@ -29,6 +30,10 @@ class DistributionExtension {
 
     public void mainClass(String mainClass) {
         this.mainClass = mainClass
+    }
+
+    public void wrapperConfPath(String wrapperConfPath) {
+        this.wrapperConfPath = wrapperConfPath
     }
 
     public List<String> args(String... args) {
@@ -61,6 +66,10 @@ class DistributionExtension {
 
     public boolean isEnableManifestClasspath() {
         return enableManifestClasspath;
+    }
+
+    public String getWrapperConfPath() {
+        return wrapperConfPath;
     }
 
 }
