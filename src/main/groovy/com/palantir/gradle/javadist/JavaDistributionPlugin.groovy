@@ -61,9 +61,9 @@ class JavaDistributionPlugin implements Plugin<Project> {
             description = "Generates daemonizing init.sh script."
         }) << {
             EmitFiles.replaceVars(
-                    JavaDistributionPlugin.class.getResourceAsStream('/wrapper.conf'),
-                    Paths.get("${project.buildDir}/" + ext.wrapperConfPath),
-                    ['@applicationNameOpts@': GUtil.toConstant(ext.serviceName)+ '_OPTS'])
+                JavaDistributionPlugin.class.getResourceAsStream('/wrapper.conf'),
+                Paths.get("${project.buildDir}/" + ext.wrapperConfPath),
+                ['@applicationNameOpts@': GUtil.toConstant(ext.serviceName)+ '_OPTS'])
             .toFile()
 
             EmitFiles.replaceVars(
