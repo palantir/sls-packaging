@@ -60,6 +60,9 @@ class JavaDistributionPluginTests extends Specification {
         // check content was extracted
         new File(projectDir, 'dist/service-name-0.1').exists()
 
+        // Check wrapper.conf was generated
+        new File(projectDir, "build/bin/wrapper.conf").exists()
+
         // try all of the service commands
         exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
         sleep 5000
@@ -76,6 +79,11 @@ class JavaDistributionPluginTests extends Specification {
         String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
+
+        // check wrapper.conf had the right variables/placeholders replaced
+        String wrapper = readFully("build/bin/wrapper.conf")
+        wrapper.contains('SERVICE_NAME_OPTS=')
+
     }
 
     def 'produce distribution bundle and check var/log and var/run are excluded' () {
@@ -129,6 +137,7 @@ class JavaDistributionPluginTests extends Specification {
             distribution {
                 serviceName 'service-name'
                 mainClass 'test.Test'
+                wrapperConfPath 'bin/wrapper_new.conf'
             }
 
             sourceCompatibility = '1.7'
@@ -151,7 +160,13 @@ class JavaDistributionPluginTests extends Specification {
 
         // check content was extracted
         new File(projectDir, 'dist/service-name-0.1').exists()
-
+        // check that the default wrapper.conf is not generated
+        !(new File(projectDir, 'build/bin/wrapper.conf').exists())
+        // check that the specified conf file is created
+        new File(projectDir, 'build/bin/wrapper_new.conf').exists()
+        // check conf has the right place holder replaced
+        String wrapperConf = readFully("build/bin/wrapper_new.conf")
+        wrapperConf.contains("SERVICE_NAME_OPTS")
         // check manifest was created
         new File(projectDir, 'build/deployment/manifest.yaml').exists()
         String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
@@ -233,6 +248,7 @@ class JavaDistributionPluginTests extends Specification {
         !startScript.contains("-classpath \"%CLASSPATH%\"")
         new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
             .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
+
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {

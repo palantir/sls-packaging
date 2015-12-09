@@ -19,10 +19,16 @@ ACTION=$1
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
 ARGS="@args@"
+WRAPPER_CONFIG_PATH="@wrapperConfigPath@"
 
 # uses SERVICE_HOME when set, else, traverse up two directories respecting symlinks
 SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../" && pwd)}
 cd "$SERVICE_HOME"
+
+# Load the wrapper config if it exists
+if [ -f "$WRAPPER_CONFIG_PATH" ] ; then
+    source $WRAPPER_CONFIG_PATH
+fi
 
 is_process_active() {
    local PID=$1
