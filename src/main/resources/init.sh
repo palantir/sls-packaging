@@ -93,11 +93,24 @@ stop)
         exit 0
     fi
 ;;
+console)
+    service/bin/init.sh status > /dev/null 2>&1
+    if [[ $? == 0 ]]; then
+        echo "Process is already running"
+        exit 1
+    fi
+    trap "service/bin/init.sh stop &> /dev/null" SIGTERM EXIT
+    mkdir -p "$(dirname $PIDFILE)"
+
+    service/bin/$SERVICE $ARGS &
+    echo $! > $PIDFILE
+    wait
+;;
 restart)
     service/bin/init.sh stop
     service/bin/init.sh start
 ;;
 *)
-    echo "Usage: $0 {status|start|stop|restart}"
+    echo "Usage: $0 {status|start|stop|console|restart}"
     exit 1
 esac
