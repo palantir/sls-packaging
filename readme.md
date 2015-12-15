@@ -63,10 +63,11 @@ As part of package creation, this plugin will create two shell scripts:
  * `service/bin/[service-name]`: a Gradle default start script for running
    the defined `mainClass`
  * `service/bin/init.sh`: a shell script to assist with daemonizing a JVM
-   process. The script takes a single argument of `start`, `stop`, or `status`.
+   process. The script takes a single argument of `start`, `stop`, `console` or `status`.
    - `start`: On calls to `service/bin/init.sh start`,
      `service/bin/[serviceName] [args]` will be executed, disowned, and a pid file
      recorded in `var/run/[service-name].pid`.
+   - `console`: like `start`, but does not background the process.
    - `status`: returns 0 when `var/run/[service-name].pid` exists and a
      process the id recorded in that file with a command matching the expected
      start command is found in the process table.
