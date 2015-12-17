@@ -26,5 +26,5 @@ class RunTask extends JavaExec {
             setArgs(ext.args)
         }
     }
-
+    setJvmArgs(ext.getDefaultJvmOpts())
 }
