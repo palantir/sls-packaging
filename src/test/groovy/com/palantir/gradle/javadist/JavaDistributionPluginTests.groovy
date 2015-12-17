@@ -44,7 +44,7 @@ class JavaDistributionPluginTests extends Specification {
         public class Test {
             public static void main(String[] args) throws InterruptedException {
                 System.out.println("Test started");
-                java.lang.Thread.sleep(100000);
+                while(true);
             }
         }
         '''.stripIndent()
@@ -62,13 +62,10 @@ class JavaDistributionPluginTests extends Specification {
 
         // try all of the service commands
         exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        sleep 5000
         readFully('dist/service-name-0.1/var/log/service-name-startup.log').equals('Test started\n')
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
-        sleep 5000
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
             /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        sleep 5000
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
 
         // check manifest was created
@@ -297,6 +294,7 @@ class JavaDistributionPluginTests extends Specification {
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         proc.consumeProcessOutput(sout, serr)
         proc.waitFor()
+        sleep 1000 // wait for the Java process to actually run
         return sout.toString()
     }
 
