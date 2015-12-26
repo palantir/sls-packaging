@@ -88,3 +88,7 @@ Tasks
  * `createInitScript`: generates daemonizing init.sh script
  * `createManifest`: generates a simple yaml file describing the package content
  * `run`: runs the specified `mainClass` with default `args`
+
+License
+-------
+This plugin is made available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0).
