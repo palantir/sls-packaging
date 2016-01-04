@@ -1,6 +1,7 @@
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.2'
     id 'com.jfrog.bintray' version '1.5'
+    id 'com.jfrog.artifactory' version '4.0.0'
     id 'com.palantir.git-version' version '0.4.0'
     id 'eclipse'
     id 'groovy'
@@ -35,7 +36,7 @@ dependencies {
 }
 
 if (System.env.CIRCLE_TEST_REPORTS) {
-    test.reports.junitXml.destination = new File(System.getenv('CIRCLE_TEST_REPORTS'), getName())
+    test.reports.junitXml.destination = new File(System.env.CIRCLE_TEST_REPORTS, getName())
 }
 
 group 'com.palantir.gradle.javadist'
@@ -53,12 +54,35 @@ publishing {
             artifact(sourceJar)
             artifact(publishPluginJavaDocsJar)
         }
+        jfrog(MavenPublication) {
+            from components.java
+            artifact(sourceJar)
+            artifact(publishPluginJavaDocsJar)
+            // required pattern for OJO
+            version project.version.replaceAll(/-.*/, '-SNAPSHOT')
+        }
     }
 }
+
+artifactory {
+    publish {
+        contextUrl = 'https://oss.jfrog.org/artifactory'
+        repository {
+            repoKey = (project.version =~ /-/ ? 'oss-snapshot-local' : 'oss-release-local')
+            username = System.env.BINTRAY_USER
+            password = System.env.BINTRAY_KEY
+            maven = true
+        }
+        defaults {
+            publications (publishing.publications.jfrog)
+        }
+    }
+}
+artifactoryPublish.dependsOn 'generatePomFileForJfrogPublication', 'sourceJar', 'build'
   
 bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
+    user = System.env.BINTRAY_USER
+    key = System.env.BINTRAY_KEY
     pkg {
         repo = 'releases'
         name = 'gradle-java-distribution'
@@ -67,7 +91,6 @@ bintray {
         publications = ['bintray']
     }
 }
-
 bintrayUpload.dependsOn 'generatePomFileForBintrayPublication', 'sourceJar', 'build'
 
 bintrayUpload.onlyIf {
