@@ -75,6 +75,7 @@ artifactory {
         }
         defaults {
             publications (publishing.publications.jfrog)
+            properties = ['git': project.version]
         }
     }
 }
