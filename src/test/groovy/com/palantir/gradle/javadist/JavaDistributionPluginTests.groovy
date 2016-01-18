@@ -287,6 +287,7 @@ class JavaDistributionPluginTests extends Specification {
             .withPluginClasspath(pluginClasspath)
             .withProjectDir(projectDir)
             .withArguments(tasks)
+            .withDebug(true)
     }
 
     private String exec(String... tasks) {
