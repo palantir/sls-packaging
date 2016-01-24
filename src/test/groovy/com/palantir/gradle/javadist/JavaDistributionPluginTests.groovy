@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2015 Palantir Technologies
  *
@@ -61,7 +62,8 @@ class JavaDistributionPluginTests extends Specification {
         new File(projectDir, 'dist/service-name-0.1').exists()
 
         // try all of the service commands
-        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        String output = exec('dist/service-name-0.1/service/bin/init.sh', 'start')
+        output ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
         readFully('dist/service-name-0.1/var/log/service-name-startup.log').equals('Test started\n')
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
@@ -205,6 +207,31 @@ class JavaDistributionPluginTests extends Specification {
         new File(projectDir, 'dist/service-name-0.1/service/bin/service-name').exists()
         String startScript = readFully('dist/service-name-0.1/service/bin/service-name')
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+    }
+
+    def 'produce distribution bundle that populates config.sh' () {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                javaHome 'foo'
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // check start script uses default JVM options
+        new File(projectDir, 'dist/service-name-0.1/service/bin/config.sh').exists()
+        String startScript = readFully('dist/service-name-0.1/service/bin/config.sh')
+        startScript.contains('JAVA_HOME="foo"')
     }
 
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {
