@@ -20,6 +20,7 @@ content of the package. The package will follow this structure:
                 [service-name]       # start script
                 [service-name.bat]   # Windows start script
                 init.sh              # daemonizing script
+                config.sh            # customized environment vars
             lib/
                 [jars]
         var/
@@ -52,14 +53,16 @@ The `distribution` block offers the following options:
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead infered
-   from a JAR file whose MANIFEST contains the classpath entries
+   from a JAR file whose MANIFEST contains the classpath entries.
+ * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
+   be applied when `init.sh` is run.
 
 
 Packaging
 ---------
 To create a compressed, gzipped tar file, run the `distTar` task.
 
-As part of package creation, this plugin will create two shell scripts:
+As part of package creation, this plugin will create three shell scripts:
 
  * `service/bin/[service-name]`: a Gradle default start script for running
    the defined `mainClass`
@@ -73,6 +76,8 @@ As part of package creation, this plugin will create two shell scripts:
      process the id recorded in that file with a command matching the expected
      start command is found in the process table.
    - `stop`: if the process status is 0, issues a kill signal to the process.
+ * `service/bin/config.sh`: a shell script containing environment variables to apply
+    as overrides when `init.sh` is run.
 
 
 In addition to creating these scripts, this plugin will merge the entire

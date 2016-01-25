@@ -15,13 +15,15 @@
  */
 package com.palantir.gradle.javadist
 
+import java.nio.file.Paths
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 
-import java.nio.file.Paths
-
 class JavaDistributionPlugin implements Plugin<Project> {
+
+    private static final String GROUP_NAME = "Distribution"
 
     void apply(Project project) {
         // force application of java
@@ -31,13 +33,13 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         // Specify classpath using pathing jar rather than command line argument on Windows, since
         // Windows path sizes are limited.
-        ManifestClasspathJarTask manifestClasspathJar =
-            project.tasks.create("manifestClasspathJar", ManifestClasspathJarTask)
-        manifestClasspathJar.setOnlyIf {
-            ext.isEnableManifestClasspath()
-        }
+        ManifestClasspathJarTask manifestClasspathJar = project.tasks.create("manifestClasspathJar", ManifestClasspathJarTask, {
+            group = GROUP_NAME
+            onlyIf { ext.isEnableManifestClasspath() }
+        })
 
         Task startScripts = project.tasks.create('createStartScripts', DistributionCreateStartScriptsTask, {
+            group = GROUP_NAME
             description = "Generates standard Java start scripts."
         }) << {
             if (ext.isEnableManifestClasspath()) {
@@ -57,18 +59,31 @@ class JavaDistributionPlugin implements Plugin<Project> {
         }
 
         Task initScript = project.tasks.create('createInitScript', {
+            group = GROUP_NAME
             description = "Generates daemonizing init.sh script."
         }) << {
             EmitFiles.replaceVars(
                 JavaDistributionPlugin.class.getResourceAsStream('/init.sh'),
                 Paths.get("${project.buildDir}/scripts/init.sh"),
                 ['@serviceName@': ext.serviceName,
-                 '@args@':  ext.args.iterator().join(' ')])
+                 '@args@': ext.args.iterator().join(' ')])
             .toFile()
             .setExecutable(true)
         }
 
+        Task configScript = project.tasks.create('createConfigScript', {
+            group = GROUP_NAME
+            description = "Generates config.sh script."
+        }) << {
+            String javaHome = ext.javaHome != null ? 'JAVA_HOME="' + ext.javaHome + '"' : '#JAVA_HOME=""'
+            EmitFiles.replaceVars(
+                JavaDistributionPlugin.class.getResourceAsStream('/config.sh'),
+                Paths.get("${project.buildDir}/scripts/config.sh"),
+                ['@javaHome@': javaHome])
+        }
+
         Task manifest = project.tasks.create('createManifest', {
+            group = GROUP_NAME
             description = "Generates a simple yaml file describing the package content."
         }) << {
             EmitFiles.replaceVars(
@@ -81,11 +96,13 @@ class JavaDistributionPlugin implements Plugin<Project> {
         }
 
         DistTarTask distTar = project.tasks.create('distTar', DistTarTask, {
+            group = GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
-            dependsOn startScripts, initScript, manifest, manifestClasspathJar
+            dependsOn startScripts, initScript, configScript, manifest, manifestClasspathJar
         })
 
         RunTask run = project.tasks.create('run', RunTask, {
+            group = GROUP_NAME
             description = "Runs the specified project using configured mainClass and with default args."
         })
 

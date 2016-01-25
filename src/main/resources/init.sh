@@ -17,12 +17,15 @@
 
 ACTION=$1
 SERVICE="@serviceName@"
+SERVICE_CMD="service/bin/$SERVICE"
 PIDFILE="var/run/$SERVICE.pid"
 ARGS="@args@"
 
 # uses SERVICE_HOME when set, else, traverse up two directories respecting symlinks
 SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../" && pwd)}
 cd "$SERVICE_HOME"
+
+source service/bin/config.sh
 
 is_process_active() {
    local PID=$1
@@ -42,7 +45,7 @@ start)
     # ensure log and pid directories exist
     mkdir -p "var/log"
     mkdir -p "var/run"
-    PID=$(service/bin/$SERVICE $ARGS > var/log/$SERVICE-startup.log 2>&1 & echo $!)
+    PID=$($SERVICE_CMD $ARGS > var/log/$SERVICE-startup.log 2>&1 & echo $!)
     sleep 1
     if [ $(is_process_active $PID) -eq 0 ]; then
         echo $PID > $PIDFILE
@@ -102,7 +105,7 @@ console)
     trap "service/bin/init.sh stop &> /dev/null" SIGTERM EXIT
     mkdir -p "$(dirname $PIDFILE)"
 
-    service/bin/$SERVICE $ARGS &
+    $SERVICE_CMD $ARGS &
     echo $! > $PIDFILE
     wait
 ;;

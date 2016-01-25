@@ -22,6 +22,7 @@ class DistributionExtension {
     private List<String> args = []
     private List<String> defaultJvmOpts = []
     private boolean enableManifestClasspath = false
+    private String javaHome = null
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -43,24 +44,32 @@ class DistributionExtension {
         this.enableManifestClasspath = enableManifestClasspath
     }
 
+    public void javaHome(String javaHome) {
+        this.javaHome = javaHome
+    }
+
     public String getServiceName() {
-        return serviceName;
+        return serviceName
     }
 
     public String getMainClass() {
-        return mainClass;
+        return mainClass
     }
 
     public List<String> getArgs() {
-        return args;
+        return args
     }
 
     public List<String> getDefaultJvmOpts() {
-        return defaultJvmOpts;
+        return defaultJvmOpts
     }
 
     public boolean isEnableManifestClasspath() {
-        return enableManifestClasspath;
+        return enableManifestClasspath
+    }
+
+    public String getJavaHome() {
+        return javaHome
     }
 
 }
