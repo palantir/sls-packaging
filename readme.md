@@ -15,7 +15,7 @@ content of the package. The package will follow this structure:
 
     [service-name]-[service-version]/
         deployment/
-            manifest.yaml            # simple package manifest
+            manifest.yml             # simple package manifest
         service/
             bin/
                 [service-name]       # start script

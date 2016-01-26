@@ -87,8 +87,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
             description = "Generates a simple yaml file describing the package content."
         }) << {
             EmitFiles.replaceVars(
-                JavaDistributionPlugin.class.getResourceAsStream('/manifest.yaml'),
-                Paths.get("${project.buildDir}/deployment/manifest.yaml"),
+                JavaDistributionPlugin.class.getResourceAsStream('/manifest.yml'),
+                Paths.get("${project.buildDir}/deployment/manifest.yml"),
                 ['@serviceName@': ext.serviceName,
                  '@serviceVersion@': String.valueOf(project.version)])
             .toFile()

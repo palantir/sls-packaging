@@ -71,8 +71,8 @@ class JavaDistributionPluginTests extends Specification {
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
 
         // check manifest was created
-        new File(projectDir, 'build/deployment/manifest.yaml').exists()
-        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
+        new File(projectDir, 'build/deployment/manifest.yml').exists()
+        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yml')
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
     }
@@ -152,8 +152,8 @@ class JavaDistributionPluginTests extends Specification {
         new File(projectDir, 'dist/service-name-0.1').exists()
 
         // check manifest was created
-        new File(projectDir, 'build/deployment/manifest.yaml').exists()
-        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
+        new File(projectDir, 'build/deployment/manifest.yml').exists()
+        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yml')
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
     }
@@ -164,8 +164,8 @@ class JavaDistributionPluginTests extends Specification {
 
         String deploymentConfiguration = 'log: service-name.log'
         temporaryFolder.newFolder('deployment')
-        temporaryFolder.newFile('deployment/manifest.yaml') << 'invalid manifest'
-        temporaryFolder.newFile('deployment/configuration.yaml') << deploymentConfiguration
+        temporaryFolder.newFile('deployment/manifest.yml') << 'invalid manifest'
+        temporaryFolder.newFile('deployment/configuration.yml') << deploymentConfiguration
 
         when:
         BuildResult buildResult = run('build', 'distTar', 'untar').build()
@@ -177,15 +177,15 @@ class JavaDistributionPluginTests extends Specification {
 
         new File(projectDir, 'dist/service-name-0.1').exists()
 
-        // clobbers deployment/manifest.yaml
-        new File(projectDir, 'dist/service-name-0.1/deployment/manifest.yaml').exists()
-        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yaml')
+        // clobbers deployment/manifest.yml
+        new File(projectDir, 'dist/service-name-0.1/deployment/manifest.yml').exists()
+        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yml')
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
 
         // check files in deployment/ copied successfully
-        new File(projectDir, 'dist/service-name-0.1/deployment/configuration.yaml').exists()
-        String configuration = readFully('dist/service-name-0.1/deployment/configuration.yaml')
+        new File(projectDir, 'dist/service-name-0.1/deployment/configuration.yml').exists()
+        String configuration = readFully('dist/service-name-0.1/deployment/configuration.yml')
         configuration.equals(deploymentConfiguration)
     }
 
