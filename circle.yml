@@ -1,6 +1,6 @@
 machine:
   java:
-    version: oraclejdk8
+    version: oraclejdk7
   environment:
     TERM: dumb
 
@@ -12,7 +12,7 @@ test:
   override:
     - ./gradlew --parallel build
   post:
-    - CI_PULL_REQUEST="${CI_PULL_REQUEST##*/}" ./gradlew jacocoTestReport coveralls
+    - ./gradlew jacocoTestReport coveralls
 
 deployment:
   develop:
