@@ -2,7 +2,7 @@ Java Distribution Gradle Plugin
 ================================
 [![Build Status](https://circleci.com/gh/palantir/gradle-java-distribution.svg?style=shield)](https://circleci.com/gh/palantir/gradle-java-distribution)
 [![Coverage Status](https://coveralls.io/repos/github/palantir/gradle-java-distribution/badge.svg?branch=develop)](https://coveralls.io/github/palantir/gradle-java-distribution?branch=develop)
-[![Gradle Plugins Release](https://img.shields.io/github/release/palantir/gradle-java-distribution.svg)](https://plugins.gradle.org/plugin/com.palantir.java-distribution)
+[![Gradle Plugins Release](https://api.bintray.com/packages/palantir/releases/gradle-java-distribution/images/download.svg)](https://plugins.gradle.org/plugin/com.palantir.java-distribution)
 
 Similar to the standard application plugin, this plugin facilitates packaging
 Gradle projects for easy distribution and execution. This distribution chooses
