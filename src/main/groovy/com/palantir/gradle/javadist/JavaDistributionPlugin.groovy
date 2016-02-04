@@ -92,7 +92,6 @@ class JavaDistributionPlugin implements Plugin<Project> {
                 ['@serviceName@': ext.serviceName,
                  '@serviceVersion@': String.valueOf(project.version)])
             .toFile()
-            .setExecutable(true)
         }
 
         DistTarTask distTar = project.tasks.create('distTar', DistTarTask, {
