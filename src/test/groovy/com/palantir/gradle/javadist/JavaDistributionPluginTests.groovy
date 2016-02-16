@@ -279,6 +279,38 @@ class JavaDistributionPluginTests extends Specification {
             .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
     }
 
+    def 'kills children spawned by service'() {
+        given:
+        createUntarBuildFile(buildFile)
+
+        temporaryFolder.newFolder('src', 'main', 'java', 'test')
+        temporaryFolder.newFile('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) throws Exception {
+                Runtime.exec("yes");
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        // check content was extracted
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // try all of the service commands
+        String output = exec('dist/service-name-0.1/service/bin/init.sh', 'start')
+        exec('dist/service-name-0.1/service/bin/init.sh', 'stop')
+        exec("ps aux | grep '[y]es'").trim() == ""
+    }
+
     private def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
