@@ -79,7 +79,7 @@ stop)
     service/bin/init.sh status > /dev/null 2>&1
     if [[ $? == 0 ]]; then
         PID=$(cat $PIDFILE)
-        kill $PID
+        kill -- -$PID
         sleep 4
         service/bin/init.sh status > /dev/null 2>&1
         if [[ $? == 0 ]]; then
