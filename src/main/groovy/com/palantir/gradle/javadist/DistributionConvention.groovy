@@ -20,7 +20,7 @@ class DistributionConvention {
             throw new IllegalStateException("Cannot configure distribution twice!")
         }
         configured = true
-        DistributionExtension ext = new DistributionExtension()
+        DistributionExtension ext = new DistributionExtension(project)
         project.configure(ext, closure)
 
         // Specify classpath using pathing jar rather than command line argument on Windows, since

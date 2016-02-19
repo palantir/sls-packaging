@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Palantir Technologies
+ * Copyright 2016 Palantir Technologies
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package com.palantir.gradle.javadist
 
-import org.gradle.api.tasks.bundling.Jar
+class ManifestClasspathValue {
+    private final DistributionExtension ext
 
-/**
- * Produces a JAR whose manifest's {@code Class-Path} entry lists exactly the JARs produced by the project's runtime
- * configuration.
- */
-class ManifestClasspathJarTask extends Jar {
-
-    public ManifestClasspathJarTask() {
-        appendix = 'manifest-classpath'
+    ManifestClasspathValue(DistributionExtension ext) {
+        this.ext = ext
     }
 
-    public void configure(DistributionExtension ext) {
-        manifest.attributes("Class-Path": new ManifestClasspathValue(ext))
+    @Override
+    String toString() {
+        return ext.classpath
+            .collect { it.name }
+            .join(' ')
     }
 }

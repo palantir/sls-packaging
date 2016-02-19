@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist;
+package com.palantir.gradle.javadist
+
+import org.gradle.api.Project
+import org.gradle.api.file.FileCollection
 
 class DistributionExtension {
 
@@ -23,6 +26,11 @@ class DistributionExtension {
     private List<String> defaultJvmOpts = []
     private boolean enableManifestClasspath = false
     private String javaHome = null
+    private FileCollection classpath
+
+    DistributionExtension(Project project) {
+        classpath = project.configurations.runtime + project.tasks.jar.outputs.files
+    }
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -48,6 +56,10 @@ class DistributionExtension {
         this.javaHome = javaHome
     }
 
+    public void classpath(FileCollection classpath) {
+        this.classpath = classpath
+    }
+
     public String getServiceName() {
         return serviceName
     }
@@ -70,6 +82,10 @@ class DistributionExtension {
 
     public String getJavaHome() {
         return javaHome
+    }
+
+    public FileCollection getClasspath() {
+        return classpath
     }
 
 }
