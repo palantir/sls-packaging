@@ -56,7 +56,7 @@ class DistributionCreateStartScriptsTask extends CreateStartScripts {
     @InputFiles
     @Override
     public FileCollection getClasspath() {
-        return project.tasks['jar'].outputs.files + project.configurations.runtime
+        return ext.classpath
     }
 
 }
