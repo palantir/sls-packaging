@@ -211,12 +211,9 @@ class JavaDistributionPluginTests extends Specification {
 
     def 'produce distribution bundle that populates config.sh' () {
         given:
-        createUntarBuildFile(buildFile)
-        buildFile << '''
-            distribution {
-                javaHome 'foo'
-            }
-        '''.stripIndent()
+        createUntarBuildFile(buildFile, '''
+            javaHome 'foo'
+        ''')
 
         when:
         BuildResult buildResult = run('build', 'distTar', 'untar').build()
@@ -236,12 +233,9 @@ class JavaDistributionPluginTests extends Specification {
 
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {
         given:
-        createUntarBuildFile(buildFile)
-        buildFile << '''
-            distribution {
-                enableManifestClasspath true
-            }
-        '''.stripIndent()
+        createUntarBuildFile(buildFile, '''
+            enableManifestClasspath true
+        ''')
 
         when:
         BuildResult buildResult = run('build', 'distTar', 'untar').build()
@@ -279,8 +273,8 @@ class JavaDistributionPluginTests extends Specification {
             .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
     }
 
-    private def createUntarBuildFile(buildFile) {
-        buildFile << '''
+    private def createUntarBuildFile(buildFile, extraDistributionConfig = "") {
+        buildFile << """
             plugins {
                 id 'com.palantir.java-distribution'
                 id 'java'
@@ -292,17 +286,18 @@ class JavaDistributionPluginTests extends Specification {
                 serviceName 'service-name'
                 mainClass 'test.Test'
                 defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
+                ${extraDistributionConfig}
             }
 
             sourceCompatibility = '1.7'
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
-                into "${projectDir}/dist"
+                from tarTree(resources.gzip("\${buildDir}/distributions/service-name-0.1.tgz"))
+                into "\${projectDir}/dist"
                 dependsOn distTar
             }
-        '''.stripIndent()
+        """.stripIndent()
     }
 
     private String readFully(String file) {
