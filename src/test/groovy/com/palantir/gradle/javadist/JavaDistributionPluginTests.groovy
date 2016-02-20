@@ -279,6 +279,36 @@ class JavaDistributionPluginTests extends Specification {
             .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
     }
 
+    def 'distTar artifact name is set during appropriate lifecycle events'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
+            distribution {
+                serviceName "my-service"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+            }
+
+            println "before: distTar: ${distTar.outputs.files.singleFile}"
+
+            afterEvaluate {
+                println "after: distTar: ${distTar.outputs.files.singleFile}"
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run('tasks').build()
+
+        then:
+        buildResult.task(':tasks').outcome == TaskOutcome.SUCCESS
+        buildResult.output =~ ('before: distTar: [A-Za-z0-9/-_]*/my-service.tgz')
+        buildResult.output =~ ('after: distTar: [A-Za-z0-9/-_]*/my-service.tgz')
+
+    }
+
     private def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {

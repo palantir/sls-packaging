@@ -98,6 +98,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
             group = GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
             dependsOn startScripts, initScript, configScript, manifest, manifestClasspathJar
+            distributionExtension ext
         })
 
         RunTask run = project.tasks.create('run', RunTask, {

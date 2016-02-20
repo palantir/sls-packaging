@@ -20,13 +20,26 @@ import org.gradle.api.tasks.bundling.Tar
 
 class DistTarTask extends Tar {
 
+    private DistributionExtension distributionExtension
+
     public DistTarTask() {
         // Set compression in constructor so that task output has the right name from the start.
         compression = Compression.GZIP
     }
 
+    public void distributionExtension(DistributionExtension ext) {
+        this.distributionExtension = ext
+    }
+
+    @Override
+    public String getBaseName() {
+        // works around a bug where something in the tar task hierarchy either resolves the wrong
+        // getBaseName() call or uses baseName directly.
+        setBaseName(distributionExtension.serviceName)
+        return super.getBaseName()
+    }
+
     public void configure(DistributionExtension ext) {
-        baseName = ext.serviceName
         String archiveRootDir = ext.serviceName + '-' + String.valueOf(project.version)
 
         from("${project.projectDir}/var") {
