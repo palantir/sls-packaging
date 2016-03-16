@@ -80,9 +80,18 @@ stop)
     if [[ $? == 0 ]]; then
         PID=$(cat $PIDFILE)
         kill $PID
-        sleep 4
-        service/bin/init.sh status > /dev/null 2>&1
-        if [[ $? == 0 ]]; then
+        COUNTER=0
+        while [ $(is_process_active $PID) -eq "0" -a "$COUNTER" -lt "240" ]; do
+            sleep 1
+            let COUNTER=COUNTER+1
+            if [ $((COUNTER%5)) == 0 ]; then
+                if [ "$COUNTER" -eq "5" ]; then
+                    printf "\n" # first time get a new line to get off Stopping printf
+                fi
+                printf "%s\n" "Waiting for '$SERVICE' ($PID) to stop"
+            fi
+        done
+        if [[ $(is_process_active $PID) -eq "0" ]]; then
             printf "%s\n" "Failed"
             exit 1
         else
