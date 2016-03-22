@@ -66,7 +66,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
                 JavaDistributionPlugin.class.getResourceAsStream('/init.sh'),
                 Paths.get("${project.buildDir}/scripts/init.sh"),
                 ['@serviceName@': ext.serviceName,
-                 '@args@': ext.args.iterator().join(' ')])
+                 '@args@': ext.args.iterator().join(' '),
+                 '@startDelay@': ext.startDelay.toString()])
             .toFile()
             .setExecutable(true)
         }
