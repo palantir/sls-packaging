@@ -17,6 +17,8 @@ package com.palantir.gradle.javadist;
 
 class DistributionExtension {
 
+    private static final List<String> requiredJvmOpts = ['-Djava.security.egd=file:/dev/./urandom']
+
     private String serviceName
     private String mainClass
     private List<String> args = []
@@ -61,7 +63,7 @@ class DistributionExtension {
     }
 
     public List<String> getDefaultJvmOpts() {
-        return defaultJvmOpts
+        return requiredJvmOpts + defaultJvmOpts
     }
 
     public boolean isEnableManifestClasspath() {

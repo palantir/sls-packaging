@@ -206,7 +206,7 @@ class JavaDistributionPluginTests extends Specification {
         // check start script uses default JVM options
         new File(projectDir, 'dist/service-name-0.1/service/bin/service-name').exists()
         String startScript = readFully('dist/service-name-0.1/service/bin/service-name')
-        startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
     def 'produce distribution bundle that populates config.sh' () {
