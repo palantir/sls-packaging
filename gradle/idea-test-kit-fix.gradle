@@ -1,0 +1,50 @@
+/*
+ * Fix for https://discuss.gradle.org/t/nosuchmethoderror-in-testkit-after-2-9-2-10-transition/13505. Applies
+ * configuration to the IDEA plugin that ensures that if 'gradle-core' and 'gradle-test-kit' are both exist in the
+ * classpath, then 'gradle-test-kit' will appear before 'gradle-core'.
+ */
+idea {
+    module {
+        iml {
+            withXml {
+                Node node = it.asNode()
+
+                // find classpath entries for gradle-test-kit and gradle-core
+                Node gradleTestKit = getClassPathNode(node, 'gradle-test-kit')
+                Node gradleCore = getClassPathNode(node, 'gradle-core')
+
+                if (gradleTestKit && gradleCore && gradleTestKit.parent() == gradleCore.parent()) {
+                    Node parent = gradleTestKit.parent()
+
+                    // if gradle-test-kit comes after gradle-core, remove it from parent
+                    // and insert back immediately preceding gradle-core
+                    int coreIndex = parent.children().indexOf(gradleCore)
+                    int testKitIndex = parent.children().indexOf(gradleTestKit)
+                    if (coreIndex < testKitIndex) {
+                        gradleTestKit.parent().remove(gradleTestKit)
+                        parent.children().add(coreIndex, gradleTestKit)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Returns the node of the classpath entry that has a descendant node named 'root' whose 'url' attribute contains a
+ * match for the pattern "${urlValue}". The returned node will be a node with the name 'orderEntry' whose 'type'
+ * attribute is 'module-library'. Returns null if no such node exists.
+ */
+Node getClassPathNode(Node root, String urlValue) {
+    Node foundNode = (Node) root.depthFirst().find {
+        it.name() == 'root' && it.attribute('url') =~ urlValue
+    }
+
+    if (foundNode) {
+        while (foundNode && !(foundNode.name() == 'orderEntry' && foundNode.attribute('type') == 'module-library')) {
+            foundNode = foundNode.parent()
+        }
+    }
+
+    return foundNode
+}
