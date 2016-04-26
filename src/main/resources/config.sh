@@ -2,4 +2,4 @@
 @javaHome@
 
 # use JVM_OPTS to set JVM settings, such as minimum and maximum heap
-#JVM_OPTS="-Xms1g -Xmx1g"
+#export JVM_OPTS="-Xms1g -Xmx1g"
