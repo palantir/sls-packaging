@@ -33,7 +33,6 @@ class JavaDistributionPluginTests extends Specification {
 
     File projectDir
     File buildFile
-    List<File> pluginClasspath
 
     def 'produce distribution bundle and check start, stop and restart behavior' () {
         given:
@@ -341,7 +340,7 @@ class JavaDistributionPluginTests extends Specification {
 
     private GradleRunner run(String... tasks) {
         GradleRunner.create()
-            .withPluginClasspath(pluginClasspath)
+            .withPluginClasspath()
             .withProjectDir(projectDir)
             .withArguments(tasks)
             .withDebug(true)
@@ -359,15 +358,6 @@ class JavaDistributionPluginTests extends Specification {
     def setup() {
         projectDir = temporaryFolder.root
         buildFile = temporaryFolder.newFile('build.gradle')
-
-        def pluginClasspathResource = getClass().classLoader.findResource("plugin-classpath.txt")
-        if (pluginClasspathResource == null) {
-            throw new IllegalStateException("Did not find plugin classpath resource, run `testClasses` build task.")
-        }
-
-        pluginClasspath = pluginClasspathResource.readLines()
-            .collect { it.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { new File(it) }
     }
 
 }
