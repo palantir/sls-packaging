@@ -3,6 +3,7 @@ plugins {
     id 'com.jfrog.bintray' version '1.5'
     id 'com.jfrog.artifactory' version '4.0.0'
     id 'com.palantir.git-version' version '0.4.0'
+    id 'com.palantir.idea-test-fix' version '0.1.0'
     id 'com.github.kt3k.coveralls' version '2.6.3'
     id 'eclipse'
     id 'groovy'
@@ -10,8 +11,6 @@ plugins {
     id 'jacoco'
     id 'maven-publish'
 }
-
-apply from: "${rootDir}/gradle/idea-test-kit-fix.gradle"
 
 task createClasspathManifest {
     def outputDir = file("$buildDir/$name")
