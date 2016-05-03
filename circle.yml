@@ -15,12 +15,15 @@ test:
     - ./gradlew jacocoTestReport coveralls
 
 deployment:
-  develop:
-    branch: develop
-    commands:
-      - ./gradlew -i artifactoryPublish
+  # uncomment after fixing OJO publishing
+  #develop:
+  #  branch: develop
+  #  owner: palantir
+  #  commands:
+  #    - ./gradlew -i artifactoryPublish
   release:
     tag: /[0-9]+(\.[0-9]+)+/
+    owner: palantir
     commands:
       - ./gradlew -i bintrayUpload
       - ./gradlew -i -Dgradle.publish.key=$GRADLE_KEY -Dgradle.publish.secret=$GRADLE_SECRET publishPlugins
