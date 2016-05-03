@@ -8,22 +8,11 @@ plugins {
     id 'groovy'
     id 'idea'
     id 'jacoco'
+    id 'java-gradle-plugin'
     id 'maven-publish'
 }
 
 apply from: "${rootDir}/gradle/idea-test-kit-fix.gradle"
-
-task createClasspathManifest {
-    def outputDir = file("$buildDir/$name")
-
-    inputs.files sourceSets.main.runtimeClasspath
-    outputs.dir outputDir
-
-    doLast {
-        outputDir.mkdirs()
-        file("$outputDir/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join("\n")
-    }
-}
 
 repositories {
     jcenter()
@@ -32,11 +21,9 @@ repositories {
 dependencies {
     compile gradleApi()
 
-    testCompile gradleTestKit()
     testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
-    testCompile files(createClasspathManifest)
 }
 
 if (System.env.CIRCLE_TEST_REPORTS) {
