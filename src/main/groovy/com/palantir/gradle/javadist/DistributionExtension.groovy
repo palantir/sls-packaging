@@ -25,6 +25,7 @@ class DistributionExtension {
     private List<String> defaultJvmOpts = []
     private boolean enableManifestClasspath = false
     private String javaHome = null
+    private int startDelay = 1
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -50,6 +51,10 @@ class DistributionExtension {
         this.javaHome = javaHome
     }
 
+    public void startDelay(int startDelay) {
+        this.startDelay = startDelay
+    }
+
     public String getServiceName() {
         return serviceName
     }
@@ -72,6 +77,10 @@ class DistributionExtension {
 
     public String getJavaHome() {
         return javaHome
+    }
+
+    public int getStartDelay() {
+        return startDelay
     }
 
 }

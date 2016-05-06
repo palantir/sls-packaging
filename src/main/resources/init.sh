@@ -46,7 +46,7 @@ start)
     mkdir -p "var/log"
     mkdir -p "var/run"
     PID=$($SERVICE_CMD $ARGS > var/log/$SERVICE-startup.log 2>&1 & echo $!)
-    sleep 1
+    sleep @startDelay@
     if [ $(is_process_active $PID) -eq 0 ]; then
         echo $PID > $PIDFILE
         printf "%s\n" "Started ($PID)"

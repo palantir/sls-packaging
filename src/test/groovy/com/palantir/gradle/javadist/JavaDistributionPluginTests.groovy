@@ -208,6 +208,31 @@ class JavaDistributionPluginTests extends Specification {
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
+    def 'produce distribution bundle with start script that waits on startup' () {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                startDelay 5
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // check start script includes the sleep command
+        new File(projectDir, 'dist/service-name-0.1/service/bin/init.sh').exists()
+        String daemonScript = readFully('dist/service-name-0.1/service/bin/init.sh')
+        daemonScript.contains('sleep 5')
+    }
+
     def 'produce distribution bundle that populates config.sh' () {
         given:
         createUntarBuildFile(buildFile)
