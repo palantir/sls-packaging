@@ -31,6 +31,10 @@ class DistTarTask extends Tar {
         this.distributionExtension = ext
     }
 
+    public DistributionExtension getDistributionExtension() {
+        return this.distributionExtension
+    }
+
     @Override
     public String getBaseName() {
         // works around a bug where something in the tar task hierarchy either resolves the wrong
@@ -44,8 +48,13 @@ class DistTarTask extends Tar {
 
         from("${project.projectDir}/var") {
             into "${archiveRootDir}/var"
+
             exclude 'log'
             exclude 'run'
+
+            distributionExtension.excludeFromVar.each {
+                exclude it
+            }
         }
 
         from("${project.projectDir}/deployment") {

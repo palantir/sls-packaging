@@ -25,6 +25,7 @@ class DistributionExtension {
     private List<String> defaultJvmOpts = []
     private boolean enableManifestClasspath = false
     private String javaHome = null
+    private List<String> excludeFromVar = []
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -48,6 +49,10 @@ class DistributionExtension {
 
     public void javaHome(String javaHome) {
         this.javaHome = javaHome
+    }
+
+    public void excludeFromVar(String... excludeFromVar) {
+        this.excludeFromVar = Arrays.asList(excludeFromVar);
     }
 
     public String getServiceName() {
@@ -74,4 +79,7 @@ class DistributionExtension {
         return javaHome
     }
 
+    public List<String> getExcludeFromVar() {
+        return excludeFromVar
+    }
 }
