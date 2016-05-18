@@ -55,6 +55,8 @@ The `distribution` block offers the following options:
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead infered
    from a JAR file whose MANIFEST contains the classpath entries.
+ * (optional) `excludeFromVar` a list of directories (relative to `var`) to exclude in addition to
+   `log` and `run` (which are always excluded).
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
 
