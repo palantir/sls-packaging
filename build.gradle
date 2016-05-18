@@ -75,6 +75,7 @@ artifactoryPublish.dependsOn 'generatePomFileForJfrogPublication', 'sourceJar', 
 bintray {
     user = System.env.BINTRAY_USER
     key = System.env.BINTRAY_KEY
+    publish = true
     pkg {
         repo = 'releases'
         name = 'gradle-java-distribution'
