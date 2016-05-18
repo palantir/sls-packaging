@@ -28,9 +28,11 @@ class ManifestClasspathJarTask extends Jar {
     }
 
     public void configure(DistributionExtension ext) {
-        manifest.attributes("Class-Path": project.files(project.configurations.runtime)
-            .collect { it.getName() }
-            .join(' ') + ' ' + project.tasks.jar.archiveName
-        )
+        doFirst {
+            manifest.attributes("Class-Path": project.files(project.configurations.runtime)
+                    .collect { it.getName() }
+                    .join(' ') + ' ' + project.tasks.jar.archiveName
+            )
+        }
     }
 }
