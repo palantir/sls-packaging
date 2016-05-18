@@ -16,15 +16,14 @@
  */
 package com.palantir.gradle.javadist
 
-import java.nio.file.Files
-
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-
 import spock.lang.Specification
+
+import java.nio.file.Files
 
 class JavaDistributionPluginTests extends Specification {
 
@@ -99,6 +98,54 @@ class JavaDistributionPluginTests extends Specification {
         new File(projectDir, 'dist/service-name-0.1').exists()
         !new File(projectDir, 'dist/service-name-0.1/var/log').exists()
         !new File(projectDir, 'dist/service-name-0.1/var/run').exists()
+        new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
+    }
+
+    def 'produce distribution bundle with custom exclude set' () {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
+
+            version '0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
+                excludeFromVar 'data'
+            }
+
+            sourceCompatibility = '1.7'
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+
+        temporaryFolder.newFolder('var', 'log')
+        temporaryFolder.newFile('var/log/service-name.log')
+        temporaryFolder.newFolder('var', 'data')
+        temporaryFolder.newFile('var/data/database')
+        temporaryFolder.newFolder('var', 'conf')
+        temporaryFolder.newFile('var/conf/service-name.yml')
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        // check content was extracted
+        !new File(projectDir, 'dist/service-name-0.1/var/log').exists()
+        !new File(projectDir, 'dist/service-name-0.1/var/data').exists()
         new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 
