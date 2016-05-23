@@ -19,7 +19,7 @@ class DistributionExtension {
 
     private static final List<String> requiredJvmOpts = [
         '-Djava.security.egd=file:/dev/./urandom',
-        '-Djava.io.tmpdir=var/tmp/files'
+        '-Djava.io.tmpdir=var/data/tmp'
     ]
 
     private String serviceName
