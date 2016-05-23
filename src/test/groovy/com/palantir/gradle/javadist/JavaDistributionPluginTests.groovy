@@ -100,6 +100,22 @@ class JavaDistributionPluginTests extends Specification {
         !new File(projectDir, 'dist/service-name-0.1/var/run').exists()
         new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
+    
+    def 'produce distribution bundle and check var/tmp/files is created' () {
+        given:
+        createUntarBuildFile(buildFile)
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        // check content was extracted
+        new File(projectDir, 'dist/service-name-0.1/var/tmp/files').exists()
+    }
 
     def 'produce distribution bundle with custom exclude set' () {
         given:
@@ -252,7 +268,7 @@ class JavaDistributionPluginTests extends Specification {
         // check start script uses default JVM options
         new File(projectDir, 'dist/service-name-0.1/service/bin/service-name').exists()
         String startScript = readFully('dist/service-name-0.1/service/bin/service-name')
-        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/tmp/files" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
     def 'produce distribution bundle that populates config.sh' () {
