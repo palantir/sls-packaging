@@ -22,7 +22,7 @@ PIDFILE="var/run/$SERVICE.pid"
 ARGS="@args@"
 
 # uses SERVICE_HOME when set, else, traverse up two directories respecting symlinks
-SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../" && pwd)}
+SERVICE_HOME=$(cd "$(dirname "$0")/../../" && pwd)
 cd "$SERVICE_HOME"
 
 source service/bin/config.sh
