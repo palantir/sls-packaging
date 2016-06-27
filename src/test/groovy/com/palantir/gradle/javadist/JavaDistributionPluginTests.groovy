@@ -16,14 +16,15 @@
  */
 package com.palantir.gradle.javadist
 
+import java.nio.file.Files
+
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
 
-import java.nio.file.Files
+import spock.lang.Specification
 
 class JavaDistributionPluginTests extends Specification {
 
@@ -100,7 +101,7 @@ class JavaDistributionPluginTests extends Specification {
         !new File(projectDir, 'dist/service-name-0.1/var/run').exists()
         new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
-    
+
     def 'produce distribution bundle and check var/data/tmp is created' () {
         given:
         createUntarBuildFile(buildFile)
@@ -294,6 +295,31 @@ class JavaDistributionPluginTests extends Specification {
         new File(projectDir, 'dist/service-name-0.1/service/bin/config.sh').exists()
         String startScript = readFully('dist/service-name-0.1/service/bin/config.sh')
         startScript.contains('JAVA_HOME="foo"')
+    }
+
+    def 'produce distribution bundle that populates check.sh' () {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                checkArgs 'healthcheck', 'var/conf/service.yml'
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1').exists()
+
+        // check start script uses default JVM options
+        new File(projectDir, 'dist/service-name-0.1/service/monitoring/bin/check.sh').exists()
+        String startScript = readFully('dist/service-name-0.1/service/monitoring/bin/check.sh')
+        startScript.contains('CHECK_ARGS="healthcheck var/conf/service.yml"')
     }
 
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {

@@ -83,6 +83,11 @@ class DistTarTask extends Tar {
             fileMode = 0755
         }
 
+        into("${archiveRootDir}/service/monitoring/bin") {
+            from("${project.buildDir}/monitoring")
+            fileMode = 0755
+        }
+
         into("${archiveRootDir}/deployment") {
             from("${project.buildDir}/deployment")
         }
