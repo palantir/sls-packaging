@@ -71,6 +71,21 @@ class JavaDistributionPlugin implements Plugin<Project> {
             .setExecutable(true)
         }
 
+        Task checkScript = project.tasks.create('createCheckScript', {
+            group = GROUP_NAME
+            description = "Generates healthcheck (service/monitoring/bin/check.sh) script."
+        }) << {
+            if (!ext.checkArgs.empty) {
+                EmitFiles.replaceVars(
+                    JavaDistributionPlugin.class.getResourceAsStream('/check.sh'),
+                    Paths.get("${project.buildDir}/monitoring/check.sh"),
+                    ['@serviceName@': ext.serviceName,
+                     '@checkArgs@': ext.checkArgs.iterator().join(' ')])
+                .toFile()
+                .setExecutable(true)
+            }
+        }
+
         Task configScript = project.tasks.create('createConfigScript', {
             group = GROUP_NAME
             description = "Generates config.sh script."
@@ -97,7 +112,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
         DistTarTask distTar = project.tasks.create('distTar', DistTarTask, {
             group = GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
-            dependsOn startScripts, initScript, configScript, manifest, manifestClasspathJar
+            dependsOn startScripts, initScript, checkScript, configScript, manifest, manifestClasspathJar
             distributionExtension ext
         })
 

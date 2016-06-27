@@ -24,6 +24,9 @@ content of the package. The package will follow this structure:
                 config.sh            # customized environment vars
             lib/
                 [jars]
+            monitoring/
+                bin/ 
+                    check.sh         # monitoring script
         var/
             # application configuration and data
 
@@ -51,6 +54,8 @@ The `distribution` block offers the following options:
  * `serviceName` the name of this service, used to construct the final artifact's file name.
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
+ * (optional) `checkArgs` a list of arguments to supply to the moniotring script, if omitted,
+   no monitoring script will be generated.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead infered
@@ -81,6 +86,10 @@ As part of package creation, this plugin will create three shell scripts:
    - `stop`: if the process status is 0, issues a kill signal to the process.
  * `service/bin/config.sh`: a shell script containing environment variables to apply
     as overrides when `init.sh` is run.
+ * `service/monitoring/bin/check.sh`: a no-argument shell script that returns `0` when
+   a service is healthy and non-zero otherwise. This script is generated if and only if
+   `checkArgs` is specified above, and will run the singular command defined by invoking
+   `service/bin/[serviceName] [checkArgs]` to obtain health status.
 
 
 In addition to creating these scripts, this plugin will merge the entire

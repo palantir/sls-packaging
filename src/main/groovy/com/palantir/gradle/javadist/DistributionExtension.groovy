@@ -25,6 +25,7 @@ class DistributionExtension {
     private String serviceName
     private String mainClass
     private List<String> args = []
+    private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
     private boolean enableManifestClasspath = false
     private String javaHome = null
@@ -38,11 +39,15 @@ class DistributionExtension {
         this.mainClass = mainClass
     }
 
-    public List<String> args(String... args) {
+    public void args(String... args) {
         this.args = Arrays.asList(args)
     }
 
-    public List<String> defaultJvmOpts(String... defaultJvmOpts) {
+    public void checkArgs(String... checkArgs) {
+        this.checkArgs = Arrays.asList(checkArgs);
+    }
+
+    public void defaultJvmOpts(String... defaultJvmOpts) {
         this.defaultJvmOpts = Arrays.asList(defaultJvmOpts)
     }
 
@@ -68,6 +73,10 @@ class DistributionExtension {
 
     public List<String> getArgs() {
         return args
+    }
+
+    public List<String> getCheckArgs() {
+        return checkArgs
     }
 
     public List<String> getDefaultJvmOpts() {
