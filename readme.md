@@ -30,11 +30,11 @@ content of the package. The package will follow this structure:
         var/
             # application configuration and data
 
-Packages are produced as gzipped tar names `[service-name]-[project-version].tgz`.
+Packages are produced as gzipped tar named `[service-name]-[project-version].tgz`.
 
 Usage
 -----
-Apply the plugin using standard gradle convention:
+Apply the plugin using standard Gradle convention:
 
     plugins {
         id 'com.palantir.java-distribution'
@@ -54,11 +54,11 @@ The `distribution` block offers the following options:
  * `serviceName` the name of this service, used to construct the final artifact's file name.
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
- * (optional) `checkArgs` a list of arguments to supply to the moniotring script, if omitted,
+ * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
    no monitoring script will be generated.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
-   classpath is omitted from the generated Windows start script and instead infered
+   classpath is omitted from the generated Windows start script and instead inferred
    from a JAR file whose MANIFEST contains the classpath entries.
  * (optional) `excludeFromVar` a list of directories (relative to `var`) to exclude in addition to
    `log` and `run` (which are always excluded).
