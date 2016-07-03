@@ -25,6 +25,13 @@ CHECK_ARGS="@checkArgs@"
 SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../../" && pwd)}
 cd "$SERVICE_HOME"
 
+# prefer java 8 when available to deal with poor environment management
+if [ -n "$JAVA_8_HOME" ]; then
+    export JAVA_HOME=$JAVA_8_HOME
+fi
+
+source service/bin/config.sh
+
 # now check health
 printf "%-50s" "Checking health of '$SERVICE'..."
 $SERVICE_CMD $CHECK_ARGS
