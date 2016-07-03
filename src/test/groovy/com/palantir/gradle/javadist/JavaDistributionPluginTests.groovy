@@ -16,15 +16,14 @@
  */
 package com.palantir.gradle.javadist
 
-import java.nio.file.Files
-
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-
 import spock.lang.Specification
+
+import java.nio.file.Files
 
 class JavaDistributionPluginTests extends Specification {
 
@@ -395,6 +394,52 @@ class JavaDistributionPluginTests extends Specification {
         buildResult.output =~ ('before: distTar: [A-Za-z0-9/-_]*/my-service.tgz')
         buildResult.output =~ ('after: distTar: [A-Za-z0-9/-_]*/my-service.tgz')
 
+    }
+
+    def 'produce distribution with dependencies in services/lib'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << sprintf('''
+            dependencies {
+                compile files('%s')
+                runtime files('%s')
+            }
+        '''.stripIndent(),
+                JavaDistributionPluginTests.class.getResource("/compile-dep.jar").getFile(),
+                JavaDistributionPluginTests.class.getResource("/runtime-dep.jar").getFile())
+
+        when:
+        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
+
+        new File(projectDir, 'dist/service-name-0.1/service/lib/compile-dep.jar').exists()
+        new File(projectDir, 'dist/service-name-0.1/service/lib/runtime-dep.jar').exists()
+    }
+
+    private def 'does not resolve runtime configuration during project setup'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << sprintf('''
+            afterEvaluate {
+                dependencies {
+                    compile files('%s')
+                    runtime files('%s')
+                }
+            }
+        '''.stripIndent(),
+                JavaDistributionPluginTests.class.getResource("/compile-dep.jar").getFile(),
+                JavaDistributionPluginTests.class.getResource("/runtime-dep.jar").getFile())
+
+        when:
+        BuildResult buildResult = run('build', 'distTar').build()
+
+        then:
+        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
     }
 
     private def createUntarBuildFile(buildFile) {

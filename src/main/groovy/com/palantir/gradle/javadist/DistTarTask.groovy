@@ -67,9 +67,11 @@ class DistTarTask extends Tar {
             into "${archiveRootDir}/service"
         }
 
-        into("${archiveRootDir}/service/lib") {
-            from(project.tasks.jar.outputs.files)
-            from(project.configurations.runtime)
+        doFirst {
+            into("${archiveRootDir}/service/lib") {
+                from(project.tasks.jar.outputs.files)
+                from(project.configurations.runtime)
+            }
         }
 
         if (ext.isEnableManifestClasspath()) {
