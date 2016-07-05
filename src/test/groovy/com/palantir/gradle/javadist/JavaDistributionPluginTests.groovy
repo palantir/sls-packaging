@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2015 Palantir Technologies
  *
@@ -16,30 +15,15 @@
  */
 package com.palantir.gradle.javadist
 
-import java.nio.file.Files
-
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 
-import spock.lang.Specification
-
-class JavaDistributionPluginTests extends Specification {
-
-    @Rule
-    TemporaryFolder temporaryFolder = new TemporaryFolder()
-
-    File projectDir
-    File buildFile
+class JavaDistributionPluginTests extends GradleTestSpec {
 
     def 'produce distribution bundle and check start, stop and restart behavior' () {
         given:
         createUntarBuildFile(buildFile)
 
-        temporaryFolder.newFolder('src', 'main', 'java', 'test')
-        temporaryFolder.newFile('src/main/java/test/Test.java') << '''
+        file('src/main/java/test/Test.java') << '''
         package test;
         public class Test {
             public static void main(String[] args) throws InterruptedException {
@@ -50,28 +34,20 @@ class JavaDistributionPluginTests extends Specification {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        // check content was extracted
-        new File(projectDir, 'dist/service-name-0.1').exists()
-
         // try all of the service commands
         String output = exec('dist/service-name-0.1/service/bin/init.sh', 'start')
         output ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        readFully('dist/service-name-0.1/var/log/service-name-startup.log').equals('Test started\n')
+        file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.equals('Test started\n')
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
             /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
 
         // check manifest was created
-        new File(projectDir, 'build/deployment/manifest.yml').exists()
-        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yml')
+        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
     }
@@ -80,26 +56,18 @@ class JavaDistributionPluginTests extends Specification {
         given:
         createUntarBuildFile(buildFile)
 
-        temporaryFolder.newFolder('var', 'log')
-        temporaryFolder.newFile('var/log/service-name.log')
-        temporaryFolder.newFolder('var', 'run')
-        temporaryFolder.newFile('var/run/service-name.pid')
-        temporaryFolder.newFolder('var', 'conf')
-        temporaryFolder.newFile('var/conf/service-name.yml')
+        createFile('var/log/service-name.log')
+        createFile('var/run/service-name.pid')
+        createFile('var/conf/service-name.yml')
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        // check content was extracted
-        new File(projectDir, 'dist/service-name-0.1').exists()
-        !new File(projectDir, 'dist/service-name-0.1/var/log').exists()
-        !new File(projectDir, 'dist/service-name-0.1/var/run').exists()
-        new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
+        file('dist/service-name-0.1').exists()
+        !file('dist/service-name-0.1/var/log').exists()
+        !file('dist/service-name-0.1/var/run').exists()
+        file('dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 
     def 'produce distribution bundle and check var/data/tmp is created' () {
@@ -107,15 +75,10 @@ class JavaDistributionPluginTests extends Specification {
         createUntarBuildFile(buildFile)
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        // check content was extracted
-        new File(projectDir, 'dist/service-name-0.1/var/data/tmp').exists()
+        file('dist/service-name-0.1/var/data/tmp').exists()
     }
 
     def 'produce distribution bundle with custom exclude set' () {
@@ -145,25 +108,17 @@ class JavaDistributionPluginTests extends Specification {
             }
         '''.stripIndent()
 
-        temporaryFolder.newFolder('var', 'log')
-        temporaryFolder.newFile('var/log/service-name.log')
-        temporaryFolder.newFolder('var', 'data')
-        temporaryFolder.newFile('var/data/database')
-        temporaryFolder.newFolder('var', 'conf')
-        temporaryFolder.newFile('var/conf/service-name.yml')
+        createFile('var/log/service-name.log')
+        createFile('var/data/database')
+        createFile('var/conf/service-name.yml')
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        // check content was extracted
-        !new File(projectDir, 'dist/service-name-0.1/var/log').exists()
-        !new File(projectDir, 'dist/service-name-0.1/var/data').exists()
-        new File(projectDir, 'dist/service-name-0.1/var/conf/service-name.yml').exists()
+        !file('dist/service-name-0.1/var/log').exists()
+        !file('dist/service-name-0.1/var/data').exists()
+        file('dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 
     def 'produce distribution bundle with a non-string version object' () {
@@ -204,19 +159,10 @@ class JavaDistributionPluginTests extends Specification {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        // check content was extracted
-        new File(projectDir, 'dist/service-name-0.1').exists()
-
-        // check manifest was created
-        new File(projectDir, 'build/deployment/manifest.yml').exists()
-        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yml')
+        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
     }
@@ -226,30 +172,21 @@ class JavaDistributionPluginTests extends Specification {
         createUntarBuildFile(buildFile)
 
         String deploymentConfiguration = 'log: service-name.log'
-        temporaryFolder.newFolder('deployment')
-        temporaryFolder.newFile('deployment/manifest.yml') << 'invalid manifest'
-        temporaryFolder.newFile('deployment/configuration.yml') << deploymentConfiguration
+        createFile('deployment/manifest.yml') << 'invalid manifest'
+        createFile('deployment/configuration.yml') << deploymentConfiguration
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        new File(projectDir, 'dist/service-name-0.1').exists()
-
         // clobbers deployment/manifest.yml
-        new File(projectDir, 'dist/service-name-0.1/deployment/manifest.yml').exists()
-        String manifest = readFully('dist/service-name-0.1/deployment/manifest.yml')
+        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
 
         // check files in deployment/ copied successfully
-        new File(projectDir, 'dist/service-name-0.1/deployment/configuration.yml').exists()
-        String configuration = readFully('dist/service-name-0.1/deployment/configuration.yml')
-        configuration.equals(deploymentConfiguration)
+        String actualConfiguration = file('dist/service-name-0.1/deployment/configuration.yml', projectDir).text
+        actualConfiguration.equals(deploymentConfiguration)
     }
 
     def 'produce distribution bundle with start script that passes default JVM options' () {
@@ -257,18 +194,10 @@ class JavaDistributionPluginTests extends Specification {
         createUntarBuildFile(buildFile)
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        new File(projectDir, 'dist/service-name-0.1').exists()
-
-        // check start script uses default JVM options
-        new File(projectDir, 'dist/service-name-0.1/service/bin/service-name').exists()
-        String startScript = readFully('dist/service-name-0.1/service/bin/service-name')
+        String startScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
@@ -282,18 +211,10 @@ class JavaDistributionPluginTests extends Specification {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        new File(projectDir, 'dist/service-name-0.1').exists()
-
-        // check start script uses default JVM options
-        new File(projectDir, 'dist/service-name-0.1/service/bin/config.sh').exists()
-        String startScript = readFully('dist/service-name-0.1/service/bin/config.sh')
+        String startScript = file('dist/service-name-0.1/service/bin/config.sh', projectDir).text
         startScript.contains('JAVA_HOME="foo"')
     }
 
@@ -307,19 +228,11 @@ class JavaDistributionPluginTests extends Specification {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        new File(projectDir, 'dist/service-name-0.1').exists()
-
-        // check start script uses default JVM options
-        new File(projectDir, 'dist/service-name-0.1/service/monitoring/bin/check.sh').exists()
-        String startScript = readFully('dist/service-name-0.1/service/monitoring/bin/check.sh')
-        startScript.contains('CHECK_ARGS="healthcheck var/conf/service.yml"')
+        String checkScript = file('dist/service-name-0.1/service/monitoring/bin/check.sh', projectDir).text
+        checkScript.contains('CHECK_ARGS="healthcheck var/conf/service.yml"')
     }
 
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {
@@ -332,18 +245,13 @@ class JavaDistributionPluginTests extends Specification {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        new File(projectDir, 'dist/service-name-0.1/service/bin/service-name.bat').exists()
-        String startScript = readFully('dist/service-name-0.1/service/bin/service-name.bat')
+        String startScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
         startScript.contains("-manifest-classpath-0.1.jar")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
-        new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
+        file('dist/service-name-0.1/service/lib/').listFiles()
             .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
     }
 
@@ -352,15 +260,10 @@ class JavaDistributionPluginTests extends Specification {
         createUntarBuildFile(buildFile)
 
         when:
-        BuildResult buildResult = run('build', 'distTar', 'untar').build()
+        runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        buildResult.task(':build').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':distTar').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':untar').outcome == TaskOutcome.SUCCESS
-
-        new File(projectDir, 'dist/service-name-0.1/service/bin/service-name.bat').exists()
-        String startScript = readFully('dist/service-name-0.1/service/bin/service-name.bat')
+        String startScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
         !startScript.contains("-manifest-classpath-0.1.jar")
         startScript.contains("-classpath \"%CLASSPATH%\"")
         !new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
@@ -388,16 +291,15 @@ class JavaDistributionPluginTests extends Specification {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run('tasks').build()
+        BuildResult buildResult = runSuccessfully(':tasks')
 
         then:
-        buildResult.task(':tasks').outcome == TaskOutcome.SUCCESS
-        buildResult.output =~ ('before: distTar: [A-Za-z0-9/-_]*/my-service.tgz')
-        buildResult.output =~ ('after: distTar: [A-Za-z0-9/-_]*/my-service.tgz')
+        buildResult.output =~ ("before: distTar: ${projectDir}/build/distributions/my-service.tgz")
+        buildResult.output =~ ("after: distTar: ${projectDir}/build/distributions/my-service.tgz")
 
     }
 
-    private def createUntarBuildFile(buildFile) {
+    private static def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
                 id 'com.palantir.java-distribution'
@@ -422,31 +324,4 @@ class JavaDistributionPluginTests extends Specification {
             }
         '''.stripIndent()
     }
-
-    private String readFully(String file) {
-        return new String(Files.readAllBytes(projectDir.toPath().resolve(file)))
-    }
-
-    private GradleRunner run(String... tasks) {
-        GradleRunner.create()
-            .withPluginClasspath()
-            .withProjectDir(projectDir)
-            .withArguments(tasks)
-            .withDebug(true)
-    }
-
-    private String exec(String... tasks) {
-        StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
-        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
-        proc.consumeProcessOutput(sout, serr)
-        proc.waitFor()
-        sleep 1000 // wait for the Java process to actually run
-        return sout.toString()
-    }
-
-    def setup() {
-        projectDir = temporaryFolder.root
-        buildFile = temporaryFolder.newFile('build.gradle')
-    }
-
 }

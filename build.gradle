@@ -19,10 +19,8 @@ repositories {
 
 dependencies {
     compile gradleApi()
-
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
+    testCompile gradleTestKit()
+    testCompile "com.netflix.nebula:nebula-test:4.0.0" // for better temp directory junit rule only
 }
 
 if (System.env.CIRCLE_TEST_REPORTS) {
