@@ -39,7 +39,7 @@ esac
 ACTION=$1
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
-LAUNCHER_CONFIG="service/bin/launcher.yml"
+LAUNCHER_CONFIG="var/launch/launcher.yml"
 
 case $ACTION in
 start)

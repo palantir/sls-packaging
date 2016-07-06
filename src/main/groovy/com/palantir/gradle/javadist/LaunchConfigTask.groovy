@@ -2,16 +2,19 @@ package com.palantir.gradle.javadist
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import groovy.transform.EqualsAndHashCode
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.AbstractTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskOutputs
 
+import java.nio.file.Files
 import java.nio.file.Paths
 
 class LaunchConfigTask extends AbstractTask {
 
+    @EqualsAndHashCode
     public static class LaunchConfig {
         // keep in sync with LaunchConfig struct in go-java-launcher
         String configType = "java"
@@ -42,7 +45,9 @@ class LaunchConfigTask extends AbstractTask {
         config.jvmOpts = ext.defaultJvmOpts
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        Paths.get("${project.buildDir}/scripts/launcher.yml").withWriter { it ->
+        def outfile = Paths.get("${project.buildDir}/launch/launcher.yml")
+        Files.createDirectories(outfile.parent)
+        outfile.withWriter { it ->
             mapper.writeValue(it, config)
         }
     }

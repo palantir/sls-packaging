@@ -15,6 +15,8 @@
  */
 package com.palantir.gradle.javadist
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.gradle.testkit.runner.BuildResult
 
 class JavaDistributionPluginTests extends GradleTestSpec {
@@ -205,37 +207,33 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
-        distribution {
-            javaHome 'foo'
-        }'''.stripIndent()
-        file('src/main/java/test/Test.java') << '''
-        package test;
-        public class Test {
-            public static void main(String[] args) throws InterruptedException {
-                System.out.println("Test started");
-                while(true);
-            }
-        }
-        '''.stripIndent()
+            dependencies { compile files("external.jar") }
+            tasks.jar.baseName = "internal"
+            distribution {
+                javaHome 'foo'
+            }'''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String launcherConfig = file('dist/service-name-0.1/service/bin/launcher.yml').text
-        launcherConfig.contains('configType: "java"')
-        launcherConfig.contains('configVersion: 1')
-        launcherConfig.contains('serviceName: "service-name"')
-        launcherConfig.contains('mainClass: "test.Test"')
-        launcherConfig.contains('javaHome: "foo"')
-        launcherConfig.contains('args: []')
-        launcherConfig.contains('classpath:')
-        launcherConfig.contains('- "service/lib/produce-distribution-bundle-that-populates-launcher-yml')
-        launcherConfig.contains('jvmOpts:')
-        launcherConfig.contains('- "-Djava.security.egd=file:/dev/./urandom"')
-        launcherConfig.contains('- "-Djava.io.tmpdir=var/data/tmp"')
-        launcherConfig.contains('- "-Xmx4M"')
-        launcherConfig.contains('- "-Djavax.net.ssl.trustStore=truststore.jks"')
+        LaunchConfigTask.LaunchConfig expectedConfig = new LaunchConfigTask.LaunchConfig()
+        expectedConfig.setConfigVersion(1)
+        expectedConfig.setConfigType("java")
+        expectedConfig.setServiceName("service-name")
+        expectedConfig.setMainClass("test.Test")
+        expectedConfig.setJavaHome("foo")
+        expectedConfig.setArgs([])
+        expectedConfig.setClasspath(['service/lib/internal-0.1.jar', 'service/lib/external.jar'])
+        expectedConfig.setJvmOpts([
+                '-Djava.security.egd=file:/dev/./urandom',
+                '-Djava.io.tmpdir=var/data/tmp',
+                '-Xmx4M',
+                '-Djavax.net.ssl.trustStore=truststore.jks'])
+        LaunchConfigTask.LaunchConfig actualConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.1/var/launch/launcher.yml'), LaunchConfigTask.LaunchConfig)
+        expectedConfig == actualConfig
     }
 
     def 'produce distribution bundle that populates check.sh' () {
