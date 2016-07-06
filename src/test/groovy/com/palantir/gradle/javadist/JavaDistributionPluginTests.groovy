@@ -40,7 +40,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         // try all of the service commands
         String output = exec('dist/service-name-0.1/service/bin/init.sh', 'start')
         output ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.equals('Test started\n')
+        file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.contains('Test started\n')
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
             /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
@@ -201,21 +201,41 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
-    def 'produce distribution bundle that populates config.sh' () {
+    def 'produce distribution bundle that populates launcher.yml' () {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
-            distribution {
-                javaHome 'foo'
+        distribution {
+            javaHome 'foo'
+        }'''.stripIndent()
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) throws InterruptedException {
+                System.out.println("Test started");
+                while(true);
             }
+        }
         '''.stripIndent()
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/config.sh', projectDir).text
-        startScript.contains('JAVA_HOME="foo"')
+        String launcherConfig = file('dist/service-name-0.1/service/bin/launcher.yml').text
+        launcherConfig.contains('configType: "java"')
+        launcherConfig.contains('configVersion: 1')
+        launcherConfig.contains('serviceName: "service-name"')
+        launcherConfig.contains('mainClass: "test.Test"')
+        launcherConfig.contains('javaHome: "foo"')
+        launcherConfig.contains('args: []')
+        launcherConfig.contains('classpath:')
+        launcherConfig.contains('- "service/lib/produce-distribution-bundle-that-populates-launcher-yml')
+        launcherConfig.contains('jvmOpts:')
+        launcherConfig.contains('- "-Djava.security.egd=file:/dev/./urandom"')
+        launcherConfig.contains('- "-Djava.io.tmpdir=var/data/tmp"')
+        launcherConfig.contains('- "-Xmx4M"')
+        launcherConfig.contains('- "-Djavax.net.ssl.trustStore=truststore.jks"')
     }
 
     def 'produce distribution bundle that populates check.sh' () {

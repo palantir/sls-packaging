@@ -77,7 +77,7 @@ As part of package creation, this plugin will create three shell scripts:
  * `service/bin/init.sh`: a shell script to assist with daemonizing a JVM
    process. The script takes a single argument of `start`, `stop`, `console` or `status`.
    - `start`: On calls to `service/bin/init.sh start`,
-     `service/bin/[serviceName] [args]` will be executed, disowned, and a pid file
+     `service/bin/javalauncher-<architecture>` will be executed, disowned, and a pid file
      recorded in `var/run/[service-name].pid`.
    - `console`: like `start`, but does not background the process.
    - `status`: returns 0 when `var/run/[service-name].pid` exists and a

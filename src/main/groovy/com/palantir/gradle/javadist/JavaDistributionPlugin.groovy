@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.javadist
 
+import java.nio.file.Files
 import java.nio.file.Paths
 
 import org.gradle.api.Plugin
@@ -58,6 +59,24 @@ class JavaDistributionPlugin implements Plugin<Project> {
             }
         }
 
+        Task copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', {
+            group = GROUP_NAME
+            description = "Creates go-java-launcher binaries."
+        }) << {
+            // TODO(rfink) Don't check these in, but fetch them from a published artifact?
+            ["javalauncher-linux-amd64", "javalauncher-darwin-amd64"].each { file ->
+                def dest = Paths.get("${project.buildDir}/scripts/${file}")
+                dest.parent.toFile().mkdirs()
+                Files.copy(JavaDistributionPlugin.class.getResourceAsStream("/${file}"), dest)
+                dest.toFile().setExecutable(true)
+            }
+        }
+
+        LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask, {
+            group = GROUP_NAME
+            description = "Generates launcher.yml configuration."
+        })
+
         Task initScript = project.tasks.create('createInitScript', {
             group = GROUP_NAME
             description = "Generates daemonizing init.sh script."
@@ -65,12 +84,12 @@ class JavaDistributionPlugin implements Plugin<Project> {
             EmitFiles.replaceVars(
                 JavaDistributionPlugin.class.getResourceAsStream('/init.sh'),
                 Paths.get("${project.buildDir}/scripts/init.sh"),
-                ['@serviceName@': ext.serviceName,
-                 '@args@': ext.args.iterator().join(' ')])
+                ['@serviceName@': ext.serviceName])
             .toFile()
             .setExecutable(true)
         }
 
+        // TODO(rfink) The check script should go away, or at least it should not call the Gradle start script
         Task checkScript = project.tasks.create('createCheckScript', {
             group = GROUP_NAME
             description = "Generates healthcheck (service/monitoring/bin/check.sh) script."
@@ -84,17 +103,6 @@ class JavaDistributionPlugin implements Plugin<Project> {
                 .toFile()
                 .setExecutable(true)
             }
-        }
-
-        Task configScript = project.tasks.create('createConfigScript', {
-            group = GROUP_NAME
-            description = "Generates config.sh script."
-        }) << {
-            String javaHome = ext.javaHome != null ? 'JAVA_HOME="' + ext.javaHome + '"' : '#JAVA_HOME=""'
-            EmitFiles.replaceVars(
-                JavaDistributionPlugin.class.getResourceAsStream('/config.sh'),
-                Paths.get("${project.buildDir}/scripts/config.sh"),
-                ['@javaHome@': javaHome])
         }
 
         Task manifest = project.tasks.create('createManifest', {
@@ -112,7 +120,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
         DistTarTask distTar = project.tasks.create('distTar', DistTarTask, {
             group = GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
-            dependsOn startScripts, initScript, checkScript, configScript, manifest, manifestClasspathJar
+            dependsOn startScripts, initScript, checkScript, copyLauncherBinaries, launchConfig, manifest,
+                    manifestClasspathJar
             distributionExtension ext
         })
 
@@ -124,9 +133,9 @@ class JavaDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate {
             manifestClasspathJar.configure(ext)
             startScripts.configure(ext)
+            launchConfig.configure(ext)
             distTar.configure(ext)
             run.configure(ext)
         }
     }
-
 }
