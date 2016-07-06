@@ -52,13 +52,13 @@ class LaunchConfigTask extends AbstractTask {
         config.mainClass = ext.mainClass
         config.javaHome = ext.javaHome ?: ""
         config.args = args
-        config.classpath = getSlsv2RelativeClasspath(
+        config.classpath = relativizeToServiceLibDirectory(
                 project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
         config.jvmOpts = ext.defaultJvmOpts
         return config
     }
 
-    private static List<String> getSlsv2RelativeClasspath(FileCollection files) {
+    private static List<String> relativizeToServiceLibDirectory(FileCollection files) {
         def output = []
         files.each { output.add("service/lib/" + it.name) }
         return output
