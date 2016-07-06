@@ -89,7 +89,6 @@ class JavaDistributionPlugin implements Plugin<Project> {
             .setExecutable(true)
         }
 
-        // TODO(rfink) The check script should go away, or at least it should not call the Gradle start script
         Task checkScript = project.tasks.create('createCheckScript', {
             group = GROUP_NAME
             description = "Generates healthcheck (service/monitoring/bin/check.sh) script."
