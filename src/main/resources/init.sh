@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 is_process_active() {
    local PID=$1
@@ -20,7 +21,7 @@ is_process_active() {
    echo $?
 }
 
-# Everything in this init.sh script relative to the base directory of an SLSv2 distribution
+# Everything in this script is relative to the base directory of an SLSv2 distribution
 pushd "`dirname \"$0\"`/../.." > /dev/null
 
 # Select launcher binary for this OS
@@ -39,6 +40,7 @@ ACTION=$1
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
 LAUNCHER_CONFIG="var/launch/launcher.yml"
+LAUNCHER_CHECK_CONFIG="var/launch/launcher-check.yml"
 
 case $ACTION in
 start)
@@ -129,7 +131,19 @@ restart)
     service/bin/init.sh stop
     service/bin/init.sh start
 ;;
+check)
+    printf "%-50s" "Checking health of '$SERVICE'..."
+    $LAUNCHER_CMD $LAUNCHER_CHECK_CONFIG > var/log/$SERVICE-check.log 2>&1
+    RESULT=$?
+    if [ $RESULT -eq 0 ]; then
+        printf "%s\n" "Healthy"
+        exit 0
+    else
+        printf "%s\n" "Unhealthy"
+        exit $RESULT
+    fi
+;;
 *)
-    echo "Usage: $0 {status|start|stop|console|restart}"
+    echo "Usage: $0 {status|start|stop|console|restart|check}"
     exit 1
 esac

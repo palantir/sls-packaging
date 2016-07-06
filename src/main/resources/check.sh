@@ -15,31 +15,7 @@
 # limitations under the License.
 #
 
-SERVICE="@serviceName@"
-SERVICE_CMD="service/bin/$SERVICE"
-PIDFILE="var/run/$SERVICE.pid"
-CHECK_ARGS="@checkArgs@"
+# Everything in this script is relative to the base directory of an SLSv2 distribution
+pushd "`dirname \"$0\"`/../../.." > /dev/null
 
-# uses SERVICE_HOME when set, else, traverse up three directories respecting symlinks
-# (this file emits to service/monitoring/bin)
-SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../../" && pwd)}
-cd "$SERVICE_HOME"
-
-# prefer java 8 when available to deal with poor environment management
-if [ -n "$JAVA_8_HOME" ]; then
-    export JAVA_HOME=$JAVA_8_HOME
-fi
-
-source service/bin/config.sh
-
-# now check health
-printf "%-50s" "Checking health of '$SERVICE'..."
-$SERVICE_CMD $CHECK_ARGS
-RESULT=$?
-if [ $RESULT -eq 0 ]; then
-    printf "%s\n" "Healthy"
-    exit 0
-else
-    printf "%s\n" "Unhealthy"
-    exit $RESULT
-fi
+service/bin/init.sh check

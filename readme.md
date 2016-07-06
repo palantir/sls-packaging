@@ -31,6 +31,7 @@ content of the package. The package will follow this structure:
         var/                                  # application configuration and data
             launch/
                 launcher.yml                  # generated configuration for javalauncher
+                launcher-check.yml            # generated configuration for check.sh javalauncher
 
 Packages are produced as gzipped tar named `[service-name]-[project-version].tgz`.
 
@@ -92,7 +93,7 @@ As part of package creation, this plugin will create three shell scripts:
  * `service/monitoring/bin/check.sh`: a no-argument shell script that returns `0` when
    a service is healthy and non-zero otherwise. This script is generated if and only if
    `checkArgs` is specified above, and will run the singular command defined by invoking
-   `service/bin/[serviceName] [checkArgs]` to obtain health status.
+   `<mainClass> [checkArgs]` to obtain health status.
 
 
 In addition to creating these scripts, this plugin will merge the entire

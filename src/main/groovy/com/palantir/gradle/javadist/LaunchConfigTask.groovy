@@ -7,10 +7,8 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.AbstractTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskOutputs
 
 import java.nio.file.Files
-import java.nio.file.Paths
 
 class LaunchConfigTask extends AbstractTask {
 
@@ -21,7 +19,7 @@ class LaunchConfigTask extends AbstractTask {
         int configVersion = 1
         String serviceName
         String mainClass
-        String javaHome = ""
+        String javaHome
         List<String> args
         List<String> classpath
         List<String> jvmOpts
@@ -35,21 +33,29 @@ class LaunchConfigTask extends AbstractTask {
 
     @TaskAction
     void createConfig() {
-        LaunchConfig config = new LaunchConfig()
-        config.serviceName = ext.serviceName
-        config.mainClass = ext.mainClass
-        config.javaHome = ext.javaHome ?: ""
-        config.args = ext.args
-        config.classpath = getSlsv2RelativeClasspath(
-                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
-        config.jvmOpts = ext.defaultJvmOpts
+        writeConfig(createConfig(ext.args), "launch/launcher.yml")
+        writeConfig(createConfig(ext.checkArgs), "launch/launcher-check.yml")
+    }
 
+    void writeConfig(LaunchConfig config, String relativePath) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        def outfile = Paths.get("${project.buildDir}/launch/launcher.yml")
+        def outfile = project.buildDir.toPath().resolve(relativePath)
         Files.createDirectories(outfile.parent)
         outfile.withWriter { it ->
             mapper.writeValue(it, config)
         }
+    }
+
+    LaunchConfig createConfig(List<String> args) {
+        LaunchConfig config = new LaunchConfig()
+        config.serviceName = ext.serviceName
+        config.mainClass = ext.mainClass
+        config.javaHome = ext.javaHome ?: ""
+        config.args = args
+        config.classpath = getSlsv2RelativeClasspath(
+                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+        config.jvmOpts = ext.defaultJvmOpts
+        return config
     }
 
     private static List<String> getSlsv2RelativeClasspath(FileCollection files) {
