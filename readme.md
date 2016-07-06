@@ -15,20 +15,23 @@ content of the package. The package will follow this structure:
 
     [service-name]-[service-version]/
         deployment/
-            manifest.yml             # simple package manifest
+            manifest.yml                      # simple package manifest
         service/
             bin/
-                [service-name]       # start script
-                [service-name.bat]   # Windows start script
-                init.sh              # daemonizing script
-                config.sh            # customized environment vars
+                [service-name]                # Bash start script
+                [service-name.bat]            # Windows start script
+                init.sh                       # daemonizing script
+                javalauncher-darwin-amd64     # Native Java launcher binary
+                javalauncher-linux-amd64      # Native Java launcher binary
             lib/
                 [jars]
             monitoring/
                 bin/ 
-                    check.sh         # monitoring script
-        var/
-            # application configuration and data
+                    check.sh                  # monitoring script
+        var/                                  # application configuration and data
+            launch/
+                launcher.yml                  # generated configuration for javalauncher
+                launcher-check.yml            # generated configuration for check.sh javalauncher
 
 Packages are produced as gzipped tar named `[service-name]-[project-version].tgz`.
 
@@ -73,23 +76,24 @@ To create a compressed, gzipped tar file, run the `distTar` task.
 As part of package creation, this plugin will create three shell scripts:
 
  * `service/bin/[service-name]`: a Gradle default start script for running
-   the defined `mainClass`
+   the defined `mainClass`. This script is considered deprecated due to security issues with
+   injectable Bash code; use the javalauncher binaries instead (see below).
+ * `service/bin/javalauncher-<architecture>`: native binaries for executing the specified `mainClass`,
+   configurable via `var/launch/launcher.yml`. 
  * `service/bin/init.sh`: a shell script to assist with daemonizing a JVM
    process. The script takes a single argument of `start`, `stop`, `console` or `status`.
    - `start`: On calls to `service/bin/init.sh start`,
-     `service/bin/[serviceName] [args]` will be executed, disowned, and a pid file
+     `service/bin/javalauncher-<architecture>` will be executed, disowned, and a pid file
      recorded in `var/run/[service-name].pid`.
    - `console`: like `start`, but does not background the process.
    - `status`: returns 0 when `var/run/[service-name].pid` exists and a
      process the id recorded in that file with a command matching the expected
      start command is found in the process table.
    - `stop`: if the process status is 0, issues a kill signal to the process.
- * `service/bin/config.sh`: a shell script containing environment variables to apply
-    as overrides when `init.sh` is run.
  * `service/monitoring/bin/check.sh`: a no-argument shell script that returns `0` when
    a service is healthy and non-zero otherwise. This script is generated if and only if
    `checkArgs` is specified above, and will run the singular command defined by invoking
-   `service/bin/[serviceName] [checkArgs]` to obtain health status.
+   `<mainClass> [checkArgs]` to obtain health status.
 
 
 In addition to creating these scripts, this plugin will merge the entire

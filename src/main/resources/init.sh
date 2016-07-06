@@ -15,23 +15,32 @@
 # limitations under the License.
 #
 
-ACTION=$1
-SERVICE="@serviceName@"
-SERVICE_CMD="service/bin/$SERVICE"
-PIDFILE="var/run/$SERVICE.pid"
-ARGS="@args@"
-
-# uses SERVICE_HOME when set, else, traverse up two directories respecting symlinks
-SERVICE_HOME=${SERVICE_HOME:-$(cd "$(dirname "$0")/../../" && pwd)}
-cd "$SERVICE_HOME"
-
-source service/bin/config.sh
-
 is_process_active() {
    local PID=$1
    ps $PID > /dev/null;
    echo $?
 }
+
+# Everything in this script is relative to the base directory of an SLSv2 distribution
+pushd "`dirname \"$0\"`/../.." > /dev/null
+
+# Select launcher binary for this OS
+case "`uname`" in
+  Linux*)
+    LAUNCHER_CMD=service/bin/javalauncher-linux-amd64
+    ;;
+  Darwin*)
+    LAUNCHER_CMD=service/bin/javalauncher-darwin-amd64
+    ;;
+  *)
+    echo "Unsupported operating system: $(uname)"; exit 1
+esac
+
+ACTION=$1
+SERVICE="@serviceName@"
+PIDFILE="var/run/$SERVICE.pid"
+LAUNCHER_CONFIG="var/launch/launcher.yml"
+LAUNCHER_CHECK_CONFIG="var/launch/launcher-check.yml"
 
 case $ACTION in
 start)
@@ -45,7 +54,7 @@ start)
     # ensure log and pid directories exist
     mkdir -p "var/log"
     mkdir -p "var/run"
-    PID=$($SERVICE_CMD $ARGS > var/log/$SERVICE-startup.log 2>&1 & echo $!)
+    PID=$($LAUNCHER_CMD $LAUNCHER_CONFIG > var/log/$SERVICE-startup.log 2>&1 & echo $!)
     sleep 1
     if [ $(is_process_active $PID) -eq 0 ]; then
         echo $PID > $PIDFILE
@@ -114,7 +123,7 @@ console)
     trap "service/bin/init.sh stop &> /dev/null" SIGTERM EXIT
     mkdir -p "$(dirname $PIDFILE)"
 
-    $SERVICE_CMD $ARGS &
+    $LAUNCHER_CMD $LAUNCHER_CONFIG &
     echo $! > $PIDFILE
     wait
 ;;
@@ -122,7 +131,19 @@ restart)
     service/bin/init.sh stop
     service/bin/init.sh start
 ;;
+check)
+    printf "%-50s" "Checking health of '$SERVICE'..."
+    $LAUNCHER_CMD $LAUNCHER_CHECK_CONFIG > var/log/$SERVICE-check.log 2>&1
+    RESULT=$?
+    if [ $RESULT -eq 0 ]; then
+        printf "%s\n" "Healthy"
+        exit 0
+    else
+        printf "%s\n" "Unhealthy"
+        exit $RESULT
+    fi
+;;
 *)
-    echo "Usage: $0 {status|start|stop|console|restart}"
+    echo "Usage: $0 {status|start|stop|console|restart|check}"
     exit 1
 esac

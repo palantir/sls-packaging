@@ -15,18 +15,27 @@
  */
 package com.palantir.gradle.javadist
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.gradle.testkit.runner.BuildResult
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
-    def 'produce distribution bundle and check start, stop and restart behavior' () {
+    def 'produce distribution bundle and check start, stop, restart, check behavior' () {
         given:
         createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                checkArgs 'healthcheck'
+            }
+        '''.stripIndent()
 
         file('src/main/java/test/Test.java') << '''
         package test;
         public class Test {
             public static void main(String[] args) throws InterruptedException {
+                if (args.length > 0 && args[0].equals("healthcheck")) System.exit(0); // always healthy
+
                 System.out.println("Test started");
                 while(true);
             }
@@ -38,13 +47,14 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         // try all of the service commands
-        String output = exec('dist/service-name-0.1/service/bin/init.sh', 'start')
-        output ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.equals('Test started\n')
+        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.contains('Test started\n')
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
             /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        exec('dist/service-name-0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
 
         // check manifest was created
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
@@ -201,21 +211,45 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
-    def 'produce distribution bundle that populates config.sh' () {
+    def 'produce distribution bundle that populates launcher.yml and launcher-check.yml' () {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
+            dependencies { compile files("external.jar") }
+            tasks.jar.baseName = "internal"
             distribution {
                 javaHome 'foo'
-            }
-        '''.stripIndent()
+                args 'myArg1', 'myArg2'
+                checkArgs 'myCheckArg1', 'myCheckArg2'
+            }'''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/config.sh', projectDir).text
-        startScript.contains('JAVA_HOME="foo"')
+        def expectedLaunchConfig = new LaunchConfigTask.LaunchConfig()
+        expectedLaunchConfig.setConfigVersion(1)
+        expectedLaunchConfig.setConfigType("java")
+        expectedLaunchConfig.setServiceName("service-name")
+        expectedLaunchConfig.setMainClass("test.Test")
+        expectedLaunchConfig.setJavaHome("foo")
+        expectedLaunchConfig.setArgs(['myArg1', 'myArg2'])
+        expectedLaunchConfig.setClasspath(['service/lib/internal-0.1.jar', 'service/lib/external.jar'])
+        expectedLaunchConfig.setJvmOpts([
+                '-Djava.security.egd=file:/dev/./urandom',
+                '-Djava.io.tmpdir=var/data/tmp',
+                '-Xmx4M',
+                '-Djavax.net.ssl.trustStore=truststore.jks'])
+        def actualLaunchConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.1/var/launch/launcher.yml'), LaunchConfigTask.LaunchConfig)
+        expectedLaunchConfig == actualLaunchConfig
+
+        def expectedCheckConfig = expectedLaunchConfig
+        expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
+        def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.1/var/launch/launcher-check.yml'), LaunchConfigTask.LaunchConfig)
+        expectedCheckConfig == actualCheckConfig
     }
 
     def 'produce distribution bundle that populates check.sh' () {
@@ -231,8 +265,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String checkScript = file('dist/service-name-0.1/service/monitoring/bin/check.sh', projectDir).text
-        checkScript.contains('CHECK_ARGS="healthcheck var/conf/service.yml"')
+        file('dist/service-name-0.1/service/monitoring/bin/check.sh').exists()
     }
 
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {
