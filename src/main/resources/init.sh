@@ -22,7 +22,6 @@ is_process_active() {
 
 # Everything in this init.sh script relative to the base directory of an SLSv2 distribution
 pushd "`dirname \"$0\"`/../.." > /dev/null
-APP_HOME="`pwd -P`"
 
 # Select launcher binary for this OS
 case "`uname`" in
