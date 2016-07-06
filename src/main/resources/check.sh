@@ -18,4 +18,9 @@
 # Everything in this script is relative to the base directory of an SLSv2 distribution
 pushd "`dirname \"$0\"`/../../.." > /dev/null
 
+# Prefer java 8 when available to deal with poor environment management
+if [ -n "$JAVA_8_HOME" ]; then
+    export JAVA_HOME=$JAVA_8_HOME
+fi
+
 service/bin/init.sh check
