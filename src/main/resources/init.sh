@@ -39,8 +39,9 @@ esac
 ACTION=$1
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
-LAUNCHER_CONFIG="var/launch/launcher.yml"
-LAUNCHER_CHECK_CONFIG="var/launch/launcher-check.yml"
+STATIC_LAUNCHER_CONFIG="service/bin/launcher-static.yml"
+CUSTOM_LAUNCHER_CONFIG="var/conf/launcher-custom.yml"
+STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
 
 case $ACTION in
 start)
@@ -54,7 +55,7 @@ start)
     # ensure log and pid directories exist
     mkdir -p "var/log"
     mkdir -p "var/run"
-    PID=$($LAUNCHER_CMD $LAUNCHER_CONFIG > var/log/$SERVICE-startup.log 2>&1 & echo $!)
+    PID=$($LAUNCHER_CMD $STATIC_LAUNCHER_CONFIG $CUSTOM_LAUNCHER_CONFIG > var/log/$SERVICE-startup.log 2>&1 & echo $!)
     sleep 1
     if [ $(is_process_active $PID) -eq 0 ]; then
         echo $PID > $PIDFILE
@@ -123,7 +124,7 @@ console)
     trap "service/bin/init.sh stop &> /dev/null" SIGTERM EXIT
     mkdir -p "$(dirname $PIDFILE)"
 
-    $LAUNCHER_CMD $LAUNCHER_CONFIG &
+    $LAUNCHER_CMD $STATIC_LAUNCHER_CONFIG $CUSTOM_LAUNCHER_CONFIG &
     echo $! > $PIDFILE
     wait
 ;;
@@ -133,7 +134,7 @@ restart)
 ;;
 check)
     printf "%-50s" "Checking health of '$SERVICE'..."
-    $LAUNCHER_CMD $LAUNCHER_CHECK_CONFIG > var/log/$SERVICE-check.log 2>&1
+    $LAUNCHER_CMD $STATIC_LAUNCHER_CHECK_CONFIG > var/log/$SERVICE-check.log 2>&1
     RESULT=$?
     if [ $RESULT -eq 0 ]; then
         printf "%s\n" "Healthy"

@@ -29,13 +29,23 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 checkArgs 'healthcheck'
             }
         '''.stripIndent()
+        file('var/conf/launcher-custom.yml') << '''
+            configType: java
+            configVersion: 1
+            jvmOpts:
+              - '-Dcustom.property=myCustomValue'
+        '''.stripIndent()
 
         file('src/main/java/test/Test.java') << '''
         package test;
+        import java.lang.IllegalStateException;
         public class Test {
             public static void main(String[] args) throws InterruptedException {
                 if (args.length > 0 && args[0].equals("healthcheck")) System.exit(0); // always healthy
 
+                if (!System.getProperty("custom.property").equals("myCustomValue")) {
+                    throw new IllegalStateException("Expected custom.start.property to be set");
+                }
                 System.out.println("Test started");
                 while(true);
             }
@@ -211,7 +221,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
-    def 'produce distribution bundle that populates launcher.yml and launcher-check.yml' () {
+    def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml' () {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
@@ -228,27 +238,26 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        def expectedLaunchConfig = new LaunchConfigTask.LaunchConfig()
-        expectedLaunchConfig.setConfigVersion(1)
-        expectedLaunchConfig.setConfigType("java")
-        expectedLaunchConfig.setServiceName("service-name")
-        expectedLaunchConfig.setMainClass("test.Test")
-        expectedLaunchConfig.setJavaHome("foo")
-        expectedLaunchConfig.setArgs(['myArg1', 'myArg2'])
-        expectedLaunchConfig.setClasspath(['service/lib/internal-0.1.jar', 'service/lib/external.jar'])
-        expectedLaunchConfig.setJvmOpts([
+        def expectedStaticConfig = new LaunchConfigTask.StaticLaunchConfig()
+        expectedStaticConfig.setConfigVersion(1)
+        expectedStaticConfig.setConfigType("java")
+        expectedStaticConfig.setMainClass("test.Test")
+        expectedStaticConfig.setJavaHome("foo")
+        expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
+        expectedStaticConfig.setClasspath(['service/lib/internal-0.1.jar', 'service/lib/external.jar'])
+        expectedStaticConfig.setJvmOpts([
                 '-Djava.security.egd=file:/dev/./urandom',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
-        def actualLaunchConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.1/var/launch/launcher.yml'), LaunchConfigTask.LaunchConfig)
-        expectedLaunchConfig == actualLaunchConfig
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        expectedStaticConfig == actualStaticConfig
 
-        def expectedCheckConfig = expectedLaunchConfig
+        def expectedCheckConfig = expectedStaticConfig
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
         def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.1/var/launch/launcher-check.yml'), LaunchConfigTask.LaunchConfig)
+                file('dist/service-name-0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedCheckConfig == actualCheckConfig
     }
 

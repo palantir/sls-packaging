@@ -74,7 +74,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask, {
             group = GROUP_NAME
-            description = "Generates launcher.yml configuration."
+            description = "Generates launcher-static.yml and launcher-check.yml configurations."
         })
 
         Task initScript = project.tasks.create('createInitScript', {
