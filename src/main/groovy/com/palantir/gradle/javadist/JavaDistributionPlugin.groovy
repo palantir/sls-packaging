@@ -15,12 +15,13 @@
  */
 package com.palantir.gradle.javadist
 
-import java.nio.file.Files
-import java.nio.file.Paths
-
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 class JavaDistributionPlugin implements Plugin<Project> {
 
@@ -67,7 +68,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
             ["javalauncher-linux-amd64", "javalauncher-darwin-amd64"].each { file ->
                 def dest = Paths.get("${project.buildDir}/scripts/${file}")
                 dest.parent.toFile().mkdirs()
-                Files.copy(JavaDistributionPlugin.class.getResourceAsStream("/${file}"), dest)
+                Files.copy(JavaDistributionPlugin.class.getResourceAsStream("/${file}"),
+                        dest, StandardCopyOption.REPLACE_EXISTING)
                 dest.toFile().setExecutable(true)
             }
         }
