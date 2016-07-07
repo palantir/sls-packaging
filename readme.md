@@ -79,7 +79,7 @@ As part of package creation, this plugin will create three shell scripts:
    the defined `mainClass`. This script is considered deprecated due to security issues with
    injectable Bash code; use the javalauncher binaries instead (see below).
  * `service/bin/javalauncher-<architecture>`: native binaries for executing the specified `mainClass`,
-   configurable via `var/launch/launcher.yml`. 
+   configurable via `var/launch/launcher-static.yml` and `var/conf/launcher-custom.yml`.
  * `service/bin/init.sh`: a shell script to assist with daemonizing a JVM
    process. The script takes a single argument of `start`, `stop`, `console` or `status`.
    - `start`: On calls to `service/bin/init.sh start`,

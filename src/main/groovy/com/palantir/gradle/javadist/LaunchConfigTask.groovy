@@ -13,16 +13,15 @@ import java.nio.file.Files
 class LaunchConfigTask extends AbstractTask {
 
     @EqualsAndHashCode
-    public static class LaunchConfig {
-        // keep in sync with LaunchConfig struct in go-java-launcher
+    public static class StaticLaunchConfig {
+        // keep in sync with StaticLaunchConfig struct in go-java-launcher
         String configType = "java"
         int configVersion = 1
-        String serviceName
         String mainClass
         String javaHome
-        List<String> args
         List<String> classpath
         List<String> jvmOpts
+        List<String> args
     }
 
     private DistributionExtension ext
@@ -33,11 +32,11 @@ class LaunchConfigTask extends AbstractTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(ext.args), "launch/launcher.yml")
+        writeConfig(createConfig(ext.args), "launch/launcher-static.yml")
         writeConfig(createConfig(ext.checkArgs), "launch/launcher-check.yml")
     }
 
-    void writeConfig(LaunchConfig config, String relativePath) {
+    void writeConfig(StaticLaunchConfig config, String relativePath) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
         def outfile = project.buildDir.toPath().resolve(relativePath)
         Files.createDirectories(outfile.parent)
@@ -46,9 +45,8 @@ class LaunchConfigTask extends AbstractTask {
         }
     }
 
-    LaunchConfig createConfig(List<String> args) {
-        LaunchConfig config = new LaunchConfig()
-        config.serviceName = ext.serviceName
+    StaticLaunchConfig createConfig(List<String> args) {
+        StaticLaunchConfig config = new StaticLaunchConfig()
         config.mainClass = ext.mainClass
         config.javaHome = ext.javaHome ?: ""
         config.args = args
