@@ -32,8 +32,8 @@ class LaunchConfigTask extends AbstractTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(ext.args), "launch/launcher-static.yml")
-        writeConfig(createConfig(ext.checkArgs), "launch/launcher-check.yml")
+        writeConfig(createConfig(ext.args), "scripts/launcher-static.yml")
+        writeConfig(createConfig(ext.checkArgs), "scripts/launcher-check.yml")
     }
 
     void writeConfig(StaticLaunchConfig config, String relativePath) {

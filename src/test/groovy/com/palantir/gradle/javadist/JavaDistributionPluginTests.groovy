@@ -251,13 +251,13 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.1/var/launch/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedStaticConfig == actualStaticConfig
 
         def expectedCheckConfig = expectedStaticConfig
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
         def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.1/var/launch/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedCheckConfig == actualCheckConfig
     }
 

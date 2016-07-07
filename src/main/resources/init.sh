@@ -39,9 +39,9 @@ esac
 ACTION=$1
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
-STATIC_LAUNCHER_CONFIG="var/launch/launcher-static.yml"
+STATIC_LAUNCHER_CONFIG="service/bin/launcher-static.yml"
 CUSTOM_LAUNCHER_CONFIG="var/conf/launcher-custom.yml"
-STATIC_LAUNCHER_CHECK_CONFIG="var/launch/launcher-check.yml"
+STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
 
 case $ACTION in
 start)
