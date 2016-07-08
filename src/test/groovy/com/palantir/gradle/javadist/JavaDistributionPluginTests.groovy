@@ -108,6 +108,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.java-distribution'
                 id 'java'
             }
+            repositories { jcenter() }
 
             version '0.1'
 
@@ -148,6 +149,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.java-distribution'
                 id 'java'
             }
+            repositories { jcenter() }
 
             class MyVersion {
                 String version
@@ -319,6 +321,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.java-distribution'
                 id 'java'
             }
+            repositories { jcenter() }
             distribution {
                 serviceName "my-service"
                 mainClass "dummy.service.MainClass"
@@ -347,6 +350,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.java-distribution'
                 id 'java'
             }
+
+            repositories { jcenter() }
 
             version '0.1'
 
