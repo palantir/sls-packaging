@@ -27,10 +27,10 @@ pushd "`dirname \"$0\"`/../.." > /dev/null
 # Select launcher binary for this OS
 case "`uname`" in
   Linux*)
-    LAUNCHER_CMD=service/bin/javalauncher-linux-amd64
+    LAUNCHER_CMD=service/bin/linux-amd64/go-java-launcher
     ;;
   Darwin*)
-    LAUNCHER_CMD=service/bin/javalauncher-darwin-amd64
+    LAUNCHER_CMD=service/bin/darwin-amd64/go-java-launcher
     ;;
   *)
     echo "Unsupported operating system: $(uname)"; exit 1

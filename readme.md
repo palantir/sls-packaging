@@ -21,10 +21,10 @@ content of the package. The package will follow this structure:
                 [service-name]                # Bash start script
                 [service-name.bat]            # Windows start script
                 init.sh                       # daemonizing script
-                javalauncher-darwin-amd64     # Native Java launcher binary
-                javalauncher-linux-amd64      # Native Java launcher binary
-                launcher-static.yml           # generated configuration for javalauncher
-                launcher-check.yml            # generated configuration for check.sh javalauncher
+                darwin-amd64/go-java-launcher # Native Java launcher binary (MacOS)
+                linux-amd64/go-java-launcher  # Native Java launcher binary (Linux)
+                launcher-static.yml           # generated configuration for go-java-launcher
+                launcher-check.yml            # generated configuration for check.sh go-java-launcher
             lib/
                 [jars]
             monitoring/
@@ -76,13 +76,13 @@ As part of package creation, this plugin will create three shell scripts:
 
  * `service/bin/[service-name]`: a Gradle default start script for running
    the defined `mainClass`. This script is considered deprecated due to security issues with
-   injectable Bash code; use the javalauncher binaries instead (see below).
- * `service/bin/javalauncher-<architecture>`: native binaries for executing the specified `mainClass`,
+   injectable Bash code; use the go-java-launcher binaries instead (see below).
+ * `service/bin/<architecture>/go-java-launcher`: native binaries for executing the specified `mainClass`,
    configurable via `service/bin/launcher-static.yml` and `var/conf/launcher-custom.yml`.
  * `service/bin/init.sh`: a shell script to assist with daemonizing a JVM
    process. The script takes a single argument of `start`, `stop`, `console` or `status`.
    - `start`: On calls to `service/bin/init.sh start`,
-     `service/bin/javalauncher-<architecture>` will be executed, disowned, and a pid file
+     `service/bin/<architecture>/go-java-launcher` will be executed, disowned, and a pid file
      recorded in `var/run/[service-name].pid`.
    - `console`: like `start`, but does not background the process.
    - `status`: returns 0 when `var/run/[service-name].pid` exists and a
