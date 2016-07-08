@@ -14,7 +14,7 @@ dependencies:
 
 test:
   override:
-    - ./gradlew --parallel build --info --stacktrace
+    - ./gradlew build --info --stacktrace
   post:
     - ./gradlew jacocoTestReport coveralls --info --stacktrace
 
