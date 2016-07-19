@@ -98,6 +98,17 @@ As part of package creation, this plugin will create three shell scripts:
 In addition to creating these scripts, this plugin will merge the entire
 contents of `${projectDir}/service` and `${projectDir}/var` into the package.
 
+The plugin also exposes the tar file as an artifact in the `sls` configuration, making it easy to
+share the artifact between sibling Gradle projects. For example:
+
+```groovy
+configurations { tarballs }
+
+dependencies {
+    tarballs project(path: ':other-project', configuration: 'sls')
+}
+```
+
 Running with Gradle
 -------------------
 To run the main class using Gradle, run the `run` task.
