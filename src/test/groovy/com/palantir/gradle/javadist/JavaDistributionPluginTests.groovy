@@ -18,6 +18,7 @@ package com.palantir.gradle.javadist
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
@@ -342,7 +343,44 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         then:
         buildResult.output =~ ("before: distTar: ${projectDir}/build/distributions/my-service.tgz")
         buildResult.output =~ ("after: distTar: ${projectDir}/build/distributions/my-service.tgz")
+    }
 
+    def 'exposes an artifact through the sls configuration'() {
+        given:
+        helper.addSubproject('parent', '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
+            repositories { jcenter() }
+            distribution {
+                serviceName "my-service"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+            }
+        ''')
+
+        helper.addSubproject('child', '''
+            configurations {
+                fromOtherProject
+            }
+            dependencies {
+                fromOtherProject project(path: ':parent', configuration: 'sls')
+            }
+            task untar(type: Copy) {
+                from configurations.fromOtherProject.singleFile
+                into 'build/exploded'
+            }
+        ''')
+
+        when:
+        BuildResult buildResult = runSuccessfully(':child:untar')
+
+        then:
+        buildResult.task(':child:untar').outcome == TaskOutcome.SUCCESS
+        println buildResult.output
+        // TODO: add checks for files produced
+        // TODO: add checks for the parent building tasks being triggered
     }
 
     private static def createUntarBuildFile(buildFile) {
