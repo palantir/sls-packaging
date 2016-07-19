@@ -353,6 +353,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'java'
             }
             repositories { jcenter() }
+            version '0.1'
             distribution {
                 serviceName "my-service"
                 mainClass "dummy.service.MainClass"
@@ -368,7 +369,11 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 fromOtherProject project(path: ':parent', configuration: 'sls')
             }
             task untar(type: Copy) {
-                from configurations.fromOtherProject.singleFile
+                // ensures the artifact is built by depending on the configuration
+                dependsOn configurations.fromOtherProject
+
+                // copy the contents of the tarball
+                from tarTree(configurations.fromOtherProject.singleFile)
                 into 'build/exploded'
             }
         ''')
@@ -377,10 +382,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         BuildResult buildResult = runSuccessfully(':child:untar')
 
         then:
-        buildResult.task(':child:untar').outcome == TaskOutcome.SUCCESS
-        println buildResult.output
-        // TODO: add checks for files produced
-        // TODO: add checks for the parent building tasks being triggered
+        buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
+        file('child/build/exploded/my-service-0.1/deployment/manifest.yml')
     }
 
     private static def createUntarBuildFile(buildFile) {

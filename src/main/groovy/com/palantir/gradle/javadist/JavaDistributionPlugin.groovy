@@ -27,6 +27,7 @@ import java.nio.file.Paths
 class JavaDistributionPlugin implements Plugin<Project> {
 
     private static final String GROUP_NAME = "Distribution"
+    private static final String SLS_CONFIGURATION_NAME = "sls"
 
     void apply(Project project) {
         // force application of java
@@ -146,6 +147,9 @@ class JavaDistributionPlugin implements Plugin<Project> {
             it.group = GROUP_NAME
             it.description = "Runs the specified project using configured mainClass and with default args."
         })
+
+        project.configurations.create(SLS_CONFIGURATION_NAME)
+        project.artifacts.add(SLS_CONFIGURATION_NAME, distTar)
 
         project.afterEvaluate {
             manifestClasspathJar.configure(ext)
