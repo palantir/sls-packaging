@@ -18,6 +18,7 @@ package com.palantir.gradle.javadist
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
@@ -342,7 +343,47 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         then:
         buildResult.output =~ ("before: distTar: ${projectDir}/build/distributions/my-service.tgz")
         buildResult.output =~ ("after: distTar: ${projectDir}/build/distributions/my-service.tgz")
+    }
 
+    def 'exposes an artifact through the sls configuration'() {
+        given:
+        helper.addSubproject('parent', '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'java'
+            }
+            repositories { jcenter() }
+            version '0.1'
+            distribution {
+                serviceName "my-service"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+            }
+        ''')
+
+        helper.addSubproject('child', '''
+            configurations {
+                fromOtherProject
+            }
+            dependencies {
+                fromOtherProject project(path: ':parent', configuration: 'sls')
+            }
+            task untar(type: Copy) {
+                // ensures the artifact is built by depending on the configuration
+                dependsOn configurations.fromOtherProject
+
+                // copy the contents of the tarball
+                from tarTree(configurations.fromOtherProject.singleFile)
+                into 'build/exploded'
+            }
+        ''')
+
+        when:
+        BuildResult buildResult = runSuccessfully(':child:untar')
+
+        then:
+        buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
+        file('child/build/exploded/my-service-0.1/deployment/manifest.yml')
     }
 
     private static def createUntarBuildFile(buildFile) {

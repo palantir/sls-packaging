@@ -3,6 +3,7 @@ package com.palantir.gradle.javadist
 import com.energizedwork.spock.extensions.TempDirectory
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import nebula.test.multiproject.MultiProjectIntegrationHelper
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -11,12 +12,16 @@ import spock.lang.Specification
 import java.nio.file.Files
 
 public class GradleTestSpec extends Specification {
-    @TempDirectory
+    @TempDirectory(clean = false)
     File projectDir
     File buildFile
+    File settingsFile
+    MultiProjectIntegrationHelper helper
 
     def setup() {
         buildFile = file("build.gradle")
+        settingsFile = new File(projectDir, 'settings.gradle')
+        helper = new MultiProjectIntegrationHelper(projectDir, settingsFile)
         println("Build directory: \n" + projectDir.absolutePath)
     }
 
