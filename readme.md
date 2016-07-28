@@ -19,7 +19,7 @@ content of the package. The package will follow this structure:
         service/
             bin/
                 [service-name]                # Bash start script
-                [service-name.bat]            # Windows start script
+                [service-name].bat            # Windows start script
                 init.sh                       # daemonizing script
                 darwin-amd64/go-java-launcher # Native Java launcher binary (MacOS)
                 linux-amd64/go-java-launcher  # Native Java launcher binary (Linux)
@@ -31,6 +31,9 @@ content of the package. The package will follow this structure:
                 bin/ 
                     check.sh                  # monitoring script
         var/                                  # application configuration and data
+
+The `service/bin/` directory contains both Gradle-generated launcher scripts (`[service-name]` and `[service-name].bat`)
+and [go-java-launcher](https://github.com/palantir/go-java-launcher) launcher binaries.
 
 Packages are produced as gzipped tar named `[service-name]-[project-version].tgz`.
 
