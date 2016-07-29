@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist
+package com.palantir.gradle.javadist.tasks
 
+import com.palantir.gradle.javadist.DistributionExtension
+import com.palantir.gradle.javadist.JavaDistributionPlugin
 import org.gradle.api.tasks.bundling.Jar
 
 /**
@@ -24,13 +26,21 @@ import org.gradle.api.tasks.bundling.Jar
 class ManifestClasspathJarTask extends Jar {
 
     public ManifestClasspathJarTask() {
+        group = JavaDistributionPlugin.GROUP_NAME
+        description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
+                "jar rather than command line argument on Windows, since Windows path sizes are limited."
         appendix = 'manifest-classpath'
+
+        project.afterEvaluate {
+            manifest.attributes("Class-Path": project.files(project.configurations.runtime)
+                    .collect { it.getName() }
+                    .join(' ') + ' ' + project.tasks.jar.archiveName
+            )
+            onlyIf { distributionExtension().isEnableManifestClasspath() }
+        }
     }
 
-    public void configure(DistributionExtension ext) {
-        manifest.attributes("Class-Path": project.files(project.configurations.runtime)
-            .collect { it.getName() }
-            .join(' ') + ' ' + project.tasks.jar.archiveName
-        )
+    DistributionExtension distributionExtension() {
+        return project.extensions.findByType(DistributionExtension)
     }
 }

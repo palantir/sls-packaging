@@ -1,16 +1,21 @@
-package com.palantir.gradle.javadist
+package com.palantir.gradle.javadist.tasks
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.palantir.gradle.javadist.JavaDistributionPlugin
 import groovy.transform.EqualsAndHashCode
 import org.gradle.api.file.FileCollection
-import org.gradle.api.internal.AbstractTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Files
 
-class LaunchConfigTask extends AbstractTask {
+class LaunchConfigTask extends BaseTask {
+
+    LaunchConfigTask() {
+        group = JavaDistributionPlugin.GROUP_NAME
+        description = "Generates launcher-static.yml and launcher-check.yml configurations."
+    }
 
     @EqualsAndHashCode
     public static class StaticLaunchConfig {
@@ -24,16 +29,10 @@ class LaunchConfigTask extends AbstractTask {
         List<String> args
     }
 
-    private DistributionExtension ext
-
-    public void configure(DistributionExtension extension) {
-        this.ext = extension
-    }
-
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(ext.args), "scripts/launcher-static.yml")
-        writeConfig(createConfig(ext.checkArgs), "scripts/launcher-check.yml")
+        writeConfig(createConfig(distributionExtension().args), "scripts/launcher-static.yml")
+        writeConfig(createConfig(distributionExtension().checkArgs), "scripts/launcher-check.yml")
     }
 
     void writeConfig(StaticLaunchConfig config, String relativePath) {
@@ -47,12 +46,12 @@ class LaunchConfigTask extends AbstractTask {
 
     StaticLaunchConfig createConfig(List<String> args) {
         StaticLaunchConfig config = new StaticLaunchConfig()
-        config.mainClass = ext.mainClass
-        config.javaHome = ext.javaHome ?: ""
+        config.mainClass = distributionExtension().mainClass
+        config.javaHome = distributionExtension().javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(
                 project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
-        config.jvmOpts = ext.defaultJvmOpts
+        config.jvmOpts = distributionExtension().defaultJvmOpts
         return config
     }
 
