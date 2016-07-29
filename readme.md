@@ -71,13 +71,19 @@ The `distribution` block offers the following options:
    be applied when `init.sh` is run.
 
 #### JVM Options
-The list of JVM options passed to the Java process is obtained by concatenating the following list of hard-coded
-*required options* and the list of options specified in `distribution.defaultJvmOpts`:
+The list of JVM options passed to the Java processes launched through a package's start-up scripts is obtained by
+concatenating the following list of hard-coded *required options* and the list of options specified in
+`distribution.defaultJvmOpts`:
 
-    # Hard-coded required JVM options
-    '-Djava.security.egd=file:/dev/./urandom'
-    '-Djava.io.tmpdir=var/data/tmp'
-    '-XX:+PerfDisableSharedMem'
+Hard-coded required JVM options:
+- `-Djava.security.egd=file:/dev/./urandom`: urandom is the
+  [preferred source of cryptographic randomness on modern Linux systems](http://www.2uo.de/myths-about-urandom/). Note
+  that some Java implementations override `/dev/urandom` internally; we thus set it to `/dev/./urandom`.
+- `-Djava.io.tmpdir=var/data/tmp`: Allocates temporary files inside the application installation folder rather than on
+  `/tmp`; the latter is often space-constrained on cloud hosts.
+- `-XX:+PerfDisableSharedMem`: Avoids long [garbage collection pauses](http://www.evanjones.ca/jvm-mmap-pause.html).
+  As a side-effect, some Java debug tools (e.g., jps, jstat) are unavailable for processes launched through the startup
+  scripts.
 
 The `go-java-launcher` and `init.sh` launchers additionally append the list of JVM options specified in the
 `var/conf/launcher-custom.yml` [configuration file](https://github.com/palantir/go-java-launcher). Note that later
