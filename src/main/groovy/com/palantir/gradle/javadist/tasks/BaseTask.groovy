@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Palantir Technologies
+ * Copyright 2016 Palantir Technologies
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist
 
-import org.gradle.api.tasks.JavaExec
+package com.palantir.gradle.javadist.tasks
 
-class RunTask extends JavaExec {
+import com.palantir.gradle.javadist.DistributionExtension
+import org.gradle.api.DefaultTask
 
-    public void configure(DistributionExtension ext) {
-        setClasspath(project.sourceSets.main.runtimeClasspath)
-        setMain(ext.mainClass)
-        if (!ext.args.isEmpty()) {
-            setArgs(ext.args)
-        }
-        setJvmArgs(ext.getDefaultJvmOpts())
+class BaseTask extends DefaultTask {
+    DistributionExtension distributionExtension() {
+        return project.extensions.findByType(DistributionExtension)
     }
-
 }
