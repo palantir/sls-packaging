@@ -70,6 +70,20 @@ The `distribution` block offers the following options:
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
 
+#### JVM Options
+The list of JVM options passed to the Java process is obtained by concatenating the following list of hard-coded
+*required options* and the list of options specified in `distribution.defaultJvmOpts`:
+
+    # Hard-coded required JVM options
+    '-Djava.security.egd=file:/dev/./urandom'
+    '-Djava.io.tmpdir=var/data/tmp'
+    '-XX:+PerfDisableSharedMem'
+
+The `go-java-launcher` and `init.sh` launchers additionally append the list of JVM options specified in the
+`var/conf/launcher-custom.yml` [configuration file](https://github.com/palantir/go-java-launcher). Note that later
+options typically override earlier options (although this behavior is undefined and may be JVM-specific); this allows
+users to override the hard-coded options.
+
 
 Packaging
 ---------
