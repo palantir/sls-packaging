@@ -92,15 +92,28 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 
-    def 'produce distribution bundle and check var/data/tmp is created' () {
+    def 'produce distribution bundle and check var/data/tmp is created and used for temporary files' () {
         given:
         createUntarBuildFile(buildFile)
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        import java.nio.file.Files;
+        import java.io.IOException;
+        public class Test {
+            public static void main(String[] args) throws IOException {
+                Files.write(Files.createTempFile("prefix", "suffix"), "temp content".getBytes());
+                while(true);
+            }
+        }
+        '''.stripIndent()
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        file('dist/service-name-0.1/var/data/tmp').exists()
+        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        file('dist/service-name-0.1/var/data/tmp').listFiles().length == 1
+        file('dist/service-name-0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
 
     def 'produce distribution bundle with custom exclude set' () {
