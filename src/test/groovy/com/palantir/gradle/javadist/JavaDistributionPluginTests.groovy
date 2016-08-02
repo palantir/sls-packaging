@@ -259,7 +259,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String startScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
-        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-XX:+PrintGCDateStamps" "-XX:+PrintGCDetails" "-XX:-TraceClassUnloading" "-XX:+UseGCLogFileRotation" "-XX:GCLogFileSize=10M" "-XX:NumberOfGCLogFiles=10" "-Xloggc:var/log/gc.log" "-verbose:gc" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.io.tmpdir=var/data/tmp" "-XX:+PrintGCDateStamps" "-XX:+PrintGCDetails" "-XX:-TraceClassUnloading" "-XX:+UseGCLogFileRotation" "-XX:GCLogFileSize=10M" "-XX:NumberOfGCLogFiles=10" "-Xloggc:var/log/gc.log" "-verbose:gc" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
     def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
@@ -287,7 +287,6 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
         expectedStaticConfig.setClasspath(['service/lib/internal-0.1.jar', 'service/lib/external.jar'])
         expectedStaticConfig.setJvmOpts([
-                '-Djava.security.egd=file:/dev/./urandom',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:+PrintGCDateStamps',
                 '-XX:+PrintGCDetails',

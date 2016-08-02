@@ -79,9 +79,6 @@ concatenating the following list of hard-coded *required options* and the list o
 `distribution.defaultJvmOpts`:
 
 Hard-coded required JVM options:
-- `-Djava.security.egd=file:/dev/./urandom`: urandom is the
-  [preferred source of cryptographic randomness on modern Linux systems](http://www.2uo.de/myths-about-urandom/). Note
-  that some Java implementations override `/dev/urandom` internally; we thus set it to `/dev/./urandom`.
 - `-Djava.io.tmpdir=var/data/tmp`: Allocates temporary files inside the application installation folder rather than on
   `/tmp`; the latter is often space-constrained on cloud hosts.
 
