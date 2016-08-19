@@ -35,7 +35,7 @@ content of the package. The package will follow this structure:
 The `service/bin/` directory contains both Gradle-generated launcher scripts (`[service-name]` and `[service-name].bat`)
 and [go-java-launcher](https://github.com/palantir/go-java-launcher) launcher binaries.
 
-Packages are produced as gzipped tar named `[service-name]-[project-version].tgz`.
+Packages are produced as gzipped tar named `[service-name]-[project-version].sls.tgz`.
 
 Usage
 -----
