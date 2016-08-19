@@ -138,7 +138,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }
@@ -189,7 +189,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }
@@ -355,8 +355,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         BuildResult buildResult = runSuccessfully(':tasks')
 
         then:
-        buildResult.output =~ ("before: distTar: ${projectDir}/build/distributions/my-service.tgz")
-        buildResult.output =~ ("after: distTar: ${projectDir}/build/distributions/my-service.tgz")
+        buildResult.output =~ ("before: distTar: ${projectDir}/build/distributions/my-service.sls.tgz")
+        buildResult.output =~ ("after: distTar: ${projectDir}/build/distributions/my-service.sls.tgz")
     }
 
     def 'exposes an artifact through the sls configuration'() {
@@ -421,7 +421,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }

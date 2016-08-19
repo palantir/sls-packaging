@@ -27,6 +27,7 @@ class DistTarTask extends Tar {
         description = "Creates a compressed, gzipped tar file that contains required runtime resources."
         // Set compression in constructor so that task output has the right name from the start.
         compression = Compression.GZIP
+        extension = 'sls.tgz'
 
         project.afterEvaluate {
             String archiveRootDir = distributionExtension().serviceName + '-' + String.valueOf(project.version)
