@@ -23,9 +23,8 @@ import nebula.test.multiproject.MultiProjectIntegrationHelper
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Assert
 import spock.lang.Specification
-
-import java.nio.file.Files
 
 public class GradleTestSpec extends Specification {
     @TempDirectory(clean = false)
@@ -60,7 +59,8 @@ public class GradleTestSpec extends Specification {
         StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         proc.consumeProcessOutput(sout, serr)
-        proc.waitFor()
+        int result = proc.waitFor()
+        Assert.assertEquals(sprintf("Expected command '%s' to be successful", tasks.join(' ')), result, 0)
         sleep 1000 // wait for the Java process to actually run
         return sout.toString()
     }
