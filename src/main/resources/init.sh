@@ -48,7 +48,7 @@ start)
     service/bin/init.sh status > /dev/null 2>&1
     if [[ $? == 0 ]]; then
         echo "Process is already running"
-        exit 1
+        exit 0
     fi
     printf "%-50s" "Running '$SERVICE'..."
 

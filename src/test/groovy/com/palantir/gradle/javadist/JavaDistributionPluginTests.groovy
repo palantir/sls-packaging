@@ -61,6 +61,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         // try all of the service commands
         exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
         file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.contains('Test started\n')
+        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Process is already running\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
             /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
