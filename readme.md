@@ -81,9 +81,6 @@ Hard-coded required JVM options:
   that some Java implementations override `/dev/urandom` internally; we thus set it to `/dev/./urandom`.
 - `-Djava.io.tmpdir=var/data/tmp`: Allocates temporary files inside the application installation folder rather than on
   `/tmp`; the latter is often space-constrained on cloud hosts.
-- `-XX:+PerfDisableSharedMem`: Avoids long [garbage collection pauses](http://www.evanjones.ca/jvm-mmap-pause.html).
-  As a side-effect, some Java debug tools (e.g., jps, jstat) are unavailable for processes launched through the startup
-  scripts.
 
 The `go-java-launcher` and `init.sh` launchers additionally append the list of JVM options specified in the
 `var/conf/launcher-custom.yml` [configuration file](https://github.com/palantir/go-java-launcher). Note that later

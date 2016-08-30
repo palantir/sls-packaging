@@ -236,7 +236,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String startScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
-        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-XX:+PerfDisableSharedMem" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
     def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml' () {
@@ -266,7 +266,6 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig.setJvmOpts([
                 '-Djava.security.egd=file:/dev/./urandom',
                 '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:+PerfDisableSharedMem',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
