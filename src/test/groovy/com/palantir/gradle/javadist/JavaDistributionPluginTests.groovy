@@ -28,7 +28,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                checkArgs 'healthcheck'
+                checkArgs = ['healthcheck']
             }
         '''.stripIndent()
         file('var/conf/launcher-custom.yml') << '''
@@ -128,10 +128,10 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             version '0.1'
 
             distribution {
-                serviceName 'service-name'
-                mainClass 'test.Test'
-                defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
-                excludeFromVar 'data'
+                serviceName = 'service-name'
+                mainClass = 'test.Test'
+                defaultJvmOpts += ['-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks']
+                excludeFromVar += 'data'
             }
 
             sourceCompatibility = '1.7'
@@ -181,8 +181,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             version new MyVersion('0.1')
 
             distribution {
-                serviceName 'service-name'
-                mainClass 'test.Test'
+                serviceName = 'service-name'
+                mainClass = 'test.Test'
             }
 
             sourceCompatibility = '1.7'
@@ -245,9 +245,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             dependencies { compile files("external.jar") }
             tasks.jar.baseName = "internal"
             distribution {
-                javaHome 'foo'
-                args 'myArg1', 'myArg2'
-                checkArgs 'myCheckArg1', 'myCheckArg2'
+                javaHome = 'foo'
+                args = ['myArg1', 'myArg2']
+                checkArgs = ['myCheckArg1', 'myCheckArg2']
             }'''.stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
@@ -283,7 +283,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                checkArgs 'healthcheck', 'var/conf/service.yml'
+                checkArgs = ['healthcheck', 'var/conf/service.yml']
             }
         '''.stripIndent()
 
@@ -299,7 +299,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                enableManifestClasspath true
+                enableManifestClasspath = true
             }
         '''.stripIndent()
 
@@ -338,9 +338,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             }
             repositories { jcenter() }
             distribution {
-                serviceName "my-service"
-                mainClass "dummy.service.MainClass"
-                args "hello"
+                serviceName = "my-service"
+                mainClass = "dummy.service.MainClass"
+                args = ["hello"]
             }
 
             println "before: distTar: ${distTar.outputs.files.singleFile}"
@@ -368,9 +368,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             repositories { jcenter() }
             version '0.1'
             distribution {
-                serviceName "my-service"
-                mainClass "dummy.service.MainClass"
-                args "hello"
+                serviceName = "my-service"
+                mainClass = "dummy.service.MainClass"
+                args = ["hello"]
             }
         ''')
 
@@ -411,9 +411,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             version '0.1'
 
             distribution {
-                serviceName 'service-name'
-                mainClass 'test.Test'
-                defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
+                serviceName = 'service-name'
+                mainClass = 'test.Test'
+                defaultJvmOpts = ['-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks']
             }
 
             sourceCompatibility = '1.7'

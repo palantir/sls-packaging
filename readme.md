@@ -49,9 +49,9 @@ Set the service name, main class, and optionally the arguments to pass to the
 program for a default run configuration:
 
     distribution {
-        serviceName 'my-service'
-        mainClass 'com.palantir.foo.bar.MyServiceMainClass'
-        args 'server', 'var/conf/my-service.yml'
+        serviceName = 'my-service'
+        mainClass = 'com.palantir.foo.bar.MyServiceMainClass'
+        args = ['server', 'var/conf/my-service.yml']
     }
 
 The `distribution` block offers the following options:
@@ -65,8 +65,8 @@ The `distribution` block offers the following options:
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead inferred
    from a JAR file whose MANIFEST contains the classpath entries.
- * (optional) `excludeFromVar` a list of directories (relative to `var`) to exclude in addition to
-   `log` and `run` (which are always excluded).
+ * (optional) `excludeFromVar` a list of directories (relative to `var`) to exclude from the distribution,
+   defaults to `['log', 'run']`
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
 

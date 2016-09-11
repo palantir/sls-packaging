@@ -18,80 +18,20 @@ package com.palantir.gradle.javadist;
 class DistributionExtension {
 
     private static final List<String> requiredJvmOpts = [
-        '-Djava.security.egd=file:/dev/./urandom',
-        '-Djava.io.tmpdir=var/data/tmp'
+            '-Djava.security.egd=file:/dev/./urandom',
+            '-Djava.io.tmpdir=var/data/tmp'
     ]
 
-    private String serviceName
-    private String mainClass
-    private List<String> args = []
-    private List<String> checkArgs = []
-    private List<String> defaultJvmOpts = []
-    private boolean enableManifestClasspath = false
-    private String javaHome = null
-    private List<String> excludeFromVar = []
-
-    public void serviceName(String serviceName) {
-        this.serviceName = serviceName
-    }
-
-    public void mainClass(String mainClass) {
-        this.mainClass = mainClass
-    }
-
-    public void args(String... args) {
-        this.args = Arrays.asList(args)
-    }
-
-    public void checkArgs(String... checkArgs) {
-        this.checkArgs = Arrays.asList(checkArgs);
-    }
-
-    public void defaultJvmOpts(String... defaultJvmOpts) {
-        this.defaultJvmOpts = Arrays.asList(defaultJvmOpts)
-    }
-
-    public void enableManifestClasspath(boolean enableManifestClasspath) {
-        this.enableManifestClasspath = enableManifestClasspath
-    }
-
-    public void javaHome(String javaHome) {
-        this.javaHome = javaHome
-    }
-
-    public void excludeFromVar(String... excludeFromVar) {
-        this.excludeFromVar = Arrays.asList(excludeFromVar);
-    }
-
-    public String getServiceName() {
-        return serviceName
-    }
-
-    public String getMainClass() {
-        return mainClass
-    }
-
-    public List<String> getArgs() {
-        return args
-    }
-
-    public List<String> getCheckArgs() {
-        return checkArgs
-    }
+    String serviceName
+    String mainClass
+    List<String> args = []
+    List<String> checkArgs = []
+    List<String> defaultJvmOpts = []
+    boolean enableManifestClasspath = false
+    String javaHome = null
+    List<String> excludeFromVar = ['log', 'run']
 
     public List<String> getDefaultJvmOpts() {
         return requiredJvmOpts + defaultJvmOpts
-    }
-
-    public boolean isEnableManifestClasspath() {
-        return enableManifestClasspath
-    }
-
-    public String getJavaHome() {
-        return javaHome
-    }
-
-    public List<String> getExcludeFromVar() {
-        return excludeFromVar
     }
 }
