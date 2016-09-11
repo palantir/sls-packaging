@@ -65,6 +65,11 @@ public class GradleTestSpec extends Specification {
         return sout.toString()
     }
 
+    protected String execAllowFail(String... tasks) {
+        new ProcessBuilder().command(tasks).directory(projectDir)
+                .start()
+                .waitFor()
+    }
 
     @CompileStatic(TypeCheckingMode.SKIP)
     protected File createFile(String path, File baseDir = projectDir) {

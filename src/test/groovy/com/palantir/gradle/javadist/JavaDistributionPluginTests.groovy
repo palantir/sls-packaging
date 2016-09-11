@@ -23,7 +23,7 @@ import org.gradle.testkit.runner.TaskOutcome
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
-    def 'produce distribution bundle and check start, stop, restart, check behavior' () {
+    def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
@@ -64,7 +64,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Process is already running\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
-            /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
+                /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
         exec('dist/service-name-0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
@@ -75,7 +75,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         manifest.contains('productVersion: 0.1\n')
     }
 
-    def 'produce distribution bundle and check var/log and var/run are excluded' () {
+    def 'produce distribution bundle and check var/log and var/run are excluded'() {
         given:
         createUntarBuildFile(buildFile)
 
@@ -93,7 +93,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 
-    def 'produce distribution bundle and check var/data/tmp is created and used for temporary files' () {
+    def 'produce distribution bundle and check var/data/tmp is created and used for temporary files'() {
         given:
         createUntarBuildFile(buildFile)
         file('src/main/java/test/Test.java') << '''
@@ -103,7 +103,6 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         public class Test {
             public static void main(String[] args) throws IOException {
                 Files.write(Files.createTempFile("prefix", "suffix"), "temp content".getBytes());
-                while(true);
             }
         }
         '''.stripIndent()
@@ -112,12 +111,12 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        execAllowFail('dist/service-name-0.1/service/bin/init.sh', 'start')
         file('dist/service-name-0.1/var/data/tmp').listFiles().length == 1
         file('dist/service-name-0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
 
-    def 'produce distribution bundle with custom exclude set' () {
+    def 'produce distribution bundle with custom exclude set'() {
         given:
         buildFile << '''
             plugins {
@@ -158,7 +157,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 
-    def 'produce distribution bundle with a non-string version object' () {
+    def 'produce distribution bundle with a non-string version object'() {
         given:
         buildFile << '''
             plugins {
@@ -205,7 +204,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         manifest.contains('productVersion: 0.1\n')
     }
 
-    def 'produce distribution bundle with files in deployment/' () {
+    def 'produce distribution bundle with files in deployment/'() {
         given:
         createUntarBuildFile(buildFile)
 
@@ -227,7 +226,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         actualConfiguration.equals(deploymentConfiguration)
     }
 
-    def 'produce distribution bundle with start script that passes default JVM options' () {
+    def 'produce distribution bundle with start script that passes default JVM options'() {
         given:
         createUntarBuildFile(buildFile)
 
@@ -239,7 +238,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.security.egd=file:/dev/./urandom" "-Djava.io.tmpdir=var/data/tmp" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
-    def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml' () {
+    def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
@@ -279,7 +278,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         expectedCheckConfig == actualCheckConfig
     }
 
-    def 'produce distribution bundle that populates check.sh' () {
+    def 'produce distribution bundle that populates check.sh'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
@@ -295,7 +294,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.1/service/monitoring/bin/check.sh').exists()
     }
 
-    def 'produces manifest-classpath jar and windows start script with no classpath length limitations' () {
+    def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
@@ -312,7 +311,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         startScript.contains("-manifest-classpath-0.1.jar")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
         file('dist/service-name-0.1/service/lib/').listFiles()
-            .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
+                .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {
@@ -327,7 +326,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         !startScript.contains("-manifest-classpath-0.1.jar")
         startScript.contains("-classpath \"%CLASSPATH%\"")
         !new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
-            .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
+                .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
     }
 
     def 'distTar artifact name is set during appropriate lifecycle events'() {
