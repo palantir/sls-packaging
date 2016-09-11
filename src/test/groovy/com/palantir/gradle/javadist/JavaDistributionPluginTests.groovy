@@ -116,6 +116,40 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
 
+    def 'distribution contains var/data/tmp even if it deleted from the source tree'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distTar.doFirst {
+                project.file('var/data/tmp').deleteDir()
+            }
+        '''.stripIndent()
+
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        !file('var/data/tmp').exists()
+        file('dist/service-name-0.1/var/data/tmp').exists()
+    }
+
+    def 'can delete var/data/tmp from distribution; this may have unforeseen consequences and should be considered bad!?'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                excludeFromVar << 'data'
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        !file('dist/service-name-0.1/var/data/tmp').exists()
+    }
+
     def 'produce distribution bundle with custom exclude set'() {
         given:
         buildFile << '''
