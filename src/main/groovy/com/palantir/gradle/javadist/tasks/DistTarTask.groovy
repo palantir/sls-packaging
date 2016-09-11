@@ -40,7 +40,18 @@ class DistTarTask extends Tar {
                 }
             }
 
-            new File(project.projectDir, "var/data/tmp").mkdirs()
+            // Create var/data/tmp
+            File.createTempDir().with { emptyTempDirBase ->
+                emptyTempDirBase.deleteOnExit()
+                emptyTempDirBase.toPath().resolve("data").resolve("tmp").toFile().mkdirs()
+                from(emptyTempDirBase) {
+                    into "${archiveRootDir}/var"
+                    // TODO(rfink) If users exclude 'data', then the temp dir will not be created. That seems wrong?
+                    distributionExtension().excludeFromVar.each {
+                        exclude it
+                    }
+                }
+            }
 
             from("${project.projectDir}/deployment") {
                 into "${archiveRootDir}/deployment"
