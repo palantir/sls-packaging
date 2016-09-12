@@ -153,7 +153,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         !file('dist/service-name-0.1/var/log').exists()
-        !file('dist/service-name-0.1/var/data').exists()
+        !file('dist/service-name-0.1/var/data/database').exists()
         file('dist/service-name-0.1/var/conf/service-name.yml').exists()
     }
 

@@ -43,7 +43,10 @@ class DistTarTask extends Tar {
                 }
             }
 
-            new File(project.projectDir, "var/data/tmp").mkdirs()
+            new File(project.buildDir, "gjd-tmp/var/data/tmp").mkdirs()
+            from ("${project.buildDir}/gjd-tmp/var/data") {
+                into "${archiveRootDir}/var/data"
+            }
 
             from("${project.projectDir}/deployment") {
                 into "${archiveRootDir}/deployment"
