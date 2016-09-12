@@ -65,7 +65,7 @@ The `distribution` block offers the following options:
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead inferred
    from a JAR file whose MANIFEST contains the classpath entries.
- * (optional) `excludeFromVar` a list of directories (relative to `var`) to exclude from the distribution,
+ * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.
    **Note**: this plugin will *always* create `var/data/tmp` in the resulting distribution to
    ensure the prescribed Java temp directory exists. Setting `data` for this option will still ensure
