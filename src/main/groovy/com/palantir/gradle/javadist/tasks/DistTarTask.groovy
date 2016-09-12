@@ -35,9 +35,6 @@ class DistTarTask extends Tar {
             from("${project.projectDir}/var") {
                 into "${archiveRootDir}/var"
 
-                exclude 'log'
-                exclude 'run'
-
                 distributionExtension().excludeFromVar.each {
                     exclude it
                 }

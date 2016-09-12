@@ -18,8 +18,8 @@ package com.palantir.gradle.javadist;
 class DistributionExtension {
 
     private static final List<String> requiredJvmOpts = [
-        '-Djava.security.egd=file:/dev/./urandom',
-        '-Djava.io.tmpdir=var/data/tmp'
+            '-Djava.security.egd=file:/dev/./urandom',
+            '-Djava.io.tmpdir=var/data/tmp'
     ]
 
     private String serviceName
@@ -29,7 +29,7 @@ class DistributionExtension {
     private List<String> defaultJvmOpts = []
     private boolean enableManifestClasspath = false
     private String javaHome = null
-    private List<String> excludeFromVar = []
+    private List<String> excludeFromVar = ['log', 'run']
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
@@ -40,15 +40,27 @@ class DistributionExtension {
     }
 
     public void args(String... args) {
-        this.args = Arrays.asList(args)
+        this.args.addAll(args)
+    }
+
+    public void setArgs(Iterable<String> args) {
+        this.args = args.toList()
     }
 
     public void checkArgs(String... checkArgs) {
-        this.checkArgs = Arrays.asList(checkArgs);
+        this.checkArgs.addAll(checkArgs)
+    }
+
+    public void setCheckArgs(Iterable<String> checkArgs) {
+        this.checkArgs = checkArgs.toList()
     }
 
     public void defaultJvmOpts(String... defaultJvmOpts) {
-        this.defaultJvmOpts = Arrays.asList(defaultJvmOpts)
+        this.defaultJvmOpts.addAll(defaultJvmOpts)
+    }
+
+    public void setDefaultJvmOpts(Iterable<String> defaultJvmOpts) {
+        this.defaultJvmOpts = defaultJvmOpts.toList()
     }
 
     public void enableManifestClasspath(boolean enableManifestClasspath) {
@@ -60,7 +72,11 @@ class DistributionExtension {
     }
 
     public void excludeFromVar(String... excludeFromVar) {
-        this.excludeFromVar = Arrays.asList(excludeFromVar);
+        this.excludeFromVar.addAll(excludeFromVar)
+    }
+
+    public void setExcludeFromVar(Iterable<String> excludeFromVar) {
+        this.excludeFromVar = excludeFromVar.toList()
     }
 
     public String getServiceName() {
