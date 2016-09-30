@@ -21,6 +21,8 @@ import com.palantir.gradle.javadist.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
+import java.nio.file.Files
+
 class JavaDistributionPluginTests extends GradleTestSpec {
 
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
@@ -73,6 +75,28 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('productName: service-name\n')
         manifest.contains('productVersion: 0.1\n')
+    }
+
+    def 'status reports when process name and id don"t match'() {
+        given:
+        createUntarBuildFile(buildFile)
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+        Files.move(file('dist/service-name-0.1').toPath(), file('dist/foo').toPath())
+
+        then:
+        exec('dist/foo/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        exec('dist/foo/service/bin/init.sh', 'status').contains('appears to not correspond to service service-name')
+        exec('dist/foo/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
     }
 
     def 'produce distribution bundle and check var/log and var/run are excluded'() {
