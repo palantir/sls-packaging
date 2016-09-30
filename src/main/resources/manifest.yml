@@ -1,3 +1,4 @@
 manifest-version: 1.0.0
+layout-version: 1.0.0
 product-name: @serviceName@
 product-version: @serviceVersion@

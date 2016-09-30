@@ -210,6 +210,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         manifest.contains('product-name: service-name\n')
         manifest.contains('product-version: 0.1\n')
         manifest.contains('manifest-version: 1.0.0\n')
+        manifest.contains('layout-version: 1.0.0\n')
     }
 
     def 'produce distribution bundle with files in deployment/'() {
