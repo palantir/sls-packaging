@@ -75,6 +75,9 @@ status)
             if [[ $? == 0 ]]; then
                 printf "%s\n" "Running ($PID)"
                 exit 0
+            else
+                printf "%s\n" "Warning, Pid $PID appears to not correspond to service $SERVICE"
+                exit 0
             fi
         fi
         printf "%s\n" "Process dead but pidfile exists"
