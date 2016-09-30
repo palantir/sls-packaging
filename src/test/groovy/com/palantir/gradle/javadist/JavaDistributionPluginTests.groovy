@@ -231,10 +231,11 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
+        manifest.contains('manifest-version: 1.0\n')
         manifest.contains('product-group: service-group\n')
         manifest.contains('product-name: service-name\n')
         manifest.contains('product-version: 0.1\n')
-        manifest.contains('manifest-version: 1.0\n')
+        manifest.contains('product-type: service.v1\n')
     }
 
     def 'produce distribution bundle with files in deployment/'() {
