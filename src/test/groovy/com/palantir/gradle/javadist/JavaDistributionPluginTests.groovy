@@ -68,11 +68,6 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
         exec('dist/service-name-0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
-
-        // check manifest was created
-        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('productName: service-name\n')
-        manifest.contains('productVersion: 0.1\n')
     }
 
     def 'produce distribution bundle and check var/log and var/run are excluded'() {
@@ -200,8 +195,21 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('productName: service-name\n')
-        manifest.contains('productVersion: 0.1\n')
+        manifest.contains('product-version: 0.1\n')
+    }
+
+    def 'manifest file contains expected fields'() {
+        given:
+        createUntarBuildFile(buildFile)
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
+        manifest.contains('product-name: service-name\n')
+        manifest.contains('product-version: 0.1\n')
+        manifest.contains('manifest-version: 1.0.0\n')
     }
 
     def 'produce distribution bundle with files in deployment/'() {
@@ -218,8 +226,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         then:
         // clobbers deployment/manifest.yml
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('productName: service-name\n')
-        manifest.contains('productVersion: 0.1\n')
+        manifest.contains('product-name: service-name\n')
 
         // check files in deployment/ copied successfully
         String actualConfiguration = file('dist/service-name-0.1/deployment/configuration.yml', projectDir).text

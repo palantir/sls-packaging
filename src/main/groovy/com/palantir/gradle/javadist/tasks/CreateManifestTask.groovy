@@ -16,8 +16,8 @@
 
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.util.EmitFiles
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import com.palantir.gradle.javadist.util.EmitFiles
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Paths
