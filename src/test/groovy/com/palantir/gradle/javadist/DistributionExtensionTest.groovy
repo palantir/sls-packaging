@@ -41,8 +41,7 @@ class DistributionExtensionTest extends Specification {
         then:
         ext.args == ['a', 'b', 'c', 'd']
         ext.checkArgs == ['a', 'b', 'c', 'd']
-        ext.defaultJvmOpts ==
-                ['-Djava.security.egd=file:/dev/./urandom', '-Djava.io.tmpdir=var/data/tmp', 'a', 'b', 'c', 'd']
+        ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['a', 'b', 'c', 'd']
         ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
     }
 
@@ -65,7 +64,7 @@ class DistributionExtensionTest extends Specification {
         then:
         ext.args == ['c', 'd']
         ext.checkArgs == ['c', 'd']
-        ext.defaultJvmOpts == ['-Djava.security.egd=file:/dev/./urandom', '-Djava.io.tmpdir=var/data/tmp', 'c', 'd']
+        ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['c', 'd']
         ext.excludeFromVar == ['c', 'd']
     }
 }

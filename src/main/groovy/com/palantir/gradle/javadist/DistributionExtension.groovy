@@ -17,9 +17,17 @@ package com.palantir.gradle.javadist;
 
 class DistributionExtension {
 
-    private static final List<String> requiredJvmOpts = [
+    static final List<String> requiredJvmOpts = [
             '-Djava.security.egd=file:/dev/./urandom',
-            '-Djava.io.tmpdir=var/data/tmp'
+            '-Djava.io.tmpdir=var/data/tmp',
+            '-XX:+PrintGCDateStamps',
+            '-XX:+PrintGCDetails',
+            '-XX:-TraceClassUnloading',
+            '-XX:+UseGCLogFileRotation',
+            '-XX:GCLogFileSize=10M',
+            '-XX:NumberOfGCLogFiles=10',
+            '-Xloggc:var/log/gc.log',
+            '-verbose:gc'
     ]
 
     private String serviceName
