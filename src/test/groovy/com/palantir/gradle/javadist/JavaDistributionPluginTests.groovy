@@ -15,13 +15,14 @@
  */
 package com.palantir.gradle.javadist
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.javadist.tasks.LaunchConfigTask
+import java.nio.file.Files
+
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
-import java.nio.file.Files
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.palantir.gradle.javadist.tasks.LaunchConfigTask
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
@@ -307,6 +308,28 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
                 file('dist/service-name-0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedCheckConfig == actualCheckConfig
+    }
+
+    def 'produce distribution bundle with custom classpath'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar")
+                           compile files("manager.jar")  }
+            tasks.jar.baseName = "internal"
+            distribution {
+                customClasspath 'internal-0.1.jar', 'manager.jar'
+            }
+        '''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+            file('dist/service-name-0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        actualStaticConfig.getAt("classpath") == ['service/lib/internal-0.1.jar', 'service/lib/manager.jar']
     }
 
     def 'produce distribution bundle that populates check.sh'() {

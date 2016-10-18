@@ -16,15 +16,17 @@
 
 package com.palantir.gradle.javadist.tasks
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.javadist.JavaDistributionPlugin
-import groovy.transform.EqualsAndHashCode
+import java.nio.file.Files
+
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
 
-import java.nio.file.Files
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.palantir.gradle.javadist.JavaDistributionPlugin
+
+import groovy.transform.EqualsAndHashCode
 
 class LaunchConfigTask extends BaseTask {
 
@@ -66,14 +68,23 @@ class LaunchConfigTask extends BaseTask {
         config.javaHome = distributionExtension().javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(
-                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime,
+                distributionExtension().getCustomClasspath())
         config.jvmOpts = distributionExtension().defaultJvmOpts
         return config
     }
 
-    private static List<String> relativizeToServiceLibDirectory(FileCollection files) {
+    private static List<String> relativizeToServiceLibDirectory(FileCollection files, List<String> customFiles) {
         def output = []
-        files.each { output.add("service/lib/" + it.name) }
+        files.each {
+            // Only add file to classpath if no custom classpath is defined or the custom classpath contains
+            // the file.
+            if (customFiles.isEmpty() || customFiles.contains(it.name)) {
+                output.add("service/lib/" + it.name)
+            }
+        }
+        assert customFiles.isEmpty() || output.size == customFiles.size :
+            "Expected all custom classpath files to exist: " + customFiles + ", only found: " + output
         return output
     }
 }

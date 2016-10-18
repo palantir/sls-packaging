@@ -62,6 +62,9 @@ The `distribution` block offers the following options:
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
    no monitoring script will be generated.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
+ * (optional) `customClasspath` a list of jars to put on the classpath. The list is limited to
+   the names of jars in the runtime configuration, or the jar produced by the JavaPlugin jar task
+   for this project. The classpath is ordered as defined in this variable.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead inferred
    from a JAR file whose MANIFEST contains the classpath entries.

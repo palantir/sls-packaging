@@ -34,6 +34,7 @@ class DistributionExtension {
     private List<String> args = []
     private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
+    private List<String> customClasspath = []
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
@@ -60,6 +61,14 @@ class DistributionExtension {
 
     public void setCheckArgs(Iterable<String> checkArgs) {
         this.checkArgs = checkArgs.toList()
+    }
+
+    public void customClasspath(String... customClasspath) {
+        this.customClasspath.addAll(customClasspath)
+    }
+
+    public void setCustomClasspath(Iterable<String> customClasspath) {
+        this.customClasspath = customClasspath.toList()
     }
 
     public void defaultJvmOpts(String... defaultJvmOpts) {
@@ -100,6 +109,10 @@ class DistributionExtension {
 
     public List<String> getCheckArgs() {
         return checkArgs
+    }
+
+    public List<String> getCustomClasspath() {
+        return customClasspath
     }
 
     public List<String> getDefaultJvmOpts() {

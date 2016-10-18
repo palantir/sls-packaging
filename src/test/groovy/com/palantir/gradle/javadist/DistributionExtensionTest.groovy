@@ -36,6 +36,9 @@ class DistributionExtensionTest extends Specification {
 
             excludeFromVar 'a', 'b'
             excludeFromVar 'c', 'd'
+
+            customClasspath 'j', 'f'
+            customClasspath 'k', 'l'
         }
 
         then:
@@ -43,6 +46,7 @@ class DistributionExtensionTest extends Specification {
         ext.checkArgs == ['a', 'b', 'c', 'd']
         ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['a', 'b', 'c', 'd']
         ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
+        ext.customClasspath == ['j', 'f', 'k', 'l']
     }
 
     def 'collection setters replace existing data'() {
@@ -59,6 +63,8 @@ class DistributionExtensionTest extends Specification {
             setDefaultJvmOpts(['c', 'd'])
             setExcludeFromVar(['a', 'b'])
             setExcludeFromVar(['c', 'd'])
+            setCustomClasspath(['e', 'f'])
+            setCustomClasspath(['g', 'h'])
         }
 
         then:
@@ -66,5 +72,6 @@ class DistributionExtensionTest extends Specification {
         ext.checkArgs == ['c', 'd']
         ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['c', 'd']
         ext.excludeFromVar == ['c', 'd']
+        ext.customClasspath == ['g', 'h']
     }
 }
