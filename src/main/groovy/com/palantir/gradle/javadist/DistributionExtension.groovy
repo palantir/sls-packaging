@@ -18,7 +18,6 @@ package com.palantir.gradle.javadist;
 class DistributionExtension {
 
     static final List<String> requiredJvmOpts = [
-            '-Djava.security.egd=file:/dev/./urandom',
             '-Djava.io.tmpdir=var/data/tmp',
             '-XX:+PrintGCDateStamps',
             '-XX:+PrintGCDetails',
