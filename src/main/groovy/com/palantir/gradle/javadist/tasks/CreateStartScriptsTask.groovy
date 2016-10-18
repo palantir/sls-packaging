@@ -15,7 +15,6 @@
  */
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.DistributionExtension
 import com.palantir.gradle.javadist.JavaDistributionPlugin
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
@@ -23,6 +22,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.jvm.application.tasks.CreateStartScripts
+import org.gradle.api.tasks.bundling.Jar
 
 class CreateStartScriptsTask extends CreateStartScripts {
 
@@ -31,13 +31,13 @@ class CreateStartScriptsTask extends CreateStartScripts {
         description = "Generates standard Java start scripts."
 
         doLast {
-            ManifestClasspathJarTask manifestClasspathJarTask =
-                    (ManifestClasspathJarTask) project.tasks.getByName('manifestClasspathJar')
+            Jar manifestClasspathJarTask =
+                    project.tasks.getByName('manifestClasspathJar')
             if (!manifestClasspathJarTask) {
                 throw new GradleException("Required task not found: manifestClasspathJar")
             }
 
-            if (distributionExtension().isEnableManifestClasspath()) {
+            if (project.distributionExtension().isEnableManifestClasspath()) {
                 // Replace standard classpath with pathing jar in order to circumnavigate length limits:
                 // https://issues.gradle.org/browse/GRADLE-2992
                 def winScriptFile = project.file getWindowsScript()
@@ -54,26 +54,22 @@ class CreateStartScriptsTask extends CreateStartScripts {
         }
     }
 
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
-    }
-
     @Input
     @Override
     public String getMainClassName() {
-        return distributionExtension().mainClass
+        return project.distributionExtension().mainClass
     }
 
     @Input
     @Override
     public String getApplicationName() {
-        return distributionExtension().serviceName
+        return project.distributionExtension().serviceName
     }
 
     @Input
     @Override
     public List<String> getDefaultJvmOpts() {
-        return distributionExtension().defaultJvmOpts
+        return project.distributionExtension().defaultJvmOpts
     }
 
     @OutputDirectory

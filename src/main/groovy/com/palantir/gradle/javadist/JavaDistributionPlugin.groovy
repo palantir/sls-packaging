@@ -34,16 +34,20 @@ class JavaDistributionPlugin implements Plugin<Project> {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.0.1'
         }
 
+        project.ext.set ("distributionExtension", {
+            return project.extensions.findByType(DistributionExtension)
+        })
+
         // Create tasks
-        ManifestClasspathJarTask manifestClasspathJar = project.tasks.create("manifestClasspathJar", ManifestClasspathJarTask)
-        CreateStartScriptsTask startScripts = project.tasks.create('createStartScripts', CreateStartScriptsTask)
-        CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)
-        LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
+        Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, 'manifestClasspathJar')
+        Task startScripts = project.tasks.create('createStartScripts', CreateStartScriptsTask)
+        Task copyLauncherBinaries = CopyLauncherBinariesTask.createCopyLauncherBinariesTask(project, 'copyLauncherBinaries')
+        Task launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         Task initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
         Task checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask)
         Task manifest = project.tasks.create('createManifest', CreateManifestTask)
-        DistTarTask distTar = project.tasks.create('distTar', DistTarTask)
-        RunTask run = project.tasks.create('run', RunTask)
+        Task distTar = DistTarTask.createDistTarTask(project, 'distTar')
+        Task run = RunTask.createRunTask(project, 'run')
 
         // Create configuration and exported artifacts
         project.configurations.create(SLS_CONFIGURATION_NAME)

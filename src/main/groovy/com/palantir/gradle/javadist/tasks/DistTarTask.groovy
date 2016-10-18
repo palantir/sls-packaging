@@ -17,78 +17,74 @@ package com.palantir.gradle.javadist.tasks
 
 import com.palantir.gradle.javadist.DistributionExtension
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
 
-class DistTarTask extends Tar {
+class DistTarTask {
 
-    DistTarTask() {
-        group = JavaDistributionPlugin.GROUP_NAME
-        description = "Creates a compressed, gzipped tar file that contains required runtime resources."
+    public static Tar createDistTarTask (Project project, String taskName) {
+        def distTar = project.tasks.create(taskName, Tar.class)
+        distTar.group = JavaDistributionPlugin.GROUP_NAME
+        distTar.description = "Creates a compressed, gzipped tar file that contains required runtime resources."
         // Set compression in constructor so that task output has the right name from the start.
-        compression = Compression.GZIP
-        extension = 'sls.tgz'
+        distTar.compression = Compression.GZIP
+        distTar.extension = 'sls.tgz'
 
+        // Doing Tar task configuration in project.afterEvaluate to wait for proper configuration
+        // of project.distributionExtension() - DO NOT FIDDLE WITH RUNTIME CONFIGURATIONS IN THIS
+        // CLOSURE AS IT WILL FORCE DEPENDENCY RESOLUTION DURING CONFIGURATION TIME AND THAT IS
+        // BAD BECAUSE IT SLOWS DOWN ALL THE OTHER TASKS.
         project.afterEvaluate {
-            String archiveRootDir = distributionExtension().serviceName + '-' + String.valueOf(project.version)
-
-            from("${project.projectDir}/var") {
+            distTar.baseName = project.distributionExtension().serviceName
+            String archiveRootDir = project.distributionExtension().serviceName + '-' + String.valueOf(project.version)
+            distTar.from("${project.projectDir}/var") {
                 into "${archiveRootDir}/var"
 
-                distributionExtension().excludeFromVar.each {
+                project.distributionExtension().excludeFromVar.each {
                     exclude it
                 }
             }
 
             new File(project.buildDir, "gjd-tmp/var/data/tmp").mkdirs()
-            from ("${project.buildDir}/gjd-tmp/var/data") {
+            distTar.from ("${project.buildDir}/gjd-tmp/var/data") {
                 into "${archiveRootDir}/var/data"
             }
 
-            from("${project.projectDir}/deployment") {
+            distTar.from("${project.projectDir}/deployment") {
                 into "${archiveRootDir}/deployment"
             }
 
-            from("${project.projectDir}/service") {
+            distTar.from("${project.projectDir}/service") {
                 into "${archiveRootDir}/service"
             }
 
-            into("${archiveRootDir}/service/lib") {
+            distTar.into("${archiveRootDir}/service/lib") {
                 from(project.tasks.jar.outputs.files)
                 from(project.configurations.runtime)
             }
 
-            if (distributionExtension().isEnableManifestClasspath()) {
-                into("${archiveRootDir}/service/lib") {
+            if (project.distributionExtension().isEnableManifestClasspath()) {
+                distTar.into("${archiveRootDir}/service/lib") {
                     from(project.tasks.getByName("manifestClasspathJar"))
                 }
             }
 
-            into("${archiveRootDir}/service/bin") {
+            distTar.into("${archiveRootDir}/service/bin") {
                 from("${project.buildDir}/scripts")
                 fileMode = 0755
             }
 
-            into("${archiveRootDir}/service/monitoring/bin") {
+            distTar.into("${archiveRootDir}/service/monitoring/bin") {
                 from("${project.buildDir}/monitoring")
                 fileMode = 0755
             }
 
-            into("${archiveRootDir}/deployment") {
+            distTar.into("${archiveRootDir}/deployment") {
                 from("${project.buildDir}/deployment")
             }
         }
-    }
 
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
-    }
-
-    @Override
-    public String getBaseName() {
-        // works around a bug where something in the tar task hierarchy either resolves the wrong
-        // getBaseName() call or uses baseName directly.
-        setBaseName(distributionExtension().serviceName)
-        return super.getBaseName()
+        return distTar
     }
 }

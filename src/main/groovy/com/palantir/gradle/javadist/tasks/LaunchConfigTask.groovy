@@ -20,13 +20,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.palantir.gradle.javadist.JavaDistributionPlugin
 import groovy.transform.EqualsAndHashCode
+import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Files
 
-class LaunchConfigTask extends BaseTask {
+class LaunchConfigTask extends DefaultTask {
 
     LaunchConfigTask() {
         group = JavaDistributionPlugin.GROUP_NAME
@@ -47,8 +48,8 @@ class LaunchConfigTask extends BaseTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(distributionExtension().args), "scripts/launcher-static.yml")
-        writeConfig(createConfig(distributionExtension().checkArgs), "scripts/launcher-check.yml")
+        writeConfig(createConfig(project.distributionExtension().args), "scripts/launcher-static.yml")
+        writeConfig(createConfig(project.distributionExtension().checkArgs), "scripts/launcher-check.yml")
     }
 
     void writeConfig(StaticLaunchConfig config, String relativePath) {
@@ -62,12 +63,12 @@ class LaunchConfigTask extends BaseTask {
 
     StaticLaunchConfig createConfig(List<String> args) {
         StaticLaunchConfig config = new StaticLaunchConfig()
-        config.mainClass = distributionExtension().mainClass
-        config.javaHome = distributionExtension().javaHome ?: ""
+        config.mainClass = project.distributionExtension().mainClass
+        config.javaHome = project.distributionExtension().javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(
                 project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
-        config.jvmOpts = distributionExtension().defaultJvmOpts
+        config.jvmOpts = project.distributionExtension().defaultJvmOpts
         return config
     }
 
