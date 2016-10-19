@@ -18,11 +18,12 @@ package com.palantir.gradle.javadist.tasks
 
 import com.palantir.gradle.javadist.util.EmitFiles
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Paths
 
-class CreateInitScriptTask extends BaseTask {
+class CreateInitScriptTask extends DefaultTask {
     CreateInitScriptTask() {
         group = JavaDistributionPlugin.GROUP_NAME
         description = "Generates daemonizing init.sh script."
@@ -33,7 +34,7 @@ class CreateInitScriptTask extends BaseTask {
         EmitFiles.replaceVars(
                 JavaDistributionPlugin.class.getResourceAsStream('/init.sh'),
                 Paths.get("${project.buildDir}/scripts/init.sh"),
-                ['@serviceName@': distributionExtension().serviceName])
+                ['@serviceName@': project.distributionExtension().serviceName])
                 .toFile()
                 .setExecutable(true)
     }

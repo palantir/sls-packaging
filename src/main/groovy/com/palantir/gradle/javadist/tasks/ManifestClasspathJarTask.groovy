@@ -16,32 +16,31 @@
 
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.DistributionExtension
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Produces a JAR whose manifest's {@code Class-Path} entry lists exactly the JARs produced by the project's runtime
  * configuration.
  */
-class ManifestClasspathJarTask extends Jar {
+class ManifestClasspathJarTask {
 
-    public ManifestClasspathJarTask() {
-        group = JavaDistributionPlugin.GROUP_NAME
-        description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
+    public static Jar createManifestClasspathJarTask(Project project, String taskName) {
+        def manifestClasspathJar = project.tasks.create(taskName, Jar.class)
+        manifestClasspathJar.group = JavaDistributionPlugin.GROUP_NAME
+        manifestClasspathJar.description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
                 "jar rather than command line argument on Windows, since Windows path sizes are limited."
-        appendix = 'manifest-classpath'
+        manifestClasspathJar.appendix = 'manifest-classpath'
 
-        project.afterEvaluate {
+        manifestClasspathJar.doFirst {
             manifest.attributes("Class-Path": project.files(project.configurations.runtime)
                     .collect { it.getName() }
                     .join(' ') + ' ' + project.tasks.jar.archiveName
             )
-            onlyIf { distributionExtension().isEnableManifestClasspath() }
         }
-    }
+         manifestClasspathJar.onlyIf { project.distributionExtension().isEnableManifestClasspath() }
 
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
+        return manifestClasspathJar
     }
 }

@@ -17,25 +17,24 @@ package com.palantir.gradle.javadist.tasks
 
 import com.palantir.gradle.javadist.DistributionExtension
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import org.gradle.api.Project
 import org.gradle.api.tasks.JavaExec
 
-class RunTask extends JavaExec {
+class RunTask {
 
-    RunTask() {
-        group = JavaDistributionPlugin.GROUP_NAME
-        description = "Runs the specified project using configured mainClass and with default args."
+    public static JavaExec createRunTask(Project project, String taskName) {
+        def run = project.tasks.create(taskName, JavaExec.class)
+        run.group = JavaDistributionPlugin.GROUP_NAME
+        run.description = "Runs the specified project using configured mainClass and with default args."
 
-        project.afterEvaluate {
+        run.doFirst {
             setClasspath(project.sourceSets.main.runtimeClasspath)
-            setMain(distributionExtension().mainClass)
-            if (!distributionExtension().args.isEmpty()) {
+            setMain(project.distributionExtension().mainClass)
+            if (!project.distributionExtension().args.isEmpty()) {
                 setArgs(distributionExtension().args)
             }
-            setJvmArgs(distributionExtension().getDefaultJvmOpts())
+            setJvmArgs(project.distributionExtension().getDefaultJvmOpts())
         }
-    }
-
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
+        return run
     }
 }
