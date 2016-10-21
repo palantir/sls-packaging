@@ -34,16 +34,53 @@ class JavaDistributionPlugin implements Plugin<Project> {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.0'
         }
 
+        def distributionExtension = project.extensions.findByType(DistributionExtension)
+
         // Create tasks
-        ManifestClasspathJarTask manifestClasspathJar = project.tasks.create("manifestClasspathJar", ManifestClasspathJarTask)
-        CreateStartScriptsTask startScripts = project.tasks.create('createStartScripts', CreateStartScriptsTask)
+        Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")
+        project.afterEvaluate {
+            manifestClasspathJar.onlyIf { distributionExtension.isEnableManifestClasspath() }
+        }
+
+        Task startScripts = CreateStartScriptsTask.createStartScriptsTask(project, 'createStartScripts')
+        project.afterEvaluate {
+            CreateStartScriptsTask.configure(startScripts, distributionExtension.mainClass, distributionExtension.serviceName,
+                distributionExtension.defaultJvmOpts, distributionExtension.enableManifestClasspath)
+        }
+
         CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)
+
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
+        project.afterEvaluate {
+            launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
+                distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env)
+        }
+
         Task initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
+        project.afterEvaluate {
+            initScript.configure(distributionExtension.serviceName)
+        }
+
         Task checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask)
+        project.afterEvaluate {
+            checkScript.configure(distributionExtension.serviceName, distributionExtension.checkArgs)
+        }
+
         Task manifest = project.tasks.create('createManifest', CreateManifestTask)
-        DistTarTask distTar = project.tasks.create('distTar', DistTarTask)
-        RunTask run = project.tasks.create('run', RunTask)
+        project.afterEvaluate {
+            manifest.configure(distributionExtension.serviceName, distributionExtension.serviceGroup)
+        }
+
+        Task distTar = DistTarTask.createDistTarTask(project, 'distTar')
+        project.afterEvaluate {
+            DistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.excludeFromVar, distributionExtension.isEnableManifestClasspath())
+        }
+
+        Task run = RunTask.createRunTask(project, 'run')
+        project.afterEvaluate {
+            RunTask.configure(run, distributionExtension.mainClass, distributionExtension.args, distributionExtension.defaultJvmOpts, )
+        }
+
 
         // Create configuration and exported artifacts
         project.configurations.create(SLS_CONFIGURATION_NAME)

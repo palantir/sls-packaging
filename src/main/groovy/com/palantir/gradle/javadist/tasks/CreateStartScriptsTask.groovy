@@ -15,76 +15,50 @@
  */
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.DistributionExtension
 import com.palantir.gradle.javadist.JavaDistributionPlugin
 import org.gradle.api.GradleException
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.Project
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.jvm.application.tasks.CreateStartScripts
 
-class CreateStartScriptsTask extends CreateStartScripts {
+class CreateStartScriptsTask {
 
-    CreateStartScriptsTask() {
-        group = JavaDistributionPlugin.GROUP_NAME
-        description = "Generates standard Java start scripts."
-
-        doLast {
-            ManifestClasspathJarTask manifestClasspathJarTask =
-                    (ManifestClasspathJarTask) project.tasks.getByName('manifestClasspathJar')
-            if (!manifestClasspathJarTask) {
-                throw new GradleException("Required task not found: manifestClasspathJar")
-            }
-
-            if (distributionExtension().isEnableManifestClasspath()) {
-                // Replace standard classpath with pathing jar in order to circumnavigate length limits:
-                // https://issues.gradle.org/browse/GRADLE-2992
-                def winScriptFile = project.file getWindowsScript()
-                def winFileText = winScriptFile.text
-
-                // Remove too-long-classpath and use pathing jar instead
-                winFileText = winFileText.replaceAll('set CLASSPATH=.*', 'rem CLASSPATH declaration removed.')
-                winFileText = winFileText.replaceAll(
-                        '("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)',
-                        '$1%APP_HOME%\\\\lib\\\\' + manifestClasspathJarTask.archiveName + '$2')
-
-                winScriptFile.text = winFileText
-            }
+    public static CreateStartScripts createStartScriptsTask(Project project, String taskName) {
+        return project.tasks.create(taskName, CreateStartScripts) {
+            group = JavaDistributionPlugin.GROUP_NAME
+            description = "Generates standard Java start scripts."
+            setOutputDir(new File("${project.buildDir}/scripts"))
+            setClasspath(project.tasks['jar'].outputs.files + project.configurations.runtime)
         }
     }
 
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
-    }
+    public static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, List<String> defaultJvmOpts, boolean isEnableManifestClasspath) {
+        startScripts.configure {
+            setMainClassName(mainClass)
+            setApplicationName(serviceName)
+            setDefaultJvmOpts(defaultJvmOpts)
 
-    @Input
-    @Override
-    public String getMainClassName() {
-        return distributionExtension().mainClass
-    }
+            doLast {
+                Jar manifestClasspathJarTask = project.tasks.getByName('manifestClasspathJar')
+                if (!manifestClasspathJarTask) {
+                    throw new GradleException("Required task not found: manifestClasspathJar")
+                }
 
-    @Input
-    @Override
-    public String getApplicationName() {
-        return distributionExtension().serviceName
-    }
+                if (isEnableManifestClasspath) {
+                    // Replace standard classpath with pathing jar in order to circumnavigate length limits:
+                    // https://issues.gradle.org/browse/GRADLE-2992
+                    def winScriptFile = project.file getWindowsScript()
+                    def winFileText = winScriptFile.text
 
-    @Input
-    @Override
-    public List<String> getDefaultJvmOpts() {
-        return distributionExtension().defaultJvmOpts
-    }
+                    // Remove too-long-classpath and use pathing jar instead
+                    winFileText = winFileText.replaceAll('set CLASSPATH=.*', 'rem CLASSPATH declaration removed.')
+                    winFileText = winFileText.replaceAll(
+                        '("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)',
+                        '$1%APP_HOME%\\\\lib\\\\' + manifestClasspathJarTask.archiveName + '$2')
 
-    @OutputDirectory
-    @Override
-    public File getOutputDir() {
-        return new File("${project.buildDir}/scripts")
-    }
-
-    @InputFiles
-    @Override
-    public FileCollection getClasspath() {
-        return project.tasks['jar'].outputs.files + project.configurations.runtime
+                    winScriptFile.text = winFileText
+                }
+            }
+        }
     }
 }
