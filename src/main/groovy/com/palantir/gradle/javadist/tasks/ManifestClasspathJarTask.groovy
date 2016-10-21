@@ -38,10 +38,6 @@ class ManifestClasspathJarTask extends Jar {
                     .join(' ') + ' ' + project.tasks.jar.archiveName
             )
         }
-        onlyIf { distributionExtension().isEnableManifestClasspath() }
-    }
-
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
+        onlyIf { project.distributionExtension().isEnableManifestClasspath() }
     }
 }

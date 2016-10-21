@@ -34,6 +34,10 @@ class JavaDistributionPlugin implements Plugin<Project> {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.0.1'
         }
 
+        project.ext.set ("distributionExtension", {
+            return project.extensions.findByType(DistributionExtension)
+        })
+
         // Create tasks
         ManifestClasspathJarTask manifestClasspathJar = project.tasks.create("manifestClasspathJar", ManifestClasspathJarTask)
         CreateStartScriptsTask startScripts = project.tasks.create('createStartScripts', CreateStartScriptsTask)

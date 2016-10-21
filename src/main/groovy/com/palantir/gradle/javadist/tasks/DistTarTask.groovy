@@ -33,12 +33,12 @@ class DistTarTask extends Tar {
         // resolution during configuration time and it will slow down all the other tasks
         // in the project that uses this plugin.
         project.afterEvaluate {
-            String archiveRootDir = distributionExtension().serviceName + '-' + String.valueOf(project.version)
+            String archiveRootDir = project.distributionExtension().serviceName + '-' + String.valueOf(project.version)
 
             from("${project.projectDir}/var") {
                 into "${archiveRootDir}/var"
 
-                distributionExtension().excludeFromVar.each {
+                project.distributionExtension().excludeFromVar.each {
                     exclude it
                 }
             }
@@ -61,7 +61,7 @@ class DistTarTask extends Tar {
                 from(project.configurations.runtime)
             }
 
-            if (distributionExtension().isEnableManifestClasspath()) {
+            if (project.distributionExtension().isEnableManifestClasspath()) {
                 into("${archiveRootDir}/service/lib") {
                     from(project.tasks.getByName("manifestClasspathJar"))
                 }
@@ -83,15 +83,11 @@ class DistTarTask extends Tar {
         }
     }
 
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
-    }
-
     @Override
     public String getBaseName() {
         // works around a bug where something in the tar task hierarchy either resolves the wrong
         // getBaseName() call or uses baseName directly.
-        setBaseName(distributionExtension().serviceName)
+        setBaseName(project.distributionExtension().serviceName)
         return super.getBaseName()
     }
 }

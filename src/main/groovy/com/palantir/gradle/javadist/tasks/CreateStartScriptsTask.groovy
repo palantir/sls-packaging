@@ -37,7 +37,7 @@ class CreateStartScriptsTask extends CreateStartScripts {
                 throw new GradleException("Required task not found: manifestClasspathJar")
             }
 
-            if (distributionExtension().isEnableManifestClasspath()) {
+            if (project.distributionExtension().isEnableManifestClasspath()) {
                 // Replace standard classpath with pathing jar in order to circumnavigate length limits:
                 // https://issues.gradle.org/browse/GRADLE-2992
                 def winScriptFile = project.file getWindowsScript()
@@ -54,26 +54,22 @@ class CreateStartScriptsTask extends CreateStartScripts {
         }
     }
 
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
-    }
-
     @Input
     @Override
     public String getMainClassName() {
-        return distributionExtension().mainClass
+        return project.distributionExtension().mainClass
     }
 
     @Input
     @Override
     public String getApplicationName() {
-        return distributionExtension().serviceName
+        return project.distributionExtension().serviceName
     }
 
     @Input
     @Override
     public List<String> getDefaultJvmOpts() {
-        return distributionExtension().defaultJvmOpts
+        return project.distributionExtension().defaultJvmOpts
     }
 
     @OutputDirectory

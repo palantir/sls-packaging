@@ -30,15 +30,11 @@ class RunTask extends JavaExec {
         // in the project that uses this plugin.
         project.afterEvaluate {
             setClasspath(project.sourceSets.main.runtimeClasspath)
-            setMain(distributionExtension().mainClass)
-            if (!distributionExtension().args.isEmpty()) {
-                setArgs(distributionExtension().args)
+            setMain(project.distributionExtension().mainClass)
+            if (!project.distributionExtension().args.isEmpty()) {
+                setArgs(project.distributionExtension().args)
             }
-            setJvmArgs(distributionExtension().getDefaultJvmOpts())
+            setJvmArgs(project.distributionExtension().getDefaultJvmOpts())
         }
-    }
-
-    DistributionExtension distributionExtension() {
-        return project.extensions.findByType(DistributionExtension)
     }
 }
