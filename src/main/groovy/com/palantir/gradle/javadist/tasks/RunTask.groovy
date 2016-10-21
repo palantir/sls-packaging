@@ -25,6 +25,9 @@ class RunTask extends JavaExec {
         group = JavaDistributionPlugin.GROUP_NAME
         description = "Runs the specified project using configured mainClass and with default args."
 
+        // Do not access runtime configurations in this closure as it will force dependency
+        // resolution during configuration time and it will slow down all the other tasks
+        // in the project that uses this plugin.
         project.afterEvaluate {
             setClasspath(project.sourceSets.main.runtimeClasspath)
             setMain(distributionExtension().mainClass)

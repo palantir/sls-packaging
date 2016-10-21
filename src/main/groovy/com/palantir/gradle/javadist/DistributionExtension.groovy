@@ -25,7 +25,7 @@ class DistributionExtension {
             '-XX:+UseGCLogFileRotation',
             '-XX:GCLogFileSize=10M',
             '-XX:NumberOfGCLogFiles=10',
-            '-Xloggc:var/log/gc.log',
+            '-Xloggc:var/log/gc-%t-%p.log',
             '-verbose:gc'
     ]
 
