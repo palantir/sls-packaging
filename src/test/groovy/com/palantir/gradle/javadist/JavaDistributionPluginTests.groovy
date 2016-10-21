@@ -259,7 +259,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String startScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
-        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.io.tmpdir=var/data/tmp" "-XX:+PrintGCDateStamps" "-XX:+PrintGCDetails" "-XX:-TraceClassUnloading" "-XX:+UseGCLogFileRotation" "-XX:GCLogFileSize=10M" "-XX:NumberOfGCLogFiles=10" "-Xloggc:var/log/gc.log" "-verbose:gc" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Djava.io.tmpdir=var/data/tmp" "-XX:+PrintGCDateStamps" "-XX:+PrintGCDetails" "-XX:-TraceClassUnloading" "-XX:+UseGCLogFileRotation" "-XX:GCLogFileSize=10M" "-XX:NumberOfGCLogFiles=10" "-Xloggc:var/log/gc-%t-%p.log" "-verbose:gc" "-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
     def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
@@ -294,7 +294,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 '-XX:+UseGCLogFileRotation',
                 '-XX:GCLogFileSize=10M',
                 '-XX:NumberOfGCLogFiles=10',
-                '-Xloggc:var/log/gc.log',
+                '-Xloggc:var/log/gc-%t-%p.log',
                 '-verbose:gc',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
