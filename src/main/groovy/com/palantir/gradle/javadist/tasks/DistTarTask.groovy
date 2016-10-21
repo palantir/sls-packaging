@@ -29,6 +29,9 @@ class DistTarTask extends Tar {
         compression = Compression.GZIP
         extension = 'sls.tgz'
 
+        // Do not access runtime configurations in this closure as it will force dependency
+        // resolution during configuration time and it will slow down all the other tasks
+        // in the project that uses this plugin.
         project.afterEvaluate {
             String archiveRootDir = distributionExtension().serviceName + '-' + String.valueOf(project.version)
 

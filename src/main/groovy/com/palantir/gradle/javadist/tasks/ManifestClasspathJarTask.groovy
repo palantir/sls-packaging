@@ -32,13 +32,13 @@ class ManifestClasspathJarTask extends Jar {
                 "jar rather than command line argument on Windows, since Windows path sizes are limited."
         appendix = 'manifest-classpath'
 
-        project.afterEvaluate {
+        doFirst {
             manifest.attributes("Class-Path": project.files(project.configurations.runtime)
                     .collect { it.getName() }
                     .join(' ') + ' ' + project.tasks.jar.archiveName
             )
-            onlyIf { distributionExtension().isEnableManifestClasspath() }
         }
+        onlyIf { distributionExtension().isEnableManifestClasspath() }
     }
 
     DistributionExtension distributionExtension() {
