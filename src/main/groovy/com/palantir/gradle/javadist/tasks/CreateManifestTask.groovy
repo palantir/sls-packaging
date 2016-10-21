@@ -18,24 +18,24 @@ package com.palantir.gradle.javadist.tasks
 
 import com.palantir.gradle.javadist.JavaDistributionPlugin
 import com.palantir.gradle.javadist.util.EmitFiles
+import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class CreateManifestTask extends BaseTask {
+import java.nio.file.Paths
+
+class CreateManifestTask extends DefaultTask {
+
+    @Input
+    String serviceName
+
+    @Input
+    String serviceGroup
+
     CreateManifestTask() {
         group = JavaDistributionPlugin.GROUP_NAME
         description = "Generates a simple yaml file describing the package content."
-    }
-
-    @Input
-    public String getServiceGroup() {
-        return distributionExtension().serviceGroup
-    }
-
-    @Input
-    public String getServiceName() {
-        return distributionExtension().serviceName
     }
 
     @Input
@@ -53,8 +53,8 @@ class CreateManifestTask extends BaseTask {
         EmitFiles.replaceVars(
                 CreateManifestTask.class.getResourceAsStream('/manifest.yml'),
                 getManifestFile().toPath(),
-                ['@serviceGroup@'  : getServiceGroup(),
-                 '@serviceName@'   : getServiceName(),
+                ['@serviceGroup@'  : serviceGroup,
+                 '@serviceName@'   : serviceName,
                  '@serviceVersion@': getProjectVersion()])
     }
 }
