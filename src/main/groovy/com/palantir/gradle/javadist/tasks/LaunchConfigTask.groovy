@@ -20,15 +20,32 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.palantir.gradle.javadist.JavaDistributionPlugin
 import groovy.transform.EqualsAndHashCode
+import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Files
 
-class LaunchConfigTask extends BaseTask {
+class LaunchConfigTask extends DefaultTask {
+
+    @Input
+    String mainClass
+
+    @Input
+    List<String> args
+
+    @Input
+    List<String> checkArgs
+
+    @Input
+    List<String> defaultJvmOpts
+
+    @Optional
+    String javaHome
 
     LaunchConfigTask() {
         group = JavaDistributionPlugin.GROUP_NAME
@@ -45,16 +62,6 @@ class LaunchConfigTask extends BaseTask {
         List<String> classpath
         List<String> jvmOpts
         List<String> args
-    }
-
-    @Input
-    Iterable<String> getArgs() {
-        return distributionExtension().args
-    }
-
-    @Input
-    Iterable<String> getCheckArgs() {
-        return distributionExtension().checkArgs
     }
 
     @OutputFile
@@ -84,12 +91,12 @@ class LaunchConfigTask extends BaseTask {
 
     StaticLaunchConfig createConfig(List<String> args) {
         StaticLaunchConfig config = new StaticLaunchConfig()
-        config.mainClass = distributionExtension().mainClass
-        config.javaHome = distributionExtension().javaHome ?: ""
+        config.mainClass = mainClass
+        config.javaHome = javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(
                 project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
-        config.jvmOpts = distributionExtension().defaultJvmOpts
+        config.jvmOpts = defaultJvmOpts
         return config
     }
 
@@ -97,5 +104,13 @@ class LaunchConfigTask extends BaseTask {
         def output = []
         files.each { output.add("service/lib/" + it.name) }
         return output
+    }
+
+    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome) {
+        this.mainClass = mainClass
+        this.args = args
+        this.checkArgs = checkArgs
+        this.defaultJvmOpts = defaultJvmOpts
+        this.javaHome = javaHome
     }
 }
