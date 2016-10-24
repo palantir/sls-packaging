@@ -16,12 +16,14 @@
 
 package com.palantir.gradle.javadist
 
+import org.gradle.api.Project
+import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
 class DistributionExtensionTest extends Specification {
     def 'collection modifiers are cumulative when varargs are given'() {
         given:
-        def ext = new DistributionExtension()
+        def ext = new DistributionExtension(null)
 
         when:
         ext.with {
@@ -47,7 +49,7 @@ class DistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new DistributionExtension()
+        def ext = new DistributionExtension(null)
 
         when:
         ext.with {
@@ -66,5 +68,25 @@ class DistributionExtensionTest extends Specification {
         ext.checkArgs == ['c', 'd']
         ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['c', 'd']
         ext.excludeFromVar == ['c', 'd']
+    }
+
+    def 'serviceGroup uses project group as default'() {
+        when:
+        Project project = ProjectBuilder.builder().build()
+        project.group = "foo"
+
+        then:
+        new DistributionExtension(project).serviceGroup == "foo"
+    }
+
+    def 'serviceGroup can be overwritten'() {
+        when:
+        Project project = ProjectBuilder.builder().build()
+        project.group = "foo"
+
+        then:
+        def ext = new DistributionExtension(project)
+        ext.serviceGroup("bar")
+        ext.serviceGroup == "bar"
     }
 }

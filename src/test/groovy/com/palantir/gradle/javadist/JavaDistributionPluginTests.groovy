@@ -231,6 +231,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
+        manifest.contains('product-group: service-group\n')
         manifest.contains('product-name: service-name\n')
         manifest.contains('product-version: 0.1\n')
         manifest.contains('manifest-version: 1.0\n')
@@ -443,6 +444,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.java-distribution'
                 id 'java'
             }
+
+            project.group = 'service-group'
 
             repositories { jcenter() }
 

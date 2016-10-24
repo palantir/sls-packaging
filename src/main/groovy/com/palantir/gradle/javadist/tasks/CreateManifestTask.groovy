@@ -33,7 +33,8 @@ class CreateManifestTask extends BaseTask {
         EmitFiles.replaceVars(
                 CreateManifestTask.class.getResourceAsStream('/manifest.yml'),
                 Paths.get("${project.buildDir}/deployment/manifest.yml"),
-                ['@serviceName@'   : distributionExtension().serviceName,
+                ['@serviceGroup@'  : distributionExtension().serviceGroup,
+                 '@serviceName@'   : distributionExtension().serviceName,
                  '@serviceVersion@': String.valueOf(project.version)])
     }
 }
