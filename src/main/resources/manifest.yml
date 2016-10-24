@@ -1,3 +1,4 @@
-manifestVersion: 1.0.0-alpha
-productName: @serviceName@
-productVersion: @serviceVersion@
+manifest-version: 1.0
+product-group: @serviceGroup@
+product-name: @serviceName@
+product-version: @serviceVersion@

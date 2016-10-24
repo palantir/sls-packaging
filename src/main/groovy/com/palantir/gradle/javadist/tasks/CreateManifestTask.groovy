@@ -16,8 +16,8 @@
 
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.util.EmitFiles
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import com.palantir.gradle.javadist.util.EmitFiles
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Paths
@@ -33,7 +33,8 @@ class CreateManifestTask extends BaseTask {
         EmitFiles.replaceVars(
                 CreateManifestTask.class.getResourceAsStream('/manifest.yml'),
                 Paths.get("${project.buildDir}/deployment/manifest.yml"),
-                ['@serviceName@'   : distributionExtension().serviceName,
+                ['@serviceGroup@'  : distributionExtension().serviceGroup,
+                 '@serviceName@'   : distributionExtension().serviceName,
                  '@serviceVersion@': String.valueOf(project.version)])
     }
 }

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist;
+package com.palantir.gradle.javadist
+
+import org.gradle.api.Project;
 
 class DistributionExtension {
 
@@ -29,6 +31,9 @@ class DistributionExtension {
             '-verbose:gc'
     ]
 
+    private final Project project
+
+    private String serviceGroup
     private String serviceName
     private String mainClass
     private List<String> args = []
@@ -38,8 +43,16 @@ class DistributionExtension {
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
 
+    DistributionExtension(Project project) {
+        this.project = project
+    }
+
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
+    }
+
+    void serviceGroup(String serviceGroup) {
+        this.serviceGroup = serviceGroup
     }
 
     public void mainClass(String mainClass) {
@@ -88,6 +101,10 @@ class DistributionExtension {
 
     public String getServiceName() {
         return serviceName
+    }
+
+    public String getServiceGroup() {
+        return serviceGroup ?: project.group
     }
 
     public String getMainClass() {

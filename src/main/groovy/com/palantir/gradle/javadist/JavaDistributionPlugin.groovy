@@ -27,7 +27,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         project.plugins.apply('java')
-        project.extensions.create('distribution', DistributionExtension)
+        project.extensions.create('distribution', DistributionExtension, project)
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
