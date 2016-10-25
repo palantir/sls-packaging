@@ -15,14 +15,15 @@
  */
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.DistributionExtension
-import com.palantir.gradle.javadist.JavaDistributionPlugin
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.jvm.application.tasks.CreateStartScripts
+
+import com.palantir.gradle.javadist.DistributionExtension
+import com.palantir.gradle.javadist.JavaDistributionPlugin
 
 class CreateStartScriptsTask extends CreateStartScripts {
 
@@ -48,8 +49,15 @@ class CreateStartScriptsTask extends CreateStartScripts {
                 winFileText = winFileText.replaceAll(
                         '("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)',
                         '$1%APP_HOME%\\\\lib\\\\' + manifestClasspathJarTask.archiveName + '$2')
-
                 winScriptFile.text = winFileText
+
+                def unixScriptFile = project.file getUnixScript()
+                def unixFileText = unixScriptFile.text
+
+                unixFileText = unixFileText.replaceAll(
+                        'CLASSPATH=\\$APP_HOME.*',
+                        'CLASSPATH=\\$APP_HOME/lib/' + manifestClasspathJarTask.archiveName)
+                unixScriptFile.text = unixFileText
             }
         }
     }

@@ -63,7 +63,7 @@ The `distribution` block offers the following options:
    no monitoring script will be generated.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
-   classpath is omitted from the generated Windows start script and instead inferred
+   classpath is omitted from the generated start scripts and instead inferred
    from a JAR file whose MANIFEST contains the classpath entries.
  * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.

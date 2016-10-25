@@ -16,17 +16,19 @@
 
 package com.palantir.gradle.javadist.tasks
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.javadist.JavaDistributionPlugin
-import groovy.transform.EqualsAndHashCode
+import java.nio.file.Files
+
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-import java.nio.file.Files
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.palantir.gradle.javadist.JavaDistributionPlugin
+
+import groovy.transform.EqualsAndHashCode
 
 class LaunchConfigTask extends BaseTask {
 
@@ -87,8 +89,13 @@ class LaunchConfigTask extends BaseTask {
         config.mainClass = distributionExtension().mainClass
         config.javaHome = distributionExtension().javaHome ?: ""
         config.args = args
-        config.classpath = relativizeToServiceLibDirectory(
-                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+        if (distributionExtension().isEnableManifestClasspath()) {
+            config.classpath = relativizeToServiceLibDirectory(
+                    project.tasks.getByName('manifestClasspathJar').outputs.files)
+        } else {
+            config.classpath = relativizeToServiceLibDirectory(
+                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+        }
         config.jvmOpts = distributionExtension().defaultJvmOpts
         return config
     }
