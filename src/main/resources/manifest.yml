@@ -2,3 +2,4 @@ manifest-version: 1.0
 product-group: @serviceGroup@
 product-name: @serviceName@
 product-version: @serviceVersion@
+product-type: service.v1
