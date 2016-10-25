@@ -87,6 +87,10 @@ The `go-java-launcher` and `init.sh` launchers additionally append the list of J
 options typically override earlier options (although this behavior is undefined and may be JVM-specific); this allows
 users to override the hard-coded options.
 
+#### Runtime environment variables
+Environment variables can be configured through the `env` blocks of `launcher-static.yml` and `launcher-custom.yml` as
+described in [configuration file](https://github.com/palantir/go-java-launcher). They are set by the launcher process
+before the Java process is executed.
 
 Packaging
 ---------
