@@ -31,7 +31,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
-            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.0.1'
+            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.0'
         }
 
         // Create tasks
