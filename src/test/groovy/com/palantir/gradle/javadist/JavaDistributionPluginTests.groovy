@@ -281,6 +281,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 javaHome 'foo'
                 args 'myArg1', 'myArg2'
                 checkArgs 'myCheckArg1', 'myCheckArg2'
+                env "key1": "val1",
+                    "key2": "val2"
             }'''.stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
@@ -307,6 +309,10 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 '-verbose:gc',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
+        expectedStaticConfig.setEnv([
+            "key1": "val1",
+            "key2": "val2"
+        ])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
                 file('dist/service-name-0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedStaticConfig == actualStaticConfig
