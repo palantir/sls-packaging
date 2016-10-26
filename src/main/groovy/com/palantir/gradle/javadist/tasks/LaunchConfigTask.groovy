@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.palantir.gradle.javadist.JavaDistributionPlugin
 import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
@@ -34,6 +35,7 @@ class LaunchConfigTask extends BaseTask {
     }
 
     @EqualsAndHashCode
+    @ToString
     public static class StaticLaunchConfig {
         // keep in sync with StaticLaunchConfig struct in go-java-launcher
         String configType = "java"
@@ -43,6 +45,7 @@ class LaunchConfigTask extends BaseTask {
         List<String> classpath
         List<String> jvmOpts
         List<String> args
+        Map<String,String> env
     }
 
     @TaskAction
@@ -68,6 +71,7 @@ class LaunchConfigTask extends BaseTask {
         config.classpath = relativizeToServiceLibDirectory(
                 project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
         config.jvmOpts = distributionExtension().defaultJvmOpts
+        config.env = distributionExtension().env
         return config
     }
 
