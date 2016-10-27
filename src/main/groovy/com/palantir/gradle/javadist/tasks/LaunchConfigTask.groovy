@@ -22,6 +22,8 @@ import com.palantir.gradle.javadist.JavaDistributionPlugin
 import groovy.transform.EqualsAndHashCode
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Files
@@ -45,15 +47,35 @@ class LaunchConfigTask extends BaseTask {
         List<String> args
     }
 
-    @TaskAction
-    void createConfig() {
-        writeConfig(createConfig(distributionExtension().args), "scripts/launcher-static.yml")
-        writeConfig(createConfig(distributionExtension().checkArgs), "scripts/launcher-check.yml")
+    @Input
+    Iterable<String> getArgs() {
+        return distributionExtension().args
     }
 
-    void writeConfig(StaticLaunchConfig config, String relativePath) {
+    @Input
+    Iterable<String> getCheckArgs() {
+        return distributionExtension().checkArgs
+    }
+
+    @OutputFile
+    public File getStaticLauncher() {
+        return new File("scripts/launcher-static.yml")
+    }
+
+    @OutputFile
+    public File getCheckLauncher() {
+        return new File("scripts/launcher-check.yml")
+    }
+
+    @TaskAction
+    void createConfig() {
+        writeConfig(createConfig(getArgs()), getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs()), getCheckLauncher())
+    }
+
+    void writeConfig(StaticLaunchConfig config, File scriptFile) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        def outfile = project.buildDir.toPath().resolve(relativePath)
+        def outfile = project.buildDir.toPath().resolve(scriptFile.toPath())
         Files.createDirectories(outfile.parent)
         outfile.withWriter { it ->
             mapper.writeValue(it, config)
