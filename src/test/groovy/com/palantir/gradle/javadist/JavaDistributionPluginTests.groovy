@@ -15,13 +15,14 @@
  */
 package com.palantir.gradle.javadist
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.javadist.tasks.LaunchConfigTask
+import java.nio.file.Files
+
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
-import java.nio.file.Files
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.palantir.gradle.javadist.tasks.LaunchConfigTask
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
@@ -334,10 +335,37 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.1/service/monitoring/bin/check.sh').exists()
     }
 
-    def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
+    def 'test manifest-classpath unix start script'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
+            distribution {
+                enableManifestClasspath true
+            }
+        '''.stripIndent()
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
+    }
+
+    def 'produces manifest-classpath jar and start script with no classpath length limitations'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar") }
             distribution {
                 enableManifestClasspath true
             }
@@ -347,26 +375,41 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
-        startScript.contains("-manifest-classpath-0.1.jar")
-        !startScript.contains("-classpath \"%CLASSPATH%\"")
+        String winStartScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
+        winStartScript.contains("-manifest-classpath-0.1.jar")
+        !winStartScript.contains("-classpath \"%CLASSPATH%\"")
+        String unixStartScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
+        unixStartScript.contains("-manifest-classpath-0.1.jar")
+        !unixStartScript.contains("external.jar")
         file('dist/service-name-0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
+        String launcher = file('dist/service-name-0.1/service/bin/launcher-static.yml', projectDir).text
+        !launcher.contains("external.jar")
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {
         given:
         createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar") }
+        '''.stripIndent()
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
-        !startScript.contains("-manifest-classpath-0.1.jar")
-        startScript.contains("-classpath \"%CLASSPATH%\"")
+        String winStartScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
+        !winStartScript.contains("-manifest-classpath-0.1.jar")
+        winStartScript.contains("-classpath \"%CLASSPATH%\"")
+
+        String unixStartScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
+        !unixStartScript.contains("-manifest-classpath-0.1.jar")
+        unixStartScript.contains("external.jar")
+
         !new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
+        String launcher = file('dist/service-name-0.1/service/bin/launcher-static.yml', projectDir).text
+        launcher.contains("external.jar")
     }
 
     def 'distTar artifact name is set during appropriate lifecycle events'() {

@@ -16,9 +16,10 @@
 
 package com.palantir.gradle.javadist.tasks
 
+import org.gradle.api.tasks.bundling.Jar
+
 import com.palantir.gradle.javadist.DistributionExtension
 import com.palantir.gradle.javadist.JavaDistributionPlugin
-import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Produces a JAR whose manifest's {@code Class-Path} entry lists exactly the JARs produced by the project's runtime
@@ -29,7 +30,7 @@ class ManifestClasspathJarTask extends Jar {
     public ManifestClasspathJarTask() {
         group = JavaDistributionPlugin.GROUP_NAME
         description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
-                "jar rather than command line argument on Windows, since Windows path sizes are limited."
+                "jar rather than command line argument to work around long path sizes."
         appendix = 'manifest-classpath'
 
         doFirst {

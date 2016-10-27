@@ -16,14 +16,16 @@
 
 package com.palantir.gradle.javadist
 
-import com.energizedwork.spock.extensions.TempDirectory
-import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import nebula.test.multiproject.MultiProjectIntegrationHelper
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
+
+import com.energizedwork.spock.extensions.TempDirectory
+
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import nebula.test.multiproject.MultiProjectIntegrationHelper
 import spock.lang.Specification
 
 public class GradleTestSpec extends Specification {
@@ -60,7 +62,7 @@ public class GradleTestSpec extends Specification {
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         proc.consumeProcessOutput(sout, serr)
         int result = proc.waitFor()
-        Assert.assertEquals(sprintf("Expected command '%s' to be successful", tasks.join(' ')), result, 0)
+        Assert.assertEquals(sprintf("Expected command '%s' to be successful", tasks.join(' ')), 0, result)
         sleep 1000 // wait for the Java process to actually run
         return sout.toString()
     }
