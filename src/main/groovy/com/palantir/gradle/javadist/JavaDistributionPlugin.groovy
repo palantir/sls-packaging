@@ -34,10 +34,6 @@ class JavaDistributionPlugin implements Plugin<Project> {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.0'
         }
 
-        project.ext.set ("distributionExtension", {
-            return project.extensions.findByType(DistributionExtension)
-        })
-
         def distributionExtension = project.extensions.findByType(DistributionExtension)
 
         // Create tasks
