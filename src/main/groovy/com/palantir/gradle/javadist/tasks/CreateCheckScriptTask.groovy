@@ -16,11 +16,11 @@
 
 package com.palantir.gradle.javadist.tasks
 
-import com.palantir.gradle.javadist.util.EmitFiles
 import com.palantir.gradle.javadist.JavaDistributionPlugin
+import com.palantir.gradle.javadist.util.EmitFiles
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-
-import java.nio.file.Paths
 
 class CreateCheckScriptTask extends BaseTask {
     CreateCheckScriptTask() {
@@ -28,14 +28,29 @@ class CreateCheckScriptTask extends BaseTask {
         description = "Generates healthcheck (service/monitoring/bin/check.sh) script."
     }
 
+    @Input
+    public String getServiceName() {
+        return distributionExtension().serviceName
+    }
+
+    @Input
+    public Iterable<String> getCheckArgs() {
+        return distributionExtension().checkArgs
+    }
+
+    @OutputFile
+    public File getOutputFile() {
+        return new File("${project.buildDir}/monitoring/check.sh")
+    }
+
     @TaskAction
     void createInitScript() {
         if (!distributionExtension().checkArgs.empty) {
             EmitFiles.replaceVars(
                     JavaDistributionPlugin.class.getResourceAsStream('/check.sh'),
-                    Paths.get("${project.buildDir}/monitoring/check.sh"),
-                    ['@serviceName@': distributionExtension().serviceName,
-                     '@checkArgs@': distributionExtension().checkArgs.iterator().join(' ')])
+                    getOutputFile().toPath(),
+                    ['@serviceName@': getServiceName(),
+                     '@checkArgs@': getCheckArgs().iterator().join(' ')])
                     .toFile()
                     .setExecutable(true)
         }
