@@ -52,6 +52,7 @@ program for a default run configuration:
         serviceName 'my-service'
         mainClass 'com.palantir.foo.bar.MyServiceMainClass'
         args 'server', 'var/conf/my-service.yml'
+        env 'KEY1': 'value1', 'KEY2': 'value1'
     }
 
 The `distribution` block offers the following options:
@@ -61,6 +62,9 @@ The `distribution` block offers the following options:
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
    no monitoring script will be generated.
+ * (optional) `env` a map of environment variables that will be placed into the `env` block
+   of the static launcher config. See [go-java-launcher](https://github.com/palantir/go-java-launcher)
+   for details on the custom environment block.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
    classpath is omitted from the generated Windows start script and instead inferred

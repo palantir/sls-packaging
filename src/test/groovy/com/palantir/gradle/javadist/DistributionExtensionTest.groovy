@@ -38,6 +38,9 @@ class DistributionExtensionTest extends Specification {
 
             excludeFromVar 'a', 'b'
             excludeFromVar 'c', 'd'
+
+            env 'a': 'b'
+            env 'c': 'd'
         }
 
         then:
@@ -45,6 +48,7 @@ class DistributionExtensionTest extends Specification {
         ext.checkArgs == ['a', 'b', 'c', 'd']
         ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['a', 'b', 'c', 'd']
         ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
+        ext.env == ['a': 'b', 'c': 'd']
     }
 
     def 'collection setters replace existing data'() {
@@ -61,6 +65,8 @@ class DistributionExtensionTest extends Specification {
             setDefaultJvmOpts(['c', 'd'])
             setExcludeFromVar(['a', 'b'])
             setExcludeFromVar(['c', 'd'])
+            setEnv(['a': 'b', 'c': 'd'])
+            setEnv(['foo': 'bar'])
         }
 
         then:
@@ -68,6 +74,7 @@ class DistributionExtensionTest extends Specification {
         ext.checkArgs == ['c', 'd']
         ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['c', 'd']
         ext.excludeFromVar == ['c', 'd']
+        ext.env == ['foo': 'bar']
     }
 
     def 'serviceGroup uses project group as default'() {

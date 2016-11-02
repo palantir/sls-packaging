@@ -39,6 +39,7 @@ class DistributionExtension {
     private List<String> args = []
     private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
+    private Map<String,String> env = [:]
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
@@ -91,6 +92,14 @@ class DistributionExtension {
         this.javaHome = javaHome
     }
 
+    public void setEnv(Map<String, String> env) {
+        this.env = env
+    }
+
+    public void env(Map<String, String> env) {
+        this.env.putAll(env)
+    }
+
     public void excludeFromVar(String... excludeFromVar) {
         this.excludeFromVar.addAll(excludeFromVar)
     }
@@ -125,6 +134,10 @@ class DistributionExtension {
 
     public boolean isEnableManifestClasspath() {
         return enableManifestClasspath
+    }
+
+    public Map<String, String> getEnv() {
+        return env
     }
 
     public String getJavaHome() {
