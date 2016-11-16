@@ -252,7 +252,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         then:
         // clobbers deployment/manifest.yml
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"product-name": "service-name"\n')
+        manifest.contains('"product-name": "service-name"')
 
         // check files in deployment/ copied successfully
         String actualConfiguration = file('dist/service-name-0.1/deployment/configuration.yml', projectDir).text
