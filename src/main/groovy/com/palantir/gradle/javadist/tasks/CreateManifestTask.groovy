@@ -17,7 +17,7 @@
 package com.palantir.gradle.javadist.tasks
 
 import com.palantir.gradle.javadist.JavaDistributionPlugin
-import com.palantir.gradle.javadist.util.EmitFiles
+import groovy.json.JsonOutput
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -43,6 +43,11 @@ class CreateManifestTask extends BaseTask {
         return String.valueOf(project.version)
     }
 
+    @Input
+    public Map<String, Object> getExtraProperties() {
+        return Collections.emptyMap();
+    }
+
     @OutputFile
     File getManifestFile() {
         return new File("${project.buildDir}/deployment/manifest.yml")
@@ -50,11 +55,12 @@ class CreateManifestTask extends BaseTask {
 
     @TaskAction
     void createManifest() {
-        EmitFiles.replaceVars(
-                CreateManifestTask.class.getResourceAsStream('/manifest.yml'),
-                getManifestFile().toPath(),
-                ['@serviceGroup@'  : getServiceGroup(),
-                 '@serviceName@'   : getServiceName(),
-                 '@serviceVersion@': getProjectVersion()])
+        getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson(getExtraProperties() + [
+                'manifest-version': '1.0',
+                'product-type': 'service.v1',
+                'product-group': getServiceGroup(),
+                'product-name': getServiceName(),
+                'product-version': getProjectVersion()
+        ])))
     }
 }
