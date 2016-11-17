@@ -45,7 +45,7 @@ class CreateManifestTask extends BaseTask {
 
     @Input
     public Map<String, Object> getExtraProperties() {
-        return Collections.emptyMap();
+        return distributionExtension().extraProperties
     }
 
     @OutputFile
