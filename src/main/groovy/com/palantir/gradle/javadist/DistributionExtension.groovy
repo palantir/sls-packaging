@@ -43,7 +43,7 @@ class DistributionExtension {
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
-    private Map<String, Object> extraProperties = [:]
+    private Map<String, Object> extraProperties = Collections.emptyMap()
 
     DistributionExtension(Project project) {
         this.project = project
