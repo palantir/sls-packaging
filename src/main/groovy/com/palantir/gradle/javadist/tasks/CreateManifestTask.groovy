@@ -44,8 +44,8 @@ class CreateManifestTask extends BaseTask {
     }
 
     @Input
-    public Map<String, Object> getExtraProperties() {
-        return distributionExtension().extraProperties
+    public Map<String, Object> getExtensionsBlock() {
+        return distributionExtension().extensionsBlock
     }
 
     @OutputFile
@@ -55,12 +55,13 @@ class CreateManifestTask extends BaseTask {
 
     @TaskAction
     void createManifest() {
-        getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson(getExtraProperties() + [
+        getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
                 'manifest-version': '1.0',
                 'product-type': 'service.v1',
                 'product-group': getServiceGroup(),
                 'product-name': getServiceName(),
-                'product-version': getProjectVersion()
+                'product-version': getProjectVersion(),
+                'extensions': getExtensionsBlock(),
         ])))
     }
 }
