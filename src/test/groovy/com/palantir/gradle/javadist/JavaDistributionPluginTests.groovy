@@ -460,10 +460,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 serviceName 'service-name'
                 mainClass 'test.Test'
                 defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
-                extensionsBlock = [
-                    'service-dependencies': [
-                        'com.palantir.compass:compass-server': ['1.75.0', '2.0.0']
-                    ]
+                manifestExtensions 'service-dependencies': [
+                    'com.palantir.compass:compass-server': ['1.75.0', '2.0.0']
                 ]
             }
 

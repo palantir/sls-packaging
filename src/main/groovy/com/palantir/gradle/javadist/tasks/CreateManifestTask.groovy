@@ -23,8 +23,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-import java.nio.file.Paths
-
 class CreateManifestTask extends DefaultTask {
 
     @Input
@@ -34,7 +32,7 @@ class CreateManifestTask extends DefaultTask {
     String serviceGroup
 
     @Input
-    Map<String, Object> extensionsBlock
+    Map<String, Object> manifestExtensions
 
     CreateManifestTask() {
         group = JavaDistributionPlugin.GROUP_NAME
@@ -59,13 +57,13 @@ class CreateManifestTask extends DefaultTask {
                 'product-group': serviceGroup,
                 'product-name': serviceName,
                 'product-version': projectVersion,
-                'extensions': extensionsBlock,
+                'extensions': manifestExtensions,
         ])))
     }
 
-    public void configure(String serviceName, String serviceGroup, Map<String, Object> extensionsBlock) {
+    public void configure(String serviceName, String serviceGroup, Map<String, Object> manifestExtensions) {
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
-        this.extensionsBlock = extensionsBlock
+        this.manifestExtensions = manifestExtensions
     }
 }

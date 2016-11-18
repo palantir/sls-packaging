@@ -41,6 +41,9 @@ class DistributionExtensionTest extends Specification {
 
             env 'a': 'b'
             env 'c': 'd'
+
+            manifestExtensions 'a': 'b'
+            manifestExtensions 'c': 'd'
         }
 
         then:
@@ -49,6 +52,7 @@ class DistributionExtensionTest extends Specification {
         ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['a', 'b', 'c', 'd']
         ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
         ext.env == ['a': 'b', 'c': 'd']
+        ext.manifestExtensions == ['a': 'b', 'c': 'd']
     }
 
     def 'collection setters replace existing data'() {
@@ -67,6 +71,8 @@ class DistributionExtensionTest extends Specification {
             setExcludeFromVar(['c', 'd'])
             setEnv(['a': 'b', 'c': 'd'])
             setEnv(['foo': 'bar'])
+            setManifestExtensions(['a': 'b', 'c': 'd'])
+            setManifestExtensions(['foo': 'bar'])
         }
 
         then:

@@ -71,7 +71,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
             manifest.configure(
                     distributionExtension.serviceName,
                     distributionExtension.serviceGroup,
-                    distributionExtension.extensionsBlock,
+                    distributionExtension.manifestExtensions,
             )
         }
 

@@ -43,7 +43,7 @@ class DistributionExtension {
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
-    private Map<String, Object> extensionsBlock = Collections.emptyMap()
+    private Map<String, Object> manifestExtensions = [:]
 
     DistributionExtension(Project project) {
         this.project = project
@@ -109,14 +109,16 @@ class DistributionExtension {
         this.excludeFromVar = excludeFromVar.toList()
     }
 
-    public Map<String, Object> getExtensionsBlock() {
-        return this.extensionsBlock;
+    public Map<String, Object> getManifestExtensions() {
+        return this.manifestExtensions;
     }
 
-    public void setExtensionsBlock(Map<String, Object> extensionsBlock) {
-        Map<String, Object> copy = new LinkedHashMap<>();
-        copy.putAll(extensionsBlock);
-        this.extensionsBlock = Collections.unmodifiableMap(copy);
+    public void setManifestExtensions(Map<String, Object> manifestExtensions) {
+        this.manifestExtensions = manifestExtensions;
+    }
+
+    public void manifestExtensions(Map<String, Object> manifestExtensions) {
+        this.manifestExtensions.putAll(manifestExtensions)
     }
 
     public String getServiceName() {
