@@ -33,6 +33,9 @@ class CreateManifestTask extends DefaultTask {
     @Input
     String serviceGroup
 
+    @Input
+    Map<String, Object> extensionsBlock
+
     CreateManifestTask() {
         group = JavaDistributionPlugin.GROUP_NAME
         description = "Generates a simple yaml file describing the package content."
@@ -41,11 +44,6 @@ class CreateManifestTask extends DefaultTask {
     @Input
     public String getProjectVersion() {
         return String.valueOf(project.version)
-    }
-
-    @Input
-    public Map<String, Object> getExtensionsBlock() {
-        return distributionExtension().extensionsBlock
     }
 
     @OutputFile
@@ -58,15 +56,16 @@ class CreateManifestTask extends DefaultTask {
         getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
                 'manifest-version': '1.0',
                 'product-type': 'service.v1',
-                'product-group': getServiceGroup(),
-                'product-name': getServiceName(),
-                'product-version': getProjectVersion(),
-                'extensions': getExtensionsBlock(),
+                'product-group': serviceGroup,
+                'product-name': serviceName,
+                'product-version': projectVersion,
+                'extensions': extensionsBlock,
         ])))
     }
 
-    public void configure(String serviceName, String serviceGroup) {
+    public void configure(String serviceName, String serviceGroup, Map<String, Object> extensionsBlock) {
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
+        this.extensionsBlock = extensionsBlock
     }
 }
