@@ -68,7 +68,11 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         Task manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
-            manifest.configure(distributionExtension.serviceName, distributionExtension.serviceGroup)
+            manifest.configure(
+                    distributionExtension.serviceName,
+                    distributionExtension.serviceGroup,
+                    distributionExtension.manifestExtensions,
+            )
         }
 
         Task distTar = DistTarTask.createDistTarTask(project, 'distTar')

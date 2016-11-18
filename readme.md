@@ -53,6 +53,7 @@ program for a default run configuration:
         mainClass 'com.palantir.foo.bar.MyServiceMainClass'
         args 'server', 'var/conf/my-service.yml'
         env 'KEY1': 'value1', 'KEY2': 'value1'
+        manifestExtensions 'KEY3': 'value2'
     }
 
 The `distribution` block offers the following options:
@@ -76,6 +77,8 @@ The `distribution` block offers the following options:
    nothing in `${projectDir}/var/data` is copied.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
+   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
 
 #### JVM Options
 The list of JVM options passed to the Java processes launched through a package's start-up scripts is obtained by

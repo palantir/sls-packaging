@@ -43,6 +43,7 @@ class DistributionExtension {
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
+    private Map<String, Object> manifestExtensions = [:]
 
     DistributionExtension(Project project) {
         this.project = project
@@ -106,6 +107,18 @@ class DistributionExtension {
 
     public void setExcludeFromVar(Iterable<String> excludeFromVar) {
         this.excludeFromVar = excludeFromVar.toList()
+    }
+
+    public Map<String, Object> getManifestExtensions() {
+        return this.manifestExtensions;
+    }
+
+    public void setManifestExtensions(Map<String, Object> manifestExtensions) {
+        this.manifestExtensions = manifestExtensions;
+    }
+
+    public void manifestExtensions(Map<String, Object> manifestExtensions) {
+        this.manifestExtensions.putAll(manifestExtensions)
     }
 
     public String getServiceName() {

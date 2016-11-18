@@ -17,13 +17,11 @@
 package com.palantir.gradle.javadist.tasks
 
 import com.palantir.gradle.javadist.JavaDistributionPlugin
-import com.palantir.gradle.javadist.util.EmitFiles
+import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-
-import java.nio.file.Paths
 
 class CreateManifestTask extends DefaultTask {
 
@@ -32,6 +30,9 @@ class CreateManifestTask extends DefaultTask {
 
     @Input
     String serviceGroup
+
+    @Input
+    Map<String, Object> manifestExtensions
 
     CreateManifestTask() {
         group = JavaDistributionPlugin.GROUP_NAME
@@ -50,16 +51,19 @@ class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     void createManifest() {
-        EmitFiles.replaceVars(
-                CreateManifestTask.class.getResourceAsStream('/manifest.yml'),
-                getManifestFile().toPath(),
-                ['@serviceGroup@'  : serviceGroup,
-                 '@serviceName@'   : serviceName,
-                 '@serviceVersion@': getProjectVersion()])
+        getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
+                'manifest-version': '1.0',
+                'product-type': 'service.v1',
+                'product-group': serviceGroup,
+                'product-name': serviceName,
+                'product-version': projectVersion,
+                'extensions': manifestExtensions,
+        ])))
     }
 
-    public void configure(String serviceName, String serviceGroup) {
+    public void configure(String serviceName, String serviceGroup, Map<String, Object> manifestExtensions) {
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
+        this.manifestExtensions = manifestExtensions
     }
 }

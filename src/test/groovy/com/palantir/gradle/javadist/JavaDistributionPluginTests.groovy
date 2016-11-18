@@ -219,7 +219,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('product-version: 0.1\n')
+        manifest.contains('"product-version": "0.1"')
     }
 
     def 'manifest file contains expected fields'() {
@@ -231,11 +231,12 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('manifest-version: 1.0\n')
-        manifest.contains('product-group: service-group\n')
-        manifest.contains('product-name: service-name\n')
-        manifest.contains('product-version: 0.1\n')
-        manifest.contains('product-type: service.v1\n')
+        manifest.contains('"manifest-version": "1.0"')
+        manifest.contains('"product-group": "service-group"')
+        manifest.contains('"product-name": "service-name"')
+        manifest.contains('"product-version": "0.1"')
+        manifest.contains('"product-type": "service.v1"')
+        manifest.replaceAll(/\s/, '').contains('"extensions":{"service-dependencies":{"com.palantir.compass:compass-server":["1.75.0","2.0.0"]}}')
     }
 
     def 'produce distribution bundle with files in deployment/'() {
@@ -252,7 +253,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         then:
         // clobbers deployment/manifest.yml
         String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('product-name: service-name\n')
+        manifest.contains('"product-name": "service-name"')
 
         // check files in deployment/ copied successfully
         String actualConfiguration = file('dist/service-name-0.1/deployment/configuration.yml', projectDir).text
@@ -459,6 +460,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 serviceName 'service-name'
                 mainClass 'test.Test'
                 defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
+                manifestExtensions 'service-dependencies': [
+                    'com.palantir.compass:compass-server': ['1.75.0', '2.0.0']
+                ]
             }
 
             sourceCompatibility = '1.7'
