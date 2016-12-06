@@ -53,7 +53,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         project.afterEvaluate {
             launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
-                distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env)
+                distributionExtension.refreshArgs, distributionExtension.defaultJvmOpts, distributionExtension.javaHome,
+                distributionExtension.env)
         }
 
         Task initScript = project.tasks.create('createInitScript', CreateInitScriptTask)

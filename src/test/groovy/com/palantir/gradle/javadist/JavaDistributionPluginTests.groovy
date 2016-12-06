@@ -25,12 +25,13 @@ import java.nio.file.Files
 
 class JavaDistributionPluginTests extends GradleTestSpec {
 
-    def 'produce distribution bundle and check start, stop, restart, check behavior'() {
+    def 'produce distribution bundle and check start, stop, restart, check, refresh behavior'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
                 checkArgs 'healthcheck'
+                refreshArgs 'refresh'
             }
         '''.stripIndent()
         file('var/conf/launcher-custom.yml') << '''
@@ -46,6 +47,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         public class Test {
             public static void main(String[] args) throws InterruptedException {
                 if (args.length > 0 && args[0].equals("healthcheck")) System.exit(0); // always healthy
+                if (args.length > 0 && args[0].equals("refresh")) System.exit(0);
 
                 if (!System.getProperty("custom.property").equals("myCustomValue")) {
                     throw new IllegalStateException("Expected custom.start.property to be set");
@@ -69,6 +71,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
         exec('dist/service-name-0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        exec('dist/service-name-0.1/service/bin/init.sh', 'refresh') ==~ /(?m)Refreshing 'service-name'\.\.\.\s+Done.*\n/
         exec('dist/service-name-0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
 

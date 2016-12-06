@@ -42,6 +42,7 @@ PIDFILE="var/run/$SERVICE.pid"
 STATIC_LAUNCHER_CONFIG="service/bin/launcher-static.yml"
 CUSTOM_LAUNCHER_CONFIG="var/conf/launcher-custom.yml"
 STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
+STATIC_LAUNCHER_REFRESH_CONFIG="service/bin/launcher-refresh.yml"
 
 case $ACTION in
 start)
@@ -144,6 +145,18 @@ check)
         exit 0
     else
         printf "%s\n" "Unhealthy"
+        exit $RESULT
+    fi
+;;
+refresh)
+    printf "%-50s" "Refreshing '$SERVICE'..."
+    $LAUNCHER_CMD $STATIC_LAUNCHER_REFRESH_CONFIG > var/log/$SERVICE-refresh.log 2>&1
+    RESULT=$?
+    if [ $RESULT -eq 0 ]; then
+        printf "%s\n" "Done"
+        exit 0
+    else
+        printf "%s\n" "Failed"
         exit $RESULT
     fi
 ;;
