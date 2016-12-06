@@ -43,6 +43,9 @@ class LaunchConfigTask extends DefaultTask {
     List<String> checkArgs
 
     @Input
+    List<String> refreshArgs
+
+    @Input
     List<String> defaultJvmOpts
 
     @Input
@@ -80,10 +83,16 @@ class LaunchConfigTask extends DefaultTask {
         return new File("scripts/launcher-check.yml")
     }
 
+    @OutputFile
+    public File getRefreshLauncher() {
+        return new File("scripts/launcher-refresh.yml")
+    }
+
     @TaskAction
     void createConfig() {
         writeConfig(createConfig(getArgs()), getStaticLauncher())
         writeConfig(createConfig(getCheckArgs()), getCheckLauncher())
+        writeConfig(createConfig(getRefreshArgs()), getRefreshLauncher())
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
@@ -113,10 +122,11 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String,String> env) {
+    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> refreshArgs, List<String> defaultJvmOpts, String javaHome, Map<String,String> env) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs
+        this.refreshArgs = refreshArgs
         this.defaultJvmOpts = defaultJvmOpts
         this.javaHome = javaHome
         this.env = env

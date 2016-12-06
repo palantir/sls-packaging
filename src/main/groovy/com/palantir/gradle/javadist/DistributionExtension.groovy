@@ -38,6 +38,7 @@ class DistributionExtension {
     private String mainClass
     private List<String> args = []
     private List<String> checkArgs = []
+    private List<String> refreshArgs = []
     private List<String> defaultJvmOpts = []
     private Map<String,String> env = [:]
     private boolean enableManifestClasspath = false
@@ -75,6 +76,14 @@ class DistributionExtension {
 
     public void setCheckArgs(Iterable<String> checkArgs) {
         this.checkArgs = checkArgs.toList()
+    }
+
+    public void refreshArgs(String... refreshArgs) {
+        this.refreshArgs.addAll(refreshArgs)
+    }
+
+    public void setRefreshArgs(Iterable<String> refreshArgs) {
+        this.refreshArgs = refreshArgs.toList()
     }
 
     public void defaultJvmOpts(String... defaultJvmOpts) {
@@ -139,6 +148,10 @@ class DistributionExtension {
 
     public List<String> getCheckArgs() {
         return checkArgs
+    }
+
+    public List<String> getRefreshArgs() {
+        return refreshArgs
     }
 
     public List<String> getDefaultJvmOpts() {
