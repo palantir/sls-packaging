@@ -25,8 +25,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Files
@@ -46,8 +46,9 @@ class LaunchConfigTask extends DefaultTask {
     List<String> defaultJvmOpts
 
     @Input
-    Map<String,String> env
+    Map<String, String> env
 
+    @Input
     @Optional
     String javaHome
 
@@ -67,7 +68,7 @@ class LaunchConfigTask extends DefaultTask {
         List<String> classpath
         List<String> jvmOpts
         List<String> args
-        Map<String,String> env
+        Map<String, String> env
     }
 
     @OutputFile
@@ -113,7 +114,7 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String,String> env) {
+    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs

@@ -72,6 +72,41 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         exec('dist/service-name-0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
 
+    def 'packaging tasks re-run after version change'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                enableManifestClasspath true
+            }
+         '''.stripIndent()
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+        buildFile << '''
+            version '0.2'
+        '''.stripIndent()
+
+        then:
+        def version02BuildOutput = runSuccessfully(':build', ':distTar', ':untar').output
+        version02BuildOutput ==~ /(?m)(?s).*^:createCheckScript UP-TO-DATE$.*/
+        version02BuildOutput ==~ /(?m)(?s).*^:createInitScript UP-TO-DATE$.*/
+        version02BuildOutput ==~ /(?m)(?s).*^:createLaunchConfig$.*/
+        version02BuildOutput ==~ /(?m)(?s).*^:createManifest$.*/
+        version02BuildOutput ==~ /(?m)(?s).*^:manifestClasspathJar$.*/
+        version02BuildOutput ==~ /(?m)(?s).*^:distTar$.*/
+        exec('dist/service-name-0.2/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        exec('dist/service-name-0.2/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
+    }
+
     def 'status reports when process name and id don"t match'() {
         given:
         createUntarBuildFile(buildFile)
