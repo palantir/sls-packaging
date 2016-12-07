@@ -23,8 +23,8 @@ import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -51,6 +51,9 @@ class LaunchConfigTask extends DefaultTask {
     @Input
     @Optional
     String javaHome
+
+    @InputFiles
+    FileCollection classpath
 
     LaunchConfigTask() {
         group = JavaDistributionPlugin.GROUP_NAME
@@ -101,8 +104,7 @@ class LaunchConfigTask extends DefaultTask {
         config.mainClass = mainClass
         config.javaHome = javaHome ?: ""
         config.args = args
-        config.classpath = relativizeToServiceLibDirectory(
-                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+        config.classpath = relativizeToServiceLibDirectory(classpath)
         config.jvmOpts = defaultJvmOpts
         config.env = env
         return config
@@ -114,12 +116,13 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env) {
+    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs
         this.defaultJvmOpts = defaultJvmOpts
         this.javaHome = javaHome
         this.env = env
+        this.classpath = classpath
     }
 }

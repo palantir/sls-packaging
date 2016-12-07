@@ -79,6 +79,11 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             distribution {
                 enableManifestClasspath true
             }
+            task untar02 (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.2.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
          '''.stripIndent()
         file('src/main/java/test/Test.java') << '''
         package test;
@@ -96,7 +101,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         '''.stripIndent()
 
         then:
-        def version02BuildOutput = runSuccessfully(':build', ':distTar', ':untar').output
+        def version02BuildOutput = runSuccessfully(':build', ':distTar', ':untar02').output
         version02BuildOutput ==~ /(?m)(?s).*^:createCheckScript UP-TO-DATE$.*/
         version02BuildOutput ==~ /(?m)(?s).*^:createInitScript UP-TO-DATE$.*/
         version02BuildOutput ==~ /(?m)(?s).*^:createLaunchConfig$.*/
