@@ -19,6 +19,7 @@ import com.palantir.gradle.javadist.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaPlugin
 
 class JavaDistributionPlugin implements Plugin<Project> {
 
@@ -53,7 +54,8 @@ class JavaDistributionPlugin implements Plugin<Project> {
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         project.afterEvaluate {
             launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
-                distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env)
+                distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
+                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
         }
 
         Task initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
