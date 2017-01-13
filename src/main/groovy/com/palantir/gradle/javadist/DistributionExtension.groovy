@@ -19,18 +19,6 @@ import org.gradle.api.Project;
 
 class DistributionExtension {
 
-    static final List<String> requiredJvmOpts = [
-            '-Djava.io.tmpdir=var/data/tmp',
-            '-XX:+PrintGCDateStamps',
-            '-XX:+PrintGCDetails',
-            '-XX:-TraceClassUnloading',
-            '-XX:+UseGCLogFileRotation',
-            '-XX:GCLogFileSize=10M',
-            '-XX:NumberOfGCLogFiles=10',
-            '-Xloggc:var/log/gc-%t-%p.log',
-            '-verbose:gc'
-    ]
-
     private final Project project
 
     private String serviceGroup
@@ -142,7 +130,7 @@ class DistributionExtension {
     }
 
     public List<String> getDefaultJvmOpts() {
-        return requiredJvmOpts + defaultJvmOpts
+        return defaultJvmOpts
     }
 
     public boolean isEnableManifestClasspath() {

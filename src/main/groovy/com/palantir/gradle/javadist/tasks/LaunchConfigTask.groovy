@@ -33,6 +33,18 @@ import java.nio.file.Files
 
 class LaunchConfigTask extends DefaultTask {
 
+    static final List<String> requiredJvmOpts = [
+            '-Djava.io.tmpdir=var/data/tmp',
+            '-XX:+PrintGCDateStamps',
+            '-XX:+PrintGCDetails',
+            '-XX:-TraceClassUnloading',
+            '-XX:+UseGCLogFileRotation',
+            '-XX:GCLogFileSize=10M',
+            '-XX:NumberOfGCLogFiles=10',
+            '-Xloggc:var/log/gc-%t-%p.log',
+            '-verbose:gc'
+    ]
+
     @Input
     String mainClass
 
@@ -86,8 +98,8 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs()), getStaticLauncher())
-        writeConfig(createConfig(getCheckArgs()), getCheckLauncher())
+        writeConfig(createConfig(getArgs(), requiredJvmOpts + defaultJvmOpts), getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs(), defaultJvmOpts), getCheckLauncher())
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
@@ -99,13 +111,13 @@ class LaunchConfigTask extends DefaultTask {
         }
     }
 
-    StaticLaunchConfig createConfig(List<String> args) {
+    StaticLaunchConfig createConfig(List<String> args, List<String> jvmOpts) {
         StaticLaunchConfig config = new StaticLaunchConfig()
         config.mainClass = mainClass
         config.javaHome = javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(classpath)
-        config.jvmOpts = defaultJvmOpts
+        config.jvmOpts = jvmOpts
         config.env = env
         return config
     }
