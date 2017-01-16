@@ -309,6 +309,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         String startScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
+        startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
     def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
