@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.javadist
+package com.palantir.gradle.dist.service
 
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-class DistributionExtensionTest extends Specification {
+class ServiceDistributionExtensionTest extends Specification {
     def 'collection modifiers are cumulative when varargs are given'() {
         given:
-        def ext = new DistributionExtension(null)
+        def ext = new ServiceDistributionExtension(null)
 
         when:
         ext.with {
@@ -57,7 +55,7 @@ class DistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new DistributionExtension(null)
+        def ext = new ServiceDistributionExtension(null)
 
         when:
         ext.with {
@@ -83,23 +81,4 @@ class DistributionExtensionTest extends Specification {
         ext.env == ['foo': 'bar']
     }
 
-    def 'serviceGroup uses project group as default'() {
-        when:
-        Project project = ProjectBuilder.builder().build()
-        project.group = "foo"
-
-        then:
-        new DistributionExtension(project).serviceGroup == "foo"
-    }
-
-    def 'serviceGroup can be overwritten'() {
-        when:
-        Project project = ProjectBuilder.builder().build()
-        project.group = "foo"
-
-        then:
-        def ext = new DistributionExtension(project)
-        ext.serviceGroup("bar")
-        ext.serviceGroup == "bar"
-    }
 }
