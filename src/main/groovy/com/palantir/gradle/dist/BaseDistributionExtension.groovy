@@ -5,7 +5,8 @@ import org.gradle.api.Project
 class BaseDistributionExtension {
 
     private static final Set<String> VALID_PRODUCT_TYPES = [
-            "service.v1"
+            "service.v1",
+            "asset.v1"
     ]
 
     private final Project project
