@@ -360,6 +360,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         def expectedCheckConfig = expectedStaticConfig
         expectedCheckConfig.setJvmOpts([
+                '-Djava.io.tmpdir=var/data/tmp',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])

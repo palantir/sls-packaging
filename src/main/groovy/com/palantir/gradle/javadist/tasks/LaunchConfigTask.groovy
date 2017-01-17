@@ -33,8 +33,11 @@ import java.nio.file.Files
 
 class LaunchConfigTask extends DefaultTask {
 
-    static final List<String> requiredJvmOpts = [
-            '-Djava.io.tmpdir=var/data/tmp',
+    static final List<String> tmpdirJvmOpts = [
+            '-Djava.io.tmpdir=var/data/tmp'
+    ]
+
+    static final List<String> gcJvmOpts = [
             '-XX:+PrintGCDateStamps',
             '-XX:+PrintGCDetails',
             '-XX:-TraceClassUnloading',
@@ -98,8 +101,8 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), requiredJvmOpts + defaultJvmOpts), getStaticLauncher())
-        writeConfig(createConfig(getCheckArgs(), defaultJvmOpts), getCheckLauncher())
+        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + defaultJvmOpts), getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts), getCheckLauncher())
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
