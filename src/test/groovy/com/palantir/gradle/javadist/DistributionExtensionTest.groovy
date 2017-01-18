@@ -49,7 +49,7 @@ class DistributionExtensionTest extends Specification {
         then:
         ext.args == ['a', 'b', 'c', 'd']
         ext.checkArgs == ['a', 'b', 'c', 'd']
-        ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['a', 'b', 'c', 'd']
+        ext.defaultJvmOpts == ['a', 'b', 'c', 'd']
         ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
         ext.env == ['a': 'b', 'c': 'd']
         ext.manifestExtensions == ['a': 'b', 'c': 'd']
@@ -78,7 +78,7 @@ class DistributionExtensionTest extends Specification {
         then:
         ext.args == ['c', 'd']
         ext.checkArgs == ['c', 'd']
-        ext.defaultJvmOpts == DistributionExtension.requiredJvmOpts + ['c', 'd']
+        ext.defaultJvmOpts == ['c', 'd']
         ext.excludeFromVar == ['c', 'd']
         ext.env == ['foo': 'bar']
     }
