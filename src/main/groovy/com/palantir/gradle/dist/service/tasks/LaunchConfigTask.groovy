@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.javadist.tasks
+package com.palantir.gradle.dist.service.tasks
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.javadist.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.gradle.api.DefaultTask
