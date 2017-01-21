@@ -4,27 +4,25 @@ import org.gradle.api.Project
 
 class BaseDistributionExtension {
 
-    private static final List<String> VALID_PRODUCT_TYPES = [
-            "service.v1",
-            "asset.v1",
-            "daemon.v1"
+    private static final Set<String> VALID_PRODUCT_TYPES = [
+            "service.v1"
     ]
 
     private final Project project
     private String serviceGroup
     private String serviceName
-    private String productType = "service.v1"
+    private String productType
     private Map<String, Object> manifestExtensions = [:]
 
     public BaseDistributionExtension(Project project) {
-        this.project = project;
+        this.project = project
     }
 
     public void serviceName(String serviceName) {
         this.serviceName = serviceName
     }
 
-    void serviceGroup(String serviceGroup) {
+    public void serviceGroup(String serviceGroup) {
         this.serviceGroup = serviceGroup
     }
 
@@ -34,6 +32,13 @@ class BaseDistributionExtension {
 
     public void manifestExtensions(Map<String, Object> manifestExtensions) {
         this.manifestExtensions.putAll(manifestExtensions)
+    }
+
+    public void productType(String type) {
+        if (!VALID_PRODUCT_TYPES.contains(type)) {
+            throw new IllegalArgumentException("Invalid product type '${type}' specified; supported types: ${VALID_PRODUCT_TYPES}.")
+        }
+        this.productType = type
     }
 
     public String getServiceName() {
@@ -50,12 +55,5 @@ class BaseDistributionExtension {
 
     public String getProductType() {
         return productType
-    }
-
-    public void setProductType(String type) {
-        if (!VALID_PRODUCT_TYPES.contains(type)) {
-            throw new IllegalArgumentException("Invalid product type specified: " + type)
-        }
-        this.productType = type
     }
 }

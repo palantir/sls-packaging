@@ -26,31 +26,13 @@ class BaseDistributionExtensionTest extends Specification {
         ext.serviceGroup == "bar"
     }
 
-    def 'productType uses service as default'() {
-        when:
-        def ext = new BaseDistributionExtension(null)
-
-        then:
-        ext.productType == "service.v1"
-    }
-
-    def 'productType can be overwritten'() {
-        when:
-        def ext = new BaseDistributionExtension(null)
-        ext.productType = "asset.v1"
-
-        then:
-        ext.productType == "asset.v1"
-    }
-
     def 'productType only accepts valid values'() {
         when:
         def ext = new BaseDistributionExtension(null)
-        ext.productType = "foobar"
+        ext.productType "foobar"
 
         then:
         def ex = thrown IllegalArgumentException
-        ex.message == "Invalid product type specified: foobar"
-
+        ex.message == "Invalid product type 'foobar' specified; supported types: [service.v1]."
     }
 }

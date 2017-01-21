@@ -31,7 +31,7 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
 
     ServiceDistributionExtension(Project project) {
         super(project)
-        setProductType("service.v1")
+        productType("service.v1")
     }
 
     public void mainClass(String mainClass) {
