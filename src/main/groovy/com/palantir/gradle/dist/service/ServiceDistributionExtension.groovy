@@ -20,8 +20,6 @@ import org.gradle.api.Project;
 
 class ServiceDistributionExtension extends BaseDistributionExtension {
 
-    private final Project project
-
     private String mainClass
     private List<String> args = []
     private List<String> checkArgs = []
@@ -33,7 +31,6 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
 
     ServiceDistributionExtension(Project project) {
         super(project)
-        this.project = project
         setProductType("service.v1")
     }
 

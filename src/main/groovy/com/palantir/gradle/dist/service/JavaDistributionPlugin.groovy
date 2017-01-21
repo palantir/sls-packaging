@@ -33,7 +33,6 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
     static final String GROUP_NAME = "Distribution"
     static final String SLS_CONFIGURATION_NAME = "sls"
-    static final String SERVICE_PRODUCT_TYPE = "service.v1"
 
     void apply(Project project) {
         project.plugins.apply('java')
@@ -82,7 +81,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
             manifest.configure(
                     distributionExtension.serviceName,
                     distributionExtension.serviceGroup,
-                    SERVICE_PRODUCT_TYPE,
+                    distributionExtension.productType,
                     distributionExtension.manifestExtensions,
             )
         }
