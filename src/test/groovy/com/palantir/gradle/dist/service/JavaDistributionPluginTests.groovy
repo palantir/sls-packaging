@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist
+package com.palantir.gradle.dist.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.javadist.tasks.LaunchConfigTask
+import com.palantir.gradle.dist.GradleTestSpec
+import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 

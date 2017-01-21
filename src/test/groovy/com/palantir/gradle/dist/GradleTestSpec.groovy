@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.javadist
+package com.palantir.gradle.dist
 
 import com.energizedwork.spock.extensions.TempDirectory
 import groovy.transform.CompileStatic

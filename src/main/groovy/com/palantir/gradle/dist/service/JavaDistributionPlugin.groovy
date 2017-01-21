@@ -13,9 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist
+package com.palantir.gradle.dist.service
 
-import com.palantir.gradle.javadist.tasks.*
+import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
+import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask
+import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask
+import com.palantir.gradle.dist.service.tasks.CreateManifestTask
+import com.palantir.gradle.dist.service.tasks.CreateStartScriptsTask
+import com.palantir.gradle.dist.service.tasks.DistTarTask
+import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
+import com.palantir.gradle.dist.service.tasks.ManifestClasspathJarTask
+import com.palantir.gradle.dist.service.tasks.RunTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -25,17 +33,18 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
     static final String GROUP_NAME = "Distribution"
     static final String SLS_CONFIGURATION_NAME = "sls"
+    static final String SERVICE_PRODUCT_TYPE = "service.v1"
 
     void apply(Project project) {
         project.plugins.apply('java')
-        project.extensions.create('distribution', DistributionExtension, project)
+        project.extensions.create('distribution', ServiceDistributionExtension, project)
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.1'
         }
 
-        def distributionExtension = project.extensions.findByType(DistributionExtension)
+        def distributionExtension = project.extensions.findByType(ServiceDistributionExtension)
 
         // Create tasks
         Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")
@@ -73,6 +82,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
             manifest.configure(
                     distributionExtension.serviceName,
                     distributionExtension.serviceGroup,
+                    SERVICE_PRODUCT_TYPE,
                     distributionExtension.manifestExtensions,
             )
         }
