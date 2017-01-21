@@ -27,7 +27,7 @@ class BaseDistributionExtension {
     }
 
     public void setManifestExtensions(Map<String, Object> manifestExtensions) {
-        this.manifestExtensions = manifestExtensions;
+        this.manifestExtensions = manifestExtensions
     }
 
     public void manifestExtensions(Map<String, Object> manifestExtensions) {
