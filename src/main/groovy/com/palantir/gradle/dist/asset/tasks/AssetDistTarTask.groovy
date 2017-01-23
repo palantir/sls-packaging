@@ -1,5 +1,6 @@
-package com.palantir.gradle.dist.asset
+package com.palantir.gradle.dist.asset.tasks
 
+import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar

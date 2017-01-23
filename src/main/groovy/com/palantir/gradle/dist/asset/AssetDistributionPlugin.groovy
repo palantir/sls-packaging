@@ -1,6 +1,7 @@
 package com.palantir.gradle.dist.asset
 
-import com.palantir.gradle.dist.service.tasks.CreateManifestTask
+import com.palantir.gradle.dist.asset.tasks.AssetDistTarTask
+import com.palantir.gradle.dist.tasks.CreateManifestTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task

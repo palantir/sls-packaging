@@ -18,7 +18,7 @@ package com.palantir.gradle.dist.service
 import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask
-import com.palantir.gradle.dist.service.tasks.CreateManifestTask
+import com.palantir.gradle.dist.tasks.CreateManifestTask
 import com.palantir.gradle.dist.service.tasks.CreateStartScriptsTask
 import com.palantir.gradle.dist.service.tasks.DistTarTask
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
