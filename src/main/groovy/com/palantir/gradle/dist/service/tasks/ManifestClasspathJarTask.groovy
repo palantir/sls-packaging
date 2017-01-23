@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.javadist.tasks
+package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.javadist.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Jar
 

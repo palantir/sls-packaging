@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.javadist.tasks
+package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.javadist.JavaDistributionPlugin
-import com.palantir.gradle.javadist.util.EmitFiles
+import com.palantir.gradle.dist.service.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.util.EmitFiles
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-
-import java.nio.file.Paths
 
 class CreateCheckScriptTask extends DefaultTask {
 

@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.javadist
+package com.palantir.gradle.dist.service
 
+import com.palantir.gradle.dist.BaseDistributionExtension
 import org.gradle.api.Project;
 
-class DistributionExtension {
+class ServiceDistributionExtension extends BaseDistributionExtension {
 
-    private final Project project
-
-    private String serviceGroup
-    private String serviceName
     private String mainClass
     private List<String> args = []
     private List<String> checkArgs = []
@@ -31,18 +28,10 @@ class DistributionExtension {
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
-    private Map<String, Object> manifestExtensions = [:]
 
-    DistributionExtension(Project project) {
-        this.project = project
-    }
-
-    public void serviceName(String serviceName) {
-        this.serviceName = serviceName
-    }
-
-    void serviceGroup(String serviceGroup) {
-        this.serviceGroup = serviceGroup
+    ServiceDistributionExtension(Project project) {
+        super(project)
+        productType("service.v1")
     }
 
     public void mainClass(String mainClass) {
@@ -95,26 +84,6 @@ class DistributionExtension {
 
     public void setExcludeFromVar(Iterable<String> excludeFromVar) {
         this.excludeFromVar = excludeFromVar.toList()
-    }
-
-    public Map<String, Object> getManifestExtensions() {
-        return this.manifestExtensions;
-    }
-
-    public void setManifestExtensions(Map<String, Object> manifestExtensions) {
-        this.manifestExtensions = manifestExtensions;
-    }
-
-    public void manifestExtensions(Map<String, Object> manifestExtensions) {
-        this.manifestExtensions.putAll(manifestExtensions)
-    }
-
-    public String getServiceName() {
-        return serviceName
-    }
-
-    public String getServiceGroup() {
-        return serviceGroup ?: project.group
     }
 
     public String getMainClass() {

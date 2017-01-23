@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.javadist.tasks
+package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.javadist.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
@@ -30,6 +30,9 @@ class CreateManifestTask extends DefaultTask {
 
     @Input
     String serviceGroup
+
+    @Input
+    String productType
 
     @Input
     Map<String, Object> manifestExtensions
@@ -53,7 +56,7 @@ class CreateManifestTask extends DefaultTask {
     void createManifest() {
         getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
                 'manifest-version': '1.0',
-                'product-type': 'service.v1',
+                'product-type': productType,
                 'product-group': serviceGroup,
                 'product-name': serviceName,
                 'product-version': projectVersion,
@@ -61,9 +64,11 @@ class CreateManifestTask extends DefaultTask {
         ])))
     }
 
-    public void configure(String serviceName, String serviceGroup, Map<String, Object> manifestExtensions) {
+    public void configure(
+            String serviceName, String serviceGroup, String productType, Map<String, Object> manifestExtensions) {
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
+        this.productType = productType
         this.manifestExtensions = manifestExtensions
     }
 }
