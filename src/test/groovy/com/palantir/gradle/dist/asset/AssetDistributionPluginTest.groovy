@@ -42,6 +42,7 @@ class AssetDistributionPluginTest extends GradleTestSpec {
     def 'asset dirs are copied correctly'() {
         given:
         [file("static/foo/bar"), file("static/baz/abc")].each { it.write(".") }
+        file("static/abc").write("overwritten")
         buildFile << '''
             plugins {
                 id 'com.palantir.asset-distribution'
@@ -54,6 +55,7 @@ class AssetDistributionPluginTest extends GradleTestSpec {
                 serviceName 'asset-name'
                 assetsDir "static/foo", "maven"
                 assetsDir "static/baz", "maven"
+                assetsDir "static/abc", "maven"
             }
 
             // most convenient way to untar the dist is to use gradle
@@ -70,7 +72,9 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         then:
         file("dist/asset-name-0.2/asset/maven/abc").exists()
         file("dist/asset-name-0.2/asset/maven/bar").exists()
+        def lines = file("dist/asset-name-0.2/asset/maven/abc").readLines()
+        lines.size() == 1
+        lines.get(0) == "overwritten"
     }
-
 
 }
