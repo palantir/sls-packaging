@@ -77,11 +77,11 @@ status)
                 exit 0
             else
                 printf "%s\n" "Warning, Pid $PID appears to not correspond to service $SERVICE"
-                exit 0
             fi
         fi
-        printf "%s\n" "Process dead but pidfile exists"
-        exit 1
+        printf "%s\n" "Process dead but pidfile exists. Cleaning up."
+        rm -f $PIDFILE
+        exit 3
     else
         printf "%s\n" "Service not running"
         exit 3
