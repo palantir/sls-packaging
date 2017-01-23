@@ -9,7 +9,7 @@ class AssetDistributionExtension extends BaseDistributionExtension {
 
     AssetDistributionExtension(Project project) {
         super(project)
-        setProductType("asset.v1")
+        productType("asset.v1")
     }
 
     public Map<String, String> getAssetsDirs() {
