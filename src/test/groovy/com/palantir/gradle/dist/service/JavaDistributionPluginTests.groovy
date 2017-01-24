@@ -277,7 +277,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         manifest.contains('"product-name": "service-name"')
         manifest.contains('"product-version": "0.1"')
         manifest.contains('"product-type": "service.v1"')
-        manifest.replaceAll(/\s/, '').contains('"extensions":{"service-dependencies":{"com.palantir.compass:compass-server":["1.75.0","2.0.0"]}}')
+        manifest.replaceAll(/\s/, '').contains('"extensions":{"service-dependencies":{"com.palantir.service:test-server":["1.75.0","2.0.0"]}}')
     }
 
     def 'produce distribution bundle with files in deployment/'() {
@@ -506,7 +506,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 mainClass 'test.Test'
                 defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
                 manifestExtensions 'service-dependencies': [
-                    'com.palantir.compass:compass-server': ['1.75.0', '2.0.0']
+                    'com.palantir.service:test-server': ['1.75.0', '2.0.0']
                 ]
             }
 
