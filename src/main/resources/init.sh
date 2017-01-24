@@ -53,7 +53,7 @@ STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
 
 case $ACTION in
 start)
-    if service/bin/init.sh status > /dev/null 2>&1; then
+    if service/bin/init.sh status &> /dev/null; then
         echo "Process is already running"
         exit 0
     fi
@@ -95,7 +95,7 @@ status)
 ;;
 stop)
     printf "%-50s" "Stopping '$SERVICE'..."
-    if service/bin/init.sh status > /dev/null 2>&1; then
+    if service/bin/init.sh status &> /dev/null; then
         PID=$(cat $PIDFILE)
         kill $PID
         COUNTER=0
@@ -124,7 +124,7 @@ stop)
     fi
 ;;
 console)
-    if service/bin/init.sh status > /dev/null 2>&1; then
+    if service/bin/init.sh status &> /dev/null; then
         echo "Process is already running"
         exit 1
     fi
