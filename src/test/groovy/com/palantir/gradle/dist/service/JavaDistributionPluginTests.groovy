@@ -127,12 +127,15 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
-        Files.move(file('dist/service-name-0.1').toPath(), file('dist/foo').toPath())
+        createFile('dist/service-name-0.1/var/run/service-name.pid')
+        exec('/bin/bash', '-c', 'sleep 30 & echo $! > dist/service-name-0.1/var/run/service-name-0.1.pid')
 
         then:
-        exec('dist/foo/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        exec('dist/foo/service/bin/init.sh', 'status').contains('appears to not correspond to service service-name')
-        exec('dist/foo/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
+        execWithResult(1, 'dist/service-name-0.1/service/bin/init.sh', 'status').contains('appears to not correspond to service service-name')
+        // 'dead with pidfile' persist across status calls
+        execWithResult(1, 'dist/service-name-0.1/service/bin/init.sh', 'status').contains('Process dead but pidfile exists')
+        exec('dist/service-name-0.1/service/bin/init.sh', 'stop').contains('Service not running')
+        execWithResult(3, 'dist/service-name-0.1/service/bin/init.sh', 'status').contains('Service not running')
     }
 
     def 'produce distribution bundle and check var/log and var/run are excluded'() {
