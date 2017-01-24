@@ -130,8 +130,8 @@ A sample configuration for the Asset plugin:
 
     distribution {
         serviceName 'my-assets'
-        asset 'relative/path/to/assets', 'relocated/path/in/dist'
-        asset 'another/path, 'another/relocated/path'
+        assets 'relative/path/to/assets', 'relocated/path/in/dist'
+        assets 'another/path, 'another/relocated/path'
     }
 
 The complete list of configurable properties:
@@ -158,7 +158,7 @@ The example above, when applied to a project rooted at `~/project`, would create
             relocated/path/in/dist            # contents from `~/project/relative/path/to/assets/`
             another/relocated/path            # contents from `~/project/another/path`
 
-Note that repeated calls to `assetsDir` are processed in-order, and as such, it is possible to overwrite resources
+Note that repeated calls to `assets` are processed in-order, and as such, it is possible to overwrite resources
 by specifying that a later invocation be relocated to a previously used destination's ancestor directory.
 
 ### Packaging

@@ -501,7 +501,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         def result = run(":tasks").buildAndFail()
 
         then:
-        result.output.contains("The Asset distribution and the Java Service distribution plugins cannot be used in the same Gradle project.")
+        result.output.contains("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
     }
 
     private static def createUntarBuildFile(buildFile) {
