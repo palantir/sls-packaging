@@ -20,21 +20,21 @@ public class SlsProductVersions {
     );
 
     /**
-     * Returns tree iff the given string is a valid "orderable" SLS version.
+     * Returns true iff the given string is a valid "orderable" SLS version.
      */
     public static boolean isOrderableVersion(String version) {
         return Iterables.any(ORDERABLE_VERSION, pattern -> pattern.matcher(version).matches());
     }
 
     /**
-     * Returns tree iff the given string is a valid "non-orderable" SLS version.
+     * Returns true iff the given string is a valid "non-orderable" SLS version.
      */
     public static boolean isNonOrderableVersion(String version) {
         return NON_ORDERABLE_VERSION.matcher(version).matches();
     }
 
     /**
-     * Returns tree iff the given string is a valid "orderable" or "non-orderable" SLS version.
+     * Returns true iff the given string is a valid "orderable" or "non-orderable" SLS version.
      */
     public static boolean isValidVersion(String version) {
         // Note: Technically this condition is redundant this isOrderableVersion ==> isNonOrderableVersion.
