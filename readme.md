@@ -1,4 +1,4 @@
-# SLSv2 Distribution Gradle Plugins
+# SLS Distribution Gradle Plugins
 
 [![Build Status](https://circleci.com/gh/palantir/gradle-java-distribution.svg?style=shield)](https://circleci.com/gh/palantir/gradle-java-distribution)
 [![Coverage Status](https://coveralls.io/repos/github/palantir/gradle-java-distribution/badge.svg?branch=develop)](https://coveralls.io/github/palantir/gradle-java-distribution?branch=develop)
@@ -36,7 +36,7 @@ content of the package. The package will follow this structure:
             lib/
                 [jars]
             monitoring/
-                bin/ 
+                bin/
                     check.sh                  # monitoring script
         var/                                  # application configuration and data
 
@@ -52,49 +52,32 @@ or `var` directory, and instead utilize a top-level `asset` directory that can c
 
 ## Usage
 
-Apply the plugins using standard Gradle convention:
+### Java Service Distribution plugin
+
+Apply the plugin using standard Gradle convention:
 
     plugins {
         id 'com.palantir.java-distribution'
     }
 
-Or similarly for the asset dist plugin:
-
-    plugins {
-        id 'com.palantir.asset-distribution'
-    }
-
-Both the plugins allow you to configure some shared properties, e.g. the service name:
+A sample configuration for the Service plugin:
 
     distribution {
         serviceName 'my-service'
         serviceGroup 'my.service.group'
-    }
-
-The complete list of shared options:
-
- * `serviceName` the name of this service, used to construct the final artifact's file name.
- * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
-   Defaults to the group for the gradle project.
- * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
-   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
-
-Additionally, each plugin allows you to configure properties pertinent to the type of distribution it creates.
-
-### Java Service plugin configuration
-
-A sample configuration block for the Java Service plugin:
-
-    distribution {
-        serviceName 'my-service'
         mainClass 'com.palantir.foo.bar.MyServiceMainClass'
         args 'server', 'var/conf/my-service.yml'
         env 'KEY1': 'value1', 'KEY2': 'value1'
         manifestExtensions 'KEY3': 'value2'
     }
 
-And the complete list of available options:
+And the complete list of configurable properties:
 
+ * `serviceName` the name of this service, used to construct the final artifact's file name.
+ * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
+   Defaults to the configured "group" of the Gradle project, `project.group`.
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
+   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
@@ -135,21 +118,36 @@ Environment variables can be configured through the `env` blocks of `launcher-st
 described in [configuration file](https://github.com/palantir/go-java-launcher). They are set by the launcher process
 before the Java process is executed.
 
-### Asset plugin configuration
+### Asset Distribution plugin
+
+Apply the plugin using standard Gradle convention:
+
+    plugins {
+        id 'com.palantir.asset-distribution'
+    }
 
 A sample configuration for the Asset plugin:
 
     distribution {
         serviceName 'my-assets'
-        assetDir 'relative/path/to/assets', 'relocated/path/in/dist'
-        assetDir 'another/path, 'another/relocated/path'
+        asset 'relative/path/to/assets', 'relocated/path/in/dist'
+        asset 'another/path, 'another/relocated/path'
     }
 
-The complete list of available options:
+The complete list of configurable properties:
 
- * (optional) `assetsDir` accepts the path to a directory or file, relative from the root of the gradle project it is applied to,
-   and a path that the resource must be shipped under, relative to the top-level `asset` directory in the created dist.
- * (optional) `setAssetsDirs` resets the plugin's internal state to a provided map of (source dir -> destination dir).
+ * `serviceName` the name of this service, used to construct the final artifact's file name.
+ * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
+   Defaults to the configured "group" of the Gradle project, `project.group`.
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
+   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
+ * (optional) `assets <fromPath>` adds the specified file or directory (recursively) to the asset distribution,
+   preserving the directory structure. For example, `assets 'foo/bar'` yields files `foo/bar/baz/1.txt` and `foo/bar/2.txt` in the
+   asset distribution, assuming that the directory `foo/bar` contains files `baz/1.txt` and `2.txt`.
+ * (optional) `assets <fromPath> <toPath>` as above, but adds the specified files relative to `toPath` in the asset distribution.
+   For example, `assets 'foo/bar' 'baz'` yields files `baz/baz/1.txt` and `baz/2.txt` assuming that the directory `foo/bar` contains
+   the files `baz/1.txt` and `2.txt`.
+ * (optional) `setAssets <map<fromPath, toPath>>` as above, but removes all prior configured assets.
 
 The example above, when applied to a project rooted at `~/project`, would create a distribution with the following structure:
 
@@ -157,7 +155,7 @@ The example above, when applied to a project rooted at `~/project`, would create
         deployment/
             manifest.yml                      # simple package manifest
         asset/
-            relocated/path/in/dist			  # contents from `~/project/relative/path/to/assets/`
+            relocated/path/in/dist            # contents from `~/project/relative/path/to/assets/`
             another/relocated/path            # contents from `~/project/another/path`
 
 Note that repeated calls to `assetsDir` are processed in-order, and as such, it is possible to overwrite resources

@@ -6,24 +6,10 @@ class AssetDistributionPluginTest extends GradleTestSpec {
 
     def 'manifest file contains expected fields'() {
         given:
+        createUntarBuildFile(buildFile)
         buildFile << '''
-            plugins {
-                id 'com.palantir.asset-distribution'
-            }
-
-            project.group = 'service-group'
-
-            version '0.1'
-
             distribution {
                 serviceName 'asset-name'
-            }
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/asset-name-0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
             }
         '''.stripIndent()
 
@@ -41,28 +27,16 @@ class AssetDistributionPluginTest extends GradleTestSpec {
 
     def 'asset dirs are copied correctly'() {
         given:
-        [file("static/foo/bar"), file("static/baz/abc")].each { it.write(".") }
-        file("static/abc").write("overwritten")
+        file("static/foo/bar") << "."
+        file("static/baz/abc") << "."
+        file("static/abc") << "overwritten file"
+        createUntarBuildFile(buildFile)
         buildFile << '''
-            plugins {
-                id 'com.palantir.asset-distribution'
-            }
-
-            project.group = 'service-group'
-            version '0.2'
-
             distribution {
                 serviceName 'asset-name'
-                assetsDir "static/foo", "maven"
-                assetsDir "static/baz", "maven"
-                assetsDir "static/abc", "maven"
-            }
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/asset-name-0.2.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
+                assets "static/foo", "maven"
+                assets "static/baz", "maven"
+                assets "static/abc", "maven"
             }
         '''.stripIndent()
 
@@ -70,11 +44,44 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         runSuccessfully(':distTar', ':untar')
 
         then:
-        file("dist/asset-name-0.2/asset/maven/abc").exists()
-        file("dist/asset-name-0.2/asset/maven/bar").exists()
-        def lines = file("dist/asset-name-0.2/asset/maven/abc").readLines()
+        file("dist/asset-name-0.1/asset/maven/abc").exists()
+        file("dist/asset-name-0.1/asset/maven/bar").exists()
+        def lines = file("dist/asset-name-0.1/asset/maven/abc").readLines()
         lines.size() == 1
-        lines.get(0) == "overwritten"
+        lines.get(0) == "overwritten file"
     }
 
+    def 'fails when asset and service plugins are used'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.java-distribution'
+                id 'com.palantir.asset-distribution'
+            }
+        '''.stripIndent()
+
+        when:
+        def result = run(":tasks").buildAndFail()
+
+        then:
+        result.output.contains("The Asset distribution and the Java Service distribution plugins cannot be used in the same Gradle project.")
+    }
+
+    private static def createUntarBuildFile(buildFile) {
+        buildFile << '''
+            plugins {
+                id 'com.palantir.asset-distribution'
+            }
+
+            version 0.1
+            project.group = 'service-group'
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/asset-name-0.1.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+    }
 }

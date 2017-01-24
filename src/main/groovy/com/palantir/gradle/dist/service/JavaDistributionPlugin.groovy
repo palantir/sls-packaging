@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service
 
+import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask
@@ -24,6 +25,7 @@ import com.palantir.gradle.dist.service.tasks.DistTarTask
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import com.palantir.gradle.dist.service.tasks.ManifestClasspathJarTask
 import com.palantir.gradle.dist.service.tasks.RunTask
+import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -35,6 +37,9 @@ class JavaDistributionPlugin implements Plugin<Project> {
     static final String SLS_CONFIGURATION_NAME = "sls"
 
     void apply(Project project) {
+        if (project.getPlugins().hasPlugin(AssetDistributionPlugin)) {
+            throw new InvalidUserCodeException("The Asset distribution and the Java Service distribution plugins cannot be used in the same Gradle project.")
+        }
         project.plugins.apply('java')
         project.extensions.create('distribution', ServiceDistributionExtension, project)
 
