@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  * c.f. https://github.com/palantir/sls-spec/
  */
 public class SlsProductVersions {
-    private static final Pattern NON_ORDERABLE_VERSION = Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+[a-z0-9-]*$");
+    private static final Pattern NON_ORDERABLE_VERSION = Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[a-z0-9-]*$");
     private static final List<Pattern> ORDERABLE_VERSION = ImmutableList.of(
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[a-f0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]$"),

@@ -24,13 +24,13 @@ class SlsProductVersionsTest extends Specification {
         then:
         SlsProductVersions.isNonOrderableVersion('2.0.0-20-gaaaaaa')
         SlsProductVersions.isNonOrderableVersion('2.0.0-20-gaaaaaa')
-        SlsProductVersions.isNonOrderableVersion('1.2.4')
         SlsProductVersions.isNonOrderableVersion('2.0.0-beta1')
         SlsProductVersions.isNonOrderableVersion('2.0.0-rc1')
         SlsProductVersions.isNonOrderableVersion('2.0.0-beta1')
         SlsProductVersions.isNonOrderableVersion('2.0.0-foo')
         SlsProductVersions.isNonOrderableVersion('2.0.0-foo-g20-gaaaaaa')
 
+        !SlsProductVersions.isNonOrderableVersion('1.2.4')
         !SlsProductVersions.isNonOrderableVersion(' 2.0.0')
         !SlsProductVersions.isNonOrderableVersion('2.0.0 ')
     }
@@ -38,8 +38,8 @@ class SlsProductVersionsTest extends Specification {
     def 'verify valid version detection'() {
         when: true
         then:
-        SlsProductVersions.isValidVersion('1.2.4')
-        SlsProductVersions.isValidVersion('2.0.0-foo-g20-gaaaaaa')
+        SlsProductVersions.isValidVersion('1.2.4')  // orderable
+        SlsProductVersions.isValidVersion('2.0.0-foo-g20-gaaaaaa')  // non-orderable
 
         !SlsProductVersions.isValidVersion(' 2.0.0')
         !SlsProductVersions.isValidVersion('2.0.0 ')
