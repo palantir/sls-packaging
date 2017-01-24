@@ -46,11 +46,10 @@ public class GradleTestSpec extends Specification {
                 .withArguments(tasks)
                 .withPluginClasspath()
                 .withDebug(true)
-                .build()
     }
 
     protected def runSuccessfully(String... tasks) {
-        BuildResult buildResult = run(tasks)
+        BuildResult buildResult = run(tasks).build()
         tasks.each { buildResult.task(it).outcome == TaskOutcome.SUCCESS }
         return buildResult
     }

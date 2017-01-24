@@ -1,7 +1,9 @@
 package com.palantir.gradle.dist.asset
 
 import com.palantir.gradle.dist.asset.tasks.AssetDistTarTask
+import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import com.palantir.gradle.dist.tasks.CreateManifestTask
+import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,6 +16,9 @@ class AssetDistributionPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        if (project.getPlugins().hasPlugin(JavaDistributionPlugin)) {
+            throw new InvalidUserCodeException("The Asset distribution and the Java Service distribution plugins cannot be used in the same Gradle project.")
+        }
         project.extensions.create("distribution", AssetDistributionExtension, project)
 
         def distributionExtension = project.extensions.findByType(AssetDistributionExtension)
@@ -31,7 +36,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
         Tar distTar = AssetDistTarTask.createAssetDistTarTask(project, 'distTar')
 
         project.afterEvaluate {
-            AssetDistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.assetsDirs)
+            AssetDistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.assets)
         }
 
         project.configurations.create(SLS_CONFIGURATION_NAME)

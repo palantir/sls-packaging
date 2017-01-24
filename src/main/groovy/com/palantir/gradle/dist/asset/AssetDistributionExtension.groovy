@@ -5,22 +5,26 @@ import org.gradle.api.Project
 
 class AssetDistributionExtension extends BaseDistributionExtension {
 
-    private Map<String, String> assetsDirs = [:]
+    private Map<String, String> assets = [:]
 
     AssetDistributionExtension(Project project) {
         super(project)
         productType("asset.v1")
     }
 
-    public Map<String, String> getAssetsDirs() {
-        return assetsDirs
+    public Map<String, String> getAssets() {
+        return assets
     }
 
-    public void assetsDir(String relativeSourcePath, String relativeDestinationPath) {
-        this.assetsDirs.put(relativeSourcePath, relativeDestinationPath)
+    public void assets(String relativeSourcePath) {
+        this.assets.put(relativeSourcePath, relativeSourcePath)
     }
 
-    public void setAssetsDirs(Map<String, String> assets) {
-        this.assetsDirs = assets
+    public void assets(String relativeSourcePath, String relativeDestinationPath) {
+        this.assets.put(relativeSourcePath, relativeDestinationPath)
+    }
+
+    public void setAssets(Map<String, String> assets) {
+        this.assets = assets
     }
 }

@@ -25,12 +25,17 @@ class AssetDistributionExtensionTest extends Specification {
 
         when:
         ext.with {
-            assetsDir "path/to/src", "relocated/dest"
-            assetsDir "path/to/src2", "relocated/dest2"
+            assets "path/to/foo"
+            assets "path/to/src", "relocated/dest"
+            assets "path/to/src2", "relocated/dest2"
         }
 
         then:
-        ext.assetsDirs == ["path/to/src": "relocated/dest", "path/to/src2": "relocated/dest2"]
+        ext.assets == [
+                "path/to/src" : "relocated/dest",
+                "path/to/src2": "relocated/dest2",
+                "path/to/foo" : "path/to/foo"
+        ]
     }
 
     def 'collection setters replace existing data'() {
@@ -39,11 +44,11 @@ class AssetDistributionExtensionTest extends Specification {
 
         when:
         ext.with {
-            assetsDir "path/to/src", "relocated/dest"
-            setAssetsDirs(["path/to/src2": "relocated/dest2"])
+            assets "path/to/src", "relocated/dest"
+            setAssets(["path/to/src2": "relocated/dest2"])
         }
 
         then:
-        ext.assetsDirs == ["path/to/src2": "relocated/dest2"]
+        ext.assets == ["path/to/src2": "relocated/dest2"]
     }
 }
