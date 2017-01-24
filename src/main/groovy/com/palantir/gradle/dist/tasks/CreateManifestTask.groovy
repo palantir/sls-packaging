@@ -26,6 +26,11 @@ import org.gradle.api.tasks.TaskAction
 
 class CreateManifestTask extends DefaultTask {
 
+    CreateManifestTask() {
+        group = JavaDistributionPlugin.GROUP_NAME
+        description = "Generates a simple yaml file describing the package content."
+    }
+
     @Input
     String serviceName
 
@@ -37,11 +42,6 @@ class CreateManifestTask extends DefaultTask {
 
     @Input
     Map<String, Object> manifestExtensions
-
-    CreateManifestTask() {
-        group = JavaDistributionPlugin.GROUP_NAME
-        description = "Generates a simple yaml file describing the package content."
-    }
 
     @Input
     String getProjectVersion() {
@@ -73,7 +73,7 @@ class CreateManifestTask extends DefaultTask {
         ])))
     }
 
-    public void configure(
+    void configure(
             String serviceName, String serviceGroup, String productType, Map<String, Object> manifestExtensions) {
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup

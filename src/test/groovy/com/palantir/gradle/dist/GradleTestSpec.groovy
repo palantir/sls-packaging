@@ -40,7 +40,7 @@ public class GradleTestSpec extends Specification {
         println("Build directory: \n" + projectDir.absolutePath)
     }
 
-    protected def run(String... tasks) {
+    protected run(String... tasks) {
         return GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withArguments(tasks)
@@ -48,7 +48,7 @@ public class GradleTestSpec extends Specification {
                 .withDebug(true)
     }
 
-    protected def runSuccessfully(String... tasks) {
+    protected runSuccessfully(String... tasks) {
         BuildResult buildResult = run(tasks).build()
         tasks.each { buildResult.task(it).outcome == TaskOutcome.SUCCESS }
         return buildResult
