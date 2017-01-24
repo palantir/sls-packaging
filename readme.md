@@ -1,13 +1,21 @@
-Java Distribution Gradle Plugin
-================================
+# SLS Distribution Gradle Plugins
+
 [![Build Status](https://circleci.com/gh/palantir/gradle-java-distribution.svg?style=shield)](https://circleci.com/gh/palantir/gradle-java-distribution)
 [![Coverage Status](https://coveralls.io/repos/github/palantir/gradle-java-distribution/badge.svg?branch=develop)](https://coveralls.io/github/palantir/gradle-java-distribution?branch=develop)
 [![Gradle Plugins Release](https://api.bintray.com/packages/palantir/releases/gradle-java-distribution/images/download.svg)](https://plugins.gradle.org/plugin/com.palantir.java-distribution)
 
-Similar to the standard application plugin, this plugin facilitates packaging
-Gradle projects for easy distribution and execution. This distribution chooses
-different packaging conventions that attempt to split immutable files from
-mutable state and configuration.
+A set of gradle plugins that facilitate packaging projects for distributions
+conforming to the [Service Layout Specification](https://github.com/palantir/sls-spec).
+
+The Java Service and Asset plugins cannot both be applied to the same gradle project, and
+distributions from both are produced as a gzipped tar named `[service-name]-[project-version].sls.tgz`.
+
+## Java Service Distribution Gradle Plugin
+
+Similar to the standard application plugin, this plugin helps package Java
+Gradle projects for easy distribution and execution. This distribution conforms with the
+[SLS service layout conventions](https://github.com/palantir/sls-spec/blob/master/layout.md#services-and-daemons)
+ that attempt to split immutable files from mutable state and configuration.
 
 In particular, this plugin packages a project into a common deployment structure
 with a simple start script, daemonizing script, and, a manifest describing the
@@ -28,37 +36,48 @@ content of the package. The package will follow this structure:
             lib/
                 [jars]
             monitoring/
-                bin/ 
+                bin/
                     check.sh                  # monitoring script
         var/                                  # application configuration and data
 
 The `service/bin/` directory contains both Gradle-generated launcher scripts (`[service-name]` and `[service-name].bat`)
 and [go-java-launcher](https://github.com/palantir/go-java-launcher) launcher binaries.
 
-Packages are produced as gzipped tar named `[service-name]-[project-version].sls.tgz`.
+## Asset Distribution Gradle Plugin
 
-Usage
------
+This plugin helps package static files and directories into a distribution that conforms with the
+[SLS asset layout conventions](https://github.com/palantir/sls-spec/blob/master/layout.md#assets).
+Asset distributions differ from service distributions in that they do not have a top-level `service`
+or `var` directory, and instead utilize a top-level `asset` directory that can contain arbitrary files.
+
+## Usage
+
+### Java Service Distribution plugin
+
 Apply the plugin using standard Gradle convention:
 
     plugins {
         id 'com.palantir.java-distribution'
     }
 
-Set the service name, main class, and optionally the arguments to pass to the
-program for a default run configuration:
+A sample configuration for the Service plugin:
 
     distribution {
         serviceName 'my-service'
+        serviceGroup 'my.service.group'
         mainClass 'com.palantir.foo.bar.MyServiceMainClass'
         args 'server', 'var/conf/my-service.yml'
         env 'KEY1': 'value1', 'KEY2': 'value1'
         manifestExtensions 'KEY3': 'value2'
     }
 
-The `distribution` block offers the following options:
+And the complete list of configurable properties:
 
  * `serviceName` the name of this service, used to construct the final artifact's file name.
+ * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
+   Defaults to the configured "group" of the Gradle project, `project.group`.
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
+   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
@@ -77,10 +96,9 @@ The `distribution` block offers the following options:
    nothing in `${projectDir}/var/data` is copied.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
- * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
-   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
 
 #### JVM Options
+
 The list of JVM options passed to the Java processes launched through a package's start-up scripts is obtained by
 concatenating the following list of hard-coded *required options* and the list of options specified in
 `distribution.defaultJvmOpts`:
@@ -95,15 +113,70 @@ options typically override earlier options (although this behavior is undefined 
 users to override the hard-coded options.
 
 #### Runtime environment variables
+
 Environment variables can be configured through the `env` blocks of `launcher-static.yml` and `launcher-custom.yml` as
 described in [configuration file](https://github.com/palantir/go-java-launcher). They are set by the launcher process
 before the Java process is executed.
 
-Packaging
----------
+### Asset Distribution plugin
+
+Apply the plugin using standard Gradle convention:
+
+    plugins {
+        id 'com.palantir.asset-distribution'
+    }
+
+A sample configuration for the Asset plugin:
+
+    distribution {
+        serviceName 'my-assets'
+        assets 'relative/path/to/assets', 'relocated/path/in/dist'
+        assets 'another/path, 'another/relocated/path'
+    }
+
+The complete list of configurable properties:
+
+ * `serviceName` the name of this service, used to construct the final artifact's file name.
+ * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
+   Defaults to the configured "group" of the Gradle project, `project.group`.
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
+   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
+ * (optional) `assets <fromPath>` adds the specified file or directory (recursively) to the asset distribution,
+   preserving the directory structure. For example, `assets 'foo/bar'` yields files `foo/bar/baz/1.txt` and `foo/bar/2.txt` in the
+   asset distribution, assuming that the directory `foo/bar` contains files `baz/1.txt` and `2.txt`.
+ * (optional) `assets <fromPath> <toPath>` as above, but adds the specified files relative to `toPath` in the asset distribution.
+   For example, `assets 'foo/bar' 'baz'` yields files `baz/baz/1.txt` and `baz/2.txt` assuming that the directory `foo/bar` contains
+   the files `baz/1.txt` and `2.txt`.
+ * (optional) `setAssets <map<fromPath, toPath>>` as above, but removes all prior configured assets.
+
+The example above, when applied to a project rooted at `~/project`, would create a distribution with the following structure:
+
+    [service-name]-[service-version]/
+        deployment/
+            manifest.yml                      # simple package manifest
+        asset/
+            relocated/path/in/dist            # contents from `~/project/relative/path/to/assets/`
+            another/relocated/path            # contents from `~/project/another/path`
+
+Note that repeated calls to `assets` are processed in-order, and as such, it is possible to overwrite resources
+by specifying that a later invocation be relocated to a previously used destination's ancestor directory.
+
+### Packaging
+
 To create a compressed, gzipped tar file, run the `distTar` task.
 
-As part of package creation, this plugin will create three shell scripts:
+The plugins expose the tar file as an artifact in the `sls` configuration, making it easy to
+share the artifact between sibling Gradle projects. For example:
+
+```groovy
+configurations { tarballs }
+
+dependencies {
+    tarballs project(path: ':other-project', configuration: 'sls')
+}
+```
+
+As part of package creation, the Java Service plugin will additionally create three shell scripts:
 
  * `service/bin/[service-name]`: a Gradle default start script for running
    the defined `mainClass`. This script is considered deprecated due to security issues with
@@ -126,32 +199,20 @@ As part of package creation, this plugin will create three shell scripts:
    `<mainClass> [checkArgs]` to obtain health status.
 
 
-In addition to creating these scripts, this plugin will merge the entire
-contents of `${projectDir}/service` and `${projectDir}/var` into the package.
+Furthermore, the Java Service plugin will merge the entire contents of
+`${projectDir}/service` and `${projectDir}/var` into the package.
 
-The plugin also exposes the tar file as an artifact in the `sls` configuration, making it easy to
-share the artifact between sibling Gradle projects. For example:
+### Tasks
 
-```groovy
-configurations { tarballs }
-
-dependencies {
-    tarballs project(path: ':other-project', configuration: 'sls')
-}
-```
-
-Running with Gradle
--------------------
-To run the main class using Gradle, run the `run` task.
-
-Tasks
------
  * `distTar`: creates the gzipped tar package
+ * `createManifest`: generates a simple yaml file describing the package content
+
+Specific to the Java Service plugin:
+
  * `createStartScripts`: generates standard Java start scripts
  * `createInitScript`: generates daemonizing init.sh script
- * `createManifest`: generates a simple yaml file describing the package content
  * `run`: runs the specified `mainClass` with default `args`
 
-License
--------
+## License
+
 This plugin is made available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0).

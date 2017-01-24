@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.service.tasks
+package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import groovy.json.JsonOutput

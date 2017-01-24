@@ -488,6 +488,22 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         file('child/build/exploded/my-service-0.1/deployment/manifest.yml')
     }
 
+    def 'fails when asset and service plugins are both applied'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.asset-distribution'
+                id 'com.palantir.java-distribution'
+            }
+        '''.stripIndent()
+
+        when:
+        def result = run(":tasks").buildAndFail()
+
+        then:
+        result.output.contains("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
+    }
+
     private static def createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
