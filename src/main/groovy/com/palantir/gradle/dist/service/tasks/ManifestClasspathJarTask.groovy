@@ -34,9 +34,10 @@ class ManifestClasspathJarTask {
             t.appendix = 'manifest-classpath'
 
             t.doFirst {
-                t.manifest.attributes("Class-Path": project.files(project.configurations.runtime)
-                        .collect { it.getName() }
-                        .join(' ') + ' ' + project.tasks.jar.archiveName  // TODO(rfink) Should use t.archiveName ?
+                t.manifest.attributes(
+                        "Class-Path": project.files(project.configurations.runtime)
+                                .collect { it.getName() }
+                                .join(' ') + ' ' + t.archiveName
                 )
             }
         }

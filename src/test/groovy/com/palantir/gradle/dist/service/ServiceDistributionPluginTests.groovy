@@ -23,7 +23,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 
-import java.nio.file.Files
+import java.util.zip.ZipFile
 
 class ServiceDistributionPluginTests extends GradleTestSpec {
 
@@ -452,6 +452,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
             distribution {
                 enableManifestClasspath true
             }
+            dependencies {
+              compile "com.google.guava:guava:19.0"
+            }
         '''.stripIndent()
 
         when:
@@ -461,8 +464,11 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
         startScript.contains("-manifest-classpath-0.0.1.jar")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
-        file('dist/service-name-0.0.1/service/lib/').listFiles()
+        def classpathJar = file('dist/service-name-0.0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
+        classpathJar.exists()
+        readFromZip(classpathJar, "META-INF/MANIFEST.MF")
+                .contains('Class-Path: guava-19.0.jar produces-manifest-') // etc
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {
@@ -594,5 +600,11 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 dependsOn distTar
             }
         '''.stripIndent()
+    }
+
+    def readFromZip(File zipFile, String pathInZipFile) {
+        def zf = new ZipFile(zipFile)
+        def object = zf.entries().find { it.name == pathInZipFile }
+        return zf.getInputStream(object).text
     }
 }
