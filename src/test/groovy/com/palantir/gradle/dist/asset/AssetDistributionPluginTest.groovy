@@ -72,7 +72,6 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
-                assets "static/foo", "maven"
                 serviceDependency "group1", "name1", "1.0.0", "2.0.0"
                 serviceDependency {
                     group = "group2"
