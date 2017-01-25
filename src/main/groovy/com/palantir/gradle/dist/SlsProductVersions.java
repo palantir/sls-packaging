@@ -1,9 +1,5 @@
 package com.palantir.gradle.dist;
 
-import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
-import org.gradle.internal.impldep.com.google.common.collect.Iterables;
-
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -12,18 +8,23 @@ import java.util.regex.Pattern;
  */
 public class SlsProductVersions {
     private static final Pattern NON_ORDERABLE_VERSION = Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[a-z0-9-]*$");
-    private static final List<Pattern> ORDERABLE_VERSION = ImmutableList.of(
+    private static final Pattern[] ORDERABLE_VERSION = new Pattern[]{
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[a-f0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+$")
-    );
+    };
 
     /**
      * Returns true iff the given string is a valid "orderable" SLS version.
      */
     public static boolean isOrderableVersion(String version) {
-        return Iterables.any(ORDERABLE_VERSION, pattern -> pattern.matcher(version).matches());
+        for (Pattern p : ORDERABLE_VERSION) {
+            if (p.matcher(version).matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
