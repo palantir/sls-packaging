@@ -44,10 +44,14 @@ class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    public String getProjectVersion() {
+    String getProjectVersion() {
         def stringVersion = String.valueOf(project.version)
         if (!SlsProductVersions.isValidVersion(stringVersion)) {
             throw new IllegalArgumentException("Project version must be a valid SLS version: " + stringVersion)
+        }
+        if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
+            project.logger.warn("Version string in project {} is not orderable as per SLS specification: {}",
+                    project.name, stringVersion)
         }
         return stringVersion
     }
@@ -61,11 +65,11 @@ class CreateManifestTask extends DefaultTask {
     void createManifest() {
         getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
                 'manifest-version': '1.0',
-                'product-type': productType,
-                'product-group': serviceGroup,
-                'product-name': serviceName,
-                'product-version': projectVersion,
-                'extensions': manifestExtensions,
+                'product-type'    : productType,
+                'product-group'   : serviceGroup,
+                'product-name'    : serviceName,
+                'product-version' : projectVersion,
+                'extensions'      : manifestExtensions,
         ])))
     }
 
