@@ -15,7 +15,7 @@
  */
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.ServiceDistributionPlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
@@ -24,7 +24,7 @@ class DistTarTask {
 
     public static Tar createDistTarTask(Project project, String taskName) {
         Tar tarTask = project.tasks.create(taskName, Tar) {
-            group = JavaDistributionPlugin.GROUP_NAME
+            group = ServiceDistributionPlugin.GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
             // Set compression in constructor so that task output has the right name from the start.
             compression = Compression.GZIP
