@@ -17,7 +17,7 @@
 
 is_process_active() {
    local PID=$1
-   ps $PID > /dev/null;
+   ps -o pid | sed 's/ //g' | grep "^$PID$" > /dev/null;
    echo $?
 }
 
