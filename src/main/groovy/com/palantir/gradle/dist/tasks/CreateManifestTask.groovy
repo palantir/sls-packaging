@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.SlsProductVersions
 import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
@@ -44,7 +45,11 @@ class CreateManifestTask extends DefaultTask {
 
     @Input
     public String getProjectVersion() {
-        return String.valueOf(project.version)
+        def stringVersion = String.valueOf(project.version)
+        if (!SlsProductVersions.isValidVersion(stringVersion)) {
+            throw new IllegalArgumentException("Project version must be a valid SLS version: " + stringVersion)
+        }
+        return stringVersion
     }
 
     @OutputFile

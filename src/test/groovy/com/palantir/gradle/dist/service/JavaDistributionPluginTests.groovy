@@ -62,15 +62,15 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         // try all of the service commands
-        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        file('dist/service-name-0.1/var/log/service-name-startup.log', projectDir).text.contains('Test started\n')
-        exec('dist/service-name-0.1/service/bin/init.sh', 'start') ==~ /(?m)Process is already running\n/
-        exec('dist/service-name-0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
-        exec('dist/service-name-0.1/service/bin/init.sh', 'restart') ==~
+        exec('dist/service-name-0.0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        file('dist/service-name-0.0.1/var/log/service-name-startup.log', projectDir).text.contains('Test started\n')
+        exec('dist/service-name-0.0.1/service/bin/init.sh', 'start') ==~ /(?m)Process is already running\n/
+        exec('dist/service-name-0.0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
+        exec('dist/service-name-0.0.1/service/bin/init.sh', 'restart') ==~
                 /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        exec('dist/service-name-0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
-        exec('dist/service-name-0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
-        exec('dist/service-name-0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        exec('dist/service-name-0.0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
+        exec('dist/service-name-0.0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        exec('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
 
     def 'packaging tasks re-run after version change'() {
@@ -81,7 +81,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 enableManifestClasspath true
             }
             task untar02 (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.2.sls.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.2.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }
@@ -98,7 +98,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         when:
         runSuccessfully(':build', ':distTar', ':untar')
         buildFile << '''
-            version '0.2'
+            version '0.0.2'
         '''.stripIndent()
 
         then:
@@ -109,8 +109,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         version02BuildOutput ==~ /(?m)(?s).*^:createManifest$.*/
         version02BuildOutput ==~ /(?m)(?s).*^:manifestClasspathJar$.*/
         version02BuildOutput ==~ /(?m)(?s).*^:distTar$.*/
-        exec('dist/service-name-0.2/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        exec('dist/service-name-0.2/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
+        exec('dist/service-name-0.0.2/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
+        exec('dist/service-name-0.0.2/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
     }
 
     def 'status reports when process name and id don"t match'() {
@@ -127,7 +127,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         when:
         runSuccessfully(':build', ':distTar', ':untar')
-        Files.move(file('dist/service-name-0.1').toPath(), file('dist/foo').toPath())
+        Files.move(file('dist/service-name-0.0.1').toPath(), file('dist/foo').toPath())
 
         then:
         exec('dist/foo/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
@@ -147,10 +147,10 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        file('dist/service-name-0.1').exists()
-        !file('dist/service-name-0.1/var/log').exists()
-        !file('dist/service-name-0.1/var/run').exists()
-        file('dist/service-name-0.1/var/conf/service-name.yml').exists()
+        file('dist/service-name-0.0.1').exists()
+        !file('dist/service-name-0.0.1/var/log').exists()
+        !file('dist/service-name-0.0.1/var/run').exists()
+        file('dist/service-name-0.0.1/var/conf/service-name.yml').exists()
     }
 
     def 'produce distribution bundle and check var/data/tmp is created and used for temporary files'() {
@@ -171,9 +171,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        execAllowFail('dist/service-name-0.1/service/bin/init.sh', 'start')
-        file('dist/service-name-0.1/var/data/tmp').listFiles().length == 1
-        file('dist/service-name-0.1/var/data/tmp').listFiles()[0].text == "temp content"
+        execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
+        file('dist/service-name-0.0.1/var/data/tmp').listFiles().length == 1
+        file('dist/service-name-0.0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
 
     def 'produce distribution bundle with custom exclude set'() {
@@ -185,7 +185,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             }
             repositories { jcenter() }
 
-            version '0.1'
+            version '0.0.1'
 
             distribution {
                 serviceName 'service-name'
@@ -198,7 +198,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.sls.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }
@@ -212,9 +212,9 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        !file('dist/service-name-0.1/var/log').exists()
-        !file('dist/service-name-0.1/var/data/database').exists()
-        file('dist/service-name-0.1/var/conf/service-name.yml').exists()
+        !file('dist/service-name-0.0.1/var/log').exists()
+        !file('dist/service-name-0.0.1/var/data/database').exists()
+        file('dist/service-name-0.0.1/var/conf/service-name.yml').exists()
     }
 
     def 'produce distribution bundle with a non-string version object'() {
@@ -238,7 +238,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 }
             }
 
-            version new MyVersion('0.1')
+            version new MyVersion('0.0.1')
 
             distribution {
                 serviceName 'service-name'
@@ -249,7 +249,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.sls.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }
@@ -259,8 +259,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"product-version": "0.1"')
+        String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
+        manifest.contains('"product-version": "0.0.1"')
     }
 
     def 'manifest file contains expected fields'() {
@@ -271,11 +271,11 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
+        String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('"manifest-version": "1.0"')
         manifest.contains('"product-group": "service-group"')
         manifest.contains('"product-name": "service-name"')
-        manifest.contains('"product-version": "0.1"')
+        manifest.contains('"product-version": "0.0.1"')
         manifest.contains('"product-type": "service.v1"')
         manifest.replaceAll(/\s/, '').contains('"extensions":{"service-dependencies":{"com.palantir.service:test-server":["1.75.0","2.0.0"]}}')
     }
@@ -293,11 +293,11 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         // clobbers deployment/manifest.yml
-        String manifest = file('dist/service-name-0.1/deployment/manifest.yml', projectDir).text
+        String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('"product-name": "service-name"')
 
         // check files in deployment/ copied successfully
-        String actualConfiguration = file('dist/service-name-0.1/deployment/configuration.yml', projectDir).text
+        String actualConfiguration = file('dist/service-name-0.0.1/deployment/configuration.yml', projectDir).text
         actualConfiguration.equals(deploymentConfiguration)
     }
 
@@ -309,7 +309,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/service-name', projectDir).text
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name', projectDir).text
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
     }
 
@@ -338,7 +338,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig.setMainClass("test.Test")
         expectedStaticConfig.setJavaHome("foo")
         expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
-        expectedStaticConfig.setClasspath(['service/lib/internal-0.1.jar', 'service/lib/external.jar'])
+        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
         expectedStaticConfig.setJvmOpts([
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:+PrintGCDateStamps',
@@ -356,7 +356,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
             "key2": "val2"
         ])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedStaticConfig == actualStaticConfig
 
         def expectedCheckConfig = expectedStaticConfig
@@ -366,7 +366,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
         def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedCheckConfig == actualCheckConfig
     }
 
@@ -383,7 +383,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        file('dist/service-name-0.1/service/monitoring/bin/check.sh').exists()
+        file('dist/service-name-0.0.1/service/monitoring/bin/check.sh').exists()
     }
 
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
@@ -399,11 +399,11 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
-        startScript.contains("-manifest-classpath-0.1.jar")
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
+        startScript.contains("-manifest-classpath-0.0.1.jar")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
-        file('dist/service-name-0.1/service/lib/').listFiles()
-                .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
+        file('dist/service-name-0.0.1/service/lib/').listFiles()
+                .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {
@@ -414,10 +414,10 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         runSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String startScript = file('dist/service-name-0.1/service/bin/service-name.bat', projectDir).text
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
         !startScript.contains("-manifest-classpath-0.1.jar")
         startScript.contains("-classpath \"%CLASSPATH%\"")
-        !new File(projectDir, 'dist/service-name-0.1/service/lib/').listFiles()
+        !new File(projectDir, 'dist/service-name-0.0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
     }
 
@@ -455,7 +455,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 id 'java'
             }
             repositories { jcenter() }
-            version '0.1'
+            version '0.0.1'
             distribution {
                 serviceName "my-service"
                 mainClass "dummy.service.MainClass"
@@ -504,7 +504,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         result.output.contains("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
     }
 
-    private static def createUntarBuildFile(buildFile) {
+    private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
                 id 'com.palantir.java-distribution'
@@ -515,7 +515,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             repositories { jcenter() }
 
-            version '0.1'
+            version '0.0.1'
 
             distribution {
                 serviceName 'service-name'
@@ -530,7 +530,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.1.sls.tgz"))
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
                 into "${projectDir}/dist"
                 dependsOn distTar
             }
