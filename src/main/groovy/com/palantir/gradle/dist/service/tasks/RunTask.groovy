@@ -15,7 +15,7 @@
  */
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.ServiceDistributionPlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.JavaExec
 
@@ -23,7 +23,7 @@ class RunTask {
 
     public static JavaExec createRunTask(Project project, String taskName) {
         return project.tasks.create(taskName, JavaExec) {
-            group = JavaDistributionPlugin.GROUP_NAME
+            group = ServiceDistributionPlugin.GROUP_NAME
             description = "Runs the specified project using configured mainClass and with default args."
             classpath project.sourceSets.main.runtimeClasspath
         }

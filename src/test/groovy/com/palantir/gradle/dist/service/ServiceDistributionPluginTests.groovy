@@ -25,7 +25,7 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 
 import java.nio.file.Files
 
-class JavaDistributionPluginTests extends GradleTestSpec {
+class ServiceDistributionPluginTests extends GradleTestSpec {
 
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:

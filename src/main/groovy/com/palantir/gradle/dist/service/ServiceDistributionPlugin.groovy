@@ -15,8 +15,6 @@
  */
 package com.palantir.gradle.dist.service
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.*
 import com.palantir.gradle.dist.tasks.CreateManifestTask
@@ -29,7 +27,7 @@ import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.bundling.Tar
 import org.gradle.jvm.application.tasks.CreateStartScripts
 
-class JavaDistributionPlugin implements Plugin<Project> {
+class ServiceDistributionPlugin implements Plugin<Project> {
 
     static final String GROUP_NAME = "Distribution"
     static final String SLS_CONFIGURATION_NAME = "sls"
