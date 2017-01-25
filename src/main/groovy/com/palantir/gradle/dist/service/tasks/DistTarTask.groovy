@@ -22,7 +22,7 @@ import org.gradle.api.tasks.bundling.Tar
 
 class DistTarTask {
 
-    public static Tar createDistTarTask(Project project, String taskName) {
+    static Tar createDistTarTask(Project project, String taskName) {
         Tar tarTask = project.tasks.create(taskName, Tar) {
             group = ServiceDistributionPlugin.GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required runtime resources."
@@ -32,7 +32,7 @@ class DistTarTask {
         }
     }
 
-    public static void configure(Tar distTar, String serviceName, List<String> excludeFromVar, boolean isEnableManifestClasspath) {
+    static void configure(Tar distTar, String serviceName, List<String> excludeFromVar, boolean isEnableManifestClasspath) {
         distTar.configure {
             setBaseName(serviceName)
             String archiveRootDir = serviceName + '-' + String.valueOf(project.version)

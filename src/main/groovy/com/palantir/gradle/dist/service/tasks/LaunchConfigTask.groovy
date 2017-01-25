@@ -73,7 +73,7 @@ class LaunchConfigTask extends DefaultTask {
 
     @EqualsAndHashCode
     @ToString
-    public static class StaticLaunchConfig {
+    static class StaticLaunchConfig {
         // keep in sync with StaticLaunchConfig struct in go-java-launcher
         String configType = "java"
         int configVersion = 1
@@ -86,12 +86,12 @@ class LaunchConfigTask extends DefaultTask {
     }
 
     @OutputFile
-    public File getStaticLauncher() {
+    File getStaticLauncher() {
         return new File("scripts/launcher-static.yml")
     }
 
     @OutputFile
-    public File getCheckLauncher() {
+    File getCheckLauncher() {
         return new File("scripts/launcher-check.yml")
     }
 
@@ -127,7 +127,7 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    public void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
+    void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs

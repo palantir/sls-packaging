@@ -26,7 +26,7 @@ import org.gradle.api.tasks.bundling.Jar
  */
 class ManifestClasspathJarTask {
 
-    public static Jar createManifestClasspathJarTask(Project project, String taskName) {
+    static Jar createManifestClasspathJarTask(Project project, String taskName) {
         return project.tasks.create(taskName, Jar) {
             group = ServiceDistributionPlugin.GROUP_NAME
             description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +

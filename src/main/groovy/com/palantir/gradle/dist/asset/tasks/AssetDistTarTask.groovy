@@ -7,7 +7,7 @@ import org.gradle.api.tasks.bundling.Tar
 
 class AssetDistTarTask {
 
-    public static Tar createAssetDistTarTask(Project project, String taskName) {
+    static Tar createAssetDistTarTask(Project project, String taskName) {
         Tar tarTask = project.tasks.create(taskName, Tar) {
             group = AssetDistributionPlugin.GROUP_NAME
             description = "Creates a compressed, gzipped tar file that contains required static assets."
@@ -18,7 +18,7 @@ class AssetDistTarTask {
         return tarTask
     }
 
-    public static void configure(Tar distTar, String serviceName, Map<String, String> assetDirs) {
+    static void configure(Tar distTar, String serviceName, Map<String, String> assetDirs) {
         distTar.configure {
             setBaseName(serviceName)
             // do the things that the java plugin would otherwise do for us

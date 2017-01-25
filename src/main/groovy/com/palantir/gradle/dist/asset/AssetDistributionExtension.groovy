@@ -12,19 +12,19 @@ class AssetDistributionExtension extends BaseDistributionExtension {
         productType("asset.v1")
     }
 
-    public Map<String, String> getAssets() {
+    Map<String, String> getAssets() {
         return assets
     }
 
-    public void assets(String relativeSourcePath) {
+    void assets(String relativeSourcePath) {
         this.assets.put(relativeSourcePath, relativeSourcePath)
     }
 
-    public void assets(String relativeSourcePath, String relativeDestinationPath) {
+    void assets(String relativeSourcePath, String relativeDestinationPath) {
         this.assets.put(relativeSourcePath, relativeDestinationPath)
     }
 
-    public void setAssets(Map<String, String> assets) {
+    void setAssets(Map<String, String> assets) {
         this.assets = assets
     }
 }

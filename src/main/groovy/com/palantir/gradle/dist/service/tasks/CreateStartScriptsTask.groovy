@@ -23,7 +23,7 @@ import org.gradle.jvm.application.tasks.CreateStartScripts
 
 class CreateStartScriptsTask {
 
-    public static CreateStartScripts createStartScriptsTask(Project project, String taskName) {
+    static CreateStartScripts createStartScriptsTask(Project project, String taskName) {
         return project.tasks.create(taskName, CreateStartScripts) {
             group = ServiceDistributionPlugin.GROUP_NAME
             description = "Generates standard Java start scripts."
@@ -32,7 +32,7 @@ class CreateStartScriptsTask {
         }
     }
 
-    public static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, List<String> defaultJvmOpts, boolean isEnableManifestClasspath) {
+    static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, List<String> defaultJvmOpts, boolean isEnableManifestClasspath) {
         startScripts.configure {
             setMainClassName(mainClass)
             setApplicationName(serviceName)
