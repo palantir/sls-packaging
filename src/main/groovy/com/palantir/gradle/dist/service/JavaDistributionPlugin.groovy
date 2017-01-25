@@ -81,23 +81,12 @@ class JavaDistributionPlugin implements Plugin<Project> {
 
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
-            // Serialize service-dependencies, add them to manifestExtensions
-            def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            def dependencies = []
-            distributionExtension.serviceDependencies.each {
-                dependencies.add(mapper.convertValue(it, Map))
-            }
-            if (distributionExtension.manifestExtensions.containsKey("service-dependencies")) {
-                throw new IllegalArgumentException("Use serviceDependencies configuration option instead of setting " +
-                        "'service-dependencies' key in manifestExtensions")
-            }
-            distributionExtension.manifestExtensions.put("service-dependencies", dependencies)
-
             manifest.configure(
                     distributionExtension.serviceName,
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
+                    distributionExtension.serviceDependencies
             )
         }
 

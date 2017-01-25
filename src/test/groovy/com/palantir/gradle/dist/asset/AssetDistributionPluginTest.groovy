@@ -1,5 +1,6 @@
 package com.palantir.gradle.dist.asset
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleTestSpec
 
 class AssetDistributionPluginTest extends GradleTestSpec {
@@ -33,7 +34,6 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'asset-name'
                 assets "static/foo", "maven"
                 assets "static/baz", "maven"
                 assets "static/abc", "maven"
@@ -67,10 +67,53 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         result.output.contains("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
     }
 
+    def 'can specify service dependencies'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            distribution {
+                assets "static/foo", "maven"
+                serviceDependency "group1", "name1", "1.0.0", "2.0.0"
+                serviceDependency {
+                    group = "group2"
+                    name = "name2"
+                    minVersion = "1.0.0"
+                    maxVersion = "2.0.0"
+                    recommendedVersion = "1.5.0"
+                }
+            }
+        """.stripIndent()
+
+        when:
+        runSuccessfully(':distTar', ':untar')
+
+        then:
+        def mapper = new ObjectMapper()
+        def manifest = mapper.readValue(file('dist/asset-name-0.0.1/deployment/manifest.yml', projectDir), Map)
+
+        def dep1 = manifest['extensions']['service-dependencies'][0]
+        dep1['group'] == 'group1'
+        dep1['name'] == 'name1'
+        dep1['minVersion'] == '1.0.0'
+        dep1['maxVersion'] == '2.0.0'
+        dep1['recommendedVersion'] == null
+
+        def dep2 = manifest['extensions']['service-dependencies'][1]
+        dep2['group'] == 'group2'
+        dep2['name'] == 'name2'
+        dep2['minVersion'] == '1.0.0'
+        dep2['maxVersion'] == '2.0.0'
+        dep2['recommendedVersion'] == "1.5.0"
+    }
+
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
                 id 'com.palantir.asset-distribution'
+            }
+            
+            distribution {
+                serviceName 'asset-name'
             }
 
             version "0.0.1"

@@ -1,6 +1,8 @@
 package com.palantir.gradle.dist
 
+import com.palantir.gradle.dist.service.ServiceDependency
 import org.gradle.api.Project
+import org.gradle.util.ConfigureUtil
 
 class BaseDistributionExtension {
 
@@ -14,6 +16,7 @@ class BaseDistributionExtension {
     private String serviceName
     private String productType
     private Map<String, Object> manifestExtensions = [:]
+    private List<ServiceDependency> serviceDependencies = []
 
     public BaseDistributionExtension(Project project) {
         this.project = project
@@ -42,6 +45,26 @@ class BaseDistributionExtension {
         this.productType = type
     }
 
+    public void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
+        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
+    }
+
+    public void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
+        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+    }
+
+    public void serviceDependency(Closure closure) {
+        ServiceDependency dep = new ServiceDependency()
+        ConfigureUtil.configureUsing(closure).execute(dep)
+        serviceDependency(dep)
+    }
+
+    public void serviceDependency(ServiceDependency dependency) {
+        dependency.verifyVersions()
+        serviceDependencies.add(dependency)
+    }
+
+
     public String getServiceName() {
         return serviceName
     }
@@ -51,10 +74,14 @@ class BaseDistributionExtension {
     }
 
     public Map<String, Object> getManifestExtensions() {
-        return this.manifestExtensions;
+        return this.manifestExtensions
     }
 
     public String getProductType() {
         return productType
+    }
+
+    public List<ServiceDependency> getServiceDependencies() {
+        return serviceDependencies
     }
 }

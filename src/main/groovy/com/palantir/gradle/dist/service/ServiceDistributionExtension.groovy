@@ -29,7 +29,6 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
-    private List<ServiceDependency> serviceDependencies = []
 
     ServiceDistributionExtension(Project project) {
         super(project)
@@ -88,25 +87,6 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
         this.excludeFromVar = excludeFromVar.toList()
     }
 
-    public void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
-        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
-    }
-
-    public void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
-        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
-    }
-
-    public void serviceDependency(Closure closure) {
-        ServiceDependency dep = new ServiceDependency()
-        ConfigureUtil.configureUsing(closure).execute(dep)
-        serviceDependency(dep)
-    }
-
-    public void serviceDependency(ServiceDependency dependency) {
-        dependency.verifyVersions()
-        serviceDependencies.add(dependency)
-    }
-
     public String getMainClass() {
         return mainClass
     }
@@ -137,9 +117,5 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
 
     public List<String> getExcludeFromVar() {
         return excludeFromVar
-    }
-
-    public List<ServiceDependency> getServiceDependencies() {
-        return serviceDependencies
     }
 }

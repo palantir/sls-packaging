@@ -16,8 +16,11 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.SlsProductVersions
 import com.palantir.gradle.dist.service.JavaDistributionPlugin
+import com.palantir.gradle.dist.service.ServiceDependency
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
@@ -73,8 +76,20 @@ class CreateManifestTask extends DefaultTask {
         ])))
     }
 
-    void configure(
-            String serviceName, String serviceGroup, String productType, Map<String, Object> manifestExtensions) {
+    void configure(String serviceName, String serviceGroup, String productType, Map<String, Object> manifestExtensions,
+                   List<ServiceDependency> serviceDependencies) {
+        // Serialize service-dependencies, add them to manifestExtensions
+        def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        def dependencies = []
+        serviceDependencies.each {
+            dependencies.add(mapper.convertValue(it, Map))
+        }
+        if (manifestExtensions.containsKey("service-dependencies")) {
+            throw new IllegalArgumentException("Use serviceDependencies configuration option instead of setting " +
+                    "'service-dependencies' key in manifestExtensions")
+        }
+        manifestExtensions.put("service-dependencies", dependencies)
+
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
         this.productType = productType
