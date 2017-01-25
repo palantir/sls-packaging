@@ -89,7 +89,7 @@ class JavaDistributionPlugin implements Plugin<Project> {
             }
             if (distributionExtension.manifestExtensions.containsKey("service-dependencies")) {
                 throw new IllegalArgumentException("Use serviceDependencies configuration option instead of setting " +
-                        "'service-dependency' key in manifestExtensions")
+                        "'service-dependencies' key in manifestExtensions")
             }
             distributionExtension.manifestExtensions.put("service-dependencies", dependencies)
 

@@ -16,7 +16,8 @@
 package com.palantir.gradle.dist.service
 
 import com.palantir.gradle.dist.BaseDistributionExtension
-import org.gradle.api.Project;
+import org.gradle.api.Project
+import org.gradle.util.ConfigureUtil
 
 class ServiceDistributionExtension extends BaseDistributionExtension {
 
@@ -88,11 +89,22 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
     }
 
     public void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
-        serviceDependencies.add(ServiceDependency.of(serviceGroup, serviceName, minVersion, maxVersion, null))
+        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
     }
 
     public void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
-        serviceDependencies.add(ServiceDependency.of(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+    }
+
+    public void serviceDependency(Closure closure) {
+        ServiceDependency dep = new ServiceDependency()
+        ConfigureUtil.configureUsing(closure).execute(dep)
+        serviceDependency(dep)
+    }
+
+    public void serviceDependency(ServiceDependency dependency) {
+        dependency.verifyVersions()
+        serviceDependencies.add(dependency)
     }
 
     public String getMainClass() {

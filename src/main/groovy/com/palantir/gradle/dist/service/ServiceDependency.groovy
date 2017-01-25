@@ -11,22 +11,22 @@ class ServiceDependency {
     @Nullable
     String recommendedVersion
 
-    private ServiceDependency(String group, String name, String minVersion, String maxVersion, String recommendedVersion) {
+    ServiceDependency() {}
+
+    ServiceDependency(String group, String name, String minVersion, String maxVersion,
+                      @Nullable String recommendedVersion) {
         this.group = group
         this.name = name
         this.minVersion = minVersion
         this.maxVersion = maxVersion
         this.recommendedVersion = recommendedVersion
+    }
 
+    def verifyVersions() {
         [minVersion, maxVersion, recommendedVersion].each {
             if (it && !SlsProductVersions.isValidVersion(it)) {
                 throw new IllegalArgumentException("Invalid SLS version: " + it)
             }
         }
-    }
-
-    static ServiceDependency of(String group, String name, String minVersion, String maxVersion,
-                                       @Nullable String recommendedVersion) {
-        return new ServiceDependency(group, name, minVersion, maxVersion, recommendedVersion)
     }
 }

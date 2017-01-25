@@ -290,7 +290,13 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         buildFile << """
             distribution {
                 serviceDependency "group1", "name1", "1.0.0", "2.0.0"
-                serviceDependency "group2", "name2", "1.0.0", "2.0.0", "1.5.0"
+                serviceDependency {
+                    group = "group2"
+                    name = "name2"
+                    minVersion = "1.0.0"
+                    maxVersion = "2.0.0"
+                    recommendedVersion = "1.5.0"
+                }
             }
         """.stripIndent()
 
@@ -299,7 +305,7 @@ class JavaDistributionPluginTests extends GradleTestSpec {
 
         then:
         def mapper = new ObjectMapper()
-        def manifest= mapper.readValue(file('dist/service-name-0.1/deployment/manifest.yml', projectDir), Map)
+        def manifest = mapper.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir), Map)
 
         def dep1 = manifest['extensions']['service-dependencies'][0]
         dep1['group'] == 'group1'
