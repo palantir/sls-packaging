@@ -34,7 +34,7 @@ class CreateInitScriptTask extends DefaultTask {
     }
 
     @OutputFile
-    public File getOutputFile() {
+    File getOutputFile() {
         return new File("${project.buildDir}/scripts/init.sh")
     }
 
@@ -48,7 +48,7 @@ class CreateInitScriptTask extends DefaultTask {
                 .setExecutable(true)
     }
 
-    public void configure(String serviceName) {
+    void configure(String serviceName) {
         this.serviceName = serviceName
     }
 }

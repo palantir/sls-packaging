@@ -22,7 +22,7 @@ import java.util.Map.Entry
 
 class EmitFiles {
 
-    public static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) {
+    static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) {
         String text = new String(src.getText())
 
         for (Entry<String, String> entry : vars) {

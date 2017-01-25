@@ -26,7 +26,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
 import spock.lang.Specification
 
-public class GradleTestSpec extends Specification {
+class GradleTestSpec extends Specification {
     @TempDirectory(clean = false)
     File projectDir
     File buildFile

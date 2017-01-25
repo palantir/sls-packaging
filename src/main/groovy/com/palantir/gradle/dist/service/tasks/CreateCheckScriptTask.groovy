@@ -37,7 +37,7 @@ class CreateCheckScriptTask extends DefaultTask {
     }
 
     @OutputFile
-    public File getOutputFile() {
+    File getOutputFile() {
         return new File("${project.buildDir}/monitoring/check.sh")
     }
 
@@ -54,7 +54,7 @@ class CreateCheckScriptTask extends DefaultTask {
         }
     }
 
-    public void configure(String serviceName, List<String> checkArgs) {
+    void configure(String serviceName, List<String> checkArgs) {
         this.serviceName = serviceName
         this.checkArgs = checkArgs
     }
