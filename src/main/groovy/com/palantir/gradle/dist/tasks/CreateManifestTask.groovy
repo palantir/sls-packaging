@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.SlsProductVersions
 import com.palantir.gradle.dist.service.JavaDistributionPlugin
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
@@ -43,8 +44,16 @@ class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    public String getProjectVersion() {
-        return String.valueOf(project.version)
+    String getProjectVersion() {
+        def stringVersion = String.valueOf(project.version)
+        if (!SlsProductVersions.isValidVersion(stringVersion)) {
+            throw new IllegalArgumentException("Project version must be a valid SLS version: " + stringVersion)
+        }
+        if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
+            project.logger.warn("Version string in project {} is not orderable as per SLS specification: {}",
+                    project.name, stringVersion)
+        }
+        return stringVersion
     }
 
     @OutputFile
@@ -56,11 +65,11 @@ class CreateManifestTask extends DefaultTask {
     void createManifest() {
         getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
                 'manifest-version': '1.0',
-                'product-type': productType,
-                'product-group': serviceGroup,
-                'product-name': serviceName,
-                'product-version': projectVersion,
-                'extensions': manifestExtensions,
+                'product-type'    : productType,
+                'product-group'   : serviceGroup,
+                'product-name'    : serviceName,
+                'product-version' : projectVersion,
+                'extensions'      : manifestExtensions,
         ])))
     }
 
