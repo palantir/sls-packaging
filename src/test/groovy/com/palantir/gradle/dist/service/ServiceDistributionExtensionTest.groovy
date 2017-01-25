@@ -80,5 +80,4 @@ class ServiceDistributionExtensionTest extends Specification {
         ext.excludeFromVar == ['c', 'd']
         ext.env == ['foo': 'bar']
     }
-
 }

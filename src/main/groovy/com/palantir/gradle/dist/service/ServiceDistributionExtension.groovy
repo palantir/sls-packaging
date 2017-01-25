@@ -16,7 +16,8 @@
 package com.palantir.gradle.dist.service
 
 import com.palantir.gradle.dist.BaseDistributionExtension
-import org.gradle.api.Project;
+import org.gradle.api.Project
+import org.gradle.util.ConfigureUtil
 
 class ServiceDistributionExtension extends BaseDistributionExtension {
 
@@ -24,7 +25,7 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
     private List<String> args = []
     private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
-    private Map<String,String> env = [:]
+    private Map<String, String> env = [:]
     private boolean enableManifestClasspath = false
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']

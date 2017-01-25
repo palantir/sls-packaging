@@ -15,21 +15,19 @@
  */
 package com.palantir.gradle.dist.service
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
-import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
-import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask
-import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask
+import com.palantir.gradle.dist.service.tasks.*
 import com.palantir.gradle.dist.tasks.CreateManifestTask
-import com.palantir.gradle.dist.service.tasks.CreateStartScriptsTask
-import com.palantir.gradle.dist.service.tasks.DistTarTask
-import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
-import com.palantir.gradle.dist.service.tasks.ManifestClasspathJarTask
-import com.palantir.gradle.dist.service.tasks.RunTask
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.JavaExec
+import org.gradle.api.tasks.bundling.Tar
+import org.gradle.jvm.application.tasks.CreateStartScripts
 
 class JavaDistributionPlugin implements Plugin<Project> {
 
@@ -56,10 +54,10 @@ class JavaDistributionPlugin implements Plugin<Project> {
             manifestClasspathJar.onlyIf { distributionExtension.isEnableManifestClasspath() }
         }
 
-        Task startScripts = CreateStartScriptsTask.createStartScriptsTask(project, 'createStartScripts')
+        CreateStartScripts startScripts = CreateStartScriptsTask.createStartScriptsTask(project, 'createStartScripts')
         project.afterEvaluate {
             CreateStartScriptsTask.configure(startScripts, distributionExtension.mainClass, distributionExtension.serviceName,
-                distributionExtension.defaultJvmOpts, distributionExtension.enableManifestClasspath)
+                    distributionExtension.defaultJvmOpts, distributionExtension.enableManifestClasspath)
         }
 
         CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)
@@ -67,40 +65,40 @@ class JavaDistributionPlugin implements Plugin<Project> {
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         project.afterEvaluate {
             launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
-                distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
-                project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+                    distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
+                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
         }
 
-        Task initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
+        CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
         project.afterEvaluate {
             initScript.configure(distributionExtension.serviceName)
         }
 
-        Task checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask)
+        CreateCheckScriptTask checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask)
         project.afterEvaluate {
             checkScript.configure(distributionExtension.serviceName, distributionExtension.checkArgs)
         }
 
-        Task manifest = project.tasks.create('createManifest', CreateManifestTask)
+        CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
                     distributionExtension.serviceName,
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
+                    distributionExtension.serviceDependencies
             )
         }
 
-        Task distTar = DistTarTask.createDistTarTask(project, 'distTar')
+        Tar distTar = DistTarTask.createDistTarTask(project, 'distTar')
         project.afterEvaluate {
             DistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.excludeFromVar, distributionExtension.isEnableManifestClasspath())
         }
 
-        Task run = RunTask.createRunTask(project, 'run')
+        JavaExec run = RunTask.createRunTask(project, 'run')
         project.afterEvaluate {
-            RunTask.configure(run, distributionExtension.mainClass, distributionExtension.args, distributionExtension.defaultJvmOpts, )
+            RunTask.configure(run, distributionExtension.mainClass, distributionExtension.args, distributionExtension.defaultJvmOpts,)
         }
-
 
         // Create configuration and exported artifacts
         project.configurations.create(SLS_CONFIGURATION_NAME)

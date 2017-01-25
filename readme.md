@@ -69,6 +69,13 @@ A sample configuration for the Service plugin:
         args 'server', 'var/conf/my-service.yml'
         env 'KEY1': 'value1', 'KEY2': 'value1'
         manifestExtensions 'KEY3': 'value2'
+        serviceDependency {
+            group = "other-group"
+            name = "other-service"
+            minVersion = "1.0.0"
+            maxVersion = "2.0.0"
+            recommendedVersion = "1.5.0"
+        }
     }
 
 And the complete list of configurable properties:
@@ -78,6 +85,8 @@ And the complete list of configurable properties:
    Defaults to the configured "group" of the Gradle project, `project.group`.
  * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
    [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
+ * (optional) `serviceDependency` adds an entry to the `extensions.service-dependencies` block of the SLS manifest,
+   declaring that this service has a dependency on the given other service with specific version bounds.
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
@@ -141,6 +150,8 @@ The complete list of configurable properties:
    Defaults to the configured "group" of the Gradle project, `project.group`.
  * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
    [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
+ * (optional) `serviceDependency` adds an entry to the `extensions.service-dependencies` block of the SLS manifest,
+   declaring that this service has a dependency on the given other service with specific version bounds.
  * (optional) `assets <fromPath>` adds the specified file or directory (recursively) to the asset distribution,
    preserving the directory structure. For example, `assets 'foo/bar'` yields files `foo/bar/baz/1.txt` and `foo/bar/2.txt` in the
    asset distribution, assuming that the directory `foo/bar` contains files `baz/1.txt` and `2.txt`.

@@ -21,6 +21,7 @@ import com.palantir.gradle.dist.GradleTestSpec
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 
 import java.nio.file.Files
 
@@ -280,7 +281,62 @@ class JavaDistributionPluginTests extends GradleTestSpec {
         manifest.contains('"product-name": "service-name"')
         manifest.contains('"product-version": "0.0.1"')
         manifest.contains('"product-type": "service.v1"')
-        manifest.replaceAll(/\s/, '').contains('"extensions":{"service-dependencies":{"com.palantir.service:test-server":["1.75.0","2.0.0"]}}')
+        manifest.replaceAll(/\s/, '').contains('"extensions":{"foo":{"bar":["1","2"]}')
+    }
+
+    def 'can specify service dependencies'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            distribution {
+                serviceDependency "group1", "name1", "1.0.0", "2.0.0"
+                serviceDependency {
+                    group = "group2"
+                    name = "name2"
+                    minVersion = "1.0.0"
+                    maxVersion = "2.0.0"
+                    recommendedVersion = "1.5.0"
+                }
+            }
+        """.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        def mapper = new ObjectMapper()
+        def manifest = mapper.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir), Map)
+
+        def dep1 = manifest['extensions']['service-dependencies'][0]
+        dep1['group'] == 'group1'
+        dep1['name'] == 'name1'
+        dep1['minVersion'] == '1.0.0'
+        dep1['maxVersion'] == '2.0.0'
+        dep1['recommendedVersion'] == null
+
+        def dep2 = manifest['extensions']['service-dependencies'][1]
+        dep2['group'] == 'group2'
+        dep2['name'] == 'name2'
+        dep2['minVersion'] == '1.0.0'
+        dep2['maxVersion'] == '2.0.0'
+        dep2['recommendedVersion'] == "1.5.0"
+    }
+
+    def 'cannot specify service dependencies with invalid versions'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            distribution {
+                serviceDependency "group1", "name1", "1.0.0foo", "2.0.0"
+            }
+        """.stripIndent()
+
+        when:
+        run(':distTar').build()
+
+        then:
+        UnexpectedBuildFailure exception = thrown()
+        exception.message.contains("Invalid SLS version: 1.0.0foo")
     }
 
     def 'produce distribution bundle with files in deployment/'() {
@@ -355,8 +411,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedStaticConfig.setEnv([
-            "key1": "val1",
-            "key2": "val2"
+                "key1": "val1",
+                "key2": "val2"
         ])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
@@ -524,8 +580,8 @@ class JavaDistributionPluginTests extends GradleTestSpec {
                 serviceName 'service-name'
                 mainClass 'test.Test'
                 defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
-                manifestExtensions 'service-dependencies': [
-                    'com.palantir.service:test-server': ['1.75.0', '2.0.0']
+                manifestExtensions 'foo': [
+                    'bar': ['1', '2']
                 ]
             }
 

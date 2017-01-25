@@ -23,13 +23,14 @@ class AssetDistributionPlugin implements Plugin<Project> {
 
         def distributionExtension = project.extensions.findByType(AssetDistributionExtension)
 
-        Task manifest = project.tasks.create('createManifest', CreateManifestTask)
+        CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
                     distributionExtension.serviceName,
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
+                    distributionExtension.serviceDependencies
             )
         }
 
