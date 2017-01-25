@@ -24,11 +24,11 @@ import org.gradle.jvm.application.tasks.CreateStartScripts
 class CreateStartScriptsTask {
 
     static CreateStartScripts createStartScriptsTask(Project project, String taskName) {
-        return project.tasks.create(taskName, CreateStartScripts) {
-            group = ServiceDistributionPlugin.GROUP_NAME
-            description = "Generates standard Java start scripts."
-            setOutputDir(new File("${project.buildDir}/scripts"))
-            setClasspath(project.tasks['jar'].outputs.files + project.configurations.runtime)
+        return project.tasks.create(taskName, CreateStartScripts) { p ->
+            p.group = ServiceDistributionPlugin.GROUP_NAME
+            p.description = "Generates standard Java start scripts."
+            p.setOutputDir(new File("${project.buildDir}/scripts"))
+            p.setClasspath(project.tasks['jar'].outputs.files + project.configurations.runtime)
         }
     }
 

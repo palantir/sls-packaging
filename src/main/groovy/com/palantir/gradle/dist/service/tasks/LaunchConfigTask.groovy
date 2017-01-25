@@ -86,12 +86,12 @@ class LaunchConfigTask extends DefaultTask {
     }
 
     @OutputFile
-    File getStaticLauncher() {
+    static File getStaticLauncher() {
         return new File("scripts/launcher-static.yml")
     }
 
     @OutputFile
-    File getCheckLauncher() {
+    static File getCheckLauncher() {
         return new File("scripts/launcher-check.yml")
     }
 

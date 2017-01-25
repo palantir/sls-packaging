@@ -27,16 +27,16 @@ import org.gradle.api.tasks.bundling.Jar
 class ManifestClasspathJarTask {
 
     static Jar createManifestClasspathJarTask(Project project, String taskName) {
-        return project.tasks.create(taskName, Jar) {
-            group = ServiceDistributionPlugin.GROUP_NAME
-            description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
+        return project.tasks.create(taskName, Jar) { t ->
+            t.group = ServiceDistributionPlugin.GROUP_NAME
+            t.description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
                     "jar rather than command line argument on Windows, since Windows path sizes are limited."
-            appendix = 'manifest-classpath'
+            t.appendix = 'manifest-classpath'
 
-            doFirst {
-                manifest.attributes("Class-Path": project.files(project.configurations.runtime)
+            t.doFirst {
+                t.manifest.attributes("Class-Path": project.files(project.configurations.runtime)
                         .collect { it.getName() }
-                        .join(' ') + ' ' + project.tasks.jar.archiveName
+                        .join(' ') + ' ' + project.tasks.jar.archiveName  // TODO(rfink) Should use t.archiveName ?
                 )
             }
         }

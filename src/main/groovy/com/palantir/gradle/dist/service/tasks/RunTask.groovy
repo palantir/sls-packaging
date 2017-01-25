@@ -22,10 +22,10 @@ import org.gradle.api.tasks.JavaExec
 class RunTask {
 
     static JavaExec createRunTask(Project project, String taskName) {
-        return project.tasks.create(taskName, JavaExec) {
-            group = ServiceDistributionPlugin.GROUP_NAME
-            description = "Runs the specified project using configured mainClass and with default args."
-            classpath project.sourceSets.main.runtimeClasspath
+        return project.tasks.create(taskName, JavaExec) { t ->
+            t.group = ServiceDistributionPlugin.GROUP_NAME
+            t.description = "Runs the specified project using configured mainClass and with default args."
+            t.classpath project.sourceSets.main.runtimeClasspath
         }
     }
 

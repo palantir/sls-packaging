@@ -23,16 +23,16 @@ import org.gradle.api.tasks.bundling.Tar
 class DistTarTask {
 
     static Tar createDistTarTask(Project project, String taskName) {
-        Tar tarTask = project.tasks.create(taskName, Tar) {
-            group = ServiceDistributionPlugin.GROUP_NAME
-            description = "Creates a compressed, gzipped tar file that contains required runtime resources."
+        project.tasks.create(taskName, Tar) { p ->
+            p.group = ServiceDistributionPlugin.GROUP_NAME
+            p.description = "Creates a compressed, gzipped tar file that contains required runtime resources."
             // Set compression in constructor so that task output has the right name from the start.
-            compression = Compression.GZIP
-            extension = 'sls.tgz'
+            p.compression = Compression.GZIP
+            p.extension = 'sls.tgz'
         }
     }
 
-    static void configure(Tar distTar, String serviceName, List<String> excludeFromVar, boolean isEnableManifestClasspath) {
+    static void configure(Tar distTar, Project project, String serviceName, List<String> excludeFromVar, boolean isEnableManifestClasspath) {
         distTar.configure {
             setBaseName(serviceName)
             String archiveRootDir = serviceName + '-' + String.valueOf(project.version)

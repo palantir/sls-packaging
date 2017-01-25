@@ -90,7 +90,12 @@ class ServiceDistributionPlugin implements Plugin<Project> {
 
         Tar distTar = DistTarTask.createDistTarTask(project, 'distTar')
         project.afterEvaluate {
-            DistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.excludeFromVar, distributionExtension.isEnableManifestClasspath())
+            DistTarTask.configure(
+                    distTar,
+                    project,
+                    distributionExtension.serviceName,
+                    distributionExtension.excludeFromVar,
+                    distributionExtension.isEnableManifestClasspath())
         }
 
         JavaExec run = RunTask.createRunTask(project, 'run')

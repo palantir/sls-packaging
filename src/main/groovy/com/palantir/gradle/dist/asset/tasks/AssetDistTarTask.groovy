@@ -8,12 +8,12 @@ import org.gradle.api.tasks.bundling.Tar
 class AssetDistTarTask {
 
     static Tar createAssetDistTarTask(Project project, String taskName) {
-        Tar tarTask = project.tasks.create(taskName, Tar) {
-            group = AssetDistributionPlugin.GROUP_NAME
-            description = "Creates a compressed, gzipped tar file that contains required static assets."
+        Tar tarTask = project.tasks.create(taskName, Tar) { p ->
+            p.group = AssetDistributionPlugin.GROUP_NAME
+            p.description = "Creates a compressed, gzipped tar file that contains required static assets."
             // Set compression in constructor so that task output has the right name from the start.
-            compression = Compression.GZIP
-            extension = 'sls.tgz'
+            p.compression = Compression.GZIP
+            p.extension = 'sls.tgz'
         }
         return tarTask
     }
