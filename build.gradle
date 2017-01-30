@@ -102,7 +102,7 @@ pluginBundle {
             id = 'com.palantir.sls-java-service-distribution'
             displayName = 'Creates SLS Java services distributions'
         }
-        assertDistributionPlugin {
+        assetDistributionPlugin {
             id = 'com.palantir.sls-asset-distribution'
             displayName = 'Creates SLS asset distributions'
         }
