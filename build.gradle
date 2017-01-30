@@ -31,7 +31,7 @@ if (System.env.CIRCLE_TEST_REPORTS) {
     test.reports.junitXml.destination = new File(System.env.CIRCLE_TEST_REPORTS, getName())
 }
 
-group 'com.palantir.gradle.javadist'
+group 'com.palantir.gradle.sls-packaging'
 version gitVersion()
 
 task sourceJar(type: Jar) {
@@ -79,7 +79,7 @@ bintray {
     publish = true
     pkg {
         repo = 'releases'
-        name = 'gradle-java-distribution'
+        name = 'sls-packaging'
         userOrg = 'palantir'
         licenses = ['Apache-2.0']
         publications = ['bintray']
@@ -92,15 +92,15 @@ bintrayUpload.onlyIf {
 }
 
 pluginBundle {
-    website = 'https://github.com/palantir/gradle-java-distribution'
-    vcsUrl = 'https://github.com/palantir/gradle-java-distribution'
+    website = 'https://github.com/palantir/sls-packaging'
+    vcsUrl = 'https://github.com/palantir/sls-packaging'
     description = 'Creates a distributable package containing libraries and scripts necessary to easily deploy and run a Java project.'
     tags = ['distribution', 'application']
 
     plugins {
         distributionPlugin {
-            id = 'com.palantir.java-distribution'
-            displayName = 'Palantir Java Distribution'
+            id = 'com.palantir.sls-packaging'
+            displayName = 'Palantir SLS Packaging Plugins'
         }
     }
 }
