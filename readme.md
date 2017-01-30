@@ -4,8 +4,9 @@
 [![Coverage Status](https://coveralls.io/repos/github/palantir/sls-packaging/badge.svg?branch=develop)](https://coveralls.io/github/palantir/sls-packaging?branch=develop)
 [![Download](https://api.bintray.com/packages/palantir/releases/sls-packaging/images/download.svg) ](https://bintray.com/palantir/releases/sls-packaging/_latestVersion)
 
-A set of gradle plugins that facilitate packaging projects for distributions
+A set of Gradle plugins that facilitate packaging projects for distributions
 conforming to the [Service Layout Specification](https://github.com/palantir/sls-spec).
+This project was formerly known as gradle-java-distribution.
 
 The Java Service and Asset plugins cannot both be applied to the same gradle project, and
 distributions from both are produced as a gzipped tar named `[service-name]-[project-version].sls.tgz`.
