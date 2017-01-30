@@ -99,7 +99,7 @@ pluginBundle {
 
     plugins {
         distributionPlugin {
-            id = 'com.palantir.sls-packaging'
+            id = 'com.palantir.java-distribution'
             displayName = 'Palantir SLS Packaging Plugins'
         }
     }
