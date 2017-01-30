@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.ServiceDistributionPlugin
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Jar
 
@@ -28,7 +28,7 @@ class ManifestClasspathJarTask {
 
     static Jar createManifestClasspathJarTask(Project project, String taskName) {
         return project.tasks.create(taskName, Jar) { t ->
-            t.group = ServiceDistributionPlugin.GROUP_NAME
+            t.group = JavaServiceDistributionPlugin.GROUP_NAME
             t.description = "Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing " +
                     "jar rather than command line argument on Windows, since Windows path sizes are limited."
             t.appendix = 'manifest-classpath'

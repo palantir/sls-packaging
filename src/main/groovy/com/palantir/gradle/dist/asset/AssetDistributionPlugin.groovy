@@ -1,7 +1,7 @@
 package com.palantir.gradle.dist.asset
 
 import com.palantir.gradle.dist.asset.tasks.AssetDistTarTask
-import com.palantir.gradle.dist.service.ServiceDistributionPlugin
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.gradle.dist.tasks.CreateManifestTask
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
@@ -15,7 +15,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        if (project.getPlugins().hasPlugin(ServiceDistributionPlugin)) {
+        if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
         }
         project.extensions.create("distribution", AssetDistributionExtension, project)

@@ -18,7 +18,7 @@ package com.palantir.gradle.dist.service
 import com.palantir.gradle.dist.BaseDistributionExtension
 import org.gradle.api.Project
 
-class ServiceDistributionExtension extends BaseDistributionExtension {
+class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     private String mainClass
     private List<String> args = []
@@ -29,7 +29,7 @@ class ServiceDistributionExtension extends BaseDistributionExtension {
     private String javaHome = null
     private List<String> excludeFromVar = ['log', 'run']
 
-    ServiceDistributionExtension(Project project) {
+    JavaServiceDistributionExtension(Project project) {
         super(project)
         productType("service.v1")
     }

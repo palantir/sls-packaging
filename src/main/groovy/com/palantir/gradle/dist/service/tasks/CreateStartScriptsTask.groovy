@@ -15,7 +15,7 @@
  */
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.ServiceDistributionPlugin
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Jar
@@ -25,7 +25,7 @@ class CreateStartScriptsTask {
 
     static CreateStartScripts createStartScriptsTask(Project project, String taskName) {
         return project.tasks.create(taskName, CreateStartScripts) { p ->
-            p.group = ServiceDistributionPlugin.GROUP_NAME
+            p.group = JavaServiceDistributionPlugin.GROUP_NAME
             p.description = "Generates standard Java start scripts."
             p.setOutputDir(new File("${project.buildDir}/scripts"))
             p.setClasspath(project.tasks['jar'].outputs.files + project.configurations.runtime)

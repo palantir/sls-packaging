@@ -1,6 +1,5 @@
 package com.palantir.gradle.dist
 
-import com.palantir.gradle.dist.service.ServiceDependency
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 

@@ -27,7 +27,7 @@ import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.bundling.Tar
 import org.gradle.jvm.application.tasks.CreateStartScripts
 
-class ServiceDistributionPlugin implements Plugin<Project> {
+class JavaServiceDistributionPlugin implements Plugin<Project> {
 
     static final String GROUP_NAME = "Distribution"
     static final String SLS_CONFIGURATION_NAME = "sls"
@@ -37,14 +37,14 @@ class ServiceDistributionPlugin implements Plugin<Project> {
             throw new InvalidUserCodeException("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
         }
         project.plugins.apply('java')
-        project.extensions.create('distribution', ServiceDistributionExtension, project)
+        project.extensions.create('distribution', JavaServiceDistributionExtension, project)
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.1'
         }
 
-        def distributionExtension = project.extensions.findByType(ServiceDistributionExtension)
+        def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
 
         // Create tasks
         Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")

@@ -16,14 +16,14 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.ServiceDistributionPlugin
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
 
 class CopyLauncherBinariesTask extends DefaultTask {
     CopyLauncherBinariesTask() {
-        group = ServiceDistributionPlugin.GROUP_NAME
+        group = JavaServiceDistributionPlugin.GROUP_NAME
         description = "Creates go-java-launcher binaries."
         doLast {
             project.copy { copySpec ->
