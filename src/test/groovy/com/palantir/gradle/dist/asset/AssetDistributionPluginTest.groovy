@@ -55,8 +55,8 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         given:
         buildFile << '''
             plugins {
-                id 'com.palantir.java-distribution'
-                id 'com.palantir.asset-distribution'
+                id 'com.palantir.sls-java-service-distribution'
+                id 'com.palantir.sls-asset-distribution'
             }
         '''.stripIndent()
 
@@ -64,7 +64,7 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         def result = run(":tasks").buildAndFail()
 
         then:
-        result.output.contains("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
+        result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'can specify service dependencies'() {
@@ -108,7 +108,7 @@ class AssetDistributionPluginTest extends GradleTestSpec {
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
-                id 'com.palantir.asset-distribution'
+                id 'com.palantir.sls-asset-distribution'
             }
             
             distribution {
