@@ -19,8 +19,8 @@ package com.palantir.gradle.dist.tasks
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.SlsProductVersions
-import com.palantir.gradle.dist.service.ServiceDistributionPlugin
-import com.palantir.gradle.dist.service.ServiceDependency
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
+import com.palantir.gradle.dist.ServiceDependency
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
@@ -30,7 +30,7 @@ import org.gradle.api.tasks.TaskAction
 class CreateManifestTask extends DefaultTask {
 
     CreateManifestTask() {
-        group = ServiceDistributionPlugin.GROUP_NAME
+        group = JavaServiceDistributionPlugin.GROUP_NAME
         description = "Generates a simple yaml file describing the package content."
     }
 

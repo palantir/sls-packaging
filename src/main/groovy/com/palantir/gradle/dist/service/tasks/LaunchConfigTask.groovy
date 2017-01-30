@@ -18,7 +18,7 @@ package com.palantir.gradle.dist.service.tasks
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.dist.service.ServiceDistributionPlugin
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.gradle.api.DefaultTask
@@ -67,7 +67,7 @@ class LaunchConfigTask extends DefaultTask {
     FileCollection classpath
 
     LaunchConfigTask() {
-        group = ServiceDistributionPlugin.GROUP_NAME
+        group = JavaServiceDistributionPlugin.GROUP_NAME
         description = "Generates launcher-static.yml and launcher-check.yml configurations."
     }
 

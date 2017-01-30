@@ -1,4 +1,4 @@
-package com.palantir.gradle.dist.service
+package com.palantir.gradle.dist
 
 import com.palantir.gradle.dist.SlsProductVersions
 import org.gradle.api.Nullable

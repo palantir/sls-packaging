@@ -18,10 +18,10 @@ package com.palantir.gradle.dist.service
 
 import spock.lang.Specification
 
-class ServiceDistributionExtensionTest extends Specification {
+class JavaServiceDistributionExtensionTest extends Specification {
     def 'collection modifiers are cumulative when varargs are given'() {
         given:
-        def ext = new ServiceDistributionExtension(null)
+        def ext = new JavaServiceDistributionExtension(null)
 
         when:
         ext.with {
@@ -55,7 +55,7 @@ class ServiceDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new ServiceDistributionExtension(null)
+        def ext = new JavaServiceDistributionExtension(null)
 
         when:
         ext.with {
