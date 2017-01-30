@@ -16,7 +16,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin)) {
-            throw new InvalidUserCodeException("The plugins 'com.palantir.asset-distribution' and 'com.palantir.java-distribution' cannot be used in the same Gradle project.")
+            throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
         }
         project.extensions.create("distribution", AssetDistributionExtension, project)
 

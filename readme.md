@@ -57,7 +57,7 @@ or `var` directory, and instead utilize a top-level `asset` directory that can c
 Apply the plugin using standard Gradle convention:
 
     plugins {
-        id 'com.palantir.java-distribution'
+        id 'com.palantir.sls-java-service-distribution'
     }
 
 A sample configuration for the Service plugin:
@@ -132,7 +132,7 @@ before the Java process is executed.
 Apply the plugin using standard Gradle convention:
 
     plugins {
-        id 'com.palantir.asset-distribution'
+        id 'com.palantir.sls-asset-distribution'
     }
 
 A sample configuration for the Asset plugin:

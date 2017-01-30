@@ -98,15 +98,19 @@ pluginBundle {
     tags = ['distribution', 'application']
 
     plugins {
-        distributionPlugin {
-            id = 'com.palantir.java-distribution'
-            displayName = 'Palantir SLS Packaging Plugins'
+        javaServiceDistributionPlugin {
+            id = 'com.palantir.sls-java-service-distribution'
+            displayName = 'Creates SLS Java services distributions'
+        }
+        assetDistributionPlugin {
+            id = 'com.palantir.sls-asset-distribution'
+            displayName = 'Creates SLS asset distributions'
         }
     }
 }
 
 publishPlugins.onlyIf {
-    project.version ==~ /\d+\.\d+\.\d+/
+    project.version ==~ /[0-9]+(\.[0-9]+)+(-rc[0-9]+)?(-alpha[0-9]+)?/
 }
 
 jacocoTestReport {
