@@ -142,13 +142,12 @@ restart)
 check)
     printf "%-50s" "Checking health of '$SERVICE'..."
     $LAUNCHER_CMD $STATIC_LAUNCHER_CHECK_CONFIG > var/log/$SERVICE-check.log 2>&1
-    RESULT=$?
-    if [ $RESULT -eq 0 ]; then
+    if [ $? -eq 0 ]; then
         printf "%s\n" "Healthy"
         exit 0
     else
         printf "%s\n" "Unhealthy"
-        exit $RESULT
+        exit 2
     fi
 ;;
 *)
