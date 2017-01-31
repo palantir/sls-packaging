@@ -34,6 +34,7 @@ class LaunchConfigTask extends DefaultTask {
     ]
 
     static final List<String> gcJvmOpts = [
+            '-XX:+CrashOnOutOfMemoryError',  // requires JDK 8u92+
             '-XX:+PrintGCDateStamps',
             '-XX:+PrintGCDetails',
             '-XX:-TraceClassUnloading',

@@ -400,6 +400,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
         expectedStaticConfig.setJvmOpts([
                 '-Djava.io.tmpdir=var/data/tmp',
+                '-XX:+CrashOnOutOfMemoryError',
                 '-XX:+PrintGCDateStamps',
                 '-XX:+PrintGCDetails',
                 '-XX:-TraceClassUnloading',
