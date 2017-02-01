@@ -18,9 +18,10 @@ package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.palantir.gradle.dist.SlsProductVersions
+
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.gradle.dist.ServiceDependency
+import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input

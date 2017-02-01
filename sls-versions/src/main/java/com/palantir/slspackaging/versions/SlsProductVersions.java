@@ -1,4 +1,4 @@
-package com.palantir.gradle.dist;
+package com.palantir.slspackaging.versions;
 
 import java.util.regex.Pattern;
 

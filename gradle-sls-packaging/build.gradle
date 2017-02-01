@@ -2,6 +2,7 @@ apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
 
 dependencies {
+    compile project(':sls-versions')
     compile gradleApi()
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.2'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.2' // match Gradle's version
