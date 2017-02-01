@@ -16,8 +16,6 @@ dependencies:
 test:
   override:
     - ./gradlew build --info --stacktrace
-  post:
-    - ./gradlew jacocoTestReport coveralls --info --stacktrace
 
 deployment:
   # uncomment after fixing OJO publishing
