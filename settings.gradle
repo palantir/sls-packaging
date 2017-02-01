@@ -1,2 +1,2 @@
 include 'gradle-sls-packaging'
-
+include 'sls-versions'

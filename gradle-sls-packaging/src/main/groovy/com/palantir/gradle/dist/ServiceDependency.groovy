@@ -1,5 +1,6 @@
 package com.palantir.gradle.dist
 
+import com.palantir.slspackaging.versions.SlsProductVersions
 import org.gradle.api.Nullable
 
 class ServiceDependency {
