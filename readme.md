@@ -1,7 +1,6 @@
 # SLS Distribution Gradle Plugins
 
 [![Build Status](https://circleci.com/gh/palantir/sls-packaging.svg?style=shield)](https://circleci.com/gh/palantir/sls-packaging)
-[![Coverage Status](https://coveralls.io/repos/github/palantir/sls-packaging/badge.svg?branch=develop)](https://coveralls.io/github/palantir/sls-packaging?branch=develop)
 [![Download](https://api.bintray.com/packages/palantir/releases/sls-packaging/images/download.svg) ](https://bintray.com/palantir/releases/sls-packaging/_latestVersion)
 
 A set of Gradle plugins that facilitate packaging projects for distributions
