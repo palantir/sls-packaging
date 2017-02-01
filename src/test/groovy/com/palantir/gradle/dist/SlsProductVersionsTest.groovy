@@ -29,6 +29,7 @@ class SlsProductVersionsTest extends Specification {
         SlsProductVersions.isNonOrderableVersion('2.0.0-beta1')
         SlsProductVersions.isNonOrderableVersion('2.0.0-foo')
         SlsProductVersions.isNonOrderableVersion('2.0.0-foo-g20-gaaaaaa')
+        SlsProductVersions.isNonOrderableVersion('2.0.0-foo-g20-gaaaaaa.dirty')
 
         !SlsProductVersions.isNonOrderableVersion('1.2.4')
         !SlsProductVersions.isNonOrderableVersion(' 2.0.0')
