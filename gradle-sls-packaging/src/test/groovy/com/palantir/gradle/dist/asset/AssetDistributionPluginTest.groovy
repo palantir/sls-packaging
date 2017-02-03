@@ -80,6 +80,10 @@ class AssetDistributionPluginTest extends GradleTestSpec {
                     maxVersion = "2.0.0"
                     recommendedVersion = "1.5.0"
                 }
+                serviceDependency {
+                    productGroup = "group3"
+                    productName = "name3"
+                }
             }
         """.stripIndent()
 
@@ -103,6 +107,10 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         dep2['min-version'] == '1.0.0'
         dep2['max-version'] == '2.0.0'
         dep2['recommended-version'] == "1.5.0"
+
+        def dep3 = manifest['extensions']['service-dependencies'][2]
+        dep3['product-group'] == 'group3'
+        dep3['product-name'] == 'name3'
     }
 
     private static createUntarBuildFile(buildFile) {

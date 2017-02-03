@@ -6,15 +6,17 @@ import org.gradle.api.Nullable
 class ServiceDependency {
     String productGroup
     String productName
+    @Nullable
     String minVersion
+    @Nullable
     String maxVersion
     @Nullable
     String recommendedVersion
 
     ServiceDependency() {}
 
-    ServiceDependency(String productGroup, String productName, String minVersion, String maxVersion,
-                      @Nullable String recommendedVersion) {
+    ServiceDependency(String productGroup, String productName, @Nullable String minVersion,
+                      @Nullable String maxVersion, @Nullable String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
         this.minVersion = minVersion
