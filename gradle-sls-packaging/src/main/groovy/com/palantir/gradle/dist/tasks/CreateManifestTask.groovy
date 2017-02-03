@@ -80,7 +80,7 @@ class CreateManifestTask extends DefaultTask {
     void configure(String serviceName, String serviceGroup, String productType, Map<String, Object> manifestExtensions,
                    List<ServiceDependency> serviceDependencies) {
         // Serialize service-dependencies, add them to manifestExtensions
-        def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).setPropertyNamingStrategy(new KebabCaseStrategy())
         def dependencies = []
         serviceDependencies.each {
             dependencies.add(mapper.convertValue(it, Map))
