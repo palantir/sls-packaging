@@ -291,8 +291,8 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
             distribution {
                 serviceDependency "group1", "name1", "1.0.0", "2.0.0"
                 serviceDependency {
-                    group = "group2"
-                    name = "name2"
+                    productGroup = "group2"
+                    productName = "name2"
                     minVersion = "1.0.0"
                     maxVersion = "2.0.0"
                     recommendedVersion = "1.5.0"
@@ -308,18 +308,18 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         def manifest = mapper.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir), Map)
 
         def dep1 = manifest['extensions']['service-dependencies'][0]
-        dep1['group'] == 'group1'
-        dep1['name'] == 'name1'
-        dep1['minVersion'] == '1.0.0'
-        dep1['maxVersion'] == '2.0.0'
-        dep1['recommendedVersion'] == null
+        dep1['product-group'] == 'group1'
+        dep1['product-name'] == 'name1'
+        dep1['min-version'] == '1.0.0'
+        dep1['max-version'] == '2.0.0'
+        dep1['recommended-version'] == null
 
         def dep2 = manifest['extensions']['service-dependencies'][1]
-        dep2['group'] == 'group2'
-        dep2['name'] == 'name2'
-        dep2['minVersion'] == '1.0.0'
-        dep2['maxVersion'] == '2.0.0'
-        dep2['recommendedVersion'] == "1.5.0"
+        dep2['product-group'] == 'group2'
+        dep2['product-name'] == 'name2'
+        dep2['min-version'] == '1.0.0'
+        dep2['max-version'] == '2.0.0'
+        dep2['recommended-version'] == "1.5.0"
     }
 
     def 'cannot specify service dependencies with invalid versions'() {
