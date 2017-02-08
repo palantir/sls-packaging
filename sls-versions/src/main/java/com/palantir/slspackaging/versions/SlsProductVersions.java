@@ -10,7 +10,7 @@ public class SlsProductVersions {
     private static final Pattern NON_ORDERABLE_VERSION = Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[a-z0-9-.]*$");
     private static final Pattern[] ORDERABLE_VERSION = new Pattern[]{
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[a-f0-9]+$"),
-            Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]$"),
+            Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+$")
     };
