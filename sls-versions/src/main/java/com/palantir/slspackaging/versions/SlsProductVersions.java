@@ -14,6 +14,7 @@ public class SlsProductVersions {
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+$")
     };
+    private static final Pattern VERSION_MATCHER = Pattern.compile("^([0-9]+|x)\\.([0-9]+|x)\\.([0-9]+|x)$");
 
     /**
      * Returns true iff the given string is a valid "orderable" SLS version.
@@ -34,12 +35,17 @@ public class SlsProductVersions {
         return NON_ORDERABLE_VERSION.matcher(version).matches();
     }
 
+    public static boolean isMatcher(String matcher) {
+        return VERSION_MATCHER.matcher(matcher).matches();
+    }
+
     /**
-     * Returns true iff the given string is a valid "orderable" or "non-orderable" SLS version.
+     * Returns true iff the given string is a valid "orderable" or "non-orderable" SLS version, or a valid version
+     * matcher.
      */
     public static boolean isValidVersion(String version) {
         // Note: Technically this condition is redundant this isOrderableVersion ==> isNonOrderableVersion.
         // Will check both for maintainability and legibility.
-        return isOrderableVersion(version) || isNonOrderableVersion(version);
+        return isOrderableVersion(version) || isNonOrderableVersion(version) || isMatcher(version);
     }
 }

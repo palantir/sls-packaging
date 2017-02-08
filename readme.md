@@ -70,10 +70,10 @@ A sample configuration for the Service plugin:
         env 'KEY1': 'value1', 'KEY2': 'value1'
         manifestExtensions 'KEY3': 'value2'
         serviceDependency {
-            group = "other-group"
-            name = "other-service"
-            minVersion = "1.0.0"
-            maxVersion = "2.0.0"
+            productGroup = "other-group"
+            productName = "other-service"
+            minVersion = "1.1.0"
+            maxVersion = "1.3.x"
             recommendedVersion = "1.5.0"
         }
     }

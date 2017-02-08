@@ -293,9 +293,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 serviceDependency {
                     productGroup = "group2"
                     productName = "name2"
-                    minVersion = "1.0.0"
-                    maxVersion = "2.0.0"
-                    recommendedVersion = "1.5.0"
+                    minVersion = "1.0.x"
+                    maxVersion = "1.3.x"
+                    recommendedVersion = "1.2.x"
                 }
                 serviceDependency {
                     productGroup = "group3"
@@ -321,9 +321,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         def dep2 = manifest['extensions']['service-dependencies'][1]
         dep2['product-group'] == 'group2'
         dep2['product-name'] == 'name2'
-        dep2['min-version'] == '1.0.0'
-        dep2['max-version'] == '2.0.0'
-        dep2['recommended-version'] == "1.5.0"
+        dep2['min-version'] == '1.0.x'
+        dep2['max-version'] == '1.3.x'
+        dep2['recommended-version'] == "1.2.x"
 
         def dep3 = manifest['extensions']['service-dependencies'][2]
         dep3['product-group'] == 'group3'
