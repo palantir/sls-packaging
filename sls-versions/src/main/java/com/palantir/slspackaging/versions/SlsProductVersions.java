@@ -43,9 +43,16 @@ public class SlsProductVersions {
      * Returns true iff the given string is a valid "orderable" or "non-orderable" SLS version, or a valid version
      * matcher.
      */
+    public static boolean isValidVersionOrMatcher(String version) {
+        return isValidVersion(version) || isMatcher(version);
+    }
+
+    /**
+     * Returns true iff the given string is a valid "orderable" or "non-orderable" SLS version.
+     */
     public static boolean isValidVersion(String version) {
         // Note: Technically this condition is redundant this isOrderableVersion ==> isNonOrderableVersion.
         // Will check both for maintainability and legibility.
-        return isOrderableVersion(version) || isNonOrderableVersion(version) || isMatcher(version);
+        return isOrderableVersion(version) || isNonOrderableVersion(version);
     }
 }

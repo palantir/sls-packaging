@@ -293,9 +293,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 serviceDependency {
                     productGroup = "group2"
                     productName = "name2"
-                    minVersion = "1.0.x"
+                    minVersion = "1.0.0"
                     maxVersion = "1.3.x"
-                    recommendedVersion = "1.2.x"
+                    recommendedVersion = "1.2.1"
                 }
                 serviceDependency {
                     productGroup = "group3"
@@ -321,9 +321,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         def dep2 = manifest['extensions']['service-dependencies'][1]
         dep2['product-group'] == 'group2'
         dep2['product-name'] == 'name2'
-        dep2['min-version'] == '1.0.x'
+        dep2['min-version'] == '1.0.0'
         dep2['max-version'] == '1.3.x'
-        dep2['recommended-version'] == "1.2.x"
+        dep2['recommended-version'] == "1.2.1"
 
         def dep3 = manifest['extensions']['service-dependencies'][2]
         dep3['product-group'] == 'group3'
@@ -335,7 +335,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
-                serviceDependency "group1", "name1", "1.0.0foo", "2.0.0"
+                serviceDependency "group1", "name1", "1.0.x", "2.0.0"
             }
         """.stripIndent()
 
@@ -344,7 +344,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         UnexpectedBuildFailure exception = thrown()
-        exception.message.contains("Invalid SLS version: 1.0.0foo")
+        exception.message.contains("minVersion and recommendedVersions must be valid SLS versions: 1.0.x")
     }
 
     def 'produce distribution bundle with files in deployment/'() {

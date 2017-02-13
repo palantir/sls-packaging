@@ -18,9 +18,8 @@ package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-
-import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.gradle.dist.ServiceDependency
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
@@ -83,6 +82,7 @@ class CreateManifestTask extends DefaultTask {
         def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).setPropertyNamingStrategy(new KebabCaseStrategy())
         def dependencies = []
         serviceDependencies.each {
+            it.isValid()
             dependencies.add(mapper.convertValue(it, Map))
         }
         if (manifestExtensions.containsKey("service-dependencies")) {

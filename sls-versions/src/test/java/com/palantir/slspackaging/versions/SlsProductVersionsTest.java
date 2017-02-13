@@ -55,9 +55,19 @@ public final class SlsProductVersionsTest {
     public void testValidVersionDetected() {
         assertThat(SlsProductVersions.isValidVersion("1.2.4")).isTrue();  // orderable
         assertThat(SlsProductVersions.isValidVersion("2.0.0-foo-g20-gaaaaaa")).isTrue();  // non-orderable
-        assertThat(SlsProductVersions.isValidVersion("2.x.x")).isTrue();  // matcher
 
+        assertThat(SlsProductVersions.isValidVersion("2.x.x")).isFalse();
         assertThat(SlsProductVersions.isValidVersion(" 2.0.0")).isFalse();
         assertThat(SlsProductVersions.isValidVersion("2.0.0 ")).isFalse();
+    }
+
+    @Test
+    public void testValidVersionOrMatcherDetected() {
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("1.2.4")).isTrue();  // orderable
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("2.0.0-foo-g20-gaaaaaa")).isTrue();  // non-orderable
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("2.x.x")).isTrue(); // matcher
+
+        assertThat(SlsProductVersions.isValidVersionOrMatcher(" 2.0.0")).isFalse();
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("2.0.0 ")).isFalse();
     }
 }
