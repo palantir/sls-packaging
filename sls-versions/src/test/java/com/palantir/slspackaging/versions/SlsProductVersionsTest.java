@@ -38,11 +38,11 @@ public final class SlsProductVersionsTest {
 
     @Test
     public void testMatcherDetection() {
-        assertThat(SlsProductVersions.isMatcher("2.0.0")).isTrue();
         assertThat(SlsProductVersions.isMatcher("2.0.x")).isTrue();
         assertThat(SlsProductVersions.isMatcher("2.x.x")).isTrue();
         assertThat(SlsProductVersions.isMatcher("x.x.x")).isTrue();
 
+        assertThat(SlsProductVersions.isMatcher("2.0.0")).isFalse();
         assertThat(SlsProductVersions.isMatcher("1.x.x.x")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.y.z")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.x.x-rc1")).isFalse();

@@ -36,7 +36,7 @@ public class SlsProductVersions {
     }
 
     public static boolean isMatcher(String matcher) {
-        return VERSION_MATCHER.matcher(matcher).matches();
+        return VERSION_MATCHER.matcher(matcher).matches() && matcher.contains("x");
     }
 
     /**
