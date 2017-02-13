@@ -85,11 +85,11 @@ class CreateManifestTask extends DefaultTask {
             it.isValid()
             dependencies.add(mapper.convertValue(it, Map))
         }
-        if (manifestExtensions.containsKey("service-dependencies")) {
-            throw new IllegalArgumentException("Use serviceDependencies configuration option instead of setting " +
+        if (manifestExtensions.containsKey("product-dependencies")) {
+            throw new IllegalArgumentException("Use productDependencies configuration option instead of setting " +
                     "'service-dependencies' key in manifestExtensions")
         }
-        manifestExtensions.put("service-dependencies", dependencies)
+        manifestExtensions.put("product-dependencies", dependencies)
 
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup

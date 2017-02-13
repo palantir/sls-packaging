@@ -289,15 +289,15 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
-                serviceDependency "group1", "name1", "1.0.0", "2.0.0"
-                serviceDependency {
+                productDependency "group1", "name1", "1.0.0", "2.0.0"
+                productDependency {
                     productGroup = "group2"
                     productName = "name2"
-                    minVersion = "1.0.0"
-                    maxVersion = "1.3.x"
+                    minimumVersion = "1.0.0"
+                    maximumVersion = "1.3.x"
                     recommendedVersion = "1.2.1"
                 }
-                serviceDependency {
+                productDependency {
                     productGroup = "group3"
                     productName = "name3"
                 }
@@ -311,21 +311,21 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         def mapper = new ObjectMapper()
         def manifest = mapper.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir), Map)
 
-        def dep1 = manifest['extensions']['service-dependencies'][0]
+        def dep1 = manifest['extensions']['product-dependencies'][0]
         dep1['product-group'] == 'group1'
         dep1['product-name'] == 'name1'
-        dep1['min-version'] == '1.0.0'
-        dep1['max-version'] == '2.0.0'
+        dep1['minimum-version'] == '1.0.0'
+        dep1['maximum-version'] == '2.0.0'
         dep1['recommended-version'] == null
 
-        def dep2 = manifest['extensions']['service-dependencies'][1]
+        def dep2 = manifest['extensions']['product-dependencies'][1]
         dep2['product-group'] == 'group2'
         dep2['product-name'] == 'name2'
-        dep2['min-version'] == '1.0.0'
-        dep2['max-version'] == '1.3.x'
+        dep2['minimum-version'] == '1.0.0'
+        dep2['maximum-version'] == '1.3.x'
         dep2['recommended-version'] == "1.2.1"
 
-        def dep3 = manifest['extensions']['service-dependencies'][2]
+        def dep3 = manifest['extensions']['product-dependencies'][2]
         dep3['product-group'] == 'group3'
         dep3['product-name'] == 'name3'
     }
@@ -335,7 +335,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
-                serviceDependency "group1", "name1", "1.0.x", "2.0.0"
+                productDependency "group1", "name1", "1.0.x", "2.0.0"
             }
         """.stripIndent()
 
@@ -344,7 +344,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         UnexpectedBuildFailure exception = thrown()
-        exception.message.contains("minVersion and recommendedVersions must be valid SLS versions: 1.0.x")
+        exception.message.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
     }
 
     def 'produce distribution bundle with files in deployment/'() {

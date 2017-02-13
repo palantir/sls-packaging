@@ -15,7 +15,7 @@ class BaseDistributionExtension {
     private String serviceName
     private String productType
     private Map<String, Object> manifestExtensions = [:]
-    private List<ServiceDependency> serviceDependencies = []
+    private List<ServiceDependency> productDependencies = []
 
     BaseDistributionExtension(Project project) {
         this.project = project
@@ -44,22 +44,22 @@ class BaseDistributionExtension {
         this.productType = type
     }
 
-    void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
-        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
+    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
+        productDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
     }
 
-    void serviceDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
-        serviceDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
+        productDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
     }
 
-    void serviceDependency(Closure closure) {
+    void productDependency(Closure closure) {
         ServiceDependency dep = new ServiceDependency()
         ConfigureUtil.configureUsing(closure).execute(dep)
-        serviceDependency(dep)
+        productDependency(dep)
     }
 
-    void serviceDependency(ServiceDependency dependency) {
-        serviceDependencies.add(dependency)
+    void productDependency(ServiceDependency dependency) {
+        productDependencies.add(dependency)
     }
 
 
@@ -80,6 +80,6 @@ class BaseDistributionExtension {
     }
 
     List<ServiceDependency> getServiceDependencies() {
-        return serviceDependencies
+        return productDependencies
     }
 }

@@ -7,36 +7,36 @@ class ServiceDependency {
     String productGroup
     String productName
     @Nullable
-    String minVersion
+    String minimumVersion
     @Nullable
-    String maxVersion
+    String maximumVersion
     @Nullable
     String recommendedVersion
 
     ServiceDependency() {}
 
-    ServiceDependency(String productGroup, String productName, @Nullable String minVersion,
-                      @Nullable String maxVersion, @Nullable String recommendedVersion) {
+    ServiceDependency(String productGroup, String productName, @Nullable String minimumVersion,
+                      @Nullable String maximumVersion, @Nullable String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
-        this.minVersion = minVersion
-        this.maxVersion = maxVersion
+        this.minimumVersion = minimumVersion
+        this.maximumVersion = maximumVersion
         this.recommendedVersion = recommendedVersion
         isValid()
     }
 
     def isValid() {
-        [maxVersion].each {
+        [maximumVersion].each {
             if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {
                 throw new IllegalArgumentException(
-                        "maxVersion must be valid SLS version or version matcher: " + it)
+                        "maximumVersion must be valid SLS version or version matcher: " + it)
             }
         }
 
-        [minVersion, recommendedVersion].each {
+        [minimumVersion, recommendedVersion].each {
             if (it && !SlsProductVersions.isValidVersion(it)) {
                 throw new IllegalArgumentException(
-                        "minVersion and recommendedVersions must be valid SLS versions: " + it)
+                        "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
             }
         }
     }
