@@ -3,7 +3,7 @@ package com.palantir.gradle.dist
 import com.palantir.slspackaging.versions.SlsProductVersions
 import org.gradle.api.Nullable
 
-class ServiceDependency {
+class ProductDependency {
     String productGroup
     String productName
     @Nullable
@@ -13,9 +13,9 @@ class ServiceDependency {
     @Nullable
     String recommendedVersion
 
-    ServiceDependency() {}
+    ProductDependency() {}
 
-    ServiceDependency(String productGroup, String productName, @Nullable String minimumVersion,
+    ProductDependency(String productGroup, String productName, @Nullable String minimumVersion,
                       @Nullable String maximumVersion, @Nullable String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName

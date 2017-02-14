@@ -2,10 +2,10 @@ package com.palantir.gradle.dist
 
 import spock.lang.Specification
 
-class ServiceDependencyTest extends Specification {
+class ProductDependencyTest extends Specification {
     def 'max version may be matcher'() {
         when:
-        new ServiceDependency("", "", "1.2.3", "1.2.x", "1.2.3").isValid()
+        new ProductDependency("", "", "1.2.3", "1.2.x", "1.2.3").isValid()
 
         then:
         true
@@ -13,7 +13,7 @@ class ServiceDependencyTest extends Specification {
 
     def 'min version must not be matcher'() {
         when:
-        new ServiceDependency("", "", "1.2.x", "1.2.x", "1.2.3").isValid()
+        new ProductDependency("", "", "1.2.x", "1.2.x", "1.2.3").isValid()
 
         then:
         thrown(IllegalArgumentException)
@@ -21,7 +21,7 @@ class ServiceDependencyTest extends Specification {
 
     def 'recommended version must not be matcher'() {
         when:
-        new ServiceDependency("", "", "1.2.3", "1.2.x", "1.2.x").isValid()
+        new ProductDependency("", "", "1.2.3", "1.2.x", "1.2.x").isValid()
 
         then:
         thrown(IllegalArgumentException)

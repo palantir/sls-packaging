@@ -15,7 +15,7 @@ class BaseDistributionExtension {
     private String serviceName
     private String productType
     private Map<String, Object> manifestExtensions = [:]
-    private List<ServiceDependency> productDependencies = []
+    private List<ProductDependency> productDependencies = []
 
     BaseDistributionExtension(Project project) {
         this.project = project
@@ -45,21 +45,21 @@ class BaseDistributionExtension {
     }
 
     void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
-        productDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
+        productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
     }
 
     void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
-        productDependency(new ServiceDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+        productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
     }
 
     void productDependency(Closure closure) {
-        ServiceDependency dep = new ServiceDependency()
+        ProductDependency dep = new ProductDependency()
         ConfigureUtil.configureUsing(closure).execute(dep)
         dep.isValid()
         productDependency(dep)
     }
 
-    void productDependency(ServiceDependency dependency) {
+    void productDependency(ProductDependency dependency) {
         productDependencies.add(dependency)
     }
 
@@ -80,7 +80,7 @@ class BaseDistributionExtension {
         return productType
     }
 
-    List<ServiceDependency> getServiceDependencies() {
+    List<ProductDependency> getServiceDependencies() {
         return productDependencies
     }
 }
