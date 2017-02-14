@@ -599,6 +599,31 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
+    def 'compiles UTF8-encoded java source files correctly'() {
+        given:
+        createUntarBuildFile(buildFile)
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        import java.io.*;
+        public class Test {
+            public static void main(String[] args) {
+                try{
+                    PrintWriter writer = new PrintWriter("file.txt", "UTF-8");
+                    writer.println("UTF8: å");
+                    writer.close();
+                } catch (IOException e) {}
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
+        file('dist/service-name-0.0.1/file.txt', projectDir).text.contains('UTF8: å')
+    }
+
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
