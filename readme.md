@@ -72,8 +72,8 @@ A sample configuration for the Service plugin:
         serviceDependency {
             productGroup = "other-group"
             productName = "other-service"
-            minVersion = "1.1.0"
-            maxVersion = "1.3.x"
+            minimumVersion = "1.1.0"
+            maximumVersion = "1.3.x"
             recommendedVersion = "1.5.0"
         }
     }
