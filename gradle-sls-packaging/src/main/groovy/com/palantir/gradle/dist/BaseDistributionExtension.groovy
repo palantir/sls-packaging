@@ -55,6 +55,7 @@ class BaseDistributionExtension {
     void productDependency(Closure closure) {
         ServiceDependency dep = new ServiceDependency()
         ConfigureUtil.configureUsing(closure).execute(dep)
+        dep.isValid()
         productDependency(dep)
     }
 

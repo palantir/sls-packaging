@@ -335,6 +335,27 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
+                productDependency {
+                    productGroup = "group2"
+                    productName = "name2"
+                    minimumVersion = "1.0.x"
+                }
+            }
+        """.stripIndent()
+
+        when:
+        run(':distTar').build()
+
+        then:
+        UnexpectedBuildFailure exception = thrown()
+        exception.message.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
+    }
+
+    def 'cannot specify service dependencies with invalid versions, with closure constructor'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            distribution {
                 productDependency "group1", "name1", "1.0.x", "2.0.0"
             }
         """.stripIndent()
