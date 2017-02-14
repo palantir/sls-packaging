@@ -59,7 +59,6 @@ class BaseDistributionExtension {
     }
 
     void serviceDependency(ServiceDependency dependency) {
-        dependency.verifyVersions()
         serviceDependencies.add(dependency)
     }
 

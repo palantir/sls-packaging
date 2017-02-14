@@ -37,11 +37,37 @@ public final class SlsProductVersionsTest {
     }
 
     @Test
+    public void testMatcherDetection() {
+        assertThat(SlsProductVersions.isMatcher("2.0.x")).isTrue();
+        assertThat(SlsProductVersions.isMatcher("2.x.x")).isTrue();
+        assertThat(SlsProductVersions.isMatcher("x.x.x")).isTrue();
+
+        assertThat(SlsProductVersions.isMatcher("2.0.0")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("1.x.x.x")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.y.z")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.x.x-rc1")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.x.x-beta1")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.x.x-1-gaaaaaa")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.x.x-foo")).isFalse();
+    }
+
+    @Test
     public void testValidVersionDetected() {
         assertThat(SlsProductVersions.isValidVersion("1.2.4")).isTrue();  // orderable
         assertThat(SlsProductVersions.isValidVersion("2.0.0-foo-g20-gaaaaaa")).isTrue();  // non-orderable
 
+        assertThat(SlsProductVersions.isValidVersion("2.x.x")).isFalse();
         assertThat(SlsProductVersions.isValidVersion(" 2.0.0")).isFalse();
         assertThat(SlsProductVersions.isValidVersion("2.0.0 ")).isFalse();
+    }
+
+    @Test
+    public void testValidVersionOrMatcherDetected() {
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("1.2.4")).isTrue();  // orderable
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("2.0.0-foo-g20-gaaaaaa")).isTrue();  // non-orderable
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("2.x.x")).isTrue(); // matcher
+
+        assertThat(SlsProductVersions.isValidVersionOrMatcher(" 2.0.0")).isFalse();
+        assertThat(SlsProductVersions.isValidVersionOrMatcher("2.0.0 ")).isFalse();
     }
 }

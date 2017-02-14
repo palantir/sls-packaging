@@ -22,12 +22,21 @@ class ServiceDependency {
         this.minVersion = minVersion
         this.maxVersion = maxVersion
         this.recommendedVersion = recommendedVersion
+        isValid()
     }
 
-    def verifyVersions() {
-        [minVersion, maxVersion, recommendedVersion].each {
+    def isValid() {
+        [maxVersion].each {
+            if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {
+                throw new IllegalArgumentException(
+                        "maxVersion must be valid SLS version or version matcher: " + it)
+            }
+        }
+
+        [minVersion, recommendedVersion].each {
             if (it && !SlsProductVersions.isValidVersion(it)) {
-                throw new IllegalArgumentException("Invalid SLS version: " + it)
+                throw new IllegalArgumentException(
+                        "minVersion and recommendedVersions must be valid SLS versions: " + it)
             }
         }
     }
