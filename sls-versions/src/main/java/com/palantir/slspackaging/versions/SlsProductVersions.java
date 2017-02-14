@@ -3,8 +3,7 @@ package com.palantir.slspackaging.versions;
 import java.util.regex.Pattern;
 
 /**
- * Utility methods for checking whether version strings are valid SLS version strings,
- * c.f. https://github.com/palantir/sls-spec/
+ * Utility methods for checking whether version strings are valid SLS version strings.
  */
 public class SlsProductVersions {
     private static final Pattern NON_ORDERABLE_VERSION = Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[a-z0-9-.]*$");

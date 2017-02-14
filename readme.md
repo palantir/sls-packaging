@@ -3,9 +3,8 @@
 [![Build Status](https://circleci.com/gh/palantir/sls-packaging.svg?style=shield)](https://circleci.com/gh/palantir/sls-packaging)
 [![Download](https://api.bintray.com/packages/palantir/releases/sls-packaging/images/download.svg) ](https://bintray.com/palantir/releases/sls-packaging/_latestVersion)
 
-A set of Gradle plugins that facilitate packaging projects for distributions
-conforming to the [Service Layout Specification](https://github.com/palantir/sls-spec).
-This project was formerly known as gradle-java-distribution.
+A set of Gradle plugins that facilitate packaging projects for distributions conforming to Palantir's Service Layout
+Specification. This project was formerly known as gradle-java-distribution.
 
 The Java Service and Asset plugins cannot both be applied to the same gradle project, and
 distributions from both are produced as a gzipped tar named `[service-name]-[project-version].sls.tgz`.
@@ -13,9 +12,8 @@ distributions from both are produced as a gzipped tar named `[service-name]-[pro
 ## Java Service Distribution Gradle Plugin
 
 Similar to the standard application plugin, this plugin helps package Java
-Gradle projects for easy distribution and execution. This distribution conforms with the
-[SLS service layout conventions](https://github.com/palantir/sls-spec/blob/master/layout.md#services-and-daemons)
- that attempt to split immutable files from mutable state and configuration.
+Gradle projects for easy distribution and execution. This distribution conforms with Palantir's 
+SLS service layout conventions that attempt to split immutable files from mutable state and configuration.
 
 In particular, this plugin packages a project into a common deployment structure
 with a simple start script, daemonizing script, and, a manifest describing the
@@ -45,10 +43,9 @@ and [go-java-launcher](https://github.com/palantir/go-java-launcher) launcher bi
 
 ## Asset Distribution Gradle Plugin
 
-This plugin helps package static files and directories into a distribution that conforms with the
-[SLS asset layout conventions](https://github.com/palantir/sls-spec/blob/master/layout.md#assets).
-Asset distributions differ from service distributions in that they do not have a top-level `service`
-or `var` directory, and instead utilize a top-level `asset` directory that can contain arbitrary files.
+This plugin helps package static files and directories into a distribution that conforms with Palantir's SLS asset
+layout conventions.  Asset distributions differ from service distributions in that they do not have a top-level
+`service` or `var` directory, and instead utilize a top-level `asset` directory that can contain arbitrary files.
 
 ## Usage
 
@@ -83,8 +80,7 @@ And the complete list of configurable properties:
  * `serviceName` the name of this service, used to construct the final artifact's file name.
  * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
    Defaults to the configured "group" of the Gradle project, `project.group`.
- * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
-   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in SLS 1.0
  * (optional) `serviceDependency` adds an entry to the `extensions.service-dependencies` block of the SLS manifest,
    declaring that this service has a dependency on the given other service with specific version bounds.
  * `mainClass` class containing the entry point to start the program.
@@ -148,8 +144,7 @@ The complete list of configurable properties:
  * `serviceName` the name of this service, used to construct the final artifact's file name.
  * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
    Defaults to the configured "group" of the Gradle project, `project.group`.
- * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in
-   [SLS 1.0](https://github.com/palantir/sls-spec/blob/master/manifest.md).
+ * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in SLS 1.0.
  * (optional) `serviceDependency` adds an entry to the `extensions.service-dependencies` block of the SLS manifest,
    declaring that this service has a dependency on the given other service with specific version bounds.
  * (optional) `assets <fromPath>` adds the specified file or directory (recursively) to the asset distribution,
