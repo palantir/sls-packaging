@@ -69,7 +69,7 @@ A sample configuration for the Service plugin:
         args 'server', 'var/conf/my-service.yml'
         env 'KEY1': 'value1', 'KEY2': 'value1'
         manifestExtensions 'KEY3': 'value2'
-        serviceDependency {
+        productDependency {
             productGroup = "other-group"
             productName = "other-service"
             minimumVersion = "1.1.0"
