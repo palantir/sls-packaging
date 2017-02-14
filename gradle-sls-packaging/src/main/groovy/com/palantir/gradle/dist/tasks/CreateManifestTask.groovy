@@ -82,7 +82,6 @@ class CreateManifestTask extends DefaultTask {
         def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).setPropertyNamingStrategy(new KebabCaseStrategy())
         def dependencies = []
         serviceDependencies.each {
-            it.isValid()
             dependencies.add(mapper.convertValue(it, Map))
         }
         if (manifestExtensions.containsKey("product-dependencies")) {
