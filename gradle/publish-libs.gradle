@@ -6,7 +6,6 @@ publishing {
         bintray(MavenPublication) {
             from components.java
             artifact(sourceJar)
-            artifact(publishPluginJavaDocsJar)
         }
     }
 }
