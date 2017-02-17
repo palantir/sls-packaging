@@ -49,6 +49,10 @@ public final class SlsProductVersionsTest {
         assertThat(SlsProductVersions.isMatcher("x.x.x-beta1")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.x.x-1-gaaaaaa")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.x.x-foo")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.x.3")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.2.3")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.2.x")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("1.x.3")).isFalse();
     }
 
     @Test
