@@ -42,42 +42,35 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.dependencies {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.1'
         }
-
-        JavaServiceDistributionExtension distributionExtension = project.extensions.create('distribution', JavaServiceDistributionExtension, project)
-
-        Jar manifestClasspathJar = createManifestClasspathJarTask(project, distributionExtension)
-        CreateStartScripts startScripts = createCreateStartScriptsTask(project, distributionExtension)
-
         CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)
 
-        LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
-        project.afterEvaluate {
-            launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
-                    distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
-                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
-        }
+        JavaServiceDistributionExtension ext = project.extensions.create('distribution', JavaServiceDistributionExtension, project)
+
+        Jar manifestClasspathJar = createManifestClasspathJarTask(project, ext)
+        CreateStartScripts startScripts = createCreateStartScriptsTask(project, manifestClasspathJar, ext)
+        LaunchConfigTask launchConfig = createLaunchConfigTask(project, ext)
 
         CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
         project.afterEvaluate {
-            initScript.configure(distributionExtension.serviceName)
+            initScript.configure(ext.serviceName)
         }
 
         CreateCheckScriptTask checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask) {
             group JavaServiceDistributionPlugin.GROUP_NAME
             description "Generates healthcheck (service/monitoring/bin/check.sh) script."
 
-            serviceName { distributionExtension.serviceName }
-            checkArgs { distributionExtension.checkArgs }
+            serviceName { ext.serviceName }
+            checkArgs { ext.checkArgs }
         }
 
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
-                    distributionExtension.serviceName,
-                    distributionExtension.serviceGroup,
-                    distributionExtension.productType,
-                    distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies
+                    ext.serviceName,
+                    ext.serviceGroup,
+                    ext.productType,
+                    ext.manifestExtensions,
+                    ext.serviceDependencies
             )
         }
 
@@ -86,18 +79,18 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             DistTarTask.configure(
                     distTar,
                     project,
-                    distributionExtension.serviceName,
-                    distributionExtension.excludeFromVar,
-                    distributionExtension.isEnableManifestClasspath())
+                    ext.serviceName,
+                    ext.excludeFromVar,
+                    ext.isEnableManifestClasspath())
         }
 
         project.tasks.create('run', RunTask) {
             group JavaServiceDistributionPlugin.GROUP_NAME
             description "Runs the specified project using configured mainClass and with default args."
 
-            mainClass { distributionExtension.mainClass }
-            args { distributionExtension.args }
-            defaultJvmOpts { distributionExtension.defaultJvmOpts }
+            mainClass { ext.mainClass }
+            args { ext.args }
+            defaultJvmOpts { ext.defaultJvmOpts }
         }
 
         // Create configuration and exported artifacts
@@ -122,8 +115,8 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         manifestClasspathJar.onlyIf { ext.isEnableManifestClasspath() }
         return manifestClasspathJar
     }
-    
-    private CreateStartScripts createCreateStartScriptsTask(Project project, JavaServiceDistributionExtension ext) {
+
+    private CreateStartScripts createCreateStartScriptsTask(Project project, Jar manifestClasspathJar, JavaServiceDistributionExtension ext) {
         CreateStartScripts startScripts =  project.tasks.create('createStartScripts', CreateStartScripts) {
             group JavaServiceDistributionPlugin.GROUP_NAME
 
@@ -131,7 +124,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             setClasspath project.tasks['jar'].outputs.files + project.configurations.runtime
 
             doLast {
-                if (distributionExtension.enableManifestClasspath) {
+                if (ext.enableManifestClasspath) {
                     // Replace standard classpath with pathing jar in order to circumnavigate length limits:
                     // https://issues.gradle.org/browse/GRADLE-2992
                     def winScriptFile = project.file getWindowsScript()
@@ -147,9 +140,25 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                 }
             }
         }
-        startScripts.conventionMapping.map('mainClassName', { distributionExtension.mainClass })
-        startScripts.conventionMapping.map('applicationName', { distributionExtension.serviceName })
-        startScripts.conventionMapping.map('defaultJvmOpts', { distributionExtension.defaultJvmOpts })
+        startScripts.conventionMapping.map('mainClassName', { ext.mainClass })
+        startScripts.conventionMapping.map('applicationName', { ext.serviceName })
+        startScripts.conventionMapping.map('defaultJvmOpts', { ext.defaultJvmOpts })
         return startScripts
+    }
+
+    private LaunchConfigTask createLaunchConfigTask(Project project, JavaServiceDistributionExtension ext) {
+        LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask) {
+            group JavaServiceDistributionPlugin.GROUP_NAME
+            description 'Generates launcher-static.yml and launcher-check.yml configurations.'
+
+            setClasspath project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+        }
+        launchConfig.conventionMapping.map('mainClass', { ext.mainClass })
+        launchConfig.conventionMapping.map('args', { ext.args })
+        launchConfig.conventionMapping.map('checkArgs', { ext.checkArgs })
+        launchConfig.conventionMapping.map('defaultJvmOpts', { ext.defaultJvmOpts })
+        launchConfig.conventionMapping.map('javaHome', { ext.javaHome })
+        launchConfig.conventionMapping.map('env', { ext.env })
+        return launchConfig
     }
 }

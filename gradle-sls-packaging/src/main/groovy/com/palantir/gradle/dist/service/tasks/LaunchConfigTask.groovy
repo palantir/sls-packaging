@@ -16,18 +16,19 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import groovy.transform.EqualsAndHashCode
-import groovy.transform.ToString
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.*
-
 import java.nio.file.Files
 
-class LaunchConfigTask extends DefaultTask {
+import org.gradle.api.file.FileCollection
+import org.gradle.api.internal.ConventionTask
+import org.gradle.api.tasks.*
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
+
+class LaunchConfigTask extends ConventionTask {
 
     static final List<String> tmpdirJvmOpts = [
             '-Djava.io.tmpdir=var/data/tmp'
@@ -45,32 +46,54 @@ class LaunchConfigTask extends DefaultTask {
             '-verbose:gc'
     ]
 
-    @Input
-    String mainClass
+    private String mainClass
+    private List<String> args
+    private List<String> checkArgs
+    private List<String> defaultJvmOpts
+    private Map<String, String> env
+    private String javaHome
+    private FileCollection classpath
 
     @Input
-    List<String> args
+    String getMainClass() {
+        return mainClass
+    }
 
     @Input
-    List<String> checkArgs
+    List<String> getArgs() {
+        return args
+    }
 
     @Input
-    List<String> defaultJvmOpts
+    List<String> getCheckArgs() {
+        return checkArgs
+    }
 
     @Input
-    Map<String, String> env
+    List<String> getDefaultJvmOpts() {
+        return defaultJvmOpts
+    }
+
+    @Input
+    Map<String, String> getEnv() {
+        return env
+    }
 
     @Input
     @Optional
-    String javaHome
-
-    @InputFiles
-    FileCollection classpath
-
-    LaunchConfigTask() {
-        group = JavaServiceDistributionPlugin.GROUP_NAME
-        description = "Generates launcher-static.yml and launcher-check.yml configurations."
+    String getJavaHome() {
+        return javaHome
     }
+
+    @Input
+    FileCollection getClasspath() {
+        return classpath
+    }
+
+    void setClasspath(FileCollection classpath) {
+        this.classpath = classpath
+    }
+
 
     @EqualsAndHashCode
     @ToString
@@ -98,8 +121,8 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + defaultJvmOpts), getStaticLauncher())
-        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts), getCheckLauncher())
+        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + getDefaultJvmOpts()), getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + getDefaultJvmOpts()), getCheckLauncher())
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
@@ -113,12 +136,12 @@ class LaunchConfigTask extends DefaultTask {
 
     StaticLaunchConfig createConfig(List<String> args, List<String> jvmOpts) {
         StaticLaunchConfig config = new StaticLaunchConfig()
-        config.mainClass = mainClass
-        config.javaHome = javaHome ?: ""
+        config.mainClass = getMainClass()
+        config.javaHome = getJavaHome() ?: ""
         config.args = args
-        config.classpath = relativizeToServiceLibDirectory(classpath)
+        config.classpath = relativizeToServiceLibDirectory(getClasspath())
         config.jvmOpts = jvmOpts
-        config.env = env
+        config.env = getEnv()
         return config
     }
 
@@ -128,13 +151,4 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
-        this.mainClass = mainClass
-        this.args = args
-        this.checkArgs = checkArgs
-        this.defaultJvmOpts = defaultJvmOpts
-        this.javaHome = javaHome
-        this.env = env
-        this.classpath = classpath
-    }
 }
