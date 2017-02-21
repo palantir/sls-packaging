@@ -48,7 +48,7 @@ class CreateCheckScriptTask extends DefaultTask {
 
     @TaskAction
     void createInitScript() {
-        if (!checkArgs.get().empty) {
+        if (getCheckArgs() != null && !getCheckArgs().empty) {
             EmitFiles.replaceVars(
                     CreateCheckScriptTask.class.getResourceAsStream('/check.sh'),
                     getOutputFile().toPath(),

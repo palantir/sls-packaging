@@ -18,18 +18,14 @@ package com.palantir.gradle.dist.service.tasks
 import java.util.function.Supplier
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
 class RunTask extends DefaultTask {
 
-    @Input
     Supplier<String> mainClass
 
-    @Input
     Supplier<List<String>> args
 
-    @Input
     Supplier<List<String>> defaultJvmOpts
 
     @TaskAction
