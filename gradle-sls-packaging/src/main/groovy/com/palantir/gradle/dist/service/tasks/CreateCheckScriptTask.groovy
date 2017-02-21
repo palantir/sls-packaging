@@ -16,24 +16,29 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import com.palantir.gradle.dist.service.util.EmitFiles
+import java.util.function.Supplier
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+import com.palantir.gradle.dist.service.util.EmitFiles
+
 class CreateCheckScriptTask extends DefaultTask {
 
-    @Input
-    String serviceName
+    Supplier<String> serviceName
+
+    Supplier<List<String>> checkArgs
 
     @Input
-    List<String> checkArgs
+    String getServiceName() {
+        return serviceName?.get()
+    }
 
-    CreateCheckScriptTask() {
-        group = JavaServiceDistributionPlugin.GROUP_NAME
-        description = "Generates healthcheck (service/monitoring/bin/check.sh) script."
+    @Input
+    List<String> getCheckArgs() {
+        return checkArgs?.get()
     }
 
     @OutputFile
@@ -43,19 +48,15 @@ class CreateCheckScriptTask extends DefaultTask {
 
     @TaskAction
     void createInitScript() {
-        if (!checkArgs.empty) {
+        if (!checkArgs.get().empty) {
             EmitFiles.replaceVars(
-                    JavaServiceDistributionPlugin.class.getResourceAsStream('/check.sh'),
+                    CreateCheckScriptTask.class.getResourceAsStream('/check.sh'),
                     getOutputFile().toPath(),
-                    ['@serviceName@': serviceName,
-                     '@checkArgs@': checkArgs.iterator().join(' ')])
+                    ['@serviceName@': getServiceName(),
+                     '@checkArgs@': getCheckArgs().iterator().join(' ')])
                     .toFile()
                     .setExecutable(true)
         }
     }
 
-    void configure(String serviceName, List<String> checkArgs) {
-        this.serviceName = serviceName
-        this.checkArgs = checkArgs
-    }
 }

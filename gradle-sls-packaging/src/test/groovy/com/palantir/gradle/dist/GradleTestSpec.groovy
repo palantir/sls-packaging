@@ -16,14 +16,16 @@
 
 package com.palantir.gradle.dist
 
-import com.energizedwork.spock.extensions.TempDirectory
-import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import nebula.test.multiproject.MultiProjectIntegrationHelper
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
+
+import com.energizedwork.spock.extensions.TempDirectory
+
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import nebula.test.multiproject.MultiProjectIntegrationHelper
 import spock.lang.Specification
 
 class GradleTestSpec extends Specification {

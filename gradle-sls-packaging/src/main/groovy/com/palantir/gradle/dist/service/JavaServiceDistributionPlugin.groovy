@@ -15,17 +15,17 @@
  */
 package com.palantir.gradle.dist.service
 
-import com.palantir.gradle.dist.asset.AssetDistributionPlugin
-import com.palantir.gradle.dist.service.tasks.*
-import com.palantir.gradle.dist.tasks.CreateManifestTask
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.bundling.Tar
 import org.gradle.jvm.application.tasks.CreateStartScripts
+
+import com.palantir.gradle.dist.asset.AssetDistributionPlugin
+import com.palantir.gradle.dist.service.tasks.*
+import com.palantir.gradle.dist.tasks.CreateManifestTask
 
 class JavaServiceDistributionPlugin implements Plugin<Project> {
 
@@ -44,7 +44,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.1'
         }
 
-        def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
+        JavaServiceDistributionExtension distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
 
         // Create tasks
         Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")
@@ -72,9 +72,12 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             initScript.configure(distributionExtension.serviceName)
         }
 
-        CreateCheckScriptTask checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask)
-        project.afterEvaluate {
-            checkScript.configure(distributionExtension.serviceName, distributionExtension.checkArgs)
+        CreateCheckScriptTask checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask) {
+            group JavaServiceDistributionPlugin.GROUP_NAME
+            description "Generates healthcheck (service/monitoring/bin/check.sh) script."
+
+            serviceName { distributionExtension.serviceName }
+            checkArgs { distributionExtension.checkArgs }
         }
 
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
@@ -98,9 +101,13 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.isEnableManifestClasspath())
         }
 
-        JavaExec run = RunTask.createRunTask(project, 'run')
-        project.afterEvaluate {
-            RunTask.configure(run, distributionExtension.mainClass, distributionExtension.args, distributionExtension.defaultJvmOpts,)
+        project.tasks.create('run', RunTask) {
+            group JavaServiceDistributionPlugin.GROUP_NAME
+            description "Runs the specified project using configured mainClass and with default args."
+
+            mainClass { distributionExtension.mainClass }
+            args { distributionExtension.args }
+            defaultJvmOpts { distributionExtension.defaultJvmOpts }
         }
 
         // Create configuration and exported artifacts
