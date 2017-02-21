@@ -16,8 +16,6 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import java.util.function.Supplier
-
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
@@ -27,19 +25,11 @@ import com.palantir.gradle.dist.service.util.EmitFiles
 
 class CreateCheckScriptTask extends DefaultTask {
 
-    Supplier<String> serviceName
-
-    Supplier<List<String>> checkArgs
+    @Input
+    def Closure<String> serviceName
 
     @Input
-    String getServiceName() {
-        return serviceName?.get()
-    }
-
-    @Input
-    List<String> getCheckArgs() {
-        return checkArgs?.get()
-    }
+    def Closure<List<String>> checkArgs
 
     @OutputFile
     File getOutputFile() {
@@ -48,12 +38,14 @@ class CreateCheckScriptTask extends DefaultTask {
 
     @TaskAction
     void createInitScript() {
-        if (getCheckArgs() != null && !getCheckArgs().empty) {
+        List<String> args = checkArgs.call()
+
+        if (args != null && !args.empty) {
             EmitFiles.replaceVars(
                     CreateCheckScriptTask.class.getResourceAsStream('/check.sh'),
                     getOutputFile().toPath(),
-                    ['@serviceName@': getServiceName(),
-                     '@checkArgs@': getCheckArgs().iterator().join(' ')])
+                    ['@serviceName@': serviceName.call(),
+                     '@checkArgs@': args.iterator().join(' ')])
                     .toFile()
                     .setExecutable(true)
         }

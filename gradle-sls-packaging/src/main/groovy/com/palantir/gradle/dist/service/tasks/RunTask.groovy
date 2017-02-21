@@ -15,25 +15,27 @@
  */
 package com.palantir.gradle.dist.service.tasks
 
-import java.util.function.Supplier
-
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
 class RunTask extends DefaultTask {
 
-    Supplier<String> mainClass
+    @Input
+    def Closure<String> mainClass
 
-    Supplier<List<String>> args
+    @Input
+    def Closure<List<String>> args
 
-    Supplier<List<String>> defaultJvmOpts
+    @Input
+    def Closure<List<String>> defaultJvmOpts
 
     @TaskAction
     def exec() {
         project.javaexec({
-            main mainClass.get()
-            args args.get()
-            jvmArgs defaultJvmOpts.get()
+            main mainClass.call()
+            args args.call()
+            jvmArgs defaultJvmOpts.call()
             classpath project.sourceSets.main.runtimeClasspath
         })
     }
