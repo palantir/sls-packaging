@@ -18,10 +18,10 @@ package com.palantir.gradle.dist.service
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.application.CreateStartScripts
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Tar
-import org.gradle.jvm.application.tasks.CreateStartScripts
 
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.*
@@ -37,26 +37,16 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
         }
         project.plugins.apply('java')
-        project.extensions.create('distribution', JavaServiceDistributionExtension, project)
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
             goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.1'
         }
 
-        JavaServiceDistributionExtension distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
+        JavaServiceDistributionExtension distributionExtension = project.extensions.create('distribution', JavaServiceDistributionExtension, project)
 
-        // Create tasks
-        Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")
-        project.afterEvaluate {
-            manifestClasspathJar.onlyIf { distributionExtension.isEnableManifestClasspath() }
-        }
-
-        CreateStartScripts startScripts = CreateStartScriptsTask.createStartScriptsTask(project, 'createStartScripts')
-        project.afterEvaluate {
-            CreateStartScriptsTask.configure(startScripts, distributionExtension.mainClass, distributionExtension.serviceName,
-                    distributionExtension.defaultJvmOpts, distributionExtension.enableManifestClasspath)
-        }
+        Jar manifestClasspathJar = createManifestClasspathJarTask(project, distributionExtension)
+        CreateStartScripts startScripts = createCreateStartScriptsTask(project, distributionExtension)
 
         CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)
 
@@ -116,5 +106,50 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         // Configure tasks
         distTar.dependsOn startScripts, initScript, checkScript, copyLauncherBinaries, launchConfig, manifest, manifestClasspathJar
+    }
+
+    private Jar createManifestClasspathJarTask(Project project, JavaServiceDistributionExtension ext) {
+        Jar manifestClasspathJar = project.tasks.create('manifestClasspathJar', Jar) {
+            group JavaServiceDistributionPlugin.GROUP_NAME
+            description 'Creates a jar containing a Class-Path manifest entry specifying the classpath using pathing ' +
+                    'jar rather than command line argument on Windows, since Windows path sizes are limited.'
+            appendix 'manifest-classpath'
+            doFirst {
+                manifest.attributes "Class-Path": project.files(project.configurations.runtime)
+                        .collect { it.getName() }.join(' ') + ' ' + archiveName
+            }
+        }
+        manifestClasspathJar.onlyIf { ext.isEnableManifestClasspath() }
+        return manifestClasspathJar
+    }
+    
+    private CreateStartScripts createCreateStartScriptsTask(Project project, JavaServiceDistributionExtension ext) {
+        CreateStartScripts startScripts =  project.tasks.create('createStartScripts', CreateStartScripts) {
+            group JavaServiceDistributionPlugin.GROUP_NAME
+
+            setOutputDir project.file("${project.buildDir}/scripts")
+            setClasspath project.tasks['jar'].outputs.files + project.configurations.runtime
+
+            doLast {
+                if (distributionExtension.enableManifestClasspath) {
+                    // Replace standard classpath with pathing jar in order to circumnavigate length limits:
+                    // https://issues.gradle.org/browse/GRADLE-2992
+                    def winScriptFile = project.file getWindowsScript()
+                    def winFileText = winScriptFile.text
+
+                    // Remove too-long-classpath and use pathing jar instead
+                    winFileText = winFileText.replaceAll('set CLASSPATH=.*', 'rem CLASSPATH declaration removed.')
+                    winFileText = winFileText.replaceAll(
+                        '("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)',
+                        '$1%APP_HOME%\\\\lib\\\\' + manifestClasspathJar.archiveName + '$2')
+
+                    winScriptFile.text = winFileText
+                }
+            }
+        }
+        startScripts.conventionMapping.map('mainClassName', { distributionExtension.mainClass })
+        startScripts.conventionMapping.map('applicationName', { distributionExtension.serviceName })
+        startScripts.conventionMapping.map('defaultJvmOpts', { distributionExtension.defaultJvmOpts })
+        return startScripts
     }
 }
