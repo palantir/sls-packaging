@@ -70,8 +70,8 @@ A sample configuration for the Service plugin:
             productGroup = "other-group"
             productName = "other-service"
             minimumVersion = "1.1.0"
-            maximumVersion = "1.3.x"
-            recommendedVersion = "1.5.0"
+            maximumVersion = "1.5.x"
+            recommendedVersion = "1.3.0"
         }
     }
 
