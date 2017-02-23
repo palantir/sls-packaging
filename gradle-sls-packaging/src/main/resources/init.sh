@@ -45,6 +45,7 @@ case "`uname`" in
 esac
 
 ACTION=$1
+SCRIPT_DIR="service/bin"
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
 STATIC_LAUNCHER_CONFIG="service/bin/launcher-static.yml"
@@ -152,6 +153,15 @@ check)
     fi
 ;;
 *)
-    echo "Usage: $0 {status|start|stop|console|restart|check}"
-    exit 1
+    # Support arbitrary additional actions; e.g. init-reload.sh will add a "reload" action
+    if [[ -f "$SCRIPT_DIR/init-$ACTION.sh" ]]; then
+        export LAUNCHER_CMD
+        shift
+        /bin/bash "$SCRIPT_DIR/init-$ACTION.sh" "$@"
+        exit $?
+    else
+        COMMANDS=$(ls $SCRIPT_DIR | sed -ne '/init-.*.sh/ { s/^init-\(.*\).sh$/|\1/g; p; }' | tr -d '\n')
+        echo "Usage: $0 {status|start|stop|console|restart|check${COMMANDS}}"
+        exit 1
+    fi
 esac
