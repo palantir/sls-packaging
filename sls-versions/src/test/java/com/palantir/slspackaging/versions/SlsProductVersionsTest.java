@@ -15,6 +15,8 @@ public final class SlsProductVersionsTest {
         assertThat(SlsProductVersions.isOrderableVersion("2.0.0-rc1")).isTrue();
         assertThat(SlsProductVersions.isOrderableVersion("2.0.0-beta1")).isTrue();
 
+        assertThat(SlsProductVersions.isOrderableVersion("2.0.0-rc.1")).isFalse();
+        assertThat(SlsProductVersions.isOrderableVersion("2.0.0-beta.1")).isFalse();
         assertThat(SlsProductVersions.isOrderableVersion(" 2.0.0")).isFalse();
         assertThat(SlsProductVersions.isOrderableVersion("2.0.0 ")).isFalse();
         assertThat(SlsProductVersions.isOrderableVersion("2.0.0-foo")).isFalse();
@@ -37,6 +39,8 @@ public final class SlsProductVersionsTest {
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("1.2.4")).isTrue();
 
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-rc.1")).isFalse();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-beta.1")).isFalse();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo.bar")).isFalse();
         assertThat(SlsProductVersions.isNonOrderableVersion(" 2.0.0")).isFalse();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0 ")).isFalse();
