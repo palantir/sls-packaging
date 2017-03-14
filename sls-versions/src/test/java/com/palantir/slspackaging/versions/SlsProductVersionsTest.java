@@ -35,8 +35,9 @@ public final class SlsProductVersionsTest {
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo-g20-gaaaaaa")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo-g20-gaaaaaa.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0.dirty")).isTrue();
+        assertThat(SlsProductVersions.isNonOrderableVersion("1.2.4")).isTrue();
 
-        assertThat(SlsProductVersions.isNonOrderableVersion("1.2.4")).isFalse();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo.bar")).isFalse();
         assertThat(SlsProductVersions.isNonOrderableVersion(" 2.0.0")).isFalse();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0 ")).isFalse();
     }
