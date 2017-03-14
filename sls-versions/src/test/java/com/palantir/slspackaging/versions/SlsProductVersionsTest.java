@@ -23,11 +23,15 @@ public final class SlsProductVersionsTest {
     @Test
     public void testNonOrderableVersionDetection() {
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-20-gaaaaaa")).isTrue();
-        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-20-gaaaaaa")).isTrue();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-20-gaaaaaa.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-beta1")).isTrue();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-beta1.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-rc1")).isTrue();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-rc1.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-beta1")).isTrue();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-beta1.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo")).isTrue();
+        assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo.dirty")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo-g20-gaaaaaa")).isTrue();
         assertThat(SlsProductVersions.isNonOrderableVersion("2.0.0-foo-g20-gaaaaaa.dirty")).isTrue();
 
