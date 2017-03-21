@@ -24,6 +24,17 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     private List<String> args = []
     private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
+    private List<String> gcJvmOpts = [
+            '-XX:+CrashOnOutOfMemoryError',  // requires JDK 8u92+
+            '-XX:+PrintGCDateStamps',
+            '-XX:+PrintGCDetails',
+            '-XX:-TraceClassUnloading',
+            '-XX:+UseGCLogFileRotation',
+            '-XX:GCLogFileSize=10M',
+            '-XX:NumberOfGCLogFiles=10',
+            '-Xloggc:var/log/gc-%t-%p.log',
+            '-verbose:gc'
+    ]
     private Map<String, String> env = [:]
     private boolean enableManifestClasspath = false
     private String javaHome = null
@@ -60,6 +71,14 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     void setDefaultJvmOpts(Iterable<String> defaultJvmOpts) {
         this.defaultJvmOpts = defaultJvmOpts.toList()
+    }
+
+    void gcJvmOpts(String... gcJvmOpts) {
+        this.gcJvmOpts = Arrays.asList(gcJvmOpts)
+    }
+
+    void setGcJvmOpts(Iterable<String> gcJvmOpts) {
+        this.gcJvmOpts = gcJvmOpts.toList()
     }
 
     void enableManifestClasspath(boolean enableManifestClasspath) {
@@ -100,6 +119,10 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     List<String> getDefaultJvmOpts() {
         return defaultJvmOpts
+    }
+
+    List<String> getGcJvmOpts() {
+        return gcJvmOpts
     }
 
     boolean isEnableManifestClasspath() {

@@ -33,18 +33,6 @@ class LaunchConfigTask extends DefaultTask {
             '-Djava.io.tmpdir=var/data/tmp'
     ]
 
-    static final List<String> gcJvmOpts = [
-            '-XX:+CrashOnOutOfMemoryError',  // requires JDK 8u92+
-            '-XX:+PrintGCDateStamps',
-            '-XX:+PrintGCDetails',
-            '-XX:-TraceClassUnloading',
-            '-XX:+UseGCLogFileRotation',
-            '-XX:GCLogFileSize=10M',
-            '-XX:NumberOfGCLogFiles=10',
-            '-Xloggc:var/log/gc-%t-%p.log',
-            '-verbose:gc'
-    ]
-
     @Input
     String mainClass
 
@@ -56,6 +44,9 @@ class LaunchConfigTask extends DefaultTask {
 
     @Input
     List<String> defaultJvmOpts
+
+    @Input
+    List<String> gcJvmOpts
 
     @Input
     Map<String, String> env
@@ -128,11 +119,12 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
+    void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, List<String> gcJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs
         this.defaultJvmOpts = defaultJvmOpts
+        this.gcJvmOpts = gcJvmOpts
         this.javaHome = javaHome
         this.env = env
         this.classpath = classpath

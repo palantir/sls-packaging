@@ -62,8 +62,14 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         project.afterEvaluate {
-            launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
-                    distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
+            launchConfig.configure(
+                    distributionExtension.mainClass,
+                    distributionExtension.args,
+                    distributionExtension.checkArgs,
+                    distributionExtension.defaultJvmOpts,
+                    distributionExtension.gcJvmOpts,
+                    distributionExtension.javaHome,
+                    distributionExtension.env,
                     project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
         }
 
