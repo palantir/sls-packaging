@@ -60,7 +60,7 @@ class DistTarTask {
 
             into("${archiveRootDir}/service/lib") {
                 from(project.tasks.jar.outputs.files)
-                from(project.configurations.runtime)
+                from(project.sourceSets.main.runtimeClasspath)
             }
 
             if (isEnableManifestClasspath) {
