@@ -15,27 +15,29 @@
  */
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import org.gradle.api.Project
-import org.gradle.api.tasks.JavaExec
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
 
-class RunTask {
+class RunTask extends DefaultTask {
 
-    static JavaExec createRunTask(Project project, String taskName) {
-        return project.tasks.create(taskName, JavaExec) { t ->
-            t.group = JavaServiceDistributionPlugin.GROUP_NAME
-            t.description = "Runs the specified project using configured mainClass and with default args."
-            t.classpath project.sourceSets.main.runtimeClasspath
-        }
+    @Input
+    def Closure<String> mainClass
+
+    @Input
+    def Closure<List<String>> args
+
+    @Input
+    def Closure<List<String>> defaultJvmOpts
+
+    @TaskAction
+    def exec() {
+        project.javaexec({
+            main mainClass.call()
+            args args.call()
+            jvmArgs defaultJvmOpts.call()
+            classpath project.sourceSets.main.runtimeClasspath
+        })
     }
 
-    static void configure(JavaExec runTask, String mainClass, List<String> args, List<String> defaultJvmOpts) {
-        runTask.configure {
-            setMain(mainClass)
-            if (!args.isEmpty()) {
-                setArgs(args)
-            }
-            setJvmArgs(defaultJvmOpts)
-        }
-    }
 }
