@@ -11,7 +11,7 @@ public class SlsProductVersions {
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[a-f0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+$"),
-            Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+$")
+            Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+-[0-9]+-g[a-f0-9]+$")
     };
     private static final Pattern VERSION_MATCHER = Pattern.compile("^([0-9]+|x)\\.([0-9]+|x)\\.([0-9]+|x)$");
 
