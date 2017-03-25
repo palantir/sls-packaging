@@ -26,7 +26,7 @@ class RunTask {
             t.dependsOn(project.tasks.jar)
             t.group = JavaServiceDistributionPlugin.GROUP_NAME
             t.description = "Runs the specified project using configured mainClass and with default args."
-            classpath project.files(project.tasks.jar.archivePath, project.sourceSets.main.runtimeClasspath)
+            t.classpath project.files(project.tasks.jar.archivePath, project.sourceSets.main.runtimeClasspath)
         }
     }
 
