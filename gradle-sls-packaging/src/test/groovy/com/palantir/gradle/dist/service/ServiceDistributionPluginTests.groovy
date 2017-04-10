@@ -599,6 +599,68 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
+    def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
+        given:
+        helper.addSubproject('parent', '''
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+                id 'java'
+            }
+            version '0.0.1'
+            distribution {
+                serviceName "service-name"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+                enableManifestClasspath true
+            }
+            repositories { jcenter() }
+            dependencies {
+                implementation project(':child')
+                compile 'org.mockito:mockito-core:2.7.22'
+            }
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        ''')
+
+        helper.addSubproject('child', '''
+            plugins {
+                id 'java-library'
+            }
+            repositories { jcenter() }
+            dependencies {
+                api "com.google.guava:guava:19.0"
+                implementation "com.google.code.findbugs:annotations:3.0.1"
+            }
+        ''')
+
+        when:
+        runSuccessfully(':parent:build', ':parent:distTar', ':parent:untar')
+
+        then:
+        def libFiles = new File(projectDir, 'parent/dist/service-name-0.0.1/service/lib/').listFiles()
+        libFiles.any { it.toString().endsWith('annotations-3.0.1.jar') }
+        libFiles.any { it.toString().endsWith('guava-19.0.jar') }
+        libFiles.any { it.toString().endsWith('mockito-core-2.7.22.jar') }
+        !libFiles.any { it.toString().equals('main') }
+
+        def classpathJar = libFiles.find { it.name.endsWith("-manifest-classpath-0.0.1.jar") }
+        classpathJar.exists()
+
+        String manifestContents = readFromZip(classpathJar, "META-INF/MANIFEST.MF")
+            .readLines()
+            .collect { it.trim() }
+            .join('')
+
+        manifestContents.contains('annotations-3.0.1.jar')
+        manifestContents.contains('guava-19.0.jar')
+        manifestContents.contains('mockito-core-2.7.22.jar')
+        !manifestContents.contains('main')
+    }
+
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
