@@ -459,6 +459,31 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         expectedCheckConfig == actualCheckConfig
     }
 
+
+    def 'produce distribution bundle with custom gcJvmOpts in launcher-static.yml'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar") }
+            tasks.jar.baseName = "internal"
+            distribution {
+                gcJvmOpts '-Dfoo=bar'
+            }'''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        actualStaticConfig.jvmOpts == [
+                '-Djava.io.tmpdir=var/data/tmp',
+                '-Dfoo=bar',
+                '-Xmx4M',
+                '-Djavax.net.ssl.trustStore=truststore.jks']
+    }
+
     def 'produce distribution bundle that populates check.sh'() {
         given:
         createUntarBuildFile(buildFile)
