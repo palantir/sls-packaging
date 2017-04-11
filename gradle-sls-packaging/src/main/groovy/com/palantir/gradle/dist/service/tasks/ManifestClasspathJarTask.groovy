@@ -22,7 +22,7 @@ import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Produces a JAR whose manifest's {@code Class-Path} entry lists exactly the JARs produced by the project's runtime
- * configuration.
+ * classpath.
  */
 class ManifestClasspathJarTask {
 
@@ -35,7 +35,7 @@ class ManifestClasspathJarTask {
 
             t.doFirst {
                 t.manifest.attributes(
-                        "Class-Path": project.files(project.configurations.runtime)
+                        "Class-Path": project.files(project.configurations.runtimeClasspath)
                                 .collect { it.getName() }
                                 .join(' ') + ' ' + t.archiveName
                 )
