@@ -18,7 +18,6 @@ package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.bundling.Jar
 
 /**
@@ -35,11 +34,8 @@ class ManifestClasspathJarTask {
             t.appendix = 'manifest-classpath'
 
             t.doFirst {
-                def depsFromRuntimeClasspath = project.sourceSets.main.runtimeClasspath.sources
-                        .findAll { it in Configuration }
-                        .flatten()
                 t.manifest.attributes(
-                        "Class-Path": project.files(depsFromRuntimeClasspath)
+                        "Class-Path": project.files(project.configurations.runtimeClasspath)
                                 .collect { it.getName() }
                                 .join(' ') + ' ' + t.archiveName
                 )

@@ -17,7 +17,6 @@ package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
 
@@ -56,9 +55,7 @@ class DistTarTask {
 
             into("${archiveRootDir}/service/lib") {
                 from(project.tasks.jar.outputs.files)
-                from(project.sourceSets.main.runtimeClasspath.sources
-                        .findAll { it in Configuration }
-                        .flatten())
+                from(project.configurations.runtimeClasspath)
             }
 
             if (isEnableManifestClasspath) {
