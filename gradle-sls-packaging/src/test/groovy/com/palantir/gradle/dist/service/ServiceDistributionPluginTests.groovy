@@ -660,6 +660,25 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         manifestContents.contains('mockito-core-2.7.22.jar')
         !manifestContents.contains('main')
     }
+    
+    def 'project class files do not appear in output lib directory'() {
+        given:
+        createUntarBuildFile(buildFile)
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        !new File(projectDir, 'dist/service-name-0.0.1/service/lib/com/test/Test.class').exists()
+    }
 
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
