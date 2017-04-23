@@ -29,9 +29,7 @@ import java.nio.file.Files
 
 class LaunchConfigTask extends DefaultTask {
 
-    static final List<String> tmpdirJvmOpts = [
-            '-Djava.io.tmpdir=var/data/tmp'
-    ]
+    static final List<String> tmpdirJvmOpts = ['-Djava.io.tmpdir=var/data/tmp']
 
     static final List<String> gcJvmOpts = [
             '-XX:+CrashOnOutOfMemoryError',  // requires JDK 8u92+
@@ -44,6 +42,8 @@ class LaunchConfigTask extends DefaultTask {
             '-Xloggc:var/log/gc-%t-%p.log',
             '-verbose:gc'
     ]
+
+    static final List<String> dirs = ['var/data/tmp']
 
     @Input
     String mainClass
@@ -84,6 +84,7 @@ class LaunchConfigTask extends DefaultTask {
         List<String> jvmOpts
         List<String> args
         Map<String, String> env
+        List<String> dirs
     }
 
     @OutputFile
@@ -119,6 +120,7 @@ class LaunchConfigTask extends DefaultTask {
         config.classpath = relativizeToServiceLibDirectory(classpath)
         config.jvmOpts = jvmOpts
         config.env = env
+        config.dirs = dirs
         return config
     }
 

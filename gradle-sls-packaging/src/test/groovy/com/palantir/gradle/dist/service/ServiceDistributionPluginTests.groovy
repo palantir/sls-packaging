@@ -444,6 +444,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 "key1": "val1",
                 "key2": "val2"
         ])
+        expectedStaticConfig.setDirs(["var/data/tmp"])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedStaticConfig == actualStaticConfig
@@ -651,16 +652,16 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         classpathJar.exists()
 
         String manifestContents = readFromZip(classpathJar, "META-INF/MANIFEST.MF")
-            .readLines()
-            .collect { it.trim() }
-            .join('')
+                .readLines()
+                .collect { it.trim() }
+                .join('')
 
         manifestContents.contains('annotations-3.0.1.jar')
         manifestContents.contains('guava-19.0.jar')
         manifestContents.contains('mockito-core-2.7.22.jar')
         !manifestContents.contains('main')
     }
-    
+
     def 'project class files do not appear in output lib directory'() {
         given:
         createUntarBuildFile(buildFile)

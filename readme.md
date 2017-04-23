@@ -96,9 +96,6 @@ And the complete list of configurable properties:
    from a JAR file whose MANIFEST contains the classpath entries.
  * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.
-   **Note**: this plugin will *always* create `var/data/tmp` in the resulting distribution to
-   ensure the prescribed Java temp directory exists. Setting `data` for this option will still ensure
-   nothing in `${projectDir}/var/data` is copied.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
 
@@ -122,6 +119,18 @@ users to override the hard-coded options.
 Environment variables can be configured through the `env` blocks of `launcher-static.yml` and `launcher-custom.yml` as
 described in [configuration file](https://github.com/palantir/go-java-launcher). They are set by the launcher process
 before the Java process is executed.
+
+#### Directories created at runtime
+The plugin configures [go-java-launcher](https://github.com/palantir/go-java-launcher) to create the following
+directories before starting the service:
+
+* var/data/tmp
+
+Additionally, the following directories are created in every SLS distribution created:
+
+* var/log
+* var/run
+
 
 ### Asset Distribution plugin
 
