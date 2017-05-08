@@ -33,7 +33,3 @@ pluginBundle {
 publishPlugins.onlyIf {
     project.version ==~ /[0-9]+(\.[0-9]+)+(-rc[0-9]+)?(-alpha[0-9]+)?/
 }
-
-test {
-    include '**/ServiceDistributionPluginTests.class'
-}
