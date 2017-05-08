@@ -664,13 +664,33 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         !manifestContents.contains('main')
 
         // verify start scripts
-        def startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name').text
+        List<String> startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name')
+                .text
                 .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
                 .split(':')
 
         startScript.any { it.contains('/lib/annotations-3.0.1.jar') }
         startScript.any { it.contains('/lib/guava-19.0.jar') }
         startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+
+        // verify launcher YAML files
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
+
+        LaunchConfigTask.StaticLaunchConfig launcherCheck = mapper.readValue(
+                new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
+                LaunchConfigTask.StaticLaunchConfig.class)
+
+        launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
+        launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
+        launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+
+        LaunchConfigTask.StaticLaunchConfig launcherStatic = mapper.readValue(
+                new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
+                LaunchConfigTask.StaticLaunchConfig.class)
+
+        launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
+        launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
+        launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
     }
 
     def 'project class files do not appear in output lib directory'() {
