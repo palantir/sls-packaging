@@ -685,7 +685,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
         LaunchConfigTask.StaticLaunchConfig launcherStatic = mapper.readValue(
-                new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
+                new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.StaticLaunchConfig.class)
 
         launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
