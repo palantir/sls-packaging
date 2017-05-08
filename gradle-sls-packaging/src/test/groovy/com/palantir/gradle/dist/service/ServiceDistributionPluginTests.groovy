@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.UnexpectedBuildFailure
+import spock.lang.IgnoreRest
 
 import java.util.zip.ZipFile
 
@@ -600,6 +601,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
+    @IgnoreRest
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
         helper.addSubproject('parent', '''
@@ -651,15 +653,24 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         def classpathJar = libFiles.find { it.name.endsWith("-manifest-classpath-0.0.1.jar") }
         classpathJar.exists()
 
+        // verify META-INF/MANIFEST.MF
         String manifestContents = readFromZip(classpathJar, "META-INF/MANIFEST.MF")
                 .readLines()
                 .collect { it.trim() }
                 .join('')
-
         manifestContents.contains('annotations-3.0.1.jar')
         manifestContents.contains('guava-19.0.jar')
         manifestContents.contains('mockito-core-2.7.22.jar')
         !manifestContents.contains('main')
+
+        // verify start scripts
+        def startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name').text
+                .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
+                .split(':')
+
+        startScript.any { it.contains('/lib/annotations-3.0.1.jar') }
+        startScript.any { it.contains('/lib/guava-19.0.jar') }
+        startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
     }
 
     def 'project class files do not appear in output lib directory'() {
