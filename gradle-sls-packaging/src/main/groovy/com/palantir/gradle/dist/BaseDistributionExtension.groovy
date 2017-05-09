@@ -68,7 +68,7 @@ class BaseDistributionExtension {
                 recommendedVersion))
     }
 
-    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion = null) {
+    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion = null, String recommendedVersion = null) {
         productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
     }
 

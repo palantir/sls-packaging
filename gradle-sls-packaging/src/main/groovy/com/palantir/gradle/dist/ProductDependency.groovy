@@ -29,6 +29,9 @@ class ProductDependency {
         if (maximumVersion) {
             return maximumVersion
         }
+        if (!maximumVersion && minimumVersion == null) {
+            return null
+        }
         def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
         return "${minimumVersionMajorRev}.x.x"
     }
