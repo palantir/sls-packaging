@@ -25,6 +25,15 @@ class ProductDependency {
         isValid()
     }
 
+    def templateMaximumVersionFromMinimumVersion() {
+        if (!minimumVersion) {
+            throw new IllegalArgumentException(
+                    "minimumVersion must be set in order to invoke singleMajorRevMaximumVersion")
+        }
+        def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
+        maximumVersion = "${minimumVersionMajorRev}.x.x"
+    }
+
     def isValid() {
         [maximumVersion].each {
             if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {

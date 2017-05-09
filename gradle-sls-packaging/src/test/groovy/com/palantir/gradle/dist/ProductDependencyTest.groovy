@@ -26,4 +26,24 @@ class ProductDependencyTest extends Specification {
         then:
         thrown(IllegalArgumentException)
     }
+
+    def 'templateMaximumVersionFromMinimumVersion with null minimumVersion'() {
+        when:
+        new ProductDependency().templateMaximumVersionFromMinimumVersion()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+
+    def 'templateMaximumVersionFromMinimumVersion'() {
+        when:
+        def dependency = new ProductDependency()
+        dependency.minimumVersion = '1.2.3'
+        dependency.templateMaximumVersionFromMinimumVersion()
+
+        then:
+        dependency.maximumVersion == '1.x.x'
+    }
+
 }
