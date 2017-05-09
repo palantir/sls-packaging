@@ -25,6 +25,14 @@ class ProductDependency {
         isValid()
     }
 
+    String getMaximumVersion() {
+        if (maximumVersion) {
+            return maximumVersion
+        }
+        def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
+        return "${minimumVersionMajorRev}.x.x"
+    }
+
     def isValid() {
         [maximumVersion].each {
             if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {
