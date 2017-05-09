@@ -36,7 +36,7 @@ class BaseDistributionExtensionTest extends Specification {
         ex.message == "Invalid product type 'foobar' specified; supported types: [service.v1, asset.v1]."
     }
 
-    def "productDependencies from invalid maven coordinat"() {
+    def "productDependencies from invalid maven coordinate"() {
         when:
         def ext = new BaseDistributionExtension(null)
         ext.productDependency("group:name")
