@@ -26,21 +26,4 @@ class ProductDependencyTest extends Specification {
         then:
         thrown(IllegalArgumentException)
     }
-
-    def 'default maximumVersion'() {
-        when:
-        def dep = new ProductDependency("", "", "1.2.3", null, "1.2.4")
-
-        then:
-        dep.maximumVersion == "1.x.x"
-    }
-
-    def 'non-deafult maximumVersion'() {
-        when:
-        def dep = new ProductDependency("", "", "1.2.3", "2.x.x", "1.2.4")
-
-        then:
-        dep.maximumVersion == "2.x.x"
-    }
-
 }
