@@ -36,7 +36,7 @@ class AssetDistTarTask {
             }
 
             assetDirs.entrySet().each { entry ->
-                from("${project.projectDir}/${entry.getKey()}") {
+                from(file(project.projectDir, entry.getKey())) {
                     into("${archiveRootDir}/asset/${entry.getValue()}")
                 }
             }
