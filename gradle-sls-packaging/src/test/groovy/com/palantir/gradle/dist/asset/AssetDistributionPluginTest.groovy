@@ -31,12 +31,14 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         file("static/foo/bar") << "."
         file("static/baz/abc") << "."
         file("static/abc") << "overwritten file"
+        file("static/abs") << "absolute path"
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
                 assets "static/foo", "maven"
                 assets "static/baz", "maven"
                 assets "static/abc", "maven"
+                assets file("static/abs").getAbsolutePath(), "maven"
             }
         '''.stripIndent()
 
@@ -46,6 +48,8 @@ class AssetDistributionPluginTest extends GradleTestSpec {
         then:
         file("dist/asset-name-0.0.1/asset/maven/abc").exists()
         file("dist/asset-name-0.0.1/asset/maven/bar").exists()
+        file("dist/asset-name-0.0.1/asset/maven/abs").exists()
+
         def lines = file("dist/asset-name-0.0.1/asset/maven/abc").readLines()
         lines.size() == 1
         lines.get(0) == "overwritten file"
