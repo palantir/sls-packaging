@@ -81,7 +81,7 @@ And the complete list of configurable properties:
  * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
    Defaults to the configured "group" of the Gradle project, `project.group`.
  * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in SLS 1.0
- * (optional) `serviceDependency` adds an entry to the `extensions.service-dependencies` block of the SLS manifest,
+ * (optional) `productDependency` adds an entry to the `extensions.product-dependencies` block of the SLS manifest,
    declaring that this service has a dependency on the given other service with specific version bounds.
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
