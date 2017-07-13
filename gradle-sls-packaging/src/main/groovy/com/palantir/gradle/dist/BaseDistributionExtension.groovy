@@ -84,7 +84,7 @@ class BaseDistributionExtension {
     }
 
     String getServiceName() {
-        return serviceName
+        return serviceName ?: project.name
     }
 
     String getServiceGroup() {
