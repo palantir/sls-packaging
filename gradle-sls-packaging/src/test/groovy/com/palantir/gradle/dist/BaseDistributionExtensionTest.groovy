@@ -24,6 +24,15 @@ class BaseDistributionExtensionTest extends Specification {
         ext.serviceName == "bar"
     }
 
+    def 'serviceName in nested project'() {
+        when:
+        Project parent = ProjectBuilder.builder().withName("parent").build()
+        Project child = ProjectBuilder.builder().withName("child").withParent(parent).build()
+
+        then:
+        new BaseDistributionExtension(child).serviceName == "child"
+    }
+
     def 'serviceGroup uses project group as default'() {
         when:
         Project project = ProjectBuilder.builder().build()
