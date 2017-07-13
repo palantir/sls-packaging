@@ -6,6 +6,24 @@ import spock.lang.Specification
 
 class BaseDistributionExtensionTest extends Specification {
 
+    def 'serviceName uses project group as default'() {
+        when:
+        Project project = ProjectBuilder.builder().withName("foo").build()
+
+        then:
+        new BaseDistributionExtension(project).serviceName == "foo"
+    }
+
+    def 'serviceName can be overwritten'() {
+        when:
+        Project project = ProjectBuilder.builder().withName("foo").build()
+
+        then:
+        def ext = new BaseDistributionExtension(project)
+        ext.serviceName("bar")
+        ext.serviceName == "bar"
+    }
+
     def 'serviceGroup uses project group as default'() {
         when:
         Project project = ProjectBuilder.builder().build()
