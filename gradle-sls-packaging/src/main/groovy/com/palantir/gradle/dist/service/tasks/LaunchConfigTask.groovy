@@ -55,6 +55,9 @@ class LaunchConfigTask extends DefaultTask {
     List<String> checkArgs
 
     @Input
+    List<String> extraClasspath
+
+    @Input
     List<String> defaultJvmOpts
 
     @Input
@@ -113,11 +116,14 @@ class LaunchConfigTask extends DefaultTask {
     }
 
     StaticLaunchConfig createConfig(List<String> args, List<String> jvmOpts) {
+        List<String> renderedClasspath = relativizeToServiceLibDirectory(classpath)
+        renderedClasspath.addAll(extraClasspath)
+
         StaticLaunchConfig config = new StaticLaunchConfig()
         config.mainClass = mainClass
         config.javaHome = javaHome ?: ""
         config.args = args
-        config.classpath = relativizeToServiceLibDirectory(classpath)
+        config.classpath = renderedClasspath
         config.jvmOpts = jvmOpts
         config.env = env
         config.dirs = dirs
@@ -130,10 +136,13 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
+    void configure(String mainClass, List<String> args, List<String> checkArgs,
+                   List<String> extraClasspath, List<String> defaultJvmOpts, String javaHome,
+                   Map<String, String> env, FileCollection classpath) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs
+        this.extraClasspath = extraClasspath
         this.defaultJvmOpts = defaultJvmOpts
         this.javaHome = javaHome
         this.env = env

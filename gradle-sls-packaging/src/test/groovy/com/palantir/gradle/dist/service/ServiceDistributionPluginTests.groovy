@@ -413,6 +413,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 checkArgs 'myCheckArg1', 'myCheckArg2'
                 env "key1": "val1",
                     "key2": "val2"
+                extraClasspath 'var/conf/hadoop'
             }'''.stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
@@ -426,7 +427,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig.setMainClass("test.Test")
         expectedStaticConfig.setJavaHome("foo")
         expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
-        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar',
+                                           'service/lib/external.jar',
+                                           'var/conf/hadoop'])
         expectedStaticConfig.setJvmOpts([
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:+CrashOnOutOfMemoryError',
