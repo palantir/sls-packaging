@@ -50,5 +50,10 @@ class ProductDependency {
                         "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
             }
         }
+
+        if (minimumVersion == maximumVersion) {
+            throw new IllegalArgumentException("minimumVersion and maximumVersion must be different "
+                + "in product dependency on " + this.productName)
+        }
     }
 }

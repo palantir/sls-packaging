@@ -43,4 +43,12 @@ class ProductDependencyTest extends Specification {
         dep.maximumVersion == "2.x.x"
     }
 
+    def 'minimumVersion and maximumVersion must not be equal' () {
+        when:
+        new ProductDependency("", "", "1.2.3", "1.2.3", null).isValid()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
 }
