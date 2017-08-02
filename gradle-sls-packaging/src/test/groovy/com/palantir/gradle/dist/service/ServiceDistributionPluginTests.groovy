@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.UnexpectedBuildFailure
+import spock.lang.IgnoreRest
 
 import java.util.zip.ZipFile
 
@@ -476,12 +477,14 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.0.1/service/monitoring/bin/check.sh').exists()
     }
 
+    @IgnoreRest
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
                 enableManifestClasspath true
+                javaHome 'java/path'
             }
             dependencies {
               compile "com.google.guava:guava:19.0"
@@ -494,6 +497,8 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
         startScript.contains("-manifest-classpath-0.0.1.jar")
+        // todo(jelena): move to a new test
+        startScript.contains("set JAVA_HOME=java/foo")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
         def classpathJar = file('dist/service-name-0.0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
