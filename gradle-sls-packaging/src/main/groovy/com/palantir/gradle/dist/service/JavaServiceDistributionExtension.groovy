@@ -27,6 +27,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     private Map<String, String> env = [:]
     private boolean enableManifestClasspath = false
     private String javaHome = null
+    private String javaHomeWin = null
     private List<String> excludeFromVar = ['log', 'run']
 
     JavaServiceDistributionExtension(Project project) {
@@ -68,6 +69,10 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     void javaHome(String javaHome) {
         this.javaHome = javaHome
+    }
+
+    void javaHomeWin(String javaHomeWin) {
+        this.javaHomeWin = javaHomeWin
     }
 
     void setEnv(Map<String, String> env) {
@@ -112,6 +117,10 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     String getJavaHome() {
         return javaHome
+    }
+
+    String getJavaHomeWin() {
+        return javaHomeWin
     }
 
     List<String> getExcludeFromVar() {

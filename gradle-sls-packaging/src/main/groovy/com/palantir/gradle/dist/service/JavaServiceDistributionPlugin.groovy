@@ -55,7 +55,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         CreateStartScripts startScripts = CreateStartScriptsTask.createStartScriptsTask(project, 'createStartScripts')
         project.afterEvaluate {
             CreateStartScriptsTask.configure(startScripts, distributionExtension.mainClass, distributionExtension.serviceName,
-                    distributionExtension.javaHome, distributionExtension.defaultJvmOpts, distributionExtension.enableManifestClasspath)
+                    distributionExtension.javaHomeWin, distributionExtension.defaultJvmOpts, distributionExtension.enableManifestClasspath)
         }
 
         CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)

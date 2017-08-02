@@ -32,7 +32,7 @@ class CreateStartScriptsTask {
         }
     }
 
-    static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, String javaHome,
+    static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, String javaHomeWin,
                           List<String> defaultJvmOpts, boolean isEnableManifestClasspath) {
         startScripts.configure {
             setMainClassName(mainClass)
@@ -44,9 +44,9 @@ class CreateStartScriptsTask {
                 def winScriptFile = project.file getWindowsScript()
                 def winFileText = winScriptFile.text
 
-                if (javaHome != null) {
+                if (javaHomeWin != null) {
                     def setJavaHomeString = "@rem Set JAVA_HOME to configured path.\n"
-                    setJavaHomeString += 'set JAVA_HOME=' + javaHome + '\n'
+                    setJavaHomeString += 'set JAVA_HOME=' + javaHomeWin + '\n'
                     winFileText =  winFileText.replaceAll('if defined JAVA_HOME ', setJavaHomeString)
                 }
 

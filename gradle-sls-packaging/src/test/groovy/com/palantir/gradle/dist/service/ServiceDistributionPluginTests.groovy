@@ -508,7 +508,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                javaHome 'java/path'
+                javaHomeWin 'java/path'
             }
             dependencies {
               compile "com.google.guava:guava:19.0"
