@@ -477,14 +477,12 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         file('dist/service-name-0.0.1/service/monitoring/bin/check.sh').exists()
     }
 
-    @IgnoreRest
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
                 enableManifestClasspath true
-                javaHome 'java/path'
             }
             dependencies {
               compile "com.google.guava:guava:19.0"
@@ -497,8 +495,6 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
         startScript.contains("-manifest-classpath-0.0.1.jar")
-        // todo(jelena): move to a new test
-        startScript.contains("set JAVA_HOME=java/foo")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
         def classpathJar = file('dist/service-name-0.0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
@@ -506,6 +502,46 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         readFromZip(classpathJar, "META-INF/MANIFEST.MF")
                 .contains('Class-Path: guava-19.0.jar produces-manifest-') // etc
     }
+
+    def 'sets_java_home_in_windows_startup_script_when_java_home_is_configured'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                javaHome 'java/path'
+            }
+            dependencies {
+              compile "com.google.guava:guava:19.0"
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
+        startScript.contains("set JAVA_HOME=java/path")
+    }
+
+    def 'does_not_set_java_home_in_windows_startup_script_when_java_home_is_not_configured'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+            }
+            dependencies {
+              compile "com.google.guava:guava:19.0"
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
+        !startScript.contains("set JAVA_HOME=java/path")
+    }
+
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {
         given:

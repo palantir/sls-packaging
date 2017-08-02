@@ -46,8 +46,8 @@ class CreateStartScriptsTask {
 
                 if (javaHome != null) {
                     def setJavaHomeString = "@rem Set JAVA_HOME to configured path.\n"
-                    setJavaHomeString += 'set JAVA_HOME=' + javaHome + ' \n'
-                    winFileText =  winFileText.replaceAll('if defined JAVA_HOME', setJavaHomeString)
+                    setJavaHomeString += 'set JAVA_HOME=' + javaHome + '\n'
+                    winFileText =  winFileText.replaceAll('if defined JAVA_HOME ', setJavaHomeString)
                 }
 
                 Jar manifestClasspathJarTask = project.tasks.getByName('manifestClasspathJar')
