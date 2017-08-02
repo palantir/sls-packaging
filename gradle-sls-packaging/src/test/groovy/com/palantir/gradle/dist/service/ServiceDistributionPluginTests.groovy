@@ -538,7 +538,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
-        !startScript.contains("set JAVA_HOME=java/path")
+        !startScript.contains("set JAVA_HOME=")
     }
 
 
