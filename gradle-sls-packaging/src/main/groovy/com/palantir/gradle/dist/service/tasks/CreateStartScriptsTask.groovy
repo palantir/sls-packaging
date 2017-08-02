@@ -44,7 +44,7 @@ class CreateStartScriptsTask {
                 def winScriptFile = project.file getWindowsScript()
                 def winFileText = winScriptFile.text
 
-                if (javaHomeWin != null) {
+                if (javaHomeWin) {
                     def setJavaHomeString = "@rem Set JAVA_HOME to configured path.\n"
                     setJavaHomeString += 'set JAVA_HOME=' + javaHomeWin + '\n'
                     winFileText =  winFileText.replaceAll('if defined JAVA_HOME ', setJavaHomeString)
