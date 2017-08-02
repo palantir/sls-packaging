@@ -22,7 +22,6 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import spock.lang.IgnoreRest
 
 import java.util.zip.ZipFile
 
