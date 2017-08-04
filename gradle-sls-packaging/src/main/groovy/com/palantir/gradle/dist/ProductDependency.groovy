@@ -6,7 +6,6 @@ import org.gradle.api.Nullable
 class ProductDependency {
     String productGroup
     String productName
-    @Nullable
     String minimumVersion
     @Nullable
     String maximumVersion
@@ -15,7 +14,7 @@ class ProductDependency {
 
     ProductDependency() {}
 
-    ProductDependency(String productGroup, String productName, @Nullable String minimumVersion,
+    ProductDependency(String productGroup, String productName, String minimumVersion,
                       @Nullable String maximumVersion, @Nullable String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
@@ -29,14 +28,15 @@ class ProductDependency {
         if (maximumVersion) {
             return maximumVersion
         }
-        if (!maximumVersion && minimumVersion == null) {
-            return null
-        }
         def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
         return "${minimumVersionMajorRev}.x.x"
     }
 
     def isValid() {
+        if (minimumVersion == null) {
+            throw new IllegalArgumentException("minimum version must be specified");
+        }
+
         [maximumVersion].each {
             if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {
                 throw new IllegalArgumentException(
