@@ -3,21 +3,12 @@ package com.palantir.gradle.dist
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-
 class BaseDistributionExtension {
 
     private static final Set<String> VALID_PRODUCT_TYPES = [
             "service.v1",
             "asset.v1"
     ]
-    private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
-            + "(?<group>[^:@?]*):"
-            + "(?<name>[^:@?]*):"
-            + "(?<version>[^:@?]*)"
-            + "(:(?<classifier>[^:@?]*))?"
-            + "(@(?<type>[^:@?]*))?")
 
     private final Project project
     private String serviceGroup
@@ -53,22 +44,11 @@ class BaseDistributionExtension {
         this.productType = type
     }
 
-    void productDependency(String mavenCoordVersionRange, String recommendedVersion = null) {
-        Matcher matcher = MAVEN_COORDINATE_PATTERN.matcher(mavenCoordVersionRange)
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("String '${mavenCoordVersionRange}' is not a valid maven coordinate. " +
-                    "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are " +
-                    "optional.")
-        }
-        productDependency(new ProductDependency(
-                matcher.group("group"),
-                matcher.group("name"),
-                matcher.group("version"),
-                null,
-                recommendedVersion))
+    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion) {
+        productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, null))
     }
 
-    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion = null, String recommendedVersion = null) {
+    void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion, String recommendedVersion) {
         productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
     }
 
@@ -82,6 +62,7 @@ class BaseDistributionExtension {
     void productDependency(ProductDependency dependency) {
         productDependencies.add(dependency)
     }
+
 
     String getServiceName() {
         return serviceName ?: project.name
@@ -102,5 +83,4 @@ class BaseDistributionExtension {
     List<ProductDependency> getServiceDependencies() {
         return productDependencies
     }
-
 }

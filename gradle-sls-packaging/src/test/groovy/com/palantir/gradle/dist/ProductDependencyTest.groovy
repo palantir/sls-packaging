@@ -27,20 +27,23 @@ class ProductDependencyTest extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'default maximumVersion'() {
+    def 'templateMaximumVersionFromMinimumVersion with null minimumVersion'() {
         when:
-        def dep = new ProductDependency("", "", "1.2.3", null, "1.2.4")
+        new ProductDependency().templateMaximumVersionFromMinimumVersion()
 
         then:
-        dep.maximumVersion == "1.x.x"
+        thrown(IllegalArgumentException)
     }
 
-    def 'non-deafult maximumVersion'() {
+
+    def 'templateMaximumVersionFromMinimumVersion'() {
         when:
-        def dep = new ProductDependency("", "", "1.2.3", "2.x.x", "1.2.4")
+        def dependency = new ProductDependency()
+        dependency.minimumVersion = '1.2.3'
+        dependency.templateMaximumVersionFromMinimumVersion()
 
         then:
-        dep.maximumVersion == "2.x.x"
+        dependency.maximumVersion == '1.x.x'
     }
 
     def 'minimumVersion and maximumVersion must not be equal' () {

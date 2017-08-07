@@ -25,15 +25,13 @@ class ProductDependency {
         isValid()
     }
 
-    String getMaximumVersion() {
-        if (maximumVersion) {
-            return maximumVersion
-        }
-        if (!maximumVersion && minimumVersion == null) {
-            return null
+    def templateMaximumVersionFromMinimumVersion() {
+        if (!minimumVersion) {
+            throw new IllegalArgumentException(
+                    "minimumVersion must be set in order to invoke singleMajorRevMaximumVersion")
         }
         def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
-        return "${minimumVersionMajorRev}.x.x"
+        maximumVersion = "${minimumVersionMajorRev}.x.x"
     }
 
     def isValid() {
