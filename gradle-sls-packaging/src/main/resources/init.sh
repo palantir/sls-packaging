@@ -25,7 +25,7 @@ is_process_service() {
   local PID=$1
   local SERVICE_NAME=$2
   # trailing '=' prevents a header line
-  ps -o command= $PID | grep -q "$SERVICE"
+  ps -o command= $PID | grep -q "$SERVICE_NAME"
   return $?
 }
 
