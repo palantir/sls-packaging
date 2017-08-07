@@ -301,7 +301,6 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                     productGroup = "group3"
                     productName = "name3"
                     minimumVersion = "1.0.0"
-                    recommendedVersion = "2.0.0"
                 }
             }
         """.stripIndent()
