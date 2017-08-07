@@ -15,8 +15,8 @@ class ProductDependency {
 
     ProductDependency() {}
 
-    ProductDependency(String productGroup, String productName, String minimumVersion,
-                      String maximumVersion, @Nullable String recommendedVersion) {
+    ProductDependency(String productGroup, String productName, @Nullable String minimumVersion,
+                      @Nullable String maximumVersion, @Nullable String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
         this.minimumVersion = minimumVersion
