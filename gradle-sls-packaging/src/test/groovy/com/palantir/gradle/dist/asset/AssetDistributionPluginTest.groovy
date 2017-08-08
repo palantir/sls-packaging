@@ -87,6 +87,7 @@ class AssetDistributionPluginTest extends GradleTestSpec {
                 productDependency {
                     productGroup = "group3"
                     productName = "name3"
+                    minimumVersion = "1.0.0"
                 }
             }
         """.stripIndent()
