@@ -44,6 +44,9 @@ class CreateManifestTask extends DefaultTask {
     String productType
 
     @Input
+    Set<ProductDependency> productDependencies
+
+    @Input
     Map<String, Object> manifestExtensions
 
     @Input
@@ -66,6 +69,12 @@ class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     void createManifest() {
+        def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).setPropertyNamingStrategy(new KebabCaseStrategy())
+        def dependencies = []
+        productDependencies.each {
+            dependencies.add(mapper.convertValue(it, Map))
+        }
+        manifestExtensions.put("product-dependencies", dependencies)
         getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
                 'manifest-version': '1.0',
                 'product-type'    : productType,
@@ -77,22 +86,16 @@ class CreateManifestTask extends DefaultTask {
     }
 
     void configure(String serviceName, String serviceGroup, String productType, Map<String, Object> manifestExtensions,
-                   List<ProductDependency> serviceDependencies) {
+                   List<ProductDependency> productDependencies) {
         // Serialize service-dependencies, add them to manifestExtensions
-        def mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).setPropertyNamingStrategy(new KebabCaseStrategy())
-        def dependencies = []
-        serviceDependencies.each {
-            dependencies.add(mapper.convertValue(it, Map))
-        }
         if (manifestExtensions.containsKey("product-dependencies")) {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting " +
                     "'service-dependencies' key in manifestExtensions")
         }
-        manifestExtensions.put("product-dependencies", dependencies)
-
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
         this.productType = productType
+        this.productDependencies = productDependencies
         this.manifestExtensions = manifestExtensions
     }
 }

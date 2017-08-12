@@ -1,9 +1,16 @@
 package com.palantir.gradle.dist
 
 import com.palantir.slspackaging.versions.SlsProductVersions
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import org.gradle.api.Nullable
 
-class ProductDependency {
+@ToString
+@EqualsAndHashCode
+class ProductDependency implements Serializable {
+
+    private static final long serialVersionUID = 1L
+
     String productGroup
     String productName
 
