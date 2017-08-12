@@ -60,16 +60,24 @@ class BaseDistributionExtension {
                     "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are " +
                     "optional.")
         }
+        def minVersion = matcher.group("version")
         productDependency(new ProductDependency(
                 matcher.group("group"),
                 matcher.group("name"),
-                matcher.group("version"),
-                null,
+                minVersion,
+                generateMaxVersion(minVersion),
                 recommendedVersion))
     }
 
     void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion = null, String recommendedVersion = null) {
-        productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+        productDependency(new ProductDependency(
+                serviceGroup,
+                serviceName,
+                minVersion,
+                maxVersion == null
+                    ? generateMaxVersion(minVersion)
+                    : maxVersion,
+                recommendedVersion))
     }
 
     void productDependency(Closure closure) {
@@ -101,6 +109,11 @@ class BaseDistributionExtension {
 
     List<ProductDependency> getServiceDependencies() {
         return productDependencies
+    }
+
+    static String generateMaxVersion(String minimumVersion) {
+        def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
+        return "${minimumVersionMajorRev}.x.x"
     }
 
 }
