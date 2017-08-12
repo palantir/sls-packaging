@@ -83,7 +83,12 @@ And the complete list of configurable properties:
    Defaults to the configured "group" of the Gradle project, `project.group`.
  * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in SLS 1.0
  * (optional) `productDependency` adds an entry to the `extensions.product-dependencies` block of the SLS manifest,
-   declaring that this service has a dependency on the given other service with specific version bounds.
+   declaring that this service has a dependency on the given other service with specific version bounds. The `productDependency` object must specify the following properties:
+   * `productGroup` the `serviceGroup` of the dependency.
+   * `productName` the `serviceName` of the dependency.
+   * `minVersion` the minimal compatible version of the dependency.
+   * `maxVersion` the maximal compatible version of the dependency.
+   * `recommended` the version developers think you should use; most commonly the version of the implementation that was tested during CI (`minVersion` typically matches the version of the api you use to negotiate).
  * `mainClass` class containing the entry point to start the program.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
