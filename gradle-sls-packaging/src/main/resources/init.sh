@@ -25,7 +25,7 @@ is_process_service() {
   local PID=$1
   local SERVICE_NAME=$2
   # trailing '=' prevents a header line
-  ps -o command= $PID | grep -q "$SERVICE"
+  ps -o command= $PID | grep -q "$SERVICE_NAME"
   return $?
 }
 
@@ -45,6 +45,7 @@ case "`uname`" in
 esac
 
 ACTION=$1
+SCRIPT_DIR="service/bin"
 SERVICE="@serviceName@"
 PIDFILE="var/run/$SERVICE.pid"
 STATIC_LAUNCHER_CONFIG="service/bin/launcher-static.yml"
@@ -60,8 +61,7 @@ start)
     printf "%-50s" "Running '$SERVICE'..."
 
     # ensure log and pid directories exist
-    mkdir -p "var/log"
-    mkdir -p "var/run"
+    mkdir -p "var/log" "var/run"
     PID=$($LAUNCHER_CMD $STATIC_LAUNCHER_CONFIG $CUSTOM_LAUNCHER_CONFIG > var/log/$SERVICE-startup.log 2>&1 & echo $!)
     # always write $PIDFILE so that `init.sh status` for a service that crashed when starting will return 1, not 3
     echo $PID > $PIDFILE
@@ -152,6 +152,15 @@ check)
     fi
 ;;
 *)
-    echo "Usage: $0 {status|start|stop|console|restart|check}"
-    exit 1
+    # Support arbitrary additional actions; e.g. init-reload.sh will add a "reload" action
+    if [[ -f "$SCRIPT_DIR/init-$ACTION.sh" ]]; then
+        export LAUNCHER_CMD
+        shift
+        /bin/bash "$SCRIPT_DIR/init-$ACTION.sh" "$@"
+        exit $?
+    else
+        COMMANDS=$(ls $SCRIPT_DIR | sed -ne '/init-.*.sh/ { s/^init-\(.*\).sh$/|\1/g; p; }' | tr -d '\n')
+        echo "Usage: $0 {status|start|stop|console|restart|check${COMMANDS}}"
+        exit 1
+    fi
 esac

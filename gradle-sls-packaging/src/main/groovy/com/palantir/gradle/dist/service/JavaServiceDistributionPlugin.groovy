@@ -41,7 +41,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
-            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.1.1'
+            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.2.0'
         }
 
         def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
@@ -64,7 +64,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate {
             launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
                     distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
-                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime)
+                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtimeClasspath)
         }
 
         CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)

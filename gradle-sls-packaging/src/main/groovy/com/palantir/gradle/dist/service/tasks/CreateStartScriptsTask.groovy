@@ -28,7 +28,7 @@ class CreateStartScriptsTask {
             p.group = JavaServiceDistributionPlugin.GROUP_NAME
             p.description = "Generates standard Java start scripts."
             p.setOutputDir(new File("${project.buildDir}/scripts"))
-            p.setClasspath(project.tasks['jar'].outputs.files + project.configurations.runtime)
+            p.setClasspath(project.tasks['jar'].outputs.files + project.configurations.runtimeClasspath)
         }
     }
 

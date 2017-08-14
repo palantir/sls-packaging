@@ -45,22 +45,23 @@ class DistTarTask {
                 }
             }
 
-            new File(project.buildDir, "gjd-tmp/var/data/tmp").mkdirs()
-            from ("${project.buildDir}/gjd-tmp/var/data") {
-                into "${archiveRootDir}/var/data"
-            }
-
             from("${project.projectDir}/deployment") {
                 into "${archiveRootDir}/deployment"
             }
 
             from("${project.projectDir}/service") {
                 into "${archiveRootDir}/service"
+                exclude("**/bin/*")
             }
+            
+            from("${project.projectDir}/service/bin") {
+        		into("${archiveRootDir}/service/bin")
+        		fileMode = 0755
+        	}
 
             into("${archiveRootDir}/service/lib") {
                 from(project.tasks.jar.outputs.files)
-                from(project.configurations.runtime)
+                from(project.configurations.runtimeClasspath)
             }
 
             if (isEnableManifestClasspath) {
