@@ -13,11 +13,7 @@ public class SlsProductVersions {
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+$"),
             Pattern.compile("^[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+-[0-9]+-g[a-f0-9]+$")
     };
-    private static final Pattern[] VERSION_MATCHER = new Pattern[]{
-            Pattern.compile("^[0-9]+\\.[0-9]+\\.x$"),
-            Pattern.compile("^[0-9]+\\.x\\.x$"),
-            Pattern.compile("^x\\.x\\.x$")
-    };
+    private static final Pattern VERSION_MATCHER = Pattern.compile("^((x\.x\.x)|([0-9]+\.x\.x)|([0-9]+\.[0-9]+\.x)|([0-9]+\.[0-9]+\.[0-9]+))$")
 
     /**
      * Returns true iff the given string is a valid "orderable" SLS version.
@@ -39,12 +35,7 @@ public class SlsProductVersions {
     }
 
     public static boolean isMatcher(String matcher) {
-        for (Pattern p : VERSION_MATCHER) {
-            if (p.matcher(matcher).matches()) {
-                return true;
-            }
-        }
-        return false;
+        return VERSION_MATCHER.matcher(matcher).matches();
     }
 
     /**
