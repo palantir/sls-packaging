@@ -22,6 +22,8 @@ class AssetDistributionPlugin implements Plugin<Project> {
 
         def distributionExtension = project.extensions.findByType(AssetDistributionExtension)
 
+        distributionExtension.productDependenciesConfig = project.configurations.create("assetBundle")
+
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
@@ -29,8 +31,9 @@ class AssetDistributionPlugin implements Plugin<Project> {
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies
-            )
+                    distributionExtension.serviceDependencies,
+                    distributionExtension.productDependenciesConfig,
+                    distributionExtension.ignoredProductIds)
         }
 
         Tar distTar = AssetDistTarTask.createAssetDistTarTask(project, 'distTar')

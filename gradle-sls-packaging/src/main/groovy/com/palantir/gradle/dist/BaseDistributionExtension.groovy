@@ -1,6 +1,7 @@
 package com.palantir.gradle.dist
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.util.ConfigureUtil
 
 import java.util.regex.Matcher
@@ -25,6 +26,8 @@ class BaseDistributionExtension {
     private String productType
     private Map<String, Object> manifestExtensions = [:]
     private List<ProductDependency> productDependencies = []
+    private Configuration productDependenciesConfig
+    private Set<ProductId> ignoredProductIds = []
 
     BaseDistributionExtension(Project project) {
         this.project = project
@@ -91,6 +94,14 @@ class BaseDistributionExtension {
         productDependencies.add(dependency)
     }
 
+    void setProductDependenciesConfig(Configuration productDependenciesConfig) {
+        this.productDependenciesConfig = productDependenciesConfig
+    }
+
+    void ignoredProductDependency(String productGroup, String productName) {
+        ignoredProductIds.add(new ProductId(productGroup, productName))
+    }
+
     String getServiceName() {
         return serviceName ?: project.name
     }
@@ -109,6 +120,14 @@ class BaseDistributionExtension {
 
     List<ProductDependency> getServiceDependencies() {
         return productDependencies
+    }
+
+    Configuration getProductDependenciesConfig() {
+        return productDependenciesConfig
+    }
+
+    Set<ProductId> getIgnoredProductIds() {
+        return ignoredProductIds
     }
 
     static String generateMaxVersion(String minimumVersion) {
