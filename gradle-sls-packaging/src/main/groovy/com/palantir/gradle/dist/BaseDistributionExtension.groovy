@@ -25,6 +25,7 @@ class BaseDistributionExtension {
     private String productType
     private Map<String, Object> manifestExtensions = [:]
     private List<ProductDependency> productDependencies = []
+    private Set<ProductId> ignoredProductIds = []
 
     BaseDistributionExtension(Project project) {
         this.project = project
@@ -91,6 +92,10 @@ class BaseDistributionExtension {
         productDependencies.add(dependency)
     }
 
+    void ignoredProductDependency(String productGroup, String productName) {
+        ignoredProductIds.add(new ProductId(productGroup, productName))
+    }
+
     String getServiceName() {
         return serviceName ?: project.name
     }
@@ -109,6 +114,10 @@ class BaseDistributionExtension {
 
     List<ProductDependency> getServiceDependencies() {
         return productDependencies
+    }
+
+    Set<ProductId> getIgnoredProductIds() {
+        return ignoredProductIds
     }
 
     static String generateMaxVersion(String minimumVersion) {

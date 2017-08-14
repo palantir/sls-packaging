@@ -1,15 +1,18 @@
 apply plugin: 'com.gradle.plugin-publish'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
+apply plugin: 'org.inferred.processors'
 
 dependencies {
+    processor 'org.immutables:value:2.5.6'
+
     compile project(':sls-versions')
     compile gradleApi()
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.2'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.2' // match Gradle's version
 
     testCompile gradleTestKit()
-    testCompile "com.netflix.nebula:nebula-test:4.0.0" // for better temp directory junit rule only
+    testCompile "com.netflix.nebula:nebula-test:6.1.2"
 }
 
 pluginBundle {

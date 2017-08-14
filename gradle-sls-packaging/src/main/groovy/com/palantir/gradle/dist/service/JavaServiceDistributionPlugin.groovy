@@ -84,8 +84,9 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies
-            )
+                    distributionExtension.serviceDependencies,
+                    project.configurations.getByName("runtime"),
+                    distributionExtension.ignoredProductIds)
         }
 
         Tar distTar = DistTarTask.createDistTarTask(project, 'distTar')

@@ -32,3 +32,5 @@ fileeditor
 *.iws
 .idea/
 out/
+
+**/generated_src/

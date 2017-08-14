@@ -29,8 +29,9 @@ class AssetDistributionPlugin implements Plugin<Project> {
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies
-            )
+                    distributionExtension.serviceDependencies,
+                    null,
+                    distributionExtension.ignoredProductIds)
         }
 
         Tar distTar = AssetDistTarTask.createAssetDistTarTask(project, 'distTar')

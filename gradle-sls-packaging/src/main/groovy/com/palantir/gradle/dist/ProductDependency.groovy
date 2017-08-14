@@ -1,5 +1,6 @@
 package com.palantir.gradle.dist
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
@@ -14,6 +15,7 @@ class ProductDependency implements Serializable {
     String productGroup
     String productName
 
+    @JsonIgnore
     boolean detectConstraints
 
     @Nullable

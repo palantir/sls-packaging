@@ -16,24 +16,30 @@
 
 package com.palantir.gradle.dist
 
-import com.energizedwork.spock.extensions.TempDirectory
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import nebula.test.multiproject.MultiProjectIntegrationHelper
+import org.gradle.internal.impldep.com.google.common.collect.ImmutableList
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 class GradleTestSpec extends Specification {
-    @TempDirectory(clean = false)
+
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     File projectDir
     File buildFile
     File settingsFile
     MultiProjectIntegrationHelper helper
 
     def setup() {
+        projectDir = folder.newFolder()
         buildFile = file("build.gradle")
         settingsFile = new File(projectDir, 'settings.gradle')
         helper = new MultiProjectIntegrationHelper(projectDir, settingsFile)
@@ -42,8 +48,12 @@ class GradleTestSpec extends Specification {
 
     protected run(String... tasks) {
         return GradleRunner.create()
+                .forwardOutput()
                 .withProjectDir(projectDir)
-                .withArguments(tasks)
+                .withArguments(ImmutableList.<String> builder()
+                .addAll(Arrays.asList(tasks))
+                .add("--stacktrace")
+                .build())
                 .withPluginClasspath()
                 .withDebug(true)
     }
