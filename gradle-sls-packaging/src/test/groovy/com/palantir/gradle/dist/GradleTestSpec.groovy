@@ -52,9 +52,9 @@ class GradleTestSpec extends Specification {
                 .forwardOutput()
                 .withProjectDir(projectDir)
                 .withArguments(ImmutableList.<String> builder()
-                .addAll(Arrays.asList(tasks))
-                .add("--stacktrace")
-                .build())
+                    .addAll(Arrays.asList(tasks))
+                    .add("--stacktrace")
+                    .build())
                 .withPluginClasspath()
                 .withDebug(true)
     }

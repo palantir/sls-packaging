@@ -27,13 +27,13 @@ class CreateManifestTaskTest extends GradleTestSpec {
     def 'Fail on missing recommended product dependencies'() {
         setup:
         generateDependencies()
-        buildFile << '''
+        buildFile << """
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
             }
 
             repositories {
-                maven {url "file:///{{mavenRepo}}"}
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
             }
 
             project.version = '1.0.0'
@@ -50,7 +50,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
                 productDependencies = []
                 productDependenciesConfig = configurations.runtime
             }
-        '''.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+        """.stripIndent()
 
         when:
         BuildResult buildResult = run(':testCreateManifest').buildAndFail()
@@ -64,13 +64,13 @@ class CreateManifestTaskTest extends GradleTestSpec {
     def 'Can ignore recommended product dependencies'() {
         setup:
         generateDependencies()
-        buildFile << '''
+        buildFile << """
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
             }
 
             repositories {
-                maven {url "file:///{{mavenRepo}}"}
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
             }
 
             project.version = '1.0.0'
@@ -91,7 +91,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
                     new com.palantir.gradle.dist.ProductId("group:name2")
                 ]
             }
-        '''.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+        """.stripIndent()
 
         when:
         BuildResult buildResult = run(':testCreateManifest').build()
@@ -103,13 +103,13 @@ class CreateManifestTaskTest extends GradleTestSpec {
     def "Can set product dependencies from recommended product dependencies"() {
         setup:
         generateDependencies()
-        buildFile << '''
+        buildFile << """
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
             }
 
             repositories {
-                maven {url "file:///{{mavenRepo}}"}
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
             }
 
             project.version = '1.0.0'
@@ -129,7 +129,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
                 ]
                 productDependenciesConfig = configurations.runtime
             }
-        '''.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+        """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
 
         when:
         runSuccessfully(':testCreateManifest')
