@@ -18,7 +18,6 @@ package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.palantir.gradle.dist.ProductDependency
 import com.palantir.gradle.dist.ProductId
 import com.palantir.gradle.dist.RecommendedProductDependencies
@@ -29,13 +28,17 @@ import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+import java.util.jar.Manifest
+import java.util.zip.ZipFile
+
 class CreateManifestTask extends DefaultTask {
+
+    public static String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies"
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -85,27 +88,32 @@ class CreateManifestTask extends DefaultTask {
         def jsonMapper = new ObjectMapper()
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .setPropertyNamingStrategy(new KebabCaseStrategy())
-        def yamlMapper = new ObjectMapper(new YAMLFactory())
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .setPropertyNamingStrategy(new KebabCaseStrategy())
-
-        def pdepCoords = []
-        productDependenciesConfig.resolvedConfiguration
-                .resolvedArtifacts
-                .each { dep ->
-                    def coord = identifierToCoord(dep.moduleVersion.id)
-                    pdepCoords.add(project.dependencies.create("${coord}@pdep"))
-                }
-        Dependency[] pdepCoordsArr = pdepCoords.toArray(new Dependency[pdepCoords.size()])
-
-        def pdepConfiguration = project.configurations.detachedConfiguration(pdepCoordsArr)
 
         Set<RecommendedProductDependency> allRecommendedProductDeps = []
         Map<String, Set<RecommendedProductDependency>> allRecommendedDepsByCoord = [:]
         Map<String, String> mavenCoordsByProductIds = [:]
-        pdepConfiguration.resolvedConfiguration.lenientConfiguration.artifacts.each { pdepFile ->
-            def coord = identifierToCoord(pdepFile.moduleVersion.id)
-            def recommendedDeps = yamlMapper.readValue(pdepFile.file, RecommendedProductDependencies.class)
+
+        productDependenciesConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            def coord = identifierToCoord(artifact.moduleVersion.id)
+
+            def manifest
+            try {
+                def zf = new ZipFile(artifact.file)
+                def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
+                manifest = new Manifest(zf.getInputStream(manifestEntry))
+            } catch (IOException e) {
+                logger.warn("IOException encountered when processing artifact '{}', file '{}'", coord, artifact.file, e)
+                return
+            }
+
+            def pdeps = manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY)
+
+            if (pdeps == null) {
+                logger.debug("No pdeps found in manifest for artifact '{}', file '{}'", coord, artifact.file)
+                return
+            }
+
+            def recommendedDeps = jsonMapper.readValue(pdeps, RecommendedProductDependencies.class)
 
             if (!allRecommendedDepsByCoord.containsKey(coord)) {
                 allRecommendedDepsByCoord.put(coord, new HashSet<RecommendedProductDependency>())
@@ -166,8 +174,8 @@ class CreateManifestTask extends DefaultTask {
         }
 
         def unseenProductIds = new HashSet<>(recommendedDepsByProductId.keySet())
-        seenRecommendedProductIds.each {unseenProductIds.remove(it)}
-        ignoredProductIds.each {unseenProductIds.remove(it.toString())}
+        seenRecommendedProductIds.each { unseenProductIds.remove(it) }
+        ignoredProductIds.each { unseenProductIds.remove(it.toString()) }
 
         if (!unseenProductIds.isEmpty()) {
             throw new GradleException("The following products are recommended as dependencies but do not appear in " +

@@ -2,10 +2,7 @@ package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.palantir.gradle.dist.GradleTestSpec
-import com.palantir.gradle.dist.RecommendedProductDependencies
-import com.palantir.gradle.dist.RecommendedProductDependency
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.gradle.api.Project
@@ -13,12 +10,12 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
 class CreateManifestTaskTest extends GradleTestSpec {
 
     def jsonMapper = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(new KebabCaseStrategy())
-    def yamlMapper = new ObjectMapper(new YAMLFactory())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(new KebabCaseStrategy())
 
@@ -182,25 +179,13 @@ class CreateManifestTaskTest extends GradleTestSpec {
         GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
         mavenRepo = generator.generateTestMavenRepo()
 
-        def pdep1 = new File(mavenRepo, "a/a/1.0/a-1.0.pdep")
-        pdep1.text = yamlMapper.writeValueAsString(RecommendedProductDependencies.builder()
-                .addRecommendedProductDependencies(RecommendedProductDependency.builder()
-                .productGroup("group")
-                .productName("name")
-                .minimumVersion("1.0.0")
-                .maximumVersion("1.x.x")
-                .recommendedVersion("1.2.0")
-                .build())
-                .build())
-        def pdep2 = new File(mavenRepo, "c/c/1.0/c-1.0.pdep")
-        pdep2.text = yamlMapper.writeValueAsString(RecommendedProductDependencies.builder()
-                .addRecommendedProductDependencies(RecommendedProductDependency.builder()
-                .productGroup("group")
-                .productName("name2")
-                .minimumVersion("2.0.0")
-                .maximumVersion("2.x.x")
-                .recommendedVersion("2.2.0")
-                .build())
-                .build())
+        Files.copy(
+                CreateManifestTaskTest.class.getResourceAsStream("/a-1.0.jar"),
+                new File(mavenRepo, "a/a/1.0/a-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(
+                CreateManifestTaskTest.class.getResourceAsStream("/b-1.0.jar"),
+                new File(mavenRepo, "b/b/1.0/b-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
     }
 }
