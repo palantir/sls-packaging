@@ -16,10 +16,10 @@
 
 package com.palantir.gradle.dist
 
+import com.google.common.collect.ImmutableList
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import nebula.test.multiproject.MultiProjectIntegrationHelper
-import org.gradle.internal.impldep.com.google.common.collect.ImmutableList
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome

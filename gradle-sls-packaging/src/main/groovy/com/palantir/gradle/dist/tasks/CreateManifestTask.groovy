@@ -39,6 +39,9 @@ import java.util.zip.ZipFile
 class CreateManifestTask extends DefaultTask {
 
     public static String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies"
+    public static ObjectMapper jsonMapper = new ObjectMapper()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setPropertyNamingStrategy(new KebabCaseStrategy())
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -85,16 +88,13 @@ class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     void createManifest() {
-        def jsonMapper = new ObjectMapper()
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .setPropertyNamingStrategy(new KebabCaseStrategy())
-
         Set<RecommendedProductDependency> allRecommendedProductDeps = []
         Map<String, Set<RecommendedProductDependency>> allRecommendedDepsByCoord = [:]
         Map<String, String> mavenCoordsByProductIds = [:]
+        Map<String, RecommendedProductDependency> recommendedDepsByProductId = [:]
 
         productDependenciesConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-            def coord = identifierToCoord(artifact.moduleVersion.id)
+            String coord = identifierToCoord(artifact.moduleVersion.id)
 
             def manifest
             try {
@@ -130,13 +130,8 @@ class CreateManifestTask extends DefaultTask {
                             "'${productId}' in '${coord}' and '${othercoord}'")
                 }
                 mavenCoordsByProductIds.put(productId, coord)
+                recommendedDepsByProductId.put(productId, recommendedDep)
             }
-        }
-
-        Map<String, RecommendedProductDependency> recommendedDepsByProductId = [:]
-        allRecommendedProductDeps.each { recommendedDep ->
-            def productId = "${recommendedDep.productGroup()}:${recommendedDep.productName()}".toString()
-            recommendedDepsByProductId.put(productId, recommendedDep)
         }
 
         Set<String> seenRecommendedProductIds = []
@@ -216,7 +211,7 @@ class CreateManifestTask extends DefaultTask {
     }
 
     static String identifierToCoord(ModuleVersionIdentifier identifier) {
-        return "$identifier.group:$identifier.name:$identifier.version"
+        return "${identifier.group}:${identifier.name}:${identifier.version}"
     }
 
 }

@@ -1,7 +1,5 @@
 package com.palantir.gradle.dist.tasks
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleTestSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
@@ -14,10 +12,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 class CreateManifestTaskTest extends GradleTestSpec {
-
-    def jsonMapper = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(new KebabCaseStrategy())
 
     File mavenRepo
 
@@ -132,7 +126,8 @@ class CreateManifestTaskTest extends GradleTestSpec {
         runSuccessfully(':testCreateManifest')
 
         then:
-        def manifest = jsonMapper.readValue(file('build/deployment/manifest.yml', projectDir).text, Map)
+        def manifest = CreateManifestTask.jsonMapper.readValue(
+                file('build/deployment/manifest.yml', projectDir).text, Map)
         manifest.get("extensions").get("product-dependencies").size() == 2
         manifest.get("extensions").get("product-dependencies") == [
                 [

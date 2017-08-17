@@ -12,7 +12,7 @@ dependencies {
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.2' // match Gradle's version
 
     testCompile gradleTestKit()
-    testCompile "com.netflix.nebula:nebula-test:6.1.2"
+    testCompile 'com.netflix.nebula:nebula-test:6.1.2'
 }
 
 pluginBundle {
