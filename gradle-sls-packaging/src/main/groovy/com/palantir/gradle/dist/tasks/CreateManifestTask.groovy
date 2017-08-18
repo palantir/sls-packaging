@@ -123,7 +123,7 @@ class CreateManifestTask extends DefaultTask {
             allRecommendedDepsByCoord.get(coord).addAll(recommendedDeps.recommendedProductDependencies())
 
             recommendedDeps.recommendedProductDependencies().each { recommendedDep ->
-                def productId = "${recommendedDep.productGroup()}:${recommendedDep.productName()}".toString()
+                def productId = "${recommendedDep.productGroup}:${recommendedDep.productName}".toString()
                 if (mavenCoordsByProductIds.containsKey(productId)) {
                     def othercoord = mavenCoordsByProductIds.get(productId)
                     throw new GradleException("Duplicate product dependency recommendations found for " +
@@ -152,9 +152,9 @@ class CreateManifestTask extends DefaultTask {
                             new ProductDependency(
                                     productDependency.productGroup,
                                     productDependency.productName,
-                                    recommendedProductDep.minimumVersion(),
-                                    recommendedProductDep.maximumVersion(),
-                                    recommendedProductDep.recommendedVersion()),
+                                    recommendedProductDep.minimumVersion,
+                                    recommendedProductDep.maximumVersion,
+                                    recommendedProductDep.recommendedVersion),
                             Map))
 
                 } catch (IllegalArgumentException e) {
