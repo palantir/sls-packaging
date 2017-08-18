@@ -1,6 +1,7 @@
 package com.palantir.gradle.dist
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.util.ConfigureUtil
 
 import java.util.regex.Matcher
@@ -25,6 +26,8 @@ class BaseDistributionExtension {
     private String productType
     private Map<String, Object> manifestExtensions = [:]
     private List<ProductDependency> productDependencies = []
+    private Configuration productDependenciesConfig
+    private Set<ProductId> ignoredProductIds = []
 
     BaseDistributionExtension(Project project) {
         this.project = project
@@ -60,16 +63,24 @@ class BaseDistributionExtension {
                     "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are " +
                     "optional.")
         }
+        def minVersion = matcher.group("version")
         productDependency(new ProductDependency(
                 matcher.group("group"),
                 matcher.group("name"),
-                matcher.group("version"),
-                null,
+                minVersion,
+                generateMaxVersion(minVersion),
                 recommendedVersion))
     }
 
     void productDependency(String serviceGroup, String serviceName, String minVersion, String maxVersion = null, String recommendedVersion = null) {
-        productDependency(new ProductDependency(serviceGroup, serviceName, minVersion, maxVersion, recommendedVersion))
+        productDependency(new ProductDependency(
+                serviceGroup,
+                serviceName,
+                minVersion,
+                maxVersion == null
+                    ? generateMaxVersion(minVersion)
+                    : maxVersion,
+                recommendedVersion))
     }
 
     void productDependency(Closure closure) {
@@ -81,6 +92,14 @@ class BaseDistributionExtension {
 
     void productDependency(ProductDependency dependency) {
         productDependencies.add(dependency)
+    }
+
+    void setProductDependenciesConfig(Configuration productDependenciesConfig) {
+        this.productDependenciesConfig = productDependenciesConfig
+    }
+
+    void ignoredProductDependency(String productGroup, String productName) {
+        ignoredProductIds.add(new ProductId(productGroup, productName))
     }
 
     String getServiceName() {
@@ -101,6 +120,19 @@ class BaseDistributionExtension {
 
     List<ProductDependency> getServiceDependencies() {
         return productDependencies
+    }
+
+    Configuration getProductDependenciesConfig() {
+        return productDependenciesConfig
+    }
+
+    Set<ProductId> getIgnoredProductIds() {
+        return ignoredProductIds
+    }
+
+    static String generateMaxVersion(String minimumVersion) {
+        def minimumVersionMajorRev = minimumVersion.tokenize('.')[0].toInteger()
+        return "${minimumVersionMajorRev}.x.x"
     }
 
 }

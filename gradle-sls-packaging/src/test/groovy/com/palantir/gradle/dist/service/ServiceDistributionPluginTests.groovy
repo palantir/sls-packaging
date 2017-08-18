@@ -500,7 +500,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
         classpathJar.exists()
         readFromZip(classpathJar, "META-INF/MANIFEST.MF")
-                .contains('Class-Path: guava-19.0.jar produces-manifest-') // etc
+                .contains('Class-Path: guava-19.0.jar root-project-manifest-') // etc
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {

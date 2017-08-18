@@ -13,7 +13,6 @@ bin
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.ear
 
@@ -32,3 +31,5 @@ fileeditor
 *.iws
 .idea/
 out/
+
+**/generated_src/
