@@ -147,6 +147,95 @@ class CreateManifestTaskTest extends GradleTestSpec {
         ]
     }
 
+    def "Duplicate recommendations with same versions"() {
+        setup:
+        generateDependencies()
+        buildFile << """
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+            }
+
+            repositories {
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
+            }
+
+            project.version = '1.0.0'
+
+            dependencies {
+                runtime 'b:b:1.0'
+                runtime 'd:d:1.0'
+            }
+
+            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
+                serviceName = "serviceName"
+                serviceGroup = "serviceGroup"
+                productType = "service"
+                manifestExtensions = [:]
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
+                ]
+                productDependenciesConfig = configurations.runtime
+            }
+        """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+
+        when:
+        runSuccessfully(':testCreateManifest')
+
+        then:
+        def manifest = CreateManifestTask.jsonMapper.readValue(
+                file('build/deployment/manifest.yml', projectDir).text, Map)
+        manifest.get("extensions").get("product-dependencies").size() == 1
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group": "group",
+                        "product-name": "name2",
+                        "minimum-version": "2.0.0",
+                        "maximum-version": "2.x.x",
+                        "recommended-version": "2.2.0"
+                ]
+        ]
+    }
+
+    def "Duplicate recommendations with different versions"() {
+        setup:
+        generateDependencies()
+        buildFile << """
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+            }
+
+            repositories {
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
+            }
+
+            project.version = '1.0.0'
+
+            dependencies {
+                runtime 'b:b:1.0'
+                runtime 'e:e:1.0'
+            }
+
+            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
+                serviceName = "serviceName"
+                serviceGroup = "serviceGroup"
+                productType = "service"
+                manifestExtensions = [:]
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
+                ]
+                productDependenciesConfig = configurations.runtime
+            }
+        """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+
+        when:
+        def result = run(':testCreateManifest').buildAndFail()
+
+        then:
+        result.task(':testCreateManifest').outcome == TaskOutcome.FAILED
+        result.output.contains(
+                "Differing product dependency recommendations found for 'group:name2' in 'e:e:1.0' and 'b:b:1.0'")
+    }
+
     def 'Can create CreateManifestTask when product.version is valid SLS version'() {
         when:
         Project project = ProjectBuilder.builder().build()
@@ -170,7 +259,8 @@ class CreateManifestTaskTest extends GradleTestSpec {
     }
 
     def generateDependencies() {
-        DependencyGraph dependencyGraph = new DependencyGraph("a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0")
+        DependencyGraph dependencyGraph = new DependencyGraph(
+                "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0")
         GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
         mavenRepo = generator.generateTestMavenRepo()
 
@@ -181,6 +271,16 @@ class CreateManifestTaskTest extends GradleTestSpec {
         Files.copy(
                 CreateManifestTaskTest.class.getResourceAsStream("/b-1.0.jar"),
                 new File(mavenRepo, "b/b/1.0/b-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+        // Make d.jar a duplicate of b.jar, including the exact same recommendation
+        Files.copy(
+                CreateManifestTaskTest.class.getResourceAsStream("/b-1.0.jar"),
+                new File(mavenRepo, "d/d/1.0/d-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+        // Make e.jar a duplicate of b.jar, but with a different recommendation
+        Files.copy(
+                CreateManifestTaskTest.class.getResourceAsStream("/b-duplicate-different-versions-1.0.jar"),
+                new File(mavenRepo, "e/e/1.0/e-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
     }
 }

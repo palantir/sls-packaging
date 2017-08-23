@@ -124,9 +124,10 @@ class CreateManifestTask extends DefaultTask {
 
             recommendedDeps.recommendedProductDependencies().each { recommendedDep ->
                 def productId = "${recommendedDep.productGroup}:${recommendedDep.productName}".toString()
-                if (mavenCoordsByProductIds.containsKey(productId)) {
+                if (mavenCoordsByProductIds.containsKey(productId)
+                        && !Objects.equals(recommendedDepsByProductId.get(productId), recommendedDep)) {
                     def othercoord = mavenCoordsByProductIds.get(productId)
-                    throw new GradleException("Duplicate product dependency recommendations found for " +
+                    throw new GradleException("Differing product dependency recommendations found for " +
                             "'${productId}' in '${coord}' and '${othercoord}'")
                 }
                 mavenCoordsByProductIds.put(productId, coord)
