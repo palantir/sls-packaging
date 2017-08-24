@@ -80,4 +80,17 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.excludeFromVar == ['c', 'd']
         ext.env == ['foo': 'bar']
     }
+
+    def 'service can be a daemon'() {
+        given:
+        def ext = new JavaServiceDistributionExtension(null)
+
+        when:
+        ext.with {
+            productType 'daemon.v1'
+        }
+
+        then:
+        ext.productType == 'daemon.v1'
+    }
 }
