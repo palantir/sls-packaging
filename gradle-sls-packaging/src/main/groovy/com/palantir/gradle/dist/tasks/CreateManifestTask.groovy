@@ -100,6 +100,10 @@ class CreateManifestTask extends DefaultTask {
             try {
                 def zf = new ZipFile(artifact.file)
                 def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
+                if (manifestEntry == null) {
+                    logger.debug("Manifest file does not exist in jar for '${coord}'")
+                    return
+                }
                 manifest = new Manifest(zf.getInputStream(manifestEntry))
             } catch (IOException e) {
                 logger.warn("IOException encountered when processing artifact '{}', file '{}'", coord, artifact.file, e)
@@ -172,6 +176,7 @@ class CreateManifestTask extends DefaultTask {
         def unseenProductIds = new HashSet<>(recommendedDepsByProductId.keySet())
         seenRecommendedProductIds.each { unseenProductIds.remove(it) }
         ignoredProductIds.each { unseenProductIds.remove(it.toString()) }
+        unseenProductIds.remove("${serviceGroup}:${serviceName}".toString())
 
         if (!unseenProductIds.isEmpty()) {
             throw new GradleException("The following products are recommended as dependencies but do not appear in " +
@@ -209,10 +214,11 @@ class CreateManifestTask extends DefaultTask {
         this.manifestExtensions = manifestExtensions
         this.productDependenciesConfig = productDependenciesConfig
         this.ignoredProductIds = ignoredProductIds
+        dependsOn(productDependenciesConfig)
     }
 
     static String identifierToCoord(ModuleVersionIdentifier identifier) {
-        return "${identifier.group}:${identifier.name}:${identifier.version}"
+        return "${identifier.group}:${identifier.name}:${identifier.version}".toString()
     }
 
 }
