@@ -533,15 +533,19 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
             }
 
             afterEvaluate {
-                println "distTar: ${distTar.outputs.files.singleFile}"
+                String actualTarballPath = distTar.outputs.files.singleFile.absolutePath
+                String expectedTarballPath = project.file('build/distributions/my-service.sls.tgz').absolutePath
+                
+                if (!actualTarballPath.equals(expectedTarballPath)) {
+                    throw new GradleException("tarball path didn't match.\\n" +
+                            "actual: ${actualTarballPath}\\n" +
+                            "expected: ${expectedTarballPath}")
+                }
             }
         '''.stripIndent()
 
-        when:
-        BuildResult buildResult = runSuccessfully(':tasks')
-
-        then:
-        buildResult.output =~ ("distTar: ${projectDir}/build/distributions/my-service.sls.tgz")
+        expect:
+        runSuccessfully(':tasks')
     }
 
     def 'exposes an artifact through the sls configuration'() {
