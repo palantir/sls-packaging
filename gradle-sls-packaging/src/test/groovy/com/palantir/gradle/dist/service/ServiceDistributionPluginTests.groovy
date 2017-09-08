@@ -533,7 +533,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
             }
 
             afterEvaluate {
-                println "distTar: ${distTar.outputs.files.singleFile}"
+                println "from test: ${distTar.outputs.files.singleFile} - distTar"
             }
         '''.stripIndent()
 
@@ -541,7 +541,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         BuildResult buildResult = runSuccessfully(':tasks')
 
         then:
-        buildResult.output =~ ("distTar: ${projectDir}/build/distributions/my-service.sls.tgz")
+        buildResult.output =~ ("${projectDir}/build/distributions/my-service.sls.tgz - distTar")
     }
 
     def 'exposes an artifact through the sls configuration'() {
