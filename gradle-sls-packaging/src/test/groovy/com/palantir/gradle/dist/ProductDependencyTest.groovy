@@ -35,28 +35,12 @@ class ProductDependencyTest extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'default maximumVersion'() {
-        when:
-        def dep = new ProductDependency("", "", "1.2.3", null, "1.2.4")
-
-        then:
-        dep.maximumVersion == "1.x.x"
-    }
-
     def 'non-deafult maximumVersion'() {
         when:
         def dep = new ProductDependency("", "", "1.2.3", "2.x.x", "1.2.4")
 
         then:
         dep.maximumVersion == "2.x.x"
-    }
-
-    def 'infer maximum version from min version'() {
-        when:
-        def dep = new ProductDependency("", "", "1.2.3", null, "1.2.4")
-
-        then:
-        dep.maximumVersion == "1.x.x"
     }
 
     def 'minimumVersion and maximumVersion must not be equal' () {

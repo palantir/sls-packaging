@@ -500,7 +500,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
         classpathJar.exists()
         readFromZip(classpathJar, "META-INF/MANIFEST.MF")
-                .contains('Class-Path: guava-19.0.jar produces-manifest-') // etc
+                .contains('Class-Path: guava-19.0.jar root-project-manifest-') // etc
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {
@@ -533,15 +533,19 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
             }
 
             afterEvaluate {
-                println "distTar: ${distTar.outputs.files.singleFile}"
+                String actualTarballPath = distTar.outputs.files.singleFile.absolutePath
+                String expectedTarballPath = project.file('build/distributions/my-service.sls.tgz').absolutePath
+                
+                if (!actualTarballPath.equals(expectedTarballPath)) {
+                    throw new GradleException("tarball path didn't match.\\n" +
+                            "actual: ${actualTarballPath}\\n" +
+                            "expected: ${expectedTarballPath}")
+                }
             }
         '''.stripIndent()
 
-        when:
-        BuildResult buildResult = runSuccessfully(':tasks')
-
-        then:
-        buildResult.output =~ ("distTar: ${projectDir}/build/distributions/my-service.sls.tgz")
+        expect:
+        runSuccessfully(':tasks')
     }
 
     def 'exposes an artifact through the sls configuration'() {

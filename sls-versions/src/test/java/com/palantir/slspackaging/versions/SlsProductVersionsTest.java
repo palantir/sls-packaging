@@ -48,12 +48,16 @@ public final class SlsProductVersionsTest {
         assertThat(SlsProductVersions.isMatcher("2.x.x")).isTrue();
         assertThat(SlsProductVersions.isMatcher("x.x.x")).isTrue();
 
-        assertThat(SlsProductVersions.isMatcher("2.0.0")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("2.0.0")).isTrue();
         assertThat(SlsProductVersions.isMatcher("1.x.x.x")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.y.z")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.x.x-rc1")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.x.x-1-gaaaaaa")).isFalse();
         assertThat(SlsProductVersions.isMatcher("x.x.x-foo")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.x.3")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.2.3")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("x.2.x")).isFalse();
+        assertThat(SlsProductVersions.isMatcher("1.x.3")).isFalse();
     }
 
     @Test

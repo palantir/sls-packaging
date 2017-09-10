@@ -77,6 +77,8 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             checkScript.configure(distributionExtension.serviceName, distributionExtension.checkArgs)
         }
 
+        distributionExtension.productDependenciesConfig = project.configurations.getByName("runtime")
+
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
@@ -84,8 +86,9 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies
-            )
+                    distributionExtension.serviceDependencies,
+                    distributionExtension.productDependenciesConfig,
+                    distributionExtension.ignoredProductIds)
         }
 
         Tar distTar = DistTarTask.createDistTarTask(project, 'distTar')
