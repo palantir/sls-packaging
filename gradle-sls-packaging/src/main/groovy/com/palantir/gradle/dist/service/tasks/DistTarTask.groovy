@@ -55,9 +55,14 @@ class DistTarTask {
             }
             
             from("${project.projectDir}/service/bin") {
-        		into("${archiveRootDir}/service/bin")
-        		fileMode = 0755
-        	}
+                into("${archiveRootDir}/service/bin")
+                fileMode = 0755
+            }
+
+            from("${project.projectDir}/service/monitoring/bin") {
+                into("${archiveRootDir}/service/monitoring/bin")
+                fileMode = 0755
+            }
 
             into("${archiveRootDir}/service/lib") {
                 from(project.tasks.jar.outputs.files)
