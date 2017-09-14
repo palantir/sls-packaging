@@ -51,7 +51,7 @@ class DistTarTask {
 
             from("${project.projectDir}/service") {
                 into "${archiveRootDir}/service"
-                exclude("**/bin/*")
+                exclude("bin/*")
             }
             
             from("${project.projectDir}/service/bin") {
