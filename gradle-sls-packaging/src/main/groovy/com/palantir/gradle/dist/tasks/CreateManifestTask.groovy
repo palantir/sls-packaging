@@ -180,7 +180,7 @@ class CreateManifestTask extends DefaultTask {
 
         if (!unseenProductIds.isEmpty()) {
             throw new GradleException("The following products are recommended as dependencies but do not appear in " +
-                    "the product dependencies or product dependencies ignored list: ${unseenProductIds}")
+                    "the product dependencies or product dependencies ignored list: ${unseenProductIds}. See gradle-sls-packaging for more details")
         }
 
         manifestExtensions.put("product-dependencies", dependencies)
