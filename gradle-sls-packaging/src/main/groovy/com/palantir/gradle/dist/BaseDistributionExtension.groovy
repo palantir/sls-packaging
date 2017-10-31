@@ -11,6 +11,7 @@ class BaseDistributionExtension {
 
     private static final Set<String> VALID_PRODUCT_TYPES = [
             "service.v1",
+            "daemon.v1",
             "asset.v1"
     ]
     private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
