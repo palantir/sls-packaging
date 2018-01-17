@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.service
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.*
 import com.palantir.gradle.dist.tasks.CreateManifestTask
+import com.palantir.gradle.dist.tasks.ConfigTarTask
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -101,6 +102,11 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.isEnableManifestClasspath())
         }
 
+        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType)
+        project.afterEvaluate {
+            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName)
+        }
+
         JavaExec run = RunTask.createRunTask(project, 'run')
         project.afterEvaluate {
             RunTask.configure(run, distributionExtension.mainClass, distributionExtension.args, distributionExtension.defaultJvmOpts,)
@@ -112,5 +118,6 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         // Configure tasks
         distTar.dependsOn startScripts, initScript, checkScript, copyLauncherBinaries, launchConfig, manifest, manifestClasspathJar
+        configTar.dependsOn manifest
     }
 }

@@ -3,6 +3,7 @@ package com.palantir.gradle.dist.asset
 import com.palantir.gradle.dist.asset.tasks.AssetDistTarTask
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.gradle.dist.tasks.CreateManifestTask
+import com.palantir.gradle.dist.tasks.ConfigTarTask
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -37,9 +38,11 @@ class AssetDistributionPlugin implements Plugin<Project> {
         }
 
         Tar distTar = AssetDistTarTask.createAssetDistTarTask(project, 'distTar')
+        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType)
 
         project.afterEvaluate {
             AssetDistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.assets)
+            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName)
         }
 
         project.configurations.create(SLS_CONFIGURATION_NAME)
@@ -47,5 +50,6 @@ class AssetDistributionPlugin implements Plugin<Project> {
 
         // Configure tasks
         distTar.dependsOn manifest
+        configTar.dependsOn manifest
     }
 }
