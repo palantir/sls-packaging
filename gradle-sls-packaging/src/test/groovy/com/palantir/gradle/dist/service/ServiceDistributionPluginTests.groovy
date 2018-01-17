@@ -605,6 +605,22 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
+    def 'fails when pod and service plugins are both applied'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.sls-pod-distribution'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+        '''.stripIndent()
+
+        when:
+        def result = run(":tasks").buildAndFail()
+
+        then:
+        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+    }
+
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
         helper.addSubproject('parent', '''

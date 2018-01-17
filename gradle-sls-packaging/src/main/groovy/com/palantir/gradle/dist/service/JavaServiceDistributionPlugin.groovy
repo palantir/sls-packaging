@@ -16,6 +16,7 @@
 package com.palantir.gradle.dist.service
 
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
+import com.palantir.gradle.dist.pod.PodDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.*
 import com.palantir.gradle.dist.tasks.CreateManifestTask
 import com.palantir.gradle.dist.tasks.ConfigTarTask
@@ -36,6 +37,9 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
     void apply(Project project) {
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        }
+        if (project.getPlugins().hasPlugin(PodDistributionPlugin)) {
+            throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
         }
         project.plugins.apply('java')
         project.extensions.create('distribution', JavaServiceDistributionExtension, project)
