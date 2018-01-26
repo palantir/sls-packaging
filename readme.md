@@ -192,7 +192,8 @@ by specifying that a later invocation be relocated to a previously used destinat
 
 ### Packaging
 
-To create a compressed, gzipped tar file, run the `distTar` task.
+To create a compressed, gzipped tar file of the distribution, run the `distTar` task. To create a compressed,
+gzipped tar file of the deployment metadata for the distribution, run the `configTar` task.
 
 The plugins expose the tar file as an artifact in the `sls` configuration, making it easy to
 share the artifact between sibling Gradle projects. For example:
@@ -234,6 +235,7 @@ Furthermore, the Java Service plugin will merge the entire contents of
 ### Tasks
 
  * `distTar`: creates the gzipped tar package
+ * `configTar`: creates the gzipped tar package of the deployment configuration
  * `createManifest`: generates a simple yaml file describing the package content
 
 Specific to the Java Service plugin:
