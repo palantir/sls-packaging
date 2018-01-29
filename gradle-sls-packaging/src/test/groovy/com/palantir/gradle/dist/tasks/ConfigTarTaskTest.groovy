@@ -1,6 +1,8 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.GradleTestSpec
+import org.gradle.api.Project
+import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.BuildResult
 
@@ -9,9 +11,6 @@ class ConfigTarTaskTest extends GradleTestSpec {
     def 'configTar task exists for services'() {
         setup:
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
-        buildFile << """
-
-        """.stripIndent()
 
         when:
         BuildResult buildResult = run(':configTar').build()
@@ -34,9 +33,6 @@ class ConfigTarTaskTest extends GradleTestSpec {
     def 'configTar task contains the necessary deployment files for services'() {
         setup:
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
-        buildFile << """
-
-        """.stripIndent()
 
         when:
         run(':configTar', ':untar').build()
@@ -62,6 +58,16 @@ class ConfigTarTaskTest extends GradleTestSpec {
         files.contains('deployment')
         def manifest = file('dist/foo-asset-0.0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('asset.v1')
+    }
+
+    def 'configTar task fails for invalid product types'() {
+        when:
+        Project project = ProjectBuilder.builder().withName("foo").build()
+        ConfigTarTask.createConfigTarTask(project, "configTar", "foo.bar")
+
+        then:
+        def err = thrown(IllegalArgumentException)
+        err.message.contains("Product type must end with")
     }
 
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {

@@ -22,6 +22,8 @@ import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
 
 class ConfigTarTask {
+    private static final String PRODUCT_TYPE_REGEX = "^\\w+?\\.v\\d+\$"
+
     static Tar createConfigTarTask(Project project, String taskName, String productType) {
         project.tasks.create(taskName, Tar) { p ->
             p.group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -30,6 +32,9 @@ class ConfigTarTask {
             p.compression = Compression.GZIP
             // The extension is the product type without the version
             // service.v1 -> .service.config.tgz
+            if (!productType.matches(PRODUCT_TYPE_REGEX)) {
+                throw new IllegalArgumentException(String.format("Product type must end with '.v<VERSION_NUMBER>': %s", productType))
+            }
             p.extension = productType.substring(0, productType.lastIndexOf('.')).concat(".config.tgz")
         }
     }
