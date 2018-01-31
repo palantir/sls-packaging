@@ -168,8 +168,8 @@ The complete list of configurable properties:
  * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
    Defaults to the configured "group" of the Gradle project, `project.group`.
  * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in SLS 1.0.
- * (optional) `serviceDependency` adds an entry to the `extensions.service-dependencies` block of the SLS manifest,
-   declaring that this service has a dependency on the given other service with specific version bounds.
+ * (optional) `productDependency` adds an entry to the `extensions.product-dependencies` block of the SLS manifest,
+   declaring that this asset has a dependency on the given other product with specific version bounds.
  * (optional) `assets <fromPath>` adds the specified file or directory (recursively) to the asset distribution,
    preserving the directory structure. For example, `assets 'foo/bar'` yields files `foo/bar/baz/1.txt` and `foo/bar/2.txt` in the
    asset distribution, assuming that the directory `foo/bar` contains files `baz/1.txt` and `2.txt`.
