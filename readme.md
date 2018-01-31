@@ -73,6 +73,14 @@ A sample configuration for the Service plugin:
             maximumVersion = "1.5.x"
             recommendedVersion = "1.3.0"
         }
+        productDependency {
+            productGroup = "other-group2"
+            productName = "other-service2"
+            // Automatically detect the constraints based on the runtime configuration
+            // API jars that publish recommended product dependencies.
+            // See the recommended product dependencies plugin section below.
+            detectConstraints = true
+        }
     }
 
 And the complete list of configurable properties:
@@ -233,6 +241,30 @@ Specific to the Java Service plugin:
  * `createStartScripts`: generates standard Java start scripts
  * `createInitScript`: generates daemonizing init.sh script
  * `run`: runs the specified `mainClass` with default `args`
+
+## Recommended Product Dependencies Plugin
+
+This plugin allows API jars to delcare the recommended product dependencies an SLS service distribution should take.
+
+An example application of this plugin might look as follows:
+
+
+```gradle
+apply plugin: 'java'
+apply plugin: 'com.palantir.sls-recommended-dependencies'
+
+recommendedProductDependencies {
+    productDependency {
+        productGroup = 'com.foo.bar.group'
+        productName = 'product'
+        minimumVersion = rootProject.version
+        maximumVersion = "${rootProject.version.tokenize('.')[0].toInteger()}.x.x"
+        recommendedVersion = rootProject.version
+    }
+}
+```
+
+The recommended product dependencies will be serialized into the jar manifest of the jar that the project produces. The SLS distribution and asset plugins will inspect the manifest of all jars in the server or asset and extract the recommended product dependencies.
 
 ## License
 

@@ -60,7 +60,7 @@ class BaseDistributionExtensionTest extends Specification {
 
         then:
         def ex = thrown IllegalArgumentException
-        ex.message == "Invalid product type 'foobar' specified; supported types: [service.v1, asset.v1]."
+        ex.message == "Invalid product type 'foobar' specified; supported types: [service.v1, daemon.v1, asset.v1]."
     }
 
     def "productDependencies from invalid maven coordinate"() {
