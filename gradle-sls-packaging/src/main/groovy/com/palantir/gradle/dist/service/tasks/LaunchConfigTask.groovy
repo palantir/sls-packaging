@@ -43,6 +43,10 @@ class LaunchConfigTask extends DefaultTask {
             '-verbose:gc'
     ]
 
+    static final List<String> optimizationsToDisableJvmOpts = [
+            '-XX:-OmitStackTraceInFastThrow'
+    ]
+
     static final List<String> dirs = ['var/data/tmp']
 
     @Input
@@ -99,7 +103,7 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + defaultJvmOpts), getStaticLauncher())
+        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + optimizationsToDisableJvmOpts + defaultJvmOpts), getStaticLauncher())
         writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts), getCheckLauncher())
     }
 
