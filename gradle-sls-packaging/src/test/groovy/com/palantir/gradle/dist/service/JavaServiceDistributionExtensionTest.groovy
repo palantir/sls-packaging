@@ -31,6 +31,9 @@ class JavaServiceDistributionExtensionTest extends Specification {
             checkArgs 'a', 'b'
             checkArgs 'c', 'd'
 
+            extraClasspath 'a', 'b'
+            extraClasspath 'c', 'd'
+
             defaultJvmOpts 'a', 'b'
             defaultJvmOpts 'c', 'd'
 
@@ -47,6 +50,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         then:
         ext.args == ['a', 'b', 'c', 'd']
         ext.checkArgs == ['a', 'b', 'c', 'd']
+        ext.extraClasspath == ['a', 'b', 'c', 'd']
         ext.defaultJvmOpts == ['a', 'b', 'c', 'd']
         ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
         ext.env == ['a': 'b', 'c': 'd']
@@ -63,6 +67,8 @@ class JavaServiceDistributionExtensionTest extends Specification {
             setArgs(['c', 'd'])
             setCheckArgs(['a', 'b'])
             setCheckArgs(['c', 'd'])
+            setExtraClasspath(['a', 'b'])
+            setExtraClasspath(['c', 'd'])
             setDefaultJvmOpts(['a', 'b'])
             setDefaultJvmOpts(['c', 'd'])
             setExcludeFromVar(['a', 'b'])
@@ -76,6 +82,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         then:
         ext.args == ['c', 'd']
         ext.checkArgs == ['c', 'd']
+        ext.extraClasspath == ['c', 'd']
         ext.defaultJvmOpts == ['c', 'd']
         ext.excludeFromVar == ['c', 'd']
         ext.env == ['foo': 'bar']

@@ -23,6 +23,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     private String mainClass
     private List<String> args = []
     private List<String> checkArgs = []
+    private List<String> extraClasspath = []
     private List<String> defaultJvmOpts = []
     private Map<String, String> env = [:]
     private boolean enableManifestClasspath = false
@@ -52,6 +53,14 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     void setCheckArgs(Iterable<String> checkArgs) {
         this.checkArgs = checkArgs.toList()
+    }
+
+    void extraClasspath(String... extraClasspath) {
+        this.extraClasspath.addAll(extraClasspath)
+    }
+
+    void setExtraClasspath(Iterable<String> extraClasspath) {
+        this.extraClasspath = extraClasspath.toList()
     }
 
     void defaultJvmOpts(String... defaultJvmOpts) {
@@ -96,6 +105,10 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     List<String> getCheckArgs() {
         return checkArgs
+    }
+
+    List<String> getExtraClasspath() {
+        return extraClasspath
     }
 
     List<String> getDefaultJvmOpts() {

@@ -101,6 +101,8 @@ And the complete list of configurable properties:
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
    no monitoring script will be generated.
+ * (optional) `extraClasspath` a list of additional classpath entries to set on the program. Can be used for example to add
+   directories to the classpath, such as `var/conf/hadoop`.
  * (optional) `env` a map of environment variables that will be placed into the `env` block
    of the static launcher config. See [go-java-launcher](https://github.com/palantir/go-java-launcher)
    for details on the custom environment block.
