@@ -40,6 +40,8 @@ class GradleTestSpec extends Specification {
 
     def setup() {
         projectDir = folder.newFolder()
+        File propertiesFile = file("gradle.properties")
+        propertiesFile << "org.gradle.daemon=false"
         buildFile = file("build.gradle")
         settingsFile = new File(projectDir, 'settings.gradle')
         helper = new MultiProjectIntegrationHelper(projectDir, settingsFile)
