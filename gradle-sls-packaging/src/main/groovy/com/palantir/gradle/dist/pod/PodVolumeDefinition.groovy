@@ -17,14 +17,20 @@ package com.palantir.gradle.dist.pod
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import org.gradle.api.GradleException
 
 @ToString
 @EqualsAndHashCode
 class PodVolumeDefinition implements Serializable {
+    private static final String VOLUME_SIZE_REGEX = "^\\d+? *?(MB|GB|TB)\$"
 
     private static final long serialVersionUID = 1L
 
     String desiredSize
 
     PodVolumeDefinition() {}
+
+    boolean isValidPodVolumeDefinition() {
+        return desiredSize.matches(VOLUME_SIZE_REGEX)
+    }
 }

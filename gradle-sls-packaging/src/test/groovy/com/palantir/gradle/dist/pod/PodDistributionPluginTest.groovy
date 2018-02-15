@@ -175,7 +175,32 @@ class PodDistributionPluginTest extends GradleTestSpec {
         BuildResult buildResult = run(':configTar').buildAndFail()
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service bar-service: product version must be specified for pod service")
+        buildResult.getOutput().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
+    }
+
+    def 'pod file creation fails with invalid product version '() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                serviceName 'pod-name'
+                service "bar-service", {
+                  productGroup = "com.palantir.foo"
+                  productName = "bar"
+                  productVersion = "not-a-valid-sls-version"
+                  volumeMap = ["bar-volume": "random-volume"]
+                }
+                volume "random-volume", {
+                  desiredSize = "10 GB"
+                }
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run(':configTar').buildAndFail()
+
+        then:
+        buildResult.getOutput().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
     }
 
     def 'pod file creation fails with bad volume mappings'() {
@@ -210,6 +235,88 @@ class PodDistributionPluginTest extends GradleTestSpec {
         then:
         buildResult.getOutput().contains("Pod validation failed for service baz-service: service volume mapping cannot contain undeclared volumes")
     }
+
+    def 'pod file creation fails with volume name too long'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                serviceName 'pod-name'
+
+                service "bar-service", {
+                  productGroup = "com.palantir.foo"
+                  productName = "bar"
+                  productVersion = "1.0.0"
+                  volumeMap = ["bar-volume": "aaaaaaaaaaaaaaaaaaaaaaaaaa"]
+                }
+
+                volume "aaaaaaaaaaaaaaaaaaaaaaaaaa", {
+                  desiredSize = "10 GB"
+                }
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run(':configTar').buildAndFail()
+
+        then:
+        buildResult.getOutput().contains("Pod validation failed for volume aaaaaaaaaaaaaaaaaaaaaaaaaa: volume names must be fewer than 25 characters")
+    }
+
+    def 'pod file creation fails with bad volume name'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                serviceName 'pod-name'
+
+                service "bar-service", {
+                  productGroup = "com.palantir.foo"
+                  productName = "bar"
+                  productVersion = "1.0.0"
+                  volumeMap = ["bar-volume": "Not-A-Valid-Volume"]
+                }
+
+                volume "Not-A-Valid-Volume", {
+                  desiredSize = "10 GiB"
+                }
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run(':configTar').buildAndFail()
+
+        then:
+        buildResult.getOutput().contains("Pod validation failed for volume Not-A-Valid-Volume: volume name does not conform to the required regex")
+    }
+
+    def 'pod file creation fails with bad volume desired size'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                serviceName 'pod-name'
+
+                service "bar-service", {
+                  productGroup = "com.palantir.foo"
+                  productName = "bar"
+                  productVersion = "1.0.0"
+                  volumeMap = ["bar-volume": "random-volume"]
+                }
+
+                volume "random-volume", {
+                  desiredSize = "10 GiB"
+                }
+            }
+        '''.stripIndent()
+
+        when:
+        BuildResult buildResult = run(':configTar').buildAndFail()
+
+        then:
+        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of")
+    }
+
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {

@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.pod
 
+import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
@@ -48,8 +49,8 @@ class PodServiceDefinition implements Serializable {
         if (productName.isEmpty()) {
             throw new IllegalArgumentException("product name must be specified for pod service")
         }
-        if (productVersion.isEmpty()) {
-            throw new IllegalArgumentException("product version must be specified for pod service")
+        if (!SlsProductVersions.isValidVersion(productVersion)) {
+            throw new IllegalArgumentException("product version must be specified and be a valid SLS version for pod service")
         }
     }
 }

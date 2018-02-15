@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.pod.PodServiceDefinition
 import com.palantir.gradle.dist.pod.PodVolumeDefinition
 import com.palantir.gradle.dist.tasks.KebabCaseStrategy
 import groovy.json.JsonOutput
+import net.rubygrapefruit.platform.NativeIntegrationLinkageException
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
@@ -29,7 +30,9 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.GradleException
 
 class CreatePodYAMLTask extends DefaultTask {
-    public final static String POD_VALIDATION_FAIL_FORMAT = "Pod validation failed for service %s: %s"
+    private final static String VOLUME_NAME_REGEX = "^(?:[a-z0-9]+?-)*[a-z0-9]+\$"
+    public final static String SERVICE_VALIDATION_FAIL_FORMAT = "Pod validation failed for service %s: %s"
+    public final static String VOLUME_VALIDATION_FAIL_FORMAT = "Pod validation failed for volume %s: %s"
 
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setPropertyNamingStrategy(new KebabCaseStrategy())
@@ -64,21 +67,38 @@ class CreatePodYAMLTask extends DefaultTask {
         def kebabCaseStrategy = new KebabCaseStrategy()
         serviceDefinitions.each { entry ->
             if (!kebabCaseStrategy.translate(entry.key).equals(entry.key)) {
-                throw new GradleException(String.format(POD_VALIDATION_FAIL_FORMAT, entry.key,
+                throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, entry.key,
                         "service names must be kebab case"))
             }
 
             try {
                 entry.value.isValid()
             } catch (IllegalArgumentException e) {
-                throw new GradleException(String.format(POD_VALIDATION_FAIL_FORMAT, entry.key, e.message))
+                throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, entry.key, e.message))
             }
 
             entry.value.volumeMap.each { volume ->
                 if (!volumeDefinitions.containsKey(volume.value)) {
-                    throw new GradleException(String.format(POD_VALIDATION_FAIL_FORMAT, entry.key,
+                    throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, entry.key,
                             "service volume mapping cannot contain undeclared volumes"))
                 }
+            }
+        }
+
+        volumeDefinitions.each { entry ->
+            if ((entry.key.length() >= 25)) {
+                throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, entry.key,
+                        "volume names must be fewer than 25 characters"))
+            }
+
+            if (!entry.key.matches(VOLUME_NAME_REGEX)) {
+                throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, entry.key,
+                        "volume name does not conform to the required regex ${VOLUME_NAME_REGEX}"))
+            }
+
+            if (!entry.value.isValidPodVolumeDefinition()) {
+                throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, entry.key,
+                        "volume desired size of ${entry.value.desiredSize} is not valid"))
             }
         }
     }
