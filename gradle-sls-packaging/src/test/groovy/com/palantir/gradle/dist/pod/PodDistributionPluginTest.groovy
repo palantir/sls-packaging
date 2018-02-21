@@ -49,7 +49,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
                 
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -70,7 +70,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         podYaml.get("services").get("bar-service").get("product-name").asText().contains("bar")
         podYaml.get("services").get("bar-service").get("product-group").asText().contains("com.palantir.foo")
         podYaml.has("volumes")
-        podYaml.get("volumes").get("random-volume").get("desired-size").asText().contains("10 GB")
+        podYaml.get("volumes").get("random-volume").get("desired-size").asText().contains("10GB")
     }
 
     def 'pod file creation fails with bad service names'() {
@@ -94,7 +94,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
                 
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -118,7 +118,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   volumeMap = ["bar-volume": "random-volume"]
                 }                
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -142,7 +142,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   volumeMap = ["bar-volume": "random-volume"]
                 }                
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -166,7 +166,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   volumeMap = ["bar-volume": "random-volume"]
                 }                
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -191,7 +191,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   volumeMap = ["bar-volume": "random-volume"]
                 }
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -224,7 +224,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
                 
                 volume "random-volume", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -251,7 +251,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
 
                 volume "aaaaaaaaaaaaaaaaaaaaaaaaaa", {
-                  desiredSize = "10 GB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -278,7 +278,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
 
                 volume "Not-A-Valid-Volume", {
-                  desiredSize = "10 GiB"
+                  desiredSize = "10GB"
                 }
             }
         '''.stripIndent()
@@ -314,7 +314,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         BuildResult buildResult = run(':configTar').buildAndFail()
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of")
+        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex '^\\d+(MB|GB|TB)\$'")
     }
 
     private static createUntarBuildFile(buildFile) {

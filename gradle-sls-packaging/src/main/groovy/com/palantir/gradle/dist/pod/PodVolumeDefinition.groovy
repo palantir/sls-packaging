@@ -22,7 +22,7 @@ import org.gradle.api.GradleException
 @ToString
 @EqualsAndHashCode
 class PodVolumeDefinition implements Serializable {
-    private static final String VOLUME_SIZE_REGEX = "^\\d+? *?(MB|GB|TB)\$"
+    public static final String VOLUME_SIZE_REGEX = "^\\d+?(MB|GB|TB)\$"
 
     private static final long serialVersionUID = 1L
 

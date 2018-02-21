@@ -22,7 +22,6 @@ import com.palantir.gradle.dist.pod.PodServiceDefinition
 import com.palantir.gradle.dist.pod.PodVolumeDefinition
 import com.palantir.gradle.dist.tasks.KebabCaseStrategy
 import groovy.json.JsonOutput
-import net.rubygrapefruit.platform.NativeIntegrationLinkageException
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
@@ -98,7 +97,7 @@ class CreatePodYAMLTask extends DefaultTask {
 
             if (!entry.value.isValidPodVolumeDefinition()) {
                 throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, entry.key,
-                        "volume desired size of ${entry.value.desiredSize} is not valid"))
+                        "volume desired size of ${entry.value.desiredSize} does not conform to the required regex '${PodVolumeDefinition.VOLUME_SIZE_REGEX}'"))
             }
         }
     }
