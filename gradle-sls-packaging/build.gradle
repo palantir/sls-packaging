@@ -30,9 +30,17 @@ pluginBundle {
             id = 'com.palantir.sls-asset-distribution'
             displayName = 'Creates SLS asset distributions'
         }
+        podDistributionPlugin {
+            id = 'com.palantir.sls-pod-distribution'
+            displayName = 'Creates SLS pod distributions'
+        }
     }
 }
 
 publishPlugins.onlyIf {
     project.version ==~ /[0-9]+(\.[0-9]+)+(-rc[0-9]+)?(-alpha[0-9]+)?/
+}
+
+test {
+    maxHeapSize = '1g'
 }

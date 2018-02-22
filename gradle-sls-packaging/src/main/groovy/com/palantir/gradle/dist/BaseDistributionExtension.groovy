@@ -12,7 +12,8 @@ class BaseDistributionExtension {
     private static final Set<String> VALID_PRODUCT_TYPES = [
             "service.v1",
             "daemon.v1",
-            "asset.v1"
+            "asset.v1",
+            "pod.v1"
     ]
     private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
             + "(?<group>[^:@?]*):"
@@ -24,6 +25,7 @@ class BaseDistributionExtension {
     private final Project project
     private String serviceGroup
     private String serviceName
+    private String podName
     private String productType
     private Map<String, Object> manifestExtensions = [:]
     private List<ProductDependency> productDependencies = []
@@ -36,6 +38,10 @@ class BaseDistributionExtension {
 
     void serviceName(String serviceName) {
         this.serviceName = serviceName
+    }
+
+    void podName(String podName) {
+        this.podName = podName
     }
 
     void serviceGroup(String serviceGroup) {
@@ -105,6 +111,10 @@ class BaseDistributionExtension {
 
     String getServiceName() {
         return serviceName ?: project.name
+    }
+
+    String getPodName() {
+        return podName ?: project.name
     }
 
     String getServiceGroup() {
