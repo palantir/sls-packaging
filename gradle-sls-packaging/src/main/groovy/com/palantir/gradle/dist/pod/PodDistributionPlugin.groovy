@@ -47,7 +47,7 @@ class PodDistributionPlugin implements Plugin<Project> {
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
-                    distributionExtension.serviceName,
+                    distributionExtension.podName,
                     distributionExtension.serviceGroup,
                     distributionExtension.productType,
                     distributionExtension.manifestExtensions,
@@ -63,7 +63,7 @@ class PodDistributionPlugin implements Plugin<Project> {
 
         Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType)
         project.afterEvaluate {
-            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName)
+            ConfigTarTask.configure(configTar, project, distributionExtension.podName)
         }
 
         project.configurations.create(SLS_CONFIGURATION_NAME)

@@ -208,7 +208,7 @@ Apply the plugin using standard Gradle convention:
 A sample configuration for the Pod plugin:
 
     distribution {
-        serviceName "pod-name"
+        podName "pod-name"
 
         service "bar-service", {
             productGroup = "com.palantir.foo"
@@ -230,7 +230,7 @@ A sample configuration for the Pod plugin:
 
 The complete list of configurable properties:
 
- * `serviceName` the name of this pod, used to construct the final artifact's file name.
+ * `podName` the name of this pod, used to construct the final artifact's file name.
  * `service` <service name> <configuration closure> generates a block for a service within the pod. Service names must be kebab case.
     A service block can be configured with the following properties:
    * `productGroup` <group> the group of the product backing this service

@@ -97,7 +97,7 @@ class CreatePodYAMLTask extends DefaultTask {
 
             if (!entry.value.isValidPodVolumeDefinition()) {
                 throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, entry.key,
-                        "volume desired size of ${entry.value.desiredSize} does not conform to the required regex '${PodVolumeDefinition.VOLUME_SIZE_REGEX}'"))
+                        "volume desired size of ${entry.value.desiredSize} does not conform to the required regex ${PodVolumeDefinition.VOLUME_SIZE_REGEX}"))
             }
         }
     }

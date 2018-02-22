@@ -12,7 +12,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
             }
         '''.stripIndent()
 
@@ -28,12 +28,50 @@ class PodDistributionPluginTest extends GradleTestSpec {
         manifest.contains('"product-type": "pod.v1"')
     }
 
+    def 'podName defaults to project name '() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.sls-pod-distribution'
+            }
+
+            version "0.0.1"
+            project.group = 'service-group'
+
+            distribution {
+                service "bar-service", {
+                  productGroup = "com.palantir.foo"
+                  productName = "bar"
+                  productVersion = "1.0.0"
+                }
+            }
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/root-project-0.0.1.pod.config.tgz"))
+                into "${projectDir}/dist"
+                dependsOn configTar
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':configTar', ':untar')
+
+        then:
+        String manifest = file('dist/root-project-0.0.1/deployment/manifest.yml', projectDir).text
+        manifest.contains('"manifest-version": "1.0"')
+        manifest.contains('"product-group": "service-group"')
+        manifest.contains('"product-name": "root-project"')
+        manifest.contains('"product-version": "0.0.1"')
+        manifest.contains('"product-type": "pod.v1"')
+    }
+
     def 'pod file contains expected fields'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
@@ -78,7 +116,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 
                 service "barService", {
                   productGroup = "com.palantir.foo"
@@ -111,7 +149,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 service "bar-service", {
                   productName = "bar"
                   productVersion = "1.0.0"
@@ -135,7 +173,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
                   productVersion = "1.0.0"
@@ -159,7 +197,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
                   productName = "bar"
@@ -183,7 +221,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
                   productName = "bar"
@@ -208,7 +246,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
                 
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
@@ -241,7 +279,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
 
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
@@ -268,7 +306,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
 
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
@@ -295,7 +333,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
-                serviceName 'pod-name'
+                podName 'pod-name'
 
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
@@ -314,7 +352,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         BuildResult buildResult = run(':configTar').buildAndFail()
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex '^\\d+(MB|GB|TB)\$'")
+        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(MB|GB|TB)\$")
     }
 
     private static createUntarBuildFile(buildFile) {
@@ -323,10 +361,6 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 id 'com.palantir.sls-pod-distribution'
             }
             
-            distribution {
-                serviceName 'pod-name'
-            }
-
             version "0.0.1"
             project.group = 'service-group'
 

@@ -25,6 +25,7 @@ class BaseDistributionExtension {
     private final Project project
     private String serviceGroup
     private String serviceName
+    private String podName
     private String productType
     private Map<String, Object> manifestExtensions = [:]
     private List<ProductDependency> productDependencies = []
@@ -37,6 +38,10 @@ class BaseDistributionExtension {
 
     void serviceName(String serviceName) {
         this.serviceName = serviceName
+    }
+
+    void podName(String podName) {
+        this.podName = podName
     }
 
     void serviceGroup(String serviceGroup) {
@@ -106,6 +111,10 @@ class BaseDistributionExtension {
 
     String getServiceName() {
         return serviceName ?: project.name
+    }
+
+    String getPodName() {
+        return podName ?: project.name
     }
 
     String getServiceGroup() {
