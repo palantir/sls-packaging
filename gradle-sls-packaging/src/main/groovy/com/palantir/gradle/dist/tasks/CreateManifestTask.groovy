@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.palantir.gradle.dist.ProductDependency
 import com.palantir.gradle.dist.ProductId
 import com.palantir.gradle.dist.RecommendedProductDependencies
@@ -41,7 +42,7 @@ class CreateManifestTask extends DefaultTask {
     public static String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies"
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(new KebabCaseStrategy())
+            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
