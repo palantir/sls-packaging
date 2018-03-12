@@ -16,17 +16,18 @@
 
 package com.palantir.gradle.dist.pod.tasks
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.palantir.gradle.dist.pod.PodDistributionPlugin
 import com.palantir.gradle.dist.pod.PodServiceDefinition
 import com.palantir.gradle.dist.pod.PodVolumeDefinition
-import com.palantir.gradle.dist.tasks.KebabCaseStrategy
 import groovy.json.JsonOutput
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.GradleException
 
 class CreatePodYAMLTask extends DefaultTask {
     private final static String VOLUME_NAME_REGEX = "^(?:[a-z0-9]+?-)*[a-z0-9]+\$"
@@ -34,7 +35,7 @@ class CreatePodYAMLTask extends DefaultTask {
     public final static String VOLUME_VALIDATION_FAIL_FORMAT = "Pod validation failed for volume %s: %s"
 
     public static ObjectMapper jsonMapper = new ObjectMapper()
-            .setPropertyNamingStrategy(new KebabCaseStrategy())
+            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
 
     CreatePodYAMLTask() {
         group = PodDistributionPlugin.GROUP_NAME
@@ -56,14 +57,14 @@ class CreatePodYAMLTask extends DefaultTask {
     void createPodYAML() {
         validatePodYAML()
         getPodYAMLFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
-                'services': jsonMapper.convertValue(this.serviceDefinitions, Map),
-                'volumes': jsonMapper.convertValue(this.volumeDefinitions, Map),
+                'services': jsonMapper.convertValue(this.serviceDefinitions, new TypeReference<Map<String, Object>>() {}),
+                'volumes': jsonMapper.convertValue(this.volumeDefinitions, new TypeReference<Map<String, Object>>() {}),
         ])))
     }
 
 
     void validatePodYAML() {
-        def kebabCaseStrategy = new KebabCaseStrategy()
+        def kebabCaseStrategy = new PropertyNamingStrategy.KebabCaseStrategy()
         serviceDefinitions.each { entry ->
             if (!kebabCaseStrategy.translate(entry.key).equals(entry.key)) {
                 throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, entry.key,

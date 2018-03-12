@@ -8,8 +8,8 @@ dependencies {
 
     compile project(':sls-versions')
     compile gradleApi()
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.3.2'
-    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.2' // match Gradle's version
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.11'
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.11'
 
     testCompile gradleTestKit()
     testCompile 'com.netflix.nebula:nebula-test:6.1.2'

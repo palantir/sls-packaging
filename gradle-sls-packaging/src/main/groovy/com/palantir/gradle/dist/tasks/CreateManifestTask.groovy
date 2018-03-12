@@ -17,7 +17,9 @@
 package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.palantir.gradle.dist.ProductDependency
 import com.palantir.gradle.dist.ProductId
 import com.palantir.gradle.dist.RecommendedProductDependencies
@@ -41,7 +43,7 @@ class CreateManifestTask extends DefaultTask {
     public static String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies"
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(new KebabCaseStrategy())
+            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -145,7 +147,7 @@ class CreateManifestTask extends DefaultTask {
             def productId = "${productDependency.productGroup}:${productDependency.productName}".toString()
 
             if (!productDependency.detectConstraints) {
-                dependencies.add(jsonMapper.convertValue(productDependency, Map))
+                dependencies.add(jsonMapper.convertValue(productDependency, new TypeReference<Map<String, Object>>() {}))
             } else {
                 if (!recommendedDepsByProductId.containsKey(productId)) {
                     throw new GradleException("Product dependency '${productId}' has constraint detection enabled, " +
@@ -160,7 +162,7 @@ class CreateManifestTask extends DefaultTask {
                                     recommendedProductDep.minimumVersion,
                                     recommendedProductDep.maximumVersion,
                                     recommendedProductDep.recommendedVersion),
-                            Map))
+                            new TypeReference<Map<String, Object>>() {}))
 
                 } catch (IllegalArgumentException e) {
                     def mavenCoordSource = mavenCoordsByProductIds.get(productId)
