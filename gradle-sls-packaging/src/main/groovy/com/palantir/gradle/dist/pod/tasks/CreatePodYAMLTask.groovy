@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.pod.tasks
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.palantir.gradle.dist.pod.PodDistributionPlugin
@@ -56,8 +57,8 @@ class CreatePodYAMLTask extends DefaultTask {
     void createPodYAML() {
         validatePodYAML()
         getPodYAMLFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
-                'services': jsonMapper.convertValue(this.serviceDefinitions, Map),
-                'volumes': jsonMapper.convertValue(this.volumeDefinitions, Map),
+                'services': jsonMapper.convertValue(this.serviceDefinitions, new TypeReference<Map<String, Object>>() {}),
+                'volumes': jsonMapper.convertValue(this.volumeDefinitions, new TypeReference<Map<String, Object>>() {}),
         ])))
     }
 
