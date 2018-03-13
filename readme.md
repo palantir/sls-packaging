@@ -92,8 +92,7 @@ A sample configuration for the Service plugin:
 
 And the complete list of configurable properties:
 
- * (optional) `serviceName` the name of this service, used to construct the final artifact's file name.
-   Defaults to the configured "name" of the Gradle project, `project.name`.
+ * `serviceName` the name of this service, used to construct the final artifact's file name.
  * (optional) `serviceGroup` the group of the service, used in the final artifact's manifest.
    Defaults to the configured "group" of the Gradle project, `project.group`.
  * (optional) `manifestExtensions` a map of extended manifest attributes, as specified in SLS 1.0
