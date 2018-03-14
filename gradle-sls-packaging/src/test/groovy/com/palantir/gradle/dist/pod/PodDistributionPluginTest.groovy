@@ -72,7 +72,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         buildFile << '''
             distribution {
                 podName 'pod-name'
-                
+
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
                   productName = "bar"
@@ -85,9 +85,9 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   productVersion = "1.0.0"
                   volumeMap = ["baz-volume": "random-volume"]
                 }
-                
+
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -108,7 +108,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         podYaml.get("services").get("bar-service").get("product-name").asText().contains("bar")
         podYaml.get("services").get("bar-service").get("product-group").asText().contains("com.palantir.foo")
         podYaml.has("volumes")
-        podYaml.get("volumes").get("random-volume").get("desired-size").asText().contains("10GB")
+        podYaml.get("volumes").get("random-volume").get("desired-size").asText().contains("10G")
     }
 
     def 'pod file creation fails with bad service names'() {
@@ -117,7 +117,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         buildFile << '''
             distribution {
                 podName 'pod-name'
-                
+
                 service "barService", {
                   productGroup = "com.palantir.foo"
                   productName = "bar"
@@ -130,9 +130,9 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   productVersion = "1.0.0"
                   volumeMap = ["baz-volume": "random-volume"]
                 }
-                
+
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -154,9 +154,9 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   productName = "bar"
                   productVersion = "1.0.0"
                   volumeMap = ["bar-volume": "random-volume"]
-                }                
+                }
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -178,9 +178,9 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   productGroup = "com.palantir.foo"
                   productVersion = "1.0.0"
                   volumeMap = ["bar-volume": "random-volume"]
-                }                
+                }
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -202,9 +202,9 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   productGroup = "com.palantir.foo"
                   productName = "bar"
                   volumeMap = ["bar-volume": "random-volume"]
-                }                
+                }
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -229,7 +229,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   volumeMap = ["bar-volume": "random-volume"]
                 }
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -247,7 +247,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         buildFile << '''
             distribution {
                 podName 'pod-name'
-                
+
                 service "bar-service", {
                   productGroup = "com.palantir.foo"
                   productName = "bar"
@@ -260,9 +260,9 @@ class PodDistributionPluginTest extends GradleTestSpec {
                   productVersion = "1.0.0"
                   volumeMap = ["baz-volume": "not-a-defined-volume"]
                 }
-                
+
                 volume "random-volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -289,7 +289,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
 
                 volume "aaaaaaaaaaaaaaaaaaaaaaaaaa", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -316,7 +316,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
                 }
 
                 volume "Not-A-Valid-Volume", {
-                  desiredSize = "10GB"
+                  desiredSize = "10G"
                 }
             }
         '''.stripIndent()
@@ -352,7 +352,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
         BuildResult buildResult = run(':configTar').buildAndFail()
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(MB|GB|TB)\$")
+        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(M|G|T)\$")
     }
 
     private static createUntarBuildFile(buildFile) {
@@ -360,7 +360,7 @@ class PodDistributionPluginTest extends GradleTestSpec {
             plugins {
                 id 'com.palantir.sls-pod-distribution'
             }
-            
+
             version "0.0.1"
             project.group = 'service-group'
 
