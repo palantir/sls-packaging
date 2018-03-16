@@ -224,7 +224,7 @@ A sample configuration for the Pod plugin:
         }
 
         volume "random-volume", {
-            desiredSize = "10 G"
+            desiredSize = "10G"
         }
     }
 
