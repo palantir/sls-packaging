@@ -40,7 +40,8 @@ class LaunchConfigTask extends DefaultTask {
             '-XX:GCLogFileSize=10M',
             '-XX:NumberOfGCLogFiles=10',
             '-Xloggc:var/log/gc-%t-%p.log',
-            '-verbose:gc'
+            '-verbose:gc',
+            '-Dsun.net.inetaddr.ttl=20'
     ]
 
     static final List<String> dirs = ['var/data/tmp']
