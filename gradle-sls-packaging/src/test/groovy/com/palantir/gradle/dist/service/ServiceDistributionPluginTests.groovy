@@ -439,6 +439,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 '-XX:NumberOfGCLogFiles=10',
                 '-Xloggc:var/log/gc-%t-%p.log',
                 '-verbose:gc',
+                '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedStaticConfig.setEnv([
