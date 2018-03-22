@@ -40,7 +40,10 @@ class LaunchConfigTask extends DefaultTask {
             '-XX:GCLogFileSize=10M',
             '-XX:NumberOfGCLogFiles=10',
             '-Xloggc:var/log/gc-%t-%p.log',
-            '-verbose:gc',
+            '-verbose:gc'
+    ]
+
+    static final List<String> dnsJvmOpts = [
             '-Dsun.net.inetaddr.ttl=20'
     ]
 
@@ -100,7 +103,7 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + defaultJvmOpts), getStaticLauncher())
+        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + dnsJvmOpts + defaultJvmOpts), getStaticLauncher())
         writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts), getCheckLauncher())
     }
 
