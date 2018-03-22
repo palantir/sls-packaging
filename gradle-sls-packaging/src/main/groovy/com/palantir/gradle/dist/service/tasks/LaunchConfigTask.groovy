@@ -44,6 +44,8 @@ class LaunchConfigTask extends DefaultTask {
     ]
 
     static final List<String> dnsJvmOpts = [
+            // Set DNS cache TTL to 20s to account for systems such as RDS and other
+            // AWS-managed systems that modify DNS records on failover.
             '-Dsun.net.inetaddr.ttl=20'
     ]
 
