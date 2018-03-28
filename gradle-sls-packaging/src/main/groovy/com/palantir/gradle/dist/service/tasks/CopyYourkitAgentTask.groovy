@@ -5,7 +5,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -28,6 +27,4 @@ class CopyYourkitAgentTask extends DefaultTask {
         dest.getParent().toFile().mkdirs()
         Files.write(dest, src.getBytes())
     }
-
-    void configure(String serviceName) {}
 }

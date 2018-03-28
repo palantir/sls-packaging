@@ -83,9 +83,6 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         }
 
         CopyYourkitAgentTask yourkitAgent = project.tasks.create('copyYourkitAgent', CopyYourkitAgentTask)
-        project.afterEvaluate {
-            yourkitAgent.configure(distributionExtension.serviceName)
-        }
 
         distributionExtension.productDependenciesConfig = project.configurations.getByName("runtime")
 
