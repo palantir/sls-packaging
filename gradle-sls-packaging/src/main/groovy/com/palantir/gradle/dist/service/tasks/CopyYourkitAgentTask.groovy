@@ -23,7 +23,7 @@ class CopyYourkitAgentTask extends DefaultTask {
     }
 
     @TaskAction
-    void createInitScript() {
+    void copyYourkitAgent() {
         EmitFiles.replaceVars(
                 JavaServiceDistributionPlugin.class.getResourceAsStream('/linux-x86-64/libyjpagent.so'),
                 getOutputFile().toPath(),
