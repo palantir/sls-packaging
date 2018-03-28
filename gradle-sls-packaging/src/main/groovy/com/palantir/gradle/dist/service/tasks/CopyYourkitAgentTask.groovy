@@ -1,16 +1,15 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import com.palantir.gradle.dist.service.util.EmitFiles
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class CopyYourkitAgentTask extends DefaultTask {
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
 
-    @Input
-    String serviceName
+class CopyYourkitAgentTask extends DefaultTask {
 
     CopyYourkitAgentTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -24,15 +23,11 @@ class CopyYourkitAgentTask extends DefaultTask {
 
     @TaskAction
     void copyYourkitAgent() {
-        EmitFiles.replaceVars(
-                JavaServiceDistributionPlugin.class.getResourceAsStream('/linux-x86-64/libyjpagent.so'),
-                getOutputFile().toPath(),
-                ['@serviceName@': serviceName])
-                .toFile()
-                .setExecutable(true)
+        InputStream src = JavaServiceDistributionPlugin.class.getResourceAsStream('/linux-x86-64/libyjpagent.so')
+        Path dest = getOutputFile().toPath()
+        dest.getParent().toFile().mkdirs()
+        Files.write(dest, src.getBytes())
     }
 
-    void configure(String serviceName) {
-        this.serviceName = serviceName
-    }
+    void configure(String serviceName) {}
 }
