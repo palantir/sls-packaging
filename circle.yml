@@ -15,6 +15,7 @@ dependencies:
 
 test:
   override:
+    - ./gradlew -i :gradle-sls-packaging:extractYourkitAgent
     - ./gradlew build --info --stacktrace
 
 deployment:
