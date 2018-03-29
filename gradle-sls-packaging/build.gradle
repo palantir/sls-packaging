@@ -2,6 +2,7 @@ apply plugin: 'com.gradle.plugin-publish'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
 apply plugin: 'org.inferred.processors'
+apply plugin: 'de.undercouch.download'
 
 dependencies {
     processor 'org.immutables:value:2.5.6'
@@ -35,6 +36,26 @@ pluginBundle {
             displayName = 'Creates SLS pod distributions'
         }
     }
+}
+
+task downloadYourkitDist(type: Download) {
+    src 'https://www.yourkit.com/download/YourKit-JavaProfiler-2017.02-b75.zip'
+    dest buildDir
+}
+
+task verifyYourkitDist(type: Verify, dependsOn: downloadYourkitDist) {
+    src new File(buildDir, 'YourKit-JavaProfiler-2017.02-b75.zip')
+    algorithm 'MD5'
+    checksum '4dbed7686fabe215379393720e7c73b5'
+}
+
+task extractYourkitAgent(type: Copy, dependsOn: verifyYourkitDist) {
+    def zipFile = new File(buildDir, 'YourKit-JavaProfiler-2017.02-b75.zip')
+    from zipTree(zipFile)
+    include '**/linux-x86-64/libyjpagent.so'
+    eachFile { path = name } // Flatten directory with single file
+    into file("${buildDir}/resources/main/linux-x86-64")
+    includeEmptyDirs = false // Cleanup empty Yourkit dist directories
 }
 
 publishPlugins.onlyIf {

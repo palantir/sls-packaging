@@ -2,6 +2,7 @@ package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 

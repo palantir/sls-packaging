@@ -29,5 +29,6 @@ deployment:
     owner: palantir
     commands:
       - ./gradlew -i bintrayUpload
+      - ./gradlew -i :gradle-sls-packaging:extractYourkitAgent
       - ./gradlew -i -Dgradle.publish.key=$GRADLE_KEY -Dgradle.publish.secret=$GRADLE_SECRET publishPlugins
 
