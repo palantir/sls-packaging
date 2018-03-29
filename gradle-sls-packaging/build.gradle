@@ -45,8 +45,8 @@ task downloadYourkitDist(type: Download) {
 
 task verifyYourkitDist(type: Verify, dependsOn: downloadYourkitDist) {
     src new File(buildDir, 'YourKit-JavaProfiler-2017.02-b75.zip')
-    algorithm 'MD5'
-    checksum '4dbed7686fabe215379393720e7c73b5'
+    algorithm 'SHA-256'
+    checksum '562d566c710f00f6b5d72a5ea29111896cccc634485f27fc7397d32bae971d54'
 }
 
 task extractYourkitAgent(type: Copy, dependsOn: verifyYourkitDist) {
