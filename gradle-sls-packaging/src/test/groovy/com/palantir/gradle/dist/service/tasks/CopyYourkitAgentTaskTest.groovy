@@ -23,7 +23,7 @@ class CopyYourkitAgentTaskTest extends GradleTestSpec {
         buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.UP_TO_DATE
     }
 
-    def 'Build produces libyjpagent file'() {
+    def 'Build produces libyjpagent file and yourkit license'() {
         given:
         createUntarBuildFile(buildFile)
 
@@ -34,6 +34,8 @@ class CopyYourkitAgentTaskTest extends GradleTestSpec {
         file('dist/service-name-0.0.1').exists()
         file('dist/service-name-0.0.1/service/lib/linux-x86-64/libyjpagent.so').exists()
         file('dist/service-name-0.0.1/service/lib/linux-x86-64/libyjpagent.so').getBytes().length > 0
+        file('dist/service-name-0.0.1/service/lib/linux-x86-64/yourkit-license.txt').exists()
+        file('dist/service-name-0.0.1/service/lib/linux-x86-64/yourkit-license.txt').getBytes().length > 0
     }
 
     protected runSuccessfully(String... tasks) {

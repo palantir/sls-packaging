@@ -83,6 +83,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         }
 
         CopyYourkitAgentTask yourkitAgent = project.tasks.create('copyYourkitAgent', CopyYourkitAgentTask)
+        CopyYourkitLicenseTask yourkitLicense = project.tasks.create('copyYourkitLicense', CopyYourkitLicenseTask)
 
         distributionExtension.productDependenciesConfig = project.configurations.getByName("runtime")
 
@@ -123,7 +124,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.artifacts.add(SLS_CONFIGURATION_NAME, distTar)
 
         // Configure tasks
-        distTar.dependsOn startScripts, initScript, checkScript, yourkitAgent, copyLauncherBinaries, launchConfig, manifest, manifestClasspathJar
+        distTar.dependsOn startScripts, initScript, checkScript, yourkitAgent, yourkitLicense, copyLauncherBinaries, launchConfig, manifest, manifestClasspathJar
         configTar.dependsOn manifest
     }
 }
