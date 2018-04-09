@@ -1,3 +1,11 @@
+The following files can be redistributable under the license below:
+
+yjpagent.dll
+libyjpagent.so
+libyjpagent.jnilib
+yjp-controller-api-redist.jar
+
+-------------------------------------------------------------------
 Copyright (c) 2003-2017, YourKit
 All rights reserved.
 

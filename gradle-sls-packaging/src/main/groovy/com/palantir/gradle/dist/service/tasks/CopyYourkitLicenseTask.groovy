@@ -17,12 +17,12 @@ class CopyYourkitLicenseTask extends DefaultTask {
 
     @OutputFile
     File getOutputFile() {
-        return new File("${project.buildDir}/libs/linux-x86-64/yourkit-license.txt")
+        return new File("${project.buildDir}/libs/linux-x86-64/yourkit-license-redist.txt")
     }
 
     @TaskAction
     void copyYourkitLicense() {
-        InputStream src = JavaServiceDistributionPlugin.class.getResourceAsStream('/yourkit-license.txt')
+        InputStream src = JavaServiceDistributionPlugin.class.getResourceAsStream('/yourkit-license-redist.txt')
         Path dest = getOutputFile().toPath()
         dest.getParent().toFile().mkdirs()
         Files.write(dest, src.getBytes())
