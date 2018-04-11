@@ -2,6 +2,7 @@ apply plugin: 'com.gradle.plugin-publish'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
 apply plugin: 'org.inferred.processors'
+apply plugin: 'de.undercouch.download'
 
 dependencies {
     processor 'org.immutables:value:2.5.6'
@@ -36,6 +37,31 @@ pluginBundle {
         }
     }
 }
+
+def yourkitVersion = "2017.02-b75"
+def yourkitFilename = "YourKit-JavaProfiler-${yourkitVersion}"
+
+task downloadYourkitDist(type: Download) {
+    src "https://www.yourkit.com/download/${yourkitFilename}.zip"
+    dest buildDir
+}
+
+task verifyYourkitDist(type: Verify, dependsOn: downloadYourkitDist) {
+    src file("${buildDir}/${yourkitFilename}.zip")
+    algorithm 'SHA-256'
+    checksum '562d566c710f00f6b5d72a5ea29111896cccc634485f27fc7397d32bae971d54'
+}
+
+task extractYourkitAgent(type: Copy, dependsOn: verifyYourkitDist) {
+    from zipTree(file("${buildDir}/${yourkitFilename}.zip"))
+    include '**/linux-x86-64/libyjpagent.so'
+    eachFile { path = name } // Flatten directory with single file
+    into file("${buildDir}/resources/main/linux-x86-64")
+    includeEmptyDirs = false // Cleanup empty Yourkit dist directories
+}
+
+tasks.idea.dependsOn extractYourkitAgent
+tasks.compileJava.dependsOn extractYourkitAgent
 
 publishPlugins.onlyIf {
     project.version ==~ /[0-9]+(\.[0-9]+)+(-rc[0-9]+)?(-alpha[0-9]+)?/

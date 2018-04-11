@@ -80,6 +80,11 @@ class DistTarTask {
                 fileMode = 0755
             }
 
+            into("${archiveRootDir}/service/lib/linux-x86-64") {
+                from("${project.buildDir}/libs/linux-x86-64")
+                fileMode = 0755
+            }
+
             into("${archiveRootDir}/deployment") {
                 from("${project.buildDir}/deployment")
             }
