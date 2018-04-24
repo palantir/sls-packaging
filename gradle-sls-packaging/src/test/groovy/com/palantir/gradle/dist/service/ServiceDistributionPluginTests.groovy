@@ -104,12 +104,12 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         def version02BuildOutput = runSuccessfully(':build', ':distTar', ':untar02').output
-        version02BuildOutput ==~ /(?m)(?s).*^:createCheckScript UP-TO-DATE$.*/
-        version02BuildOutput ==~ /(?m)(?s).*^:createInitScript UP-TO-DATE$.*/
-        version02BuildOutput ==~ /(?m)(?s).*^:createLaunchConfig$.*/
-        version02BuildOutput ==~ /(?m)(?s).*^:createManifest$.*/
-        version02BuildOutput ==~ /(?m)(?s).*^:manifestClasspathJar$.*/
-        version02BuildOutput ==~ /(?m)(?s).*^:distTar$.*/
+        version02BuildOutput ==~ /(?m)(?s).*:createCheckScript UP-TO-DATE.*/
+        version02BuildOutput ==~ /(?m)(?s).*:createInitScript UP-TO-DATE.*/
+        version02BuildOutput ==~ /(?m)(?s).*:createLaunchConfig.*/
+        version02BuildOutput ==~ /(?m)(?s).*:createManifest.*/
+        version02BuildOutput ==~ /(?m)(?s).*:manifestClasspathJar.*/
+        version02BuildOutput ==~ /(?m)(?s).*:distTar.*/
         exec('dist/service-name-0.0.2/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
         exec('dist/service-name-0.0.2/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
     }
