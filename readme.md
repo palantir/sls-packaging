@@ -119,6 +119,8 @@ And the complete list of configurable properties:
    defaulting to `['log', 'run']`.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
+ * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
+   be applied when `serviceName.bat` Windows startup script is run.
 
 #### JVM Options
 

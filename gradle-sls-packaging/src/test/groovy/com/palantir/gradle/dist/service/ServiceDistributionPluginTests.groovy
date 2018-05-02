@@ -504,6 +504,47 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 .contains('Class-Path: guava-19.0.jar root-project-manifest-') // etc
     }
 
+    def 'sets_java_home_in_windows_startup_script_when_java_home_is_configured'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+                javaHomeWin 'java/path'
+            }
+            dependencies {
+              compile "com.google.guava:guava:19.0"
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
+        startScript.contains("@rem Set JAVA_HOME to configured path")
+        startScript.contains("set JAVA_HOME=java/path")
+    }
+
+    def 'does_not_set_java_home_in_windows_startup_script_when_java_home_is_not_configured'() {
+        given:
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            distribution {
+            }
+            dependencies {
+              compile "com.google.guava:guava:19.0"
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
+        !startScript.contains("@rem Set JAVA_HOME to configured path")
+    }
+
+
     def 'does not produce manifest-classpath jar when disabled in extension'() {
         given:
         createUntarBuildFile(buildFile)

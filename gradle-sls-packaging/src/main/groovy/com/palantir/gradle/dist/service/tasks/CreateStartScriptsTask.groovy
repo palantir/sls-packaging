@@ -32,13 +32,25 @@ class CreateStartScriptsTask {
         }
     }
 
-    static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, List<String> defaultJvmOpts, boolean isEnableManifestClasspath) {
+    static void configure(CreateStartScripts startScripts, String mainClass, String serviceName, String javaHomeWin,
+                          List<String> defaultJvmOpts, boolean isEnableManifestClasspath) {
         startScripts.configure {
             setMainClassName(mainClass)
             setApplicationName(serviceName)
             setDefaultJvmOpts(defaultJvmOpts)
 
             doLast {
+
+                def winScriptFile = project.file getWindowsScript()
+                def winFileText = winScriptFile.text
+
+                if (javaHomeWin) {
+                    winFileText = winFileText.replaceAll('Find java.exe',
+                            'Set JAVA_HOME to configured path.')
+                    def setJavaHomeString = 'set JAVA_HOME=' + javaHomeWin + '\n'
+                    winFileText =  winFileText.replaceAll('if defined JAVA_HOME ', setJavaHomeString)
+                }
+
                 Jar manifestClasspathJarTask = project.tasks.getByName('manifestClasspathJar')
                 if (!manifestClasspathJarTask) {
                     throw new GradleException("Required task not found: manifestClasspathJar")
@@ -47,8 +59,6 @@ class CreateStartScriptsTask {
                 if (isEnableManifestClasspath) {
                     // Replace standard classpath with pathing jar in order to circumnavigate length limits:
                     // https://issues.gradle.org/browse/GRADLE-2992
-                    def winScriptFile = project.file getWindowsScript()
-                    def winFileText = winScriptFile.text
 
                     // Remove too-long-classpath and use pathing jar instead
                     winFileText = winFileText.replaceAll('set CLASSPATH=.*', 'rem CLASSPATH declaration removed.')
@@ -56,8 +66,8 @@ class CreateStartScriptsTask {
                         '("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)',
                         '$1%APP_HOME%\\\\lib\\\\' + manifestClasspathJarTask.archiveName + '$2')
 
-                    winScriptFile.text = winFileText
                 }
+                winScriptFile.text = winFileText
             }
         }
     }
