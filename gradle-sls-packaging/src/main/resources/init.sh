@@ -62,7 +62,7 @@ start)
 
     # ensure log and pid directories exist
     mkdir -p "var/log" "var/run"
-    PID=$($LAUNCHER_CMD $STATIC_LAUNCHER_CONFIG $CUSTOM_LAUNCHER_CONFIG > var/log/$SERVICE-startup.log 2>&1 & echo $!)
+    PID=$($LAUNCHER_CMD $STATIC_LAUNCHER_CONFIG $CUSTOM_LAUNCHER_CONFIG >> var/log/$SERVICE-startup.log 2>>&1 & echo $!)
     # always write $PIDFILE so that `init.sh status` for a service that crashed when starting will return 1, not 3
     echo $PID > $PIDFILE
     sleep 5
