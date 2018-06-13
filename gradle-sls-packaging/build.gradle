@@ -44,6 +44,8 @@ def yourkitFilename = "YourKit-JavaProfiler-${yourkitVersion}"
 task downloadYourkitDist(type: Download) {
     src "https://www.yourkit.com/download/${yourkitFilename}.zip"
     dest buildDir
+    tempAndMove true
+    onlyIfModified true
 }
 
 task verifyYourkitDist(type: Verify, dependsOn: downloadYourkitDist) {
