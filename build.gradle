@@ -18,6 +18,7 @@ buildscript {
 }
 
 apply plugin: 'com.palantir.configuration-resolver'
+apply plugin: 'com.palantir.baseline-config'
 apply plugin: 'idea'
 
 allprojects {
