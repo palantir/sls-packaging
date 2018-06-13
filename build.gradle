@@ -2,10 +2,12 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://palantir.bintray.com/releases" }
     }
 
     dependencies {
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
+        classpath 'com.palantir.baseline:gradle-baseline-java:0.21.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.5'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:4.4.4'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:0.5.1'
@@ -19,7 +21,10 @@ apply plugin: 'com.palantir.configuration-resolver'
 apply plugin: 'idea'
 
 allprojects {
-    repositories { jcenter() }
+    repositories {
+        jcenter()
+        maven { url "http://palantir.bintray.com/releases" }
+    }
     apply plugin: 'com.palantir.git-version'
 
     group 'com.palantir.sls-packaging'
@@ -27,6 +32,15 @@ allprojects {
 }
 
 subprojects {
-    apply from: "${rootDir}/gradle/java.gradle"
-    apply from: "${rootDir}/gradle/publish-libs.gradle"
+    apply plugin: 'com.palantir.baseline-checkstyle'
+    apply plugin: 'com.palantir.baseline-eclipse'
+    apply plugin: 'com.palantir.baseline-error-prone'
+    apply plugin: 'com.palantir.baseline-idea'
+    apply plugin: 'java-library'
+
+    apply from: "${rootDir}/gradle/publish-jar.gradle"
+}
+
+dependencies {
+    baseline 'com.palantir.baseline:gradle-baseline-java-config:0.21.0@zip'
 }
