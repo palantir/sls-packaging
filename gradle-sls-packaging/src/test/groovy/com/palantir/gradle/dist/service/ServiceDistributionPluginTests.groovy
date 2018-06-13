@@ -442,7 +442,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
-        expectedStaticConfig.setEnv([
+        expectedStaticConfig.setEnv(LaunchConfigTask.defaultEnvironment + [
                 "key1": "val1",
                 "key2": "val2"
         ])
@@ -452,6 +452,9 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig == actualStaticConfig
 
         def expectedCheckConfig = expectedStaticConfig
+
+        LaunchConfigTask.defaultEnvironment.keySet().forEach { key -> expectedCheckConfig.env.remove(key) }
+
         expectedCheckConfig.setJvmOpts([
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-Xmx4M',

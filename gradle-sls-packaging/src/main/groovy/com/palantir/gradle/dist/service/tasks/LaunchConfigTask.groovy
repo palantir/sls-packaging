@@ -51,6 +51,11 @@ class LaunchConfigTask extends DefaultTask {
 
     static final List<String> dirs = ['var/data/tmp']
 
+    // Reduce memory usage for some versions of glibc.
+    // Default value is 8 * CORES.
+    // See https://issues.apache.org/jira/browse/HADOOP-7154
+    static final Map<String, String> defaultEnvironment = Collections.unmodifiableMap(['MALLOC_ARENA_MAX':'4'])
+
     @Input
     String mainClass
 
@@ -105,8 +110,11 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), tmpdirJvmOpts + gcJvmOpts + dnsJvmOpts + defaultJvmOpts), getStaticLauncher())
-        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts), getCheckLauncher())
+        writeConfig(createConfig(
+                getArgs(),
+                tmpdirJvmOpts + gcJvmOpts + dnsJvmOpts + defaultJvmOpts, defaultEnvironment),
+                getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts, [:]), getCheckLauncher())
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
@@ -118,14 +126,14 @@ class LaunchConfigTask extends DefaultTask {
         }
     }
 
-    StaticLaunchConfig createConfig(List<String> args, List<String> jvmOpts) {
+    StaticLaunchConfig createConfig(List<String> args, List<String> jvmOpts, Map<String, String> defaultEnv) {
         StaticLaunchConfig config = new StaticLaunchConfig()
         config.mainClass = mainClass
         config.javaHome = javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(classpath)
         config.jvmOpts = jvmOpts
-        config.env = env
+        config.env = defaultEnv + env
         config.dirs = dirs
         return config
     }
