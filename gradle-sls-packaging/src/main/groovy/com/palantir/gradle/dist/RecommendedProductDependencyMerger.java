@@ -65,10 +65,9 @@ public final class RecommendedProductDependencyMerger {
                 comparator);
 
         Optional<SlsVersionMatcher> maximumVersion = Stream
-                .of(
-                        SlsVersionMatcher.valueOf(dep1.getMaximumVersion()),
-                        SlsVersionMatcher.valueOf(dep2.getMaximumVersion()))
+                .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
                 .filter(Objects::nonNull)
+                .map(SlsVersionMatcher::valueOf)
                 .min(MATCHER_COMPARATOR);
 
         // Recommended version. Check that it matches the inferred min and max.
