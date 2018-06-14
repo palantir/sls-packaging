@@ -9,7 +9,8 @@ buildscript {
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
         classpath 'com.palantir.baseline:gradle-baseline-java:0.21.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.1'
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:4.4.4'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:5.2.0'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:5.1.4'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:0.11.0'
         classpath 'com.palantir.configurationresolver:gradle-configuration-resolver-plugin:0.3.0'
         classpath 'gradle.plugin.org.inferred:gradle-processors:1.2.15'
@@ -31,9 +32,21 @@ allprojects {
         maven { url "http://palantir.bintray.com/releases" }
     }
     apply plugin: 'com.palantir.git-version'
+    apply plugin: 'nebula.dependency-recommender'
 
     group 'com.palantir.sls-packaging'
     version gitVersion()
+
+    dependencyRecommendations {
+        strategy OverrideTransitives
+        propertiesFile file: project.rootProject.file('versions.props')
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            failOnVersionConflict()
+        }
+    }
 }
 
 subprojects {
@@ -45,6 +58,12 @@ subprojects {
     apply plugin: 'java-library'
 
     apply from: "${rootDir}/gradle/publish-jar.gradle"
+
+    configurations.errorprone {
+        resolutionStrategy {
+            force 'com.google.guava:guava:21.0'
+        }
+    }
 }
 
 dependencies {
