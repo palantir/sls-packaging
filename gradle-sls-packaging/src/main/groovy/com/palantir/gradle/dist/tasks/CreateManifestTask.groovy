@@ -20,13 +20,12 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.palantir.gradle.dist.ProductDependency
-import com.palantir.gradle.dist.ProductId
-import com.palantir.gradle.dist.RecommendedProductDependencies
-import com.palantir.gradle.dist.RecommendedProductDependency
+import com.palantir.gradle.dist.*
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.json.JsonOutput
+import java.util.jar.Manifest
+import java.util.zip.ZipFile
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
@@ -34,9 +33,6 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-
-import java.util.jar.Manifest
-import java.util.zip.ZipFile
 
 class CreateManifestTask extends DefaultTask {
 
@@ -76,6 +72,7 @@ class CreateManifestTask extends DefaultTask {
         if (!SlsProductVersions.isValidVersion(stringVersion)) {
             throw new IllegalArgumentException("Project version must be a valid SLS version: " + stringVersion)
         }
+
         if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
             project.logger.warn("Version string in project {} is not orderable as per SLS specification: {}",
                     project.name, stringVersion)
@@ -130,14 +127,26 @@ class CreateManifestTask extends DefaultTask {
 
             recommendedDeps.recommendedProductDependencies().each { recommendedDep ->
                 def productId = "${recommendedDep.productGroup}:${recommendedDep.productName}".toString()
+                def existingDep = recommendedDepsByProductId.get(productId)
+                def dep
                 if (mavenCoordsByProductIds.containsKey(productId)
-                        && !Objects.equals(recommendedDepsByProductId.get(productId), recommendedDep)) {
+                        && !Objects.equals(existingDep, recommendedDep)) {
                     def othercoord = mavenCoordsByProductIds.get(productId)
-                    throw new GradleException("Differing product dependency recommendations found for " +
-                            "'${productId}' in '${coord}' and '${othercoord}'")
+                    // Try to merge
+                    logger.info(
+                            "Trying to merge duplicate product dependencies found for {} in '{}' and '{}': {} and {}",
+                            productId,
+                            coord,
+                            othercoord,
+                            recommendedDep,
+                            existingDep)
+                    dep = RecommendedProductDependencyMerger
+                            .mergeRecommendedProductDependencies(recommendedDep, existingDep)
+                } else {
+                    dep = recommendedDep
                 }
                 mavenCoordsByProductIds.put(productId, coord)
-                recommendedDepsByProductId.put(productId, recommendedDep)
+                recommendedDepsByProductId.put(productId, dep)
             }
         }
 
