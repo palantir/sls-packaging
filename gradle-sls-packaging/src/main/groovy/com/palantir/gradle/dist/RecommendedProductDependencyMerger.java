@@ -78,8 +78,9 @@ public final class RecommendedProductDependencyMerger {
                         OrderableSlsVersion.valueOf(dep1.getRecommendedVersion()),
                         OrderableSlsVersion.valueOf(dep2.getRecommendedVersion()))
                 .filter(version -> comparator.compare(version, minimumVersion) >= 0
-                        // If maximumVersion is 1.5.x we should still accept e.g. 1.3.0 so we use '<= 0'
-                        && maximumVersion.map(maxVer -> maxVer.compare(version) <= 0).orElse(true))
+                        // If maximumVersion is 1.5.x we should still accept e.g. 1.3.0 so we use '>= 0'
+                        // (comparison result is from the point of view of the matcher)
+                        && maximumVersion.map(maxVer -> maxVer.compare(version) >= 0).orElse(true))
                 .max(comparator)
                 .orElse(minimumVersion);
 
