@@ -26,15 +26,9 @@ class RecommendedProductDependencyMergerTest extends Specification {
 
     def "picks larger minimum version and smaller maximum version"() {
         given:
-        def dep1 = newRecommendation(
-            minimumVersion: "2.0.0",
-            maximumVersion: "2.6.x",
-            recommendedVersion: "2.2.0")
+        def dep1 = newRecommendation("2.0.0", "2.6.x", "2.2.0")
 
-        def dep2 = newRecommendation(
-            minimumVersion: "2.1.0",
-            maximumVersion: "2.x.x",
-            recommendedVersion: "2.2.0")
+        def dep2 = newRecommendation("2.1.0", "2.x.x", "2.2.0")
 
         when:
         def merged = RecommendedProductDependencyMerger.mergeRecommendedProductDependencies(dep1, dep2)
@@ -45,10 +39,10 @@ class RecommendedProductDependencyMergerTest extends Specification {
         merged.recommendedVersion == "2.2.0"
     }
 
-    private RecommendedProductDependency newRecommendation(Map<String, String> values) {
+    private RecommendedProductDependency newRecommendation(String min, String max, String recommended) {
         def rpd = basicDep.clone() as RecommendedProductDependency
         use InvokerHelper, {
-            rpd.setProperties(values)
+            rpd.setProperties(minimumVersion: min, maximumVersion: max, recommendedVersion: recommended)
         }
         return rpd
     }
