@@ -7,7 +7,7 @@ apply plugin: 'nebula.source-jar'
 
 jar {
     manifest {
-        attributes "Implementation-Version" : project.version
+        attributes("Implementation-Version" : project.version)
     }
 }
 
