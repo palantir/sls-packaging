@@ -89,6 +89,7 @@ public final class RecommendedProductDependencyMerger {
         result.setMinimumVersion(minimumVersion.toString());
         result.setRecommendedVersion(recommendedVersion.toString());
         result.setProductGroup(dep1.getProductGroup());
+        result.setProductName(dep1.getProductName());
         // Verify validity
         result.isValid();
         return result;
