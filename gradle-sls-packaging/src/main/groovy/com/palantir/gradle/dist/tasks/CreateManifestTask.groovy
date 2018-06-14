@@ -20,7 +20,11 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.palantir.gradle.dist.*
+import com.palantir.gradle.dist.ProductDependency
+import com.palantir.gradle.dist.ProductId
+import com.palantir.gradle.dist.RecommendedProductDependencies
+import com.palantir.gradle.dist.RecommendedProductDependency
+import com.palantir.gradle.dist.RecommendedProductDependencyMerger
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.json.JsonOutput
