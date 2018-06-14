@@ -58,6 +58,12 @@ subprojects {
     apply plugin: 'java-library'
 
     apply from: "${rootDir}/gradle/publish-jar.gradle"
+
+    configurations.errorprone {
+        resolutionStrategy {
+            force 'com.google.guava:guava:21.0'
+        }
+    }
 }
 
 dependencies {
