@@ -1,0 +1,6 @@
+com.fasterxml.jackson.core:* = 2.8.11
+org.immutables:value = 2.5.6
+
+com.netflix.nebula:nebula-test = 6.1.2
+junit:junit = 4.12
+org.assertj:assertj-core = 3.5.2
