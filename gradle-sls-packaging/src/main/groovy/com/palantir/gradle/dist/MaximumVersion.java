@@ -95,4 +95,33 @@ abstract class MaximumVersion implements Comparable<MaximumVersion> {
                 "Couldn't parse version as an OrderableSlsVersion or an SlsVersionMatcher",
                 UnsafeArg.of("version", version));
     }
+
+    /**
+     * Matchers may contain wildcards, e.g. {@code 1.x.x}, and can only match {@link SlsVersionType#RELEASE} versions.
+     */
+    static final class MatcherMaximumVersion extends MaximumVersion {
+        private final SlsVersionMatcher matcher;
+
+        MatcherMaximumVersion(SlsVersionMatcher matcher) {
+            this.matcher = matcher;
+        }
+
+        @Override
+        <T> T visit(MaximumVersionVisitor<T> visitor) {
+            return visitor.visitMatcher(matcher);
+        }
+    }
+
+    static final class VersionMaximumVersion extends MaximumVersion {
+        private final OrderableSlsVersion version;
+
+        VersionMaximumVersion(OrderableSlsVersion version) {
+            this.version = version;
+        }
+
+        @Override
+        <T> T visit(MaximumVersionVisitor<T> visitor) {
+            return visitor.visitVersion(version);
+        }
+    }
 }
