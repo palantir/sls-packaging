@@ -20,23 +20,26 @@ import com.palantir.sls.versions.SlsVersionMatcher;
 import java.util.Comparator;
 import java.util.OptionalInt;
 
-enum MatcherOrVersionComparator implements Comparator<MatcherOrVersion> {
+enum MaximumVersionComparator implements Comparator<MaximumVersion> {
     INSTANCE;
 
-    private static final Comparator<OptionalInt> EMPTY_IS_GREATER =
+    static final Comparator<OptionalInt> EMPTY_IS_GREATER =
             Comparator.comparingInt(num -> num.isPresent() ? num.getAsInt() : Integer.MAX_VALUE);
 
-    private static final Comparator<SlsVersionMatcher> MATCHER_COMPARATOR = Comparator
+    static final Comparator<SlsVersionMatcher> MATCHER_COMPARATOR = Comparator
             .comparing(SlsVersionMatcher::getMajorVersionNumber, EMPTY_IS_GREATER)
             .thenComparing(SlsVersionMatcher::getMinorVersionNumber, EMPTY_IS_GREATER)
             .thenComparing(SlsVersionMatcher::getPatchVersionNumber, EMPTY_IS_GREATER);
 
     @Override
-    public int compare(MatcherOrVersion o1, MatcherOrVersion o2) {
+    public int compare(MaximumVersion o1, MaximumVersion o2) {
         return o1.fold(
-                thisVersion -> -o2.compareTo(thisVersion), // reverse comparison as it's from POV of o2
+                // o1 is smaller if it satisfies the max constraint of o2
+                thisVersion -> o2.isSatisfiedBy(thisVersion) ? -1 : 1,
                 thisMatcher -> o2.fold(
-                        version -> thisMatcher.compare(version),
+                        // We're going for 'which is more restrictive as a max'
+                        // outcome of 0 means that version is accepted by matcher
+                        version -> thisMatcher.compare(version) >= 0 ? 1 : -1,
                         matcher -> MATCHER_COMPARATOR.compare(thisMatcher, matcher)));
     }
 }

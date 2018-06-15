@@ -52,12 +52,12 @@ public final class RecommendedProductDependencyMerger {
                         OrderableSlsVersion.valueOf(dep2.getMinimumVersion())),
                 versionComparator);
 
-        MatcherOrVersionComparator matcherOrVersionComparator = MatcherOrVersionComparator.INSTANCE;
-        Optional<MatcherOrVersion> maximumVersion = Stream
+        MaximumVersionComparator maximumVersionComparator = MaximumVersionComparator.INSTANCE;
+        Optional<MaximumVersion> maximumVersion = Stream
                 .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
                 .filter(Objects::nonNull)
-                .map(MatcherOrVersion::valueOf)
-                .min(matcherOrVersionComparator);
+                .map(MaximumVersion::valueOf)
+                .min(maximumVersionComparator);
 
         // Sanity check: min has to be <= max
         checkArgument(
@@ -87,10 +87,10 @@ public final class RecommendedProductDependencyMerger {
         return result;
     }
 
-    private static boolean satisfiesMaxVersion(Optional<MatcherOrVersion> maximumVersion, OrderableSlsVersion version) {
+    private static boolean satisfiesMaxVersion(Optional<MaximumVersion> maximumVersion, OrderableSlsVersion version) {
         // If maximumVersion is 1.5.x we should still accept e.g. 1.3.0 so we use '>= 0'
         // (comparison result is from the point of view of the matcher)
-        return maximumVersion.map(maxVer -> maxVer.compareTo(version) >= 0).orElse(true);
+        return maximumVersion.map(maxVer -> maxVer.isSatisfiedBy(version)).orElse(true);
     }
 
 }

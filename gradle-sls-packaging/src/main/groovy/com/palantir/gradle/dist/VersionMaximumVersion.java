@@ -20,17 +20,17 @@ import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import java.util.function.Function;
 
-final class MatcherCase extends MatcherOrVersion {
-    private final SlsVersionMatcher matcher;
+final class VersionMaximumVersion extends MaximumVersion {
+    private final OrderableSlsVersion version;
 
-    MatcherCase(SlsVersionMatcher matcher) {
-        this.matcher = matcher;
+    VersionMaximumVersion(OrderableSlsVersion version) {
+        this.version = version;
     }
 
     @Override
     public <T> T fold(
             Function<? super OrderableSlsVersion, ? extends T> ifVersion,
             Function<? super SlsVersionMatcher, ? extends T> ifMatcher) {
-        return ifMatcher.apply(matcher);
+        return ifVersion.apply(version);
     }
 }

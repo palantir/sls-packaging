@@ -22,23 +22,25 @@ import com.palantir.sls.versions.VersionComparator;
 import java.util.Objects;
 import java.util.function.Function;
 
-abstract class MatcherOrVersion implements Comparable<MatcherOrVersion> {
+abstract class MaximumVersion implements Comparable<MaximumVersion> {
     public abstract <T> T fold(
             Function<? super OrderableSlsVersion, ? extends T> ifVersion,
             Function<? super SlsVersionMatcher, ? extends T> ifMatcher);
 
     /**
-     * Convenience compareTo that compares us with a {@link OrderableSlsVersion}.
+     * True if the {@link OrderableSlsVersion} is less than or equal to the maximum version encoded in this object.
      */
-    final int compareTo(OrderableSlsVersion version) {
+    final boolean isSatisfiedBy(OrderableSlsVersion version) {
         return fold(
-                thisVersion -> VersionComparator.INSTANCE.compare(thisVersion, version),
-                thisMatcher -> thisMatcher.compare(version));
+                thisVersion -> VersionComparator.INSTANCE.compare(thisVersion, version) >= 0,
+                // We're going for 'which is more restrictive as a max'
+                // outcome of '0' means that version is accepted by matcher (not that they're equal)
+                thisMatcher -> thisMatcher.compare(version) >= 0);
     }
 
     @Override
-    public final int compareTo(MatcherOrVersion other) {
-        return MatcherOrVersionComparator.INSTANCE.compare(this, other);
+    public final int compareTo(MaximumVersion other) {
+        return MaximumVersionComparator.INSTANCE.compare(this, other);
     }
 
     @Override
@@ -46,10 +48,10 @@ abstract class MatcherOrVersion implements Comparable<MatcherOrVersion> {
         return fold(Objects::toString, Objects::toString);
     }
 
-    static MatcherOrVersion valueOf(String version) {
+    static MaximumVersion valueOf(String version) {
         return OrderableSlsVersion
                 .safeValueOf(version)
-                .<MatcherOrVersion>map(VersionCase::new)
-                .orElseGet(() -> new MatcherCase(SlsVersionMatcher.valueOf(version)));
+                .<MaximumVersion>map(VersionMaximumVersion::new)
+                .orElseGet(() -> new MatcherMaximumVersion(SlsVersionMatcher.valueOf(version)));
     }
 }
