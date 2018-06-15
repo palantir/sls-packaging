@@ -19,25 +19,31 @@ package com.palantir.gradle.dist;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
+import java.util.Objects;
 import java.util.function.Function;
 
-interface MatcherOrVersion extends Comparable<MatcherOrVersion> {
-    <T> T fold(
+abstract class MatcherOrVersion implements Comparable<MatcherOrVersion> {
+    public abstract <T> T fold(
             Function<? super OrderableSlsVersion, ? extends T> ifVersion,
             Function<? super SlsVersionMatcher, ? extends T> ifMatcher);
 
     /**
      * Convenience compareTo that compares us with a {@link OrderableSlsVersion}.
      */
-    default int compareTo(OrderableSlsVersion version) {
+    final int compareTo(OrderableSlsVersion version) {
         return fold(
                 thisVersion -> VersionComparator.INSTANCE.compare(thisVersion, version),
                 thisMatcher -> thisMatcher.compare(version));
     }
 
     @Override
-    default int compareTo(MatcherOrVersion other) {
+    public final int compareTo(MatcherOrVersion other) {
         return MatcherOrVersionComparator.INSTANCE.compare(this, other);
+    }
+
+    @Override
+    public final String toString() {
+        return fold(Objects::toString, Objects::toString);
     }
 
     static MatcherOrVersion valueOf(String version) {

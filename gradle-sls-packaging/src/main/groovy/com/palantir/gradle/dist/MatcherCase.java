@@ -20,10 +20,10 @@ import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import java.util.function.Function;
 
-final class MatcherCase implements MatcherOrVersion {
+final class MatcherCase extends MatcherOrVersion {
     private final SlsVersionMatcher matcher;
 
-    public MatcherCase(SlsVersionMatcher matcher) {
+    MatcherCase(SlsVersionMatcher matcher) {
         this.matcher = matcher;
     }
 
