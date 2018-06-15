@@ -24,6 +24,7 @@ import com.palantir.sls.versions.VersionComparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 abstract class MaximumVersion implements Comparable<MaximumVersion> {
@@ -54,9 +55,10 @@ abstract class MaximumVersion implements Comparable<MaximumVersion> {
 
     static MaximumVersion valueOf(String version) {
         return Stream
-                .concat(
-                        Stream.generate(() -> OrderableSlsVersion.safeValueOf(version).map(VersionMaximumVersion::new)),
-                        Stream.generate(() -> SlsVersionMatcher.safeValueOf(version).map(MatcherMaximumVersion::new)))
+                .<Supplier<Optional<MaximumVersion>>>of(
+                        () -> OrderableSlsVersion.safeValueOf(version).map(VersionMaximumVersion::new),
+                        () -> SlsVersionMatcher.safeValueOf(version).map(MatcherMaximumVersion::new))
+                .map(Supplier::get)
                 .flatMap(MaximumVersion::optionalToStream)
                 .findFirst()
                 .orElseThrow(() -> new SafeIllegalArgumentException(
