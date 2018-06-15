@@ -47,7 +47,21 @@ class RecommendedProductDependencyMergerTest extends Specification {
         def merged = RecommendedProductDependencyMerger.mergeRecommendedProductDependencies(dep1, dep2)
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("Inferred minimum version does not match inferred maximum version")
+    }
+
+    def "fails if min == max"() {
+        given:
+        def dep1 = newRecommendation("2.5.0", "2.x.x", null)
+        def dep2 = newRecommendation("2.1.0", "2.5.0", null)
+
+        when:
+        def merged = RecommendedProductDependencyMerger.mergeRecommendedProductDependencies(dep1, dep2)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
     private RecommendedProductDependency newRecommendation(String min, String max, String recommended) {
