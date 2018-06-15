@@ -16,11 +16,15 @@
 
 package com.palantir.gradle.dist;
 
+import com.palantir.logsafe.UnsafeArg;
+import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 abstract class MaximumVersion implements Comparable<MaximumVersion> {
     public abstract <T> T fold(
@@ -49,9 +53,18 @@ abstract class MaximumVersion implements Comparable<MaximumVersion> {
     }
 
     static MaximumVersion valueOf(String version) {
-        return OrderableSlsVersion
-                .safeValueOf(version)
-                .<MaximumVersion>map(VersionMaximumVersion::new)
-                .orElseGet(() -> new MatcherMaximumVersion(SlsVersionMatcher.valueOf(version)));
+        return Stream
+                .concat(
+                        Stream.generate(() -> OrderableSlsVersion.safeValueOf(version).map(VersionMaximumVersion::new)),
+                        Stream.generate(() -> SlsVersionMatcher.safeValueOf(version).map(MatcherMaximumVersion::new)))
+                .flatMap(MaximumVersion::optionalToStream)
+                .findFirst()
+                .orElseThrow(() -> new SafeIllegalArgumentException(
+                        "Couldn't parse version as an OrderableSlsVersion or an SlsVersionMatcher",
+                        UnsafeArg.of("version", version)));
+    }
+
+    private static <T> Stream<T> optionalToStream(Optional<T> opt) {
+        return opt.map(Stream::of).orElse(Stream.empty());
     }
 }
