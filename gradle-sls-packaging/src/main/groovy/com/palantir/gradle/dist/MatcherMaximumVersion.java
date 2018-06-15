@@ -20,6 +20,9 @@ import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import java.util.function.Function;
 
+/**
+ * {@link MaximumVersion} implemented in terms of a {@link SlsVersionMatcher}.
+ */
 final class MatcherMaximumVersion extends MaximumVersion {
     private final SlsVersionMatcher matcher;
 
