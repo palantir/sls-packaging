@@ -16,83 +16,81 @@
 
 package com.palantir.gradle.dist;
 
-import com.palantir.logsafe.Preconditions;
+import static com.palantir.logsafe.Preconditions.checkArgument;
+
 import com.palantir.logsafe.SafeArg;
 import com.palantir.sls.versions.OrderableSlsVersion;
-import com.palantir.sls.versions.SlsVersion;
-import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.stream.Stream;
 
 public final class RecommendedProductDependencyMerger {
-
-    private static final Comparator<OptionalInt> EMPTY_IS_GREATER =
-            Comparator.comparingInt(num -> num.isPresent() ? num.getAsInt() : Integer.MAX_VALUE);
-
-    public static final Comparator<SlsVersionMatcher> MATCHER_COMPARATOR = Comparator
-            .comparing(SlsVersionMatcher::getMajorVersionNumber, EMPTY_IS_GREATER)
-            .thenComparing(SlsVersionMatcher::getMinorVersionNumber, EMPTY_IS_GREATER)
-            .thenComparing(SlsVersionMatcher::getPatchVersionNumber, EMPTY_IS_GREATER);
-
     private RecommendedProductDependencyMerger() { }
 
     public static RecommendedProductDependency mergeRecommendedProductDependencies(
             RecommendedProductDependency dep1, RecommendedProductDependency dep2) {
         // Ensure they are valid
         Arrays.asList(dep1, dep2).forEach(RecommendedProductDependency::isValid);
-        Preconditions.checkArgument(
+        checkArgument(
                 dep1.getProductGroup().equals(dep2.getProductGroup()),
                 "Product groups differ",
                 SafeArg.of("dep1ProductGroup", dep1.getProductGroup()),
                 SafeArg.of("dep2ProductGroup", dep2.getProductGroup()));
-        Preconditions.checkArgument(
+        checkArgument(
                 dep1.getProductName().equals(dep2.getProductName()),
                 "Product names differ",
                 SafeArg.of("dep1ProductName", dep1.getProductName()),
                 SafeArg.of("dep2ProductName", dep2.getProductName()));
 
-        VersionComparator comparator = VersionComparator.INSTANCE;
+        VersionComparator versionComparator = VersionComparator.INSTANCE;
         OrderableSlsVersion minimumVersion = Collections.max(
                 Arrays.asList(
                         OrderableSlsVersion.valueOf(dep1.getMinimumVersion()),
                         OrderableSlsVersion.valueOf(dep2.getMinimumVersion())),
-                comparator);
+                versionComparator);
 
-        Optional<SlsVersionMatcher> maximumVersion = Stream
+        MatcherOrVersionComparator matcherOrVersionComparator = MatcherOrVersionComparator.INSTANCE;
+        Optional<MatcherOrVersion> maximumVersion = Stream
                 .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
                 .filter(Objects::nonNull)
-                .map(SlsVersionMatcher::valueOf)
-                .min(MATCHER_COMPARATOR);
+                .map(MatcherOrVersion::valueOf)
+                .min(matcherOrVersionComparator);
+
+        // Sanity check: min has to be <= max
+        checkArgument(
+                satisfiesMaxVersion(maximumVersion, minimumVersion),
+                "Inferred minimum version does not match inferred maximum version constraint",
+                SafeArg.of("minimumVersion", minimumVersion),
+                SafeArg.of("maximumVersion", maximumVersion));
 
         // Recommended version. Check that it matches the inferred min and max.
         // If none of them do, then pick the min version.
-        SlsVersion recommendedVersion = Stream
-                .of(
-                        OrderableSlsVersion.valueOf(dep1.getRecommendedVersion()),
-                        OrderableSlsVersion.valueOf(dep2.getRecommendedVersion()))
-                .filter(version -> comparator.compare(version, minimumVersion) >= 0
-                        // If maximumVersion is 1.5.x we should still accept e.g. 1.3.0 so we use '>= 0'
-                        // (comparison result is from the point of view of the matcher)
-                        && maximumVersion.map(maxVer -> maxVer.compare(version) >= 0).orElse(true))
-                .max(comparator)
-                .orElse(minimumVersion);
+        Optional<OrderableSlsVersion> recommendedVersion = Stream
+                .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
+                .filter(Objects::nonNull)
+                .map(OrderableSlsVersion::valueOf)
+                .filter(version -> versionComparator.compare(version, minimumVersion) >= 0
+                        && satisfiesMaxVersion(maximumVersion, version))
+                .max(versionComparator);
 
         RecommendedProductDependency result = new RecommendedProductDependency();
-        result.setMetaClass(dep1.getMetaClass());
-        maximumVersion.ifPresent(maxVer -> result.setMaximumVersion(maxVer.toString()));
         result.setMinimumVersion(minimumVersion.toString());
-        result.setRecommendedVersion(recommendedVersion.toString());
+        maximumVersion.map(Objects::toString).ifPresent(result::setMaximumVersion);
+        recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
         // Verify validity
         result.isValid();
         return result;
+    }
+
+    private static boolean satisfiesMaxVersion(Optional<MatcherOrVersion> maximumVersion, OrderableSlsVersion version) {
+        // If maximumVersion is 1.5.x we should still accept e.g. 1.3.0 so we use '>= 0'
+        // (comparison result is from the point of view of the matcher)
+        return maximumVersion.map(maxVer -> maxVer.compareTo(version) >= 0).orElse(true);
     }
 
 }
