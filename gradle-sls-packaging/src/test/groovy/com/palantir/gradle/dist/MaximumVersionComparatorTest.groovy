@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+import com.palantir.sls.versions.OrderableSlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
 import spock.lang.Specification
 
@@ -60,6 +61,16 @@ class MaximumVersionComparatorTest extends Specification {
     }
 
     def isVersion(MaximumVersion matcherOrVersion) {
-        return matcherOrVersion.fold({ true }, { false })
+        return matcherOrVersion.visit(new MaximumVersionVisitor<Boolean>() {
+            @Override
+            Boolean visitVersion(OrderableSlsVersion version) {
+                return true
+            }
+
+            @Override
+            Boolean visitMatcher(SlsVersionMatcher matcher) {
+                return false
+            }
+        })
     }
 }

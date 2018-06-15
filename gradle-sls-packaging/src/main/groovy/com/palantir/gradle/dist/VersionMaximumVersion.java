@@ -17,8 +17,6 @@
 package com.palantir.gradle.dist;
 
 import com.palantir.sls.versions.OrderableSlsVersion;
-import com.palantir.sls.versions.SlsVersionMatcher;
-import java.util.function.Function;
 
 /**
  * {@link MaximumVersion} implemented in terms of a {@link OrderableSlsVersion}.
@@ -31,9 +29,7 @@ final class VersionMaximumVersion extends MaximumVersion {
     }
 
     @Override
-    <T> T fold(
-            Function<? super OrderableSlsVersion, ? extends T> ifVersion,
-            Function<? super SlsVersionMatcher, ? extends T> ifMatcher) {
-        return ifVersion.apply(version);
+    <T> T visit(MaximumVersionVisitor<T> visitor) {
+        return visitor.visitVersion(version);
     }
 }

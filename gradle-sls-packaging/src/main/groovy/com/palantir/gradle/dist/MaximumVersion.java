@@ -22,9 +22,7 @@ import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.SlsVersionType;
 import com.palantir.sls.versions.VersionComparator;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -42,24 +40,26 @@ import java.util.stream.Stream;
  * non-release versions (see version types enum {@link SlsVersionType}).
  */
 abstract class MaximumVersion implements Comparable<MaximumVersion> {
-    /**
-     * Functional abstraction for the visitor pattern.
-     * Handles both possible states of this MaximumVersion (where it is represented by an {@link OrderableSlsVersion}
-     * or an {@link SlsVersionMatcher}), without requiring the caller to know in advance which one it is.
-     */
-    abstract <T> T fold(
-            Function<? super OrderableSlsVersion, ? extends T> ifVersion,
-            Function<? super SlsVersionMatcher, ? extends T> ifMatcher);
+
+    abstract <T> T visit(MaximumVersionVisitor<T> visitor);
 
     /**
      * True if the {@link OrderableSlsVersion} is less than or equal to the maximum version encoded in this object.
      */
     final boolean isSatisfiedBy(OrderableSlsVersion version) {
-        return fold(
-                thisVersion -> VersionComparator.INSTANCE.compare(thisVersion, version) >= 0,
+        return visit(new MaximumVersionVisitor<Boolean>() {
+            @Override
+            public Boolean visitVersion(OrderableSlsVersion thisVersion) {
+                return VersionComparator.INSTANCE.compare(thisVersion, version) >= 0;
+            }
+
+            @Override
+            public Boolean visitMatcher(SlsVersionMatcher matcher) {
                 // We're going for 'which is more restrictive as a max'
                 // outcome of '0' means that version is accepted by matcher (not that they're equal)
-                thisMatcher -> thisMatcher.compare(version) >= 0);
+                return matcher.compare(version) >= 0;
+            }
+        });
     }
 
     @Override
@@ -69,7 +69,17 @@ abstract class MaximumVersion implements Comparable<MaximumVersion> {
 
     @Override
     public final String toString() {
-        return fold(Objects::toString, Objects::toString);
+        return visit(new MaximumVersionVisitor<String>() {
+            @Override
+            public String visitVersion(OrderableSlsVersion version) {
+                return version.toString();
+            }
+
+            @Override
+            public String visitMatcher(SlsVersionMatcher matcher) {
+                return matcher.toString();
+            }
+        });
     }
 
     static MaximumVersion valueOf(String version) {

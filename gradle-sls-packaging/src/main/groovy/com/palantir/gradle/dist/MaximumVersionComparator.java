@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist;
 
+import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import java.util.Comparator;
 import java.util.OptionalInt;
@@ -33,13 +34,29 @@ enum MaximumVersionComparator implements Comparator<MaximumVersion> {
 
     @Override
     public int compare(MaximumVersion o1, MaximumVersion o2) {
-        return o1.fold(
+        return o1.visit(new MaximumVersionVisitor<Integer>() {
+            @Override
+            public Integer visitVersion(OrderableSlsVersion version) {
                 // o1 is smaller if it satisfies the max constraint of o2
-                thisVersion -> o2.isSatisfiedBy(thisVersion) ? -1 : 1,
-                thisMatcher -> o2.fold(
+                return o2.isSatisfiedBy(version) ? -1 : 1;
+            }
+
+            @Override
+            public Integer visitMatcher(SlsVersionMatcher thisMatcher) {
+                return o2.visit(new MaximumVersionVisitor<Integer>() {
+                    @Override
+                    public Integer visitVersion(OrderableSlsVersion version) {
                         // We're going for 'which is more restrictive as a max'
                         // outcome of 0 means that version is accepted by matcher
-                        version -> thisMatcher.compare(version) >= 0 ? 1 : -1,
-                        matcher -> MATCHER_COMPARATOR.compare(thisMatcher, matcher)));
+                        return thisMatcher.compare(version) >= 0 ? 1 : -1;
+                    }
+
+                    @Override
+                    public Integer visitMatcher(SlsVersionMatcher matcher) {
+                        return MATCHER_COMPARATOR.compare(thisMatcher, matcher);
+                    }
+                });
+            }
+        });
     }
 }

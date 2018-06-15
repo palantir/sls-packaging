@@ -16,20 +16,10 @@
 
 package com.palantir.gradle.dist;
 
+import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 
-/**
- * {@link MaximumVersion} implemented in terms of a {@link SlsVersionMatcher}.
- */
-final class MatcherMaximumVersion extends MaximumVersion {
-    private final SlsVersionMatcher matcher;
-
-    MatcherMaximumVersion(SlsVersionMatcher matcher) {
-        this.matcher = matcher;
-    }
-
-    @Override
-    <T> T visit(MaximumVersionVisitor<T> visitor) {
-        return visitor.visitMatcher(matcher);
-    }
+public interface MaximumVersionVisitor<T> {
+    T visitVersion(OrderableSlsVersion version);
+    T visitMatcher(SlsVersionMatcher matcher);
 }
