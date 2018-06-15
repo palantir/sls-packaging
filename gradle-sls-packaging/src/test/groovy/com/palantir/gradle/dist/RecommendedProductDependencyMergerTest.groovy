@@ -27,7 +27,6 @@ class RecommendedProductDependencyMergerTest extends Specification {
     def "picks larger minimum version and smaller maximum version"() {
         given:
         def dep1 = newRecommendation("2.0.0", "2.6.x", "2.2.0")
-
         def dep2 = newRecommendation("2.1.0", "2.x.x", "2.2.0")
 
         when:
@@ -37,6 +36,18 @@ class RecommendedProductDependencyMergerTest extends Specification {
         merged.minimumVersion == "2.1.0"
         merged.maximumVersion == "2.6.x"
         merged.recommendedVersion == "2.2.0"
+    }
+
+    def "fails if new min is greater than new max"() {
+        given:
+        def dep1 = newRecommendation("2.0.0", "2.6.x", "2.2.0")
+        def dep2 = newRecommendation("2.7.0", "2.x.x", "2.8.0")
+
+        when:
+        def merged = RecommendedProductDependencyMerger.mergeRecommendedProductDependencies(dep1, dep2)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     private RecommendedProductDependency newRecommendation(String min, String max, String recommended) {
