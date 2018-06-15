@@ -23,8 +23,6 @@ import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.SlsVersionType;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * A typed version of a maximum version as declared in {@link RecommendedProductDependency#maximumVersion}.
@@ -83,19 +81,18 @@ abstract class MaximumVersion implements Comparable<MaximumVersion> {
     }
 
     static MaximumVersion valueOf(String version) {
-        return Stream
-                .<Supplier<Optional<MaximumVersion>>>of(
-                        () -> OrderableSlsVersion.safeValueOf(version).map(VersionMaximumVersion::new),
-                        () -> SlsVersionMatcher.safeValueOf(version).map(MatcherMaximumVersion::new))
-                .map(Supplier::get)
-                .flatMap(MaximumVersion::optionalToStream)
-                .findFirst()
-                .orElseThrow(() -> new SafeIllegalArgumentException(
-                        "Couldn't parse version as an OrderableSlsVersion or an SlsVersionMatcher",
-                        UnsafeArg.of("version", version)));
-    }
+        Optional<OrderableSlsVersion> maybeOrderable = OrderableSlsVersion.safeValueOf(version);
+        if (maybeOrderable.isPresent()) {
+            return new VersionMaximumVersion(maybeOrderable.get());
+        }
 
-    private static <T> Stream<T> optionalToStream(Optional<T> opt) {
-        return opt.map(Stream::of).orElse(Stream.empty());
+        Optional<SlsVersionMatcher> maybeMatcher = SlsVersionMatcher.safeValueOf(version);
+        if (maybeMatcher.isPresent()) {
+            return new MatcherMaximumVersion(maybeMatcher.get());
+        }
+
+        throw new SafeIllegalArgumentException(
+                "Couldn't parse version as an OrderableSlsVersion or an SlsVersionMatcher",
+                UnsafeArg.of("version", version));
     }
 }
