@@ -22,7 +22,6 @@ import com.palantir.logsafe.SafeArg;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -46,11 +45,12 @@ public final class RecommendedProductDependencyMerger {
                 SafeArg.of("dep2ProductName", dep2.getProductName()));
 
         VersionComparator versionComparator = VersionComparator.INSTANCE;
-        OrderableSlsVersion minimumVersion = Collections.max(
-                Arrays.asList(
+        OrderableSlsVersion minimumVersion = Stream
+                .of(
                         OrderableSlsVersion.valueOf(dep1.getMinimumVersion()),
-                        OrderableSlsVersion.valueOf(dep2.getMinimumVersion())),
-                versionComparator);
+                        OrderableSlsVersion.valueOf(dep2.getMinimumVersion()))
+                .max(versionComparator)
+                .orElseThrow(() -> new RuntimeException("Impossible"));
 
         MaximumVersionComparator maximumVersionComparator = MaximumVersionComparator.INSTANCE;
         Optional<MaximumVersion> maximumVersion = Stream
