@@ -37,6 +37,6 @@ enum MatcherOrVersionComparator implements Comparator<MatcherOrVersion> {
                 thisVersion -> -o2.compareTo(thisVersion), // reverse comparison as it's from POV of o2
                 thisMatcher -> o2.fold(
                         version -> thisMatcher.compare(version),
-                        matcher -> MATCHER_COMPARATOR.compare(matcher, thisMatcher)));
+                        matcher -> MATCHER_COMPARATOR.compare(thisMatcher, matcher)));
     }
 }
