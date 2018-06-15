@@ -44,20 +44,18 @@ public final class RecommendedProductDependencyMerger {
                 SafeArg.of("dep1ProductName", dep1.getProductName()),
                 SafeArg.of("dep2ProductName", dep2.getProductName()));
 
-        VersionComparator versionComparator = VersionComparator.INSTANCE;
         OrderableSlsVersion minimumVersion = Stream
                 .of(
                         OrderableSlsVersion.valueOf(dep1.getMinimumVersion()),
                         OrderableSlsVersion.valueOf(dep2.getMinimumVersion()))
-                .max(versionComparator)
+                .max(VersionComparator.INSTANCE)
                 .orElseThrow(() -> new RuntimeException("Impossible"));
 
-        MaximumVersionComparator maximumVersionComparator = MaximumVersionComparator.INSTANCE;
         Optional<MaximumVersion> maximumVersion = Stream
                 .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
                 .filter(Objects::nonNull)
                 .map(MaximumVersion::valueOf)
-                .min(maximumVersionComparator);
+                .min(MaximumVersionComparator.INSTANCE);
 
         // Sanity check: min has to be <= max
         checkArgument(
@@ -72,9 +70,9 @@ public final class RecommendedProductDependencyMerger {
                 .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
                 .filter(Objects::nonNull)
                 .map(OrderableSlsVersion::valueOf)
-                .filter(version -> versionComparator.compare(version, minimumVersion) >= 0
+                .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
                         && satisfiesMaxVersion(maximumVersion, version))
-                .max(versionComparator);
+                .max(VersionComparator.INSTANCE);
 
         RecommendedProductDependency result = new RecommendedProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
