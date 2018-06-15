@@ -44,7 +44,7 @@ class RecommendedProductDependency {
 
     RecommendedProductDependency() {}
 
-    void isValid() {
+    final void isValid() {
         if (productGroup == null) {
             throw new IllegalArgumentException("productGroup must be specified for a recommended product dependency")
         }
