@@ -20,6 +20,7 @@ import com.palantir.logsafe.UnsafeArg;
 import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
+import com.palantir.sls.versions.SlsVersionType;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,8 +28,26 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+/**
+ * A typed version of a maximum version as declared in {@link RecommendedProductDependency#maximumVersion}.
+ * It can be represented by either:
+ * <ul>
+ *     <li>an {@link OrderableSlsVersion}, or</li>
+ *     <li>an {@link SlsVersionMatcher}</li>
+ * </ul>
+ * Hence, this class encodes a functional either-type.
+ * <p>
+ * The dichotomy is necessary because {@link SlsVersionMatcher}, though it has some overlap with
+ * {@link OrderableSlsVersion}, doesn't handle all the cases that the latter supports. For instance, it can't represent
+ * non-release versions (see version types enum {@link SlsVersionType}).
+ */
 abstract class MaximumVersion implements Comparable<MaximumVersion> {
-    public abstract <T> T fold(
+    /**
+     * Functional abstraction for the visitor pattern.
+     * Handles both possible states of this MaximumVersion (where it is represented by an {@link OrderableSlsVersion}
+     * or an {@link SlsVersionMatcher}), without requiring the caller to know in advance which one it is.
+     */
+    abstract <T> T fold(
             Function<? super OrderableSlsVersion, ? extends T> ifVersion,
             Function<? super SlsVersionMatcher, ? extends T> ifMatcher);
 

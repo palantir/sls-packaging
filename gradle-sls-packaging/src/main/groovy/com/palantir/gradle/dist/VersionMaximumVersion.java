@@ -31,7 +31,7 @@ final class VersionMaximumVersion extends MaximumVersion {
     }
 
     @Override
-    public <T> T fold(
+    <T> T fold(
             Function<? super OrderableSlsVersion, ? extends T> ifVersion,
             Function<? super SlsVersionMatcher, ? extends T> ifMatcher) {
         return ifVersion.apply(version);
