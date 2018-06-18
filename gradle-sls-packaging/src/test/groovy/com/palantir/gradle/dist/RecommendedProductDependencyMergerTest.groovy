@@ -48,7 +48,7 @@ class RecommendedProductDependencyMergerTest extends Specification {
 
         then:
         def e = thrown(IllegalArgumentException)
-        e.message.contains("Inferred minimum version does not match inferred maximum version")
+        e.message.contains("Could not merge recommended product dependencies as their version ranges do not overlap")
     }
 
     def "fails if min == max"() {

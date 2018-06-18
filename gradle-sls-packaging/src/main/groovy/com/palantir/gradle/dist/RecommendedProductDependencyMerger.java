@@ -16,9 +16,6 @@
 
 package com.palantir.gradle.dist;
 
-import static com.palantir.logsafe.Preconditions.checkArgument;
-
-import com.palantir.logsafe.SafeArg;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Arrays;
@@ -33,16 +30,14 @@ public final class RecommendedProductDependencyMerger {
             RecommendedProductDependency dep1, RecommendedProductDependency dep2) {
         // Ensure they are valid
         Arrays.asList(dep1, dep2).forEach(RecommendedProductDependency::isValid);
-        checkArgument(
-                dep1.getProductGroup().equals(dep2.getProductGroup()),
-                "Product groups differ",
-                SafeArg.of("dep1ProductGroup", dep1.getProductGroup()),
-                SafeArg.of("dep2ProductGroup", dep2.getProductGroup()));
-        checkArgument(
-                dep1.getProductName().equals(dep2.getProductName()),
-                "Product names differ",
-                SafeArg.of("dep1ProductName", dep1.getProductName()),
-                SafeArg.of("dep2ProductName", dep2.getProductName()));
+        if (!dep1.getProductGroup().equals(dep2.getProductGroup())) {
+                throw new IllegalArgumentException(String.format("Product groups differ: '%s' and '%s'",
+                dep1.getProductGroup(), dep2.getProductGroup()));
+        }
+        if (!dep1.getProductName().equals(dep2.getProductName())) {
+            throw new IllegalArgumentException(String.format("Product names differ: '%s' and '%s'",
+                dep1.getProductName(), dep2.getProductName()));
+        }
 
         OrderableSlsVersion minimumVersion = Stream
                 .of(
@@ -58,11 +53,12 @@ public final class RecommendedProductDependencyMerger {
                 .min(MaximumVersionComparator.INSTANCE);
 
         // Sanity check: min has to be <= max
-        checkArgument(
-                satisfiesMaxVersion(maximumVersion, minimumVersion),
-                "Inferred minimum version does not match inferred maximum version constraint",
-                SafeArg.of("minimumVersion", minimumVersion),
-                SafeArg.of("maximumVersion", maximumVersion));
+        if (!satisfiesMaxVersion(maximumVersion, minimumVersion)) {
+            throw new IllegalArgumentException(String.format(
+            "Could not merge recommended product dependencies as their version ranges do not overlap: '%s' and '%s'. "
+                        + "Merged min: %s, merged max: %s",
+                dep1, dep2, minimumVersion, maximumVersion));
+        }
 
         // Recommended version. Check that it matches the inferred min and max.
         // If none of them do, then pick the min version.
