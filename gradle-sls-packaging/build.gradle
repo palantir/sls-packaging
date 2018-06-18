@@ -11,6 +11,7 @@ dependencies {
     compile gradleApi()
     compile 'com.fasterxml.jackson.core:jackson-databind'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+    compile 'com.palantir.sls.versions:sls-versions'
 
     testCompile gradleTestKit()
     testCompile 'com.netflix.nebula:nebula-test'

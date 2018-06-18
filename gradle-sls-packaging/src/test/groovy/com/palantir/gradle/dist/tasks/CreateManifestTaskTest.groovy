@@ -212,7 +212,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
         ]
     }
 
-    def "Duplicate recommendations with different versions"() {
+    def "Duplicate recommendations with different mergeable versions"() {
         setup:
         generateDependencies()
         buildFile << """
@@ -244,12 +244,21 @@ class CreateManifestTaskTest extends GradleTestSpec {
         """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
 
         when:
-        def result = run(':testCreateManifest').buildAndFail()
+        def result = runSuccessfully(':testCreateManifest')
 
         then:
-        result.task(':testCreateManifest').outcome == TaskOutcome.FAILED
-        result.output.contains(
-                "Differing product dependency recommendations found for 'group:name2' in 'e:e:1.0' and 'b:b:1.0'")
+        def manifest = CreateManifestTask.jsonMapper.readValue(
+                file('build/deployment/manifest.yml', projectDir).text, Map)
+        manifest.get("extensions").get("product-dependencies").size() == 1
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group": "group",
+                        "product-name": "name2",
+                        "minimum-version": "2.1.0",
+                        "maximum-version": "2.6.x",
+                        "recommended-version": "2.2.0"
+                ]
+        ]
     }
 
     def 'Can create CreateManifestTask when product.version is valid SLS version'() {
