@@ -31,7 +31,7 @@ public final class RecommendedProductDependencyMerger {
         // Ensure they are valid
         Arrays.asList(dep1, dep2).forEach(RecommendedProductDependency::isValid);
         if (!dep1.getProductGroup().equals(dep2.getProductGroup())) {
-                throw new IllegalArgumentException(String.format("Product groups differ: '%s' and '%s'",
+            throw new IllegalArgumentException(String.format("Product groups differ: '%s' and '%s'",
                 dep1.getProductGroup(), dep2.getProductGroup()));
         }
         if (!dep1.getProductName().equals(dep2.getProductName())) {
