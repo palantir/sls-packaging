@@ -19,18 +19,9 @@ package com.palantir.gradle.dist;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import java.util.Comparator;
-import java.util.OptionalInt;
 
 enum MaximumVersionComparator implements Comparator<MaximumVersion> {
     INSTANCE;
-
-    static final Comparator<OptionalInt> EMPTY_IS_GREATER =
-            Comparator.comparingInt(num -> num.isPresent() ? num.getAsInt() : Integer.MAX_VALUE);
-
-    static final Comparator<SlsVersionMatcher> MATCHER_COMPARATOR = Comparator
-            .comparing(SlsVersionMatcher::getMajorVersionNumber, EMPTY_IS_GREATER)
-            .thenComparing(SlsVersionMatcher::getMinorVersionNumber, EMPTY_IS_GREATER)
-            .thenComparing(SlsVersionMatcher::getPatchVersionNumber, EMPTY_IS_GREATER);
 
     @Override
     public int compare(MaximumVersion o1, MaximumVersion o2) {
@@ -53,7 +44,7 @@ enum MaximumVersionComparator implements Comparator<MaximumVersion> {
 
                     @Override
                     public Integer visitMatcher(SlsVersionMatcher matcher) {
-                        return MATCHER_COMPARATOR.compare(thisMatcher, matcher);
+                        return SlsVersionMatcher.MATCHER_COMPARATOR.compare(thisMatcher, matcher);
                     }
                 });
             }

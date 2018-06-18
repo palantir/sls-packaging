@@ -21,14 +21,6 @@ import com.palantir.sls.versions.SlsVersionMatcher
 import spock.lang.Specification
 
 class MaximumVersionComparatorTest extends Specification {
-    def matcherComparatorTest() {
-        given:
-        def m1 = SlsVersionMatcher.valueOf("2.6.x")
-        def m2 = SlsVersionMatcher.valueOf("2.x.x")
-        expect:
-        MaximumVersionComparator.MATCHER_COMPARATOR.compare(m1, m2) < 0
-    }
-
     def comparesMatchers() {
         given:
         def m1 = MaximumVersion.valueOf("2.6.x")
