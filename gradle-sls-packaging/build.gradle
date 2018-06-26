@@ -40,10 +40,10 @@ pluginBundle {
 
     withDependencies {
         it.each { dep ->
-         if (!dep.version) {
-             dep.version = dependencyRecommendations.getRecommendedVersion(dep.groupId, dep.artifactId)
-         }
-       }
+            if (!dep.version) {
+                dep.version = dependencyRecommendations.getRecommendedVersion(dep.groupId, dep.artifactId)
+            }
+        }
     }
 }
 
