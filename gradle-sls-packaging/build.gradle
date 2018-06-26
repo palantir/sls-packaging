@@ -3,6 +3,7 @@ apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
 apply plugin: 'org.inferred.processors'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'nebula.maven-resolved-dependencies'
 
 dependencies {
     processor 'org.immutables:value'
