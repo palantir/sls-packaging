@@ -36,9 +36,11 @@ pushd "`dirname \"$0\"`/../.." > /dev/null
 case "`uname`" in
   Linux*)
     LAUNCHER_CMD=service/bin/linux-amd64/go-java-launcher
+    GO_INIT_CMD=service/bin/linux-amd64/go-init
     ;;
   Darwin*)
     LAUNCHER_CMD=service/bin/darwin-amd64/go-java-launcher
+    GO_INIT_CMD=service/bin/darwin-amd64/go-init
     ;;
   *)
     echo "Unsupported operating system: $(uname)"; exit 1
@@ -52,78 +54,20 @@ STATIC_LAUNCHER_CONFIG="service/bin/launcher-static.yml"
 CUSTOM_LAUNCHER_CONFIG="var/conf/launcher-custom.yml"
 STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
 
+DEPRECATION_MESSAGE="Command is deprecated: the next major release of sls-packaging will only support start/status/stop"
+
 case $ACTION in
 start)
-    if service/bin/init.sh status &> /dev/null; then
-        echo "Process is already running"
-        exit 0
-    fi
-    printf "%-50s" "Running '$SERVICE'..."
-
-    # ensure log and pid directories exist
-    mkdir -p "var/log" "var/run"
-    PID=$($LAUNCHER_CMD $STATIC_LAUNCHER_CONFIG $CUSTOM_LAUNCHER_CONFIG > var/log/$SERVICE-startup.log 2>&1 & echo $!)
-    # always write $PIDFILE so that `init.sh status` for a service that crashed when starting will return 1, not 3
-    echo $PID > $PIDFILE
-    sleep 5
-    if is_process_service $PID $SERVICE; then
-        printf "%s\n" "Started ($PID)"
-        exit 0
-    else
-        printf "%s\n" "Failed"
-        exit 1
-    fi
+    $GO_INIT_CMD start
 ;;
 status)
-    printf "%-50s" "Checking '$SERVICE'..."
-    if [ -f $PIDFILE ]; then
-        PID=$(cat $PIDFILE)
-        if is_process_service $PID $SERVICE; then
-          printf "%s\n" "Running ($PID)"
-          exit 0
-        elif is_process_active $PID; then
-          printf "%s\n" "Warning, Pid $PID appears to not correspond to service $SERVICE"
-          # fallthrough to generic 'process dead but pidfile exists'
-        fi
-
-        printf "%s\n" "Process dead but pidfile exists."
-        exit 1
-    else
-        printf "%s\n" "Service not running"
-        exit 3
-    fi
+    $GO_INIT_CMD status
 ;;
 stop)
-    printf "%-50s" "Stopping '$SERVICE'..."
-    if service/bin/init.sh status &> /dev/null; then
-        PID=$(cat $PIDFILE)
-        kill $PID
-        COUNTER=0
-        while is_process_service $PID $SERVICE && [ "$COUNTER" -lt "240" ]; do
-            sleep 1
-            let COUNTER=COUNTER+1
-            if [ $((COUNTER%5)) == 0 ]; then
-                if [ "$COUNTER" -eq "5" ]; then
-                    printf "\n" # first time get a new line to get off Stopping printf
-                fi
-                printf "%s\n" "Waiting for '$SERVICE' ($PID) to stop"
-            fi
-        done
-        if is_process_service $PID $SERVICE; then
-            printf "%s\n" "Failed"
-            exit 1
-        else
-            rm -f $PIDFILE
-            printf "%s\n" "Stopped ($PID)"
-            exit 0
-        fi
-    else
-        rm -f $PIDFILE
-        printf "%s\n" "Service not running"
-        exit 0
-    fi
+    $GO_INIT_CMD stop
 ;;
 console)
+    echo $DEPRECATION_MESSAGE
     if service/bin/init.sh status &> /dev/null; then
         echo "Process is already running"
         exit 1
@@ -136,10 +80,12 @@ console)
     wait
 ;;
 restart)
+    echo $DEPRECATION_MESSAGE
     service/bin/init.sh stop
     service/bin/init.sh start
 ;;
 check)
+    echo $DEPRECATION_MESSAGE
     printf "%-50s" "Checking health of '$SERVICE'..."
     $LAUNCHER_CMD $STATIC_LAUNCHER_CHECK_CONFIG > var/log/$SERVICE-check.log 2>&1
     RESULT=$?
@@ -154,6 +100,7 @@ check)
 *)
     # Support arbitrary additional actions; e.g. init-reload.sh will add a "reload" action
     if [[ -f "$SCRIPT_DIR/init-$ACTION.sh" ]]; then
+        echo $DEPRECATION_MESSAGE
         export LAUNCHER_CMD
         shift
         /bin/bash "$SCRIPT_DIR/init-$ACTION.sh" "$@"
@@ -161,6 +108,7 @@ check)
     else
         COMMANDS=$(ls $SCRIPT_DIR | sed -ne '/init-.*.sh/ { s/^init-\(.*\).sh$/|\1/g; p; }' | tr -d '\n')
         echo "Usage: $0 {status|start|stop|console|restart|check${COMMANDS}}"
+        echo "All commands but start/status/stop are deprecated: the next major release will only support these commands"
         exit 1
     fi
 esac
