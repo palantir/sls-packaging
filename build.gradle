@@ -7,7 +7,7 @@ buildscript {
 
     dependencies {
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
-        classpath 'com.palantir.baseline:gradle-baseline-java:0.21.0'
+        classpath 'com.palantir.baseline:gradle-baseline-java:0.24.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.3'
         classpath 'com.netflix.nebula:nebula-dependency-recommender:5.2.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:5.1.4'
@@ -65,5 +65,5 @@ subprojects {
 }
 
 dependencies {
-    baseline 'com.palantir.baseline:gradle-baseline-java-config:0.21.0@zip'
+    baseline 'com.palantir.baseline:gradle-baseline-java-config:0.24.0@zip'
 }
