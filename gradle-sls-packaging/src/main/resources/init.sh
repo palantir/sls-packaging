@@ -15,20 +15,6 @@
 # limitations under the License.
 #
 
-is_process_active() {
-   local PID=$1
-   ps $PID > /dev/null;
-   return $?
-}
-
-is_process_service() {
-  local PID=$1
-  local SERVICE_NAME=$2
-  # trailing '=' prevents a header line
-  ps -ww -o command= $PID | grep -q "$SERVICE_NAME"
-  return $?
-}
-
 # Everything in this script is relative to the base directory of an SLSv2 distribution
 pushd "`dirname \"$0\"`/../.." > /dev/null
 
