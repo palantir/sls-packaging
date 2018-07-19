@@ -8,7 +8,7 @@ buildscript {
     dependencies {
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
         classpath 'com.palantir.baseline:gradle-baseline-java:0.21.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.3'
         classpath 'com.netflix.nebula:nebula-dependency-recommender:5.2.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:5.1.4'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:0.11.0'
@@ -56,8 +56,6 @@ subprojects {
     apply plugin: 'com.palantir.baseline-error-prone'
     apply plugin: 'com.palantir.baseline-idea'
     apply plugin: 'java-library'
-
-    apply from: "${rootDir}/gradle/publish-jar.gradle"
 
     configurations.errorprone {
         resolutionStrategy {

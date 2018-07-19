@@ -1,5 +1,7 @@
 apply plugin: 'com.gradle.plugin-publish'
+// java-gradle-plugin MUST be applied before publish-jar.gradle
 apply plugin: 'java-gradle-plugin'
+apply from: "${rootDir}/gradle/publish-jar.gradle"
 apply plugin: 'groovy'
 apply plugin: 'org.inferred.processors'
 apply plugin: 'de.undercouch.download'
@@ -11,6 +13,7 @@ dependencies {
     compile gradleApi()
     compile 'com.fasterxml.jackson.core:jackson-databind'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+    compile 'com.palantir.sls.versions:sls-versions'
 
     testCompile gradleTestKit()
     testCompile 'com.netflix.nebula:nebula-test'
@@ -34,6 +37,18 @@ pluginBundle {
         podDistributionPlugin {
             id = 'com.palantir.sls-pod-distribution'
             displayName = 'Creates SLS pod distributions'
+        }
+    }
+
+    // Fix for publishPlugins not working with dependency recommenders (nebula, in our case).
+    // Gradle suggests the 'withDependencies' approach in the following workaround:
+    // http://plugins.gradle.org/help/plugin/missing-dependency-version
+    // TODO(dsanduleac): this is bad and we want to remove it
+    withDependencies {
+        it.each { dep ->
+            if (!dep.version) {
+                dep.version = dependencyRecommendations.getRecommendedVersion(dep.groupId, dep.artifactId)
+            }
         }
     }
 }
@@ -72,3 +87,8 @@ publishPlugins.onlyIf {
 test {
     maxHeapSize = '1g'
 }
+
+// Configure the publishPlugins task
+tasks.publish.dependsOn publishPlugins
+project.ext.'gradle.publish.key' = System.env["GRADLE_KEY"]
+project.ext.'gradle.publish.secret' = System.env["GRADLE_SECRET"]

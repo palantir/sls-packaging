@@ -18,11 +18,13 @@ package com.palantir.gradle.dist
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.palantir.slspackaging.versions.SlsProductVersions
+import groovy.transform.AutoClone
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
 @ToString
 @EqualsAndHashCode
+@AutoClone
 class RecommendedProductDependency {
 
     @JsonProperty("product-group")
@@ -42,7 +44,7 @@ class RecommendedProductDependency {
 
     RecommendedProductDependency() {}
 
-    void isValid() {
+    final void isValid() {
         if (productGroup == null) {
             throw new IllegalArgumentException("productGroup must be specified for a recommended product dependency")
         }
@@ -59,7 +61,7 @@ class RecommendedProductDependency {
             }
         }
         [minimumVersion, recommendedVersion].each {
-            if (it && !SlsProductVersions.isValidVersion(it)) {
+            if (it && !SlsProductVersions.isOrderableVersion(it)) {
                 throw new IllegalArgumentException(
                         "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
             }
