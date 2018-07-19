@@ -74,14 +74,12 @@ class GradleTestSpec extends Specification {
         int result = proc.waitFor()
         int expected = 0
         Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'", tasks.join(' '), expected), expected, result)
-        sleep 1000 // wait for the Java process to actually run
         return sout.toString()
     }
 
     protected int execWithExitCode(String... tasks) {
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         int result = proc.waitFor()
-        sleep 1000
         return result
     }
 
