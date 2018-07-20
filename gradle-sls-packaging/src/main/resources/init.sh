@@ -99,7 +99,7 @@ stop)
         PID=$(cat $PIDFILE)
         kill $PID
         COUNTER=0
-        while is_process_service $PID $SERVICE && [ "$COUNTER" -lt "240" ]; do
+        while is_process_service $PID $SERVICE && [ "$COUNTER" -lt "180" ]; do
             sleep 1
             let COUNTER=COUNTER+1
             if [ $((COUNTER%5)) == 0 ]; then
@@ -108,9 +108,14 @@ stop)
                 fi
                 printf "%s\n" "Waiting for '$SERVICE' ($PID) to stop"
             fi
-        done
+        done        
         if is_process_service $PID $SERVICE; then
-            printf "%s\n" "Failed"
+            # waited 3 minutes, now really kill the service
+            printf "%s\n" "Executing kill -9 on '$SERVICE' ($PID)"
+            kill -9 $PID
+        fi
+        if is_process_service $PID $SERVICE; then
+            printf "%s\n" "Failed ($PID)"
             exit 1
         else
             rm -f $PIDFILE
