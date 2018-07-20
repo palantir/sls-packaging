@@ -67,18 +67,20 @@ class GradleTestSpec extends Specification {
         return buildResult
     }
 
-    protected String exec(String... tasks) {
-        return execWithResult(0, tasks)
-    }
-
-    protected String execWithResult(int expected, String... tasks) {
+    protected String execWithOutput(String... tasks) {
         StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         proc.consumeProcessOutput(sout, serr)
         int result = proc.waitFor()
+        int expected = 0
         Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'", tasks.join(' '), expected), expected, result)
-        sleep 1000 // wait for the Java process to actually run
         return sout.toString()
+    }
+
+    protected int execWithExitCode(String... tasks) {
+        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        int result = proc.waitFor()
+        return result
     }
 
     protected String execAllowFail(String... tasks) {
