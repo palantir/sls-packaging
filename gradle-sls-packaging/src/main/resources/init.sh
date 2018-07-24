@@ -99,7 +99,7 @@ stop)
         PID=$(cat $PIDFILE)
         kill $PID
         COUNTER=0
-        while is_process_service $PID $SERVICE && [ "$COUNTER" -lt "180" ]; do
+        while is_process_service $PID $SERVICE && [ "$COUNTER" -lt "240" ]; do
             sleep 1
             let COUNTER=COUNTER+1
             if [ $((COUNTER%5)) == 0 ]; then
