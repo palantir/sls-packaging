@@ -108,7 +108,7 @@ stop)
                 fi
                 printf "%s\n" "Waiting for '$SERVICE' ($PID) to stop"
             fi
-        done        
+        done
         if is_process_service $PID $SERVICE; then
             # waited 3 minutes, now really kill the service
             printf "%s\n" "Executing kill -9 on '$SERVICE' ($PID)"
