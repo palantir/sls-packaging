@@ -46,8 +46,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
-            // TODO (gregakinman): update to 1.4.0 once released
-            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.3.0'
+            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.2.0'
         }
 
         def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
@@ -68,9 +67,8 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         project.afterEvaluate {
-            launchConfig.configure(distributionExtension.mainClass, distributionExtension.serviceName,
-                    distributionExtension.args, distributionExtension.checkArgs, distributionExtension.defaultJvmOpts,
-                    distributionExtension.javaHome, distributionExtension.env,
+            launchConfig.configure(distributionExtension.mainClass, distributionExtension.args, distributionExtension.checkArgs,
+                    distributionExtension.defaultJvmOpts, distributionExtension.javaHome, distributionExtension.env,
                     project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtimeClasspath)
         }
 

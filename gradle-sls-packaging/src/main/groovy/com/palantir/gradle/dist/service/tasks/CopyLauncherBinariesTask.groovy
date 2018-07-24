@@ -17,9 +17,6 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
@@ -45,15 +42,6 @@ class CopyLauncherBinariesTask extends DefaultTask {
                             !fcp.file.isDirectory(),
                             fcp.relativePath.segments[3..-1] as String[])
                 }
-            }
-
-            // TODO (gregakinman): pull this from released version like gjl once released
-            ['darwin-amd64', 'linux-amd64'].each { arch ->
-                def dest = Paths.get("${project.buildDir}/scripts/${arch}/go-init")
-                dest.parent.toFile().mkdirs()
-                Files.copy(JavaServiceDistributionPlugin.class.getResourceAsStream("/${arch}/go-init"),
-                    dest, StandardCopyOption.REPLACE_EXISTING)
-                dest.toFile().setExecutable(true)
             }
         }
     }
