@@ -110,7 +110,12 @@ stop)
             fi
         done
         if is_process_service $PID $SERVICE; then
-            printf "%s\n" "Failed"
+            # waited for entire timeout, now forcefully kill the service
+            printf "%s\n" "Executing kill -9 on '$SERVICE' ($PID)"
+            kill -9 $PID
+        fi
+        if is_process_service $PID $SERVICE; then
+            printf "%s\n" "Failed ($PID)"
             exit 1
         else
             rm -f $PIDFILE
