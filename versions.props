@@ -1,4 +1,5 @@
 com.fasterxml.jackson.*:* = 2.8.11
+com.google.guava:guava = 23.6.1-jre
 com.palantir.sls.versions:sls-versions = 0.9.0
 org.immutables:value = 2.5.6
 

@@ -439,6 +439,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 '-XX:NumberOfGCLogFiles=10',
                 '-Xloggc:var/log/gc-%t-%p.log',
                 '-verbose:gc',
+                '-XX:+UseParallelOldGC',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
@@ -735,6 +736,76 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/com/test/Test.class').exists()
+    }
+
+    def 'adds gc profile jvm settings'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+                id 'java'
+            }
+            repositories { jcenter() }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                gc 'response-time', {
+                    initiatingOccupancyFraction 75
+                }
+            }
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':untar')
+
+        then:
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
+    }
+
+    def 'gc profile null configuration closure'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+                id 'java'
+            }
+            repositories { jcenter() }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                gc 'hybrid'
+            }
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+
+        when:
+        runSuccessfully(':untar')
+
+        then:
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication', '-XX:+PrintStringDeduplicationStatistics'])
     }
 
     private static createUntarBuildFile(buildFile) {

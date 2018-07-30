@@ -19,29 +19,21 @@ package com.palantir.gradle.dist.service.tasks
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
+import com.palantir.gradle.dist.service.gc.GcProfile
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import java.nio.file.Files
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.*
-
-import java.nio.file.Files
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 
 class LaunchConfigTask extends DefaultTask {
 
     static final List<String> tmpdirJvmOpts = ['-Djava.io.tmpdir=var/data/tmp']
-
-    static final List<String> gcJvmOpts = [
-            '-XX:+CrashOnOutOfMemoryError',  // requires JDK 8u92+
-            '-XX:+PrintGCDateStamps',
-            '-XX:+PrintGCDetails',
-            '-XX:-TraceClassUnloading',
-            '-XX:+UseGCLogFileRotation',
-            '-XX:GCLogFileSize=10M',
-            '-XX:NumberOfGCLogFiles=10',
-            '-Xloggc:var/log/gc-%t-%p.log',
-            '-verbose:gc'
-    ]
 
     static final List<String> loggingJvmOpts = [
             '-XX:ErrorFile=var/log/hs_err_pid%p.log'
@@ -68,6 +60,9 @@ class LaunchConfigTask extends DefaultTask {
 
     @Input
     List<String> checkArgs
+
+    @Input
+    GcProfile gc
 
     @Input
     List<String> defaultJvmOpts
@@ -114,11 +109,12 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(
-                getArgs(),
-                tmpdirJvmOpts + gcJvmOpts + loggingJvmOpts + dnsJvmOpts + defaultJvmOpts, defaultEnvironment),
-                getStaticLauncher())
+        writeConfig(createConfig(getArgs(), assembleJvmOpts(), defaultEnvironment), getStaticLauncher())
         writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts, [:]), getCheckLauncher())
+    }
+
+    List<String> assembleJvmOpts() {
+        return tmpdirJvmOpts + gc.gcJvmOpts() + loggingJvmOpts + dnsJvmOpts + defaultJvmOpts
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
@@ -148,10 +144,18 @@ class LaunchConfigTask extends DefaultTask {
         return output
     }
 
-    void configure(String mainClass, List<String> args, List<String> checkArgs, List<String> defaultJvmOpts, String javaHome, Map<String, String> env, FileCollection classpath) {
+    void configure(String mainClass,
+                   List<String> args,
+                   List<String> checkArgs,
+                   GcProfile gcProfile,
+                   List<String> defaultJvmOpts,
+                   String javaHome,
+                   Map<String, String> env,
+                   FileCollection classpath) {
         this.mainClass = mainClass
         this.args = args
         this.checkArgs = checkArgs
+        this.gc = gcProfile
         this.defaultJvmOpts = defaultJvmOpts
         this.javaHome = javaHome
         this.env = env
