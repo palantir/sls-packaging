@@ -56,6 +56,9 @@ class LaunchConfigTask extends DefaultTask {
     String mainClass
 
     @Input
+    String serviceName
+
+    @Input
     List<String> args
 
     @Input
@@ -89,6 +92,7 @@ class LaunchConfigTask extends DefaultTask {
         String configType = "java"
         int configVersion = 1
         String mainClass
+        String serviceName
         String javaHome
         List<String> classpath
         List<String> jvmOpts
@@ -129,6 +133,7 @@ class LaunchConfigTask extends DefaultTask {
     StaticLaunchConfig createConfig(List<String> args, List<String> jvmOpts, Map<String, String> defaultEnv) {
         StaticLaunchConfig config = new StaticLaunchConfig()
         config.mainClass = mainClass
+        config.serviceName = serviceName
         config.javaHome = javaHome ?: ""
         config.args = args
         config.classpath = relativizeToServiceLibDirectory(classpath)
@@ -145,6 +150,7 @@ class LaunchConfigTask extends DefaultTask {
     }
 
     void configure(String mainClass,
+                   String serviceName,
                    List<String> args,
                    List<String> checkArgs,
                    GcProfile gcProfile,
@@ -153,6 +159,7 @@ class LaunchConfigTask extends DefaultTask {
                    Map<String, String> env,
                    FileCollection classpath) {
         this.mainClass = mainClass
+        this.serviceName = serviceName
         this.args = args
         this.checkArgs = checkArgs
         this.gc = gcProfile

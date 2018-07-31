@@ -26,21 +26,23 @@ class CopyLauncherBinariesTask extends DefaultTask {
         group = JavaServiceDistributionPlugin.GROUP_NAME
         description = "Creates go-java-launcher binaries."
         doLast {
-            project.copy { copySpec ->
-                def zipPath = project.configurations.goJavaLauncherBinaries.find {
-                    it.name.startsWith("go-java-launcher")
-                }
-                def zipFile = project.file(zipPath)
+            ['go-java-launcher', 'go-init'].each { binary ->
+                project.copy { copySpec ->
+                    def zipPath = project.configurations.goJavaLauncherBinaries.find {
+                        it.name.startsWith(binary)
+                    }
+                    def zipFile = project.file(zipPath)
 
-                copySpec.from project.tarTree(zipFile)
-                copySpec.into "${project.buildDir}/scripts"
-                copySpec.includeEmptyDirs = false
+                    copySpec.from project.tarTree(zipFile)
+                    copySpec.into "${project.buildDir}/scripts"
+                    copySpec.includeEmptyDirs = false
 
-                // remove first three levels of directory structure from Tar container
-                copySpec.eachFile { FileCopyDetails fcp ->
-                    fcp.relativePath = new RelativePath(
-                            !fcp.file.isDirectory(),
-                            fcp.relativePath.segments[3..-1] as String[])
+                    // remove first three levels of directory structure from Tar container
+                    copySpec.eachFile { FileCopyDetails fcp ->
+                        fcp.relativePath = new RelativePath(
+                                !fcp.file.isDirectory(),
+                                fcp.relativePath.segments[3..-1] as String[])
+                    }
                 }
             }
         }
