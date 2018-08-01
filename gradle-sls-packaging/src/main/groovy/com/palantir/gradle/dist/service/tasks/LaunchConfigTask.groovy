@@ -43,6 +43,10 @@ class LaunchConfigTask extends DefaultTask {
             '-verbose:gc'
     ]
 
+    static final List<String> loggingJvmOpts = [
+            '-XX:ErrorFile=var/log/hs_err_pid%p.log'
+    ]
+
     static final List<String> dnsJvmOpts = [
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
@@ -112,7 +116,7 @@ class LaunchConfigTask extends DefaultTask {
     void createConfig() {
         writeConfig(createConfig(
                 getArgs(),
-                tmpdirJvmOpts + gcJvmOpts + dnsJvmOpts + defaultJvmOpts, defaultEnvironment),
+                tmpdirJvmOpts + gcJvmOpts + loggingJvmOpts + dnsJvmOpts + defaultJvmOpts, defaultEnvironment),
                 getStaticLauncher())
         writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts, [:]), getCheckLauncher())
     }
