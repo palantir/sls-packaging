@@ -63,15 +63,16 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         // try all of the service commands
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        file('dist/service-name-0.0.1/var/log/service-name-startup.log', projectDir).text.contains('Test started\n')
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'start') ==~ /(?m)Process is already running\n/
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'status') ==~ /(?m)Checking 'service-name'\.\.\.\s+Running \(\d+\)\n/
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'restart') ==~
-                /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\nRunning 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'check') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
-        exec('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /(?m)Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'start') == 0
+        // wait for the Java process to start up and emit output
+        sleep 1000
+        file('dist/service-name-0.0.1/var/log/startup.log', projectDir).text.contains('Test started\n')
+        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'start') == 0
+        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'status') == 0
+        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'restart') == 0
+        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'stop') == 0
+        execWithOutput('dist/service-name-0.0.1/service/bin/init.sh', 'check') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
 
     def 'packaging tasks re-run after version change'() {
@@ -110,33 +111,8 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         version02BuildOutput ==~ /(?m)(?s).*:createManifest.*/
         version02BuildOutput ==~ /(?m)(?s).*:manifestClasspathJar.*/
         version02BuildOutput ==~ /(?m)(?s).*:distTar.*/
-        exec('dist/service-name-0.0.2/service/bin/init.sh', 'start') ==~ /(?m)Running 'service-name'\.\.\.\s+Started \(\d+\)\n/
-        exec('dist/service-name-0.0.2/service/bin/init.sh', 'stop') ==~ /(?m)Stopping 'service-name'\.\.\.\s+Stopped \(\d+\)\n/
-    }
-
-    def 'status reports when process name and id don"t match'() {
-        given:
-        createUntarBuildFile(buildFile)
-        file('src/main/java/test/Test.java') << '''
-        package test;
-        public class Test {
-            public static void main(String[] args) {
-                while(true);
-            }
-        }
-        '''.stripIndent()
-
-        when:
-        runSuccessfully(':build', ':distTar', ':untar')
-        createFile('dist/service-name-0.0.1/var/run/service-name.pid')
-        exec('/bin/bash', '-c', 'sleep 30 & echo $! > dist/service-name-0.0.1/var/run/service-name.pid')
-
-        then:
-        execWithResult(1, 'dist/service-name-0.0.1/service/bin/init.sh', 'status').contains('appears to not correspond to service service-name')
-        // 'dead with pidfile' persist across status calls
-        execWithResult(1, 'dist/service-name-0.0.1/service/bin/init.sh', 'status').contains('Process dead but pidfile exists')
-        exec('dist/service-name-0.0.1/service/bin/init.sh', 'stop').contains('Service not running')
-        execWithResult(3, 'dist/service-name-0.0.1/service/bin/init.sh', 'status').contains('Service not running')
+        execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'start') == 0
+        execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'stop') == 0
     }
 
     def 'produce distribution bundle and check var/log and var/run are excluded'() {
@@ -176,6 +152,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
         then:
         execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
+        sleep 1000
         file('dist/service-name-0.0.1/var/data/tmp').listFiles().length == 1
         file('dist/service-name-0.0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
@@ -187,7 +164,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
 
             version '0.0.1'
 
@@ -228,7 +208,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
 
             class MyVersion {
                 String version
@@ -425,6 +408,7 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
         expectedStaticConfig.setConfigVersion(1)
         expectedStaticConfig.setConfigType("java")
         expectedStaticConfig.setMainClass("test.Test")
+        expectedStaticConfig.setServiceName("service-name")
         expectedStaticConfig.setJavaHome("foo")
         expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
         expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
@@ -560,7 +544,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
             version '0.0.1'
             distribution {
                 serviceName "my-service"
@@ -640,7 +627,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 args "hello"
                 enableManifestClasspath true
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
             dependencies {
                 implementation project(':child')
                 compile 'org.mockito:mockito-core:2.7.22'
@@ -746,7 +736,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
 
             project.group = 'service-group'
 
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
 
             version '0.0.1'
 
