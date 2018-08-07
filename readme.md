@@ -309,7 +309,7 @@ Specific to the Java Service plugin:
 
 ## Recommended Product Dependencies Plugin
 
-This plugin allows API jars to delcare the recommended product dependencies an SLS service distribution should take.
+This plugin allows API jars to declare the recommended product dependencies an SLS service distribution should take.
 
 An example application of this plugin might look as follows:
 
