@@ -19,9 +19,9 @@ package com.palantir.gradle.dist.service.gc;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
-public final class Hybrid implements GcProfile {
+public class Hybrid implements GcProfile {
     @Override
-    public List<String> gcProfileJvmOpts() {
+    public final List<String> gcProfileJvmOpts() {
         return ImmutableList.of(
                 "-XX:+UseG1GC",
                 "-XX:+UseStringDeduplication",
