@@ -46,7 +46,8 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
-            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.2.0'
+            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.5.0'
+            goJavaLauncherBinaries 'com.palantir.launching:go-init:1.5.0'
         }
 
         def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
@@ -73,6 +74,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate {
             launchConfig.configure(
                     distributionExtension.mainClass,
+                    distributionExtension.serviceName,
                     distributionExtension.args,
                     distributionExtension.checkArgs,
                     distributionExtension.gc,

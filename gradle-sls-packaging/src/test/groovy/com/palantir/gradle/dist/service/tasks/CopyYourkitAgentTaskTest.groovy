@@ -69,7 +69,10 @@ class CopyYourkitAgentTaskTest extends GradleTestSpec {
 
             project.group = 'service-group'
 
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
 
             version '0.0.1'
 
