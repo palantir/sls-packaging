@@ -515,7 +515,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
             distribution {
                 serviceName "my-service"
                 mainClass "dummy.service.MainClass"
@@ -648,7 +651,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
             plugins {
                 id 'java-library'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
             dependencies {
                 api "com.google.guava:guava:19.0"
                 implementation "com.google.code.findbugs:annotations:3.0.1"
@@ -735,7 +741,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
 
             version '0.0.1'
 
@@ -771,7 +780,10 @@ class ServiceDistributionPluginTests extends GradleTestSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
-            repositories { jcenter() }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
 
             version '0.0.1'
 
