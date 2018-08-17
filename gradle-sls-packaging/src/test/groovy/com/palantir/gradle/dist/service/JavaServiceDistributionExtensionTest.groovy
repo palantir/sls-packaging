@@ -16,12 +16,20 @@
 
 package com.palantir.gradle.dist.service
 
+import org.gradle.api.Project
+import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
 class JavaServiceDistributionExtensionTest extends Specification {
+    private Project project
+
+    def setup() {
+        project = ProjectBuilder.builder().build()
+    }
+
     def 'collection modifiers are cumulative when varargs are given'() {
         given:
-        def ext = new JavaServiceDistributionExtension(null)
+        def ext = new JavaServiceDistributionExtension(project)
 
         when:
         ext.with {
@@ -55,7 +63,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new JavaServiceDistributionExtension(null)
+        def ext = new JavaServiceDistributionExtension(project)
 
         when:
         ext.with {

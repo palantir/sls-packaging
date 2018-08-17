@@ -15,12 +15,29 @@
  */
 package com.palantir.gradle.dist.service
 
+import com.google.common.collect.ImmutableMap
 import com.palantir.gradle.dist.BaseDistributionExtension
+import com.palantir.gradle.dist.service.gc.GcProfile
+import com.palantir.gradle.dist.service.gc.Hybrid
+import com.palantir.gradle.dist.service.gc.ResponseTime
+import com.palantir.gradle.dist.service.gc.Throughput
+import javax.annotation.Nullable
+import org.gradle.api.Action
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
+import org.gradle.util.ConfigureUtil
 
 class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
+    private static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
+            "throughput", Throughput.class,
+            "response-time", ResponseTime.class,
+            "hybrid", Hybrid.class)
+
+    private final ObjectFactory objects
+
     private String mainClass
+    private GcProfile gc
     private List<String> args = []
     private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
@@ -32,6 +49,8 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     JavaServiceDistributionExtension(Project project) {
         super(project)
         productType("service.v1")
+        objects = project.objects
+        gc = new Throughput()
     }
 
     void mainClass(String mainClass) {
@@ -90,6 +109,10 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
         return mainClass
     }
 
+    GcProfile getGc() {
+        return gc
+    }
+
     List<String> getArgs() {
         return args
     }
@@ -117,4 +140,27 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     List<String> getExcludeFromVar() {
         return excludeFromVar
     }
+
+    void gc(String type, @Nullable Closure configuration) {
+        gc = objects.newInstance(profileNames[type])
+        if (configuration != null) {
+            ConfigureUtil.configure(configuration, gc)
+        }
+    }
+
+    void gc(String type) {
+        gc(type, null)
+    }
+
+    def <T extends GcProfile> void gc(Class<T> type, @Nullable Action<T> action) {
+        gc = objects.newInstance(type)
+        if (action != null) {
+            action.execute(gc)
+        }
+    }
+
+    def <T extends GcProfile> void gc(Class<T> type) {
+        gc(type, null)
+    }
+
 }
