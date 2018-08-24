@@ -43,7 +43,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
 
         def distributionExtension = project.extensions.findByType(AssetDistributionExtension)
 
-        distributionExtension.productDependenciesConfig = project.configurations.create("assetBundle")
+        distributionExtension.productDependenciesConfig = project.configurations.create("mavenBundle")
 
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
