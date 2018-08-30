@@ -120,6 +120,13 @@ And the complete list of configurable properties:
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
+ 
+
+If there is a jar recommending a version of a dependency but that product is not listed in a `productDependency` block an error will be produced: `The following products are recommended as dependencies but do not appear in the product dependencies or product dependencies ignored list: ...`.
+
+The solution is to either add the product as a dependency via a `productDependency` block, or to explicitly ignore it:
+
+    ignoredProductDependency('other-group3', 'other-service3')
 
 #### JVM Options
 
