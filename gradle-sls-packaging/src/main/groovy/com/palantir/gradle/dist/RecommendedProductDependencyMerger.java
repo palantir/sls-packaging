@@ -18,6 +18,7 @@ package com.palantir.gradle.dist;
 
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.VersionComparator;
+import com.palantir.slspackaging.versions.SlsProductVersions;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,7 +27,7 @@ import java.util.stream.Stream;
 public final class RecommendedProductDependencyMerger {
     private RecommendedProductDependencyMerger() { }
 
-    public static RecommendedProductDependency mergeRecommendedProductDependencies(
+    public static RecommendedProductDependency merge(
             RecommendedProductDependency dep1, RecommendedProductDependency dep2) {
         // Ensure they are valid
         Arrays.asList(dep1, dep2).forEach(RecommendedProductDependency::isValid);
@@ -39,12 +40,11 @@ public final class RecommendedProductDependencyMerger {
                 dep1.getProductName(), dep2.getProductName()));
         }
 
-        OrderableSlsVersion minimumVersion = Stream
-                .of(
-                        OrderableSlsVersion.valueOf(dep1.getMinimumVersion()),
-                        OrderableSlsVersion.valueOf(dep2.getMinimumVersion()))
+        OrderableSlsVersion minimumVersion = Stream.of(dep1.getMinimumVersion(), dep2.getMinimumVersion())
+                .filter(SlsProductVersions::isOrderableVersion)
+                .map(OrderableSlsVersion::valueOf)
                 .max(VersionComparator.INSTANCE)
-                .orElseThrow(() -> new RuntimeException("Impossible"));
+                .orElseThrow(() -> new RuntimeException("Unable to determine minimum version"));
 
         Optional<MaximumVersion> maximumVersion = Stream
                 .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
@@ -65,6 +65,7 @@ public final class RecommendedProductDependencyMerger {
         Optional<OrderableSlsVersion> recommendedVersion = Stream
                 .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
                 .filter(Objects::nonNull)
+                .filter(SlsProductVersions::isOrderableVersion)
                 .map(OrderableSlsVersion::valueOf)
                 .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
                         && satisfiesMaxVersion(maximumVersion, version))
@@ -76,7 +77,6 @@ public final class RecommendedProductDependencyMerger {
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
-        // Verify validity
         result.isValid();
         return result;
     }
