@@ -91,7 +91,6 @@ class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     void createManifest() {
-        Set<RecommendedProductDependency> allRecommendedProductDeps = []
         Map<String, Set<RecommendedProductDependency>> allRecommendedDepsByCoord = [:]
         Map<String, String> mavenCoordsByProductIds = [:]
         Map<String, RecommendedProductDependency> recommendedDepsByProductId = [:]
@@ -126,7 +125,6 @@ class CreateManifestTask extends DefaultTask {
                 allRecommendedDepsByCoord.put(coord, new HashSet<RecommendedProductDependency>())
             }
 
-            allRecommendedProductDeps.addAll(recommendedDeps.recommendedProductDependencies())
             allRecommendedDepsByCoord.get(coord).addAll(recommendedDeps.recommendedProductDependencies())
 
             recommendedDeps.recommendedProductDependencies().each { recommendedDep ->
@@ -144,8 +142,7 @@ class CreateManifestTask extends DefaultTask {
                             othercoord,
                             recommendedDep,
                             existingDep)
-                    dep = RecommendedProductDependencyMerger
-                            .mergeRecommendedProductDependencies(recommendedDep, existingDep)
+                    dep = RecommendedProductDependencyMerger.merge(recommendedDep, existingDep)
                 } else {
                     dep = recommendedDep
                 }

@@ -61,7 +61,7 @@ class RecommendedProductDependency {
             }
         }
         [minimumVersion, recommendedVersion].each {
-            if (it && !SlsProductVersions.isOrderableVersion(it)) {
+            if (it && !SlsProductVersions.isValidVersion(it)) {
                 throw new IllegalArgumentException(
                         "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
             }
