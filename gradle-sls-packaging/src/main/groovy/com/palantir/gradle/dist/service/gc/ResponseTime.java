@@ -33,7 +33,8 @@ public class ResponseTime implements GcProfile {
                 "-XX:CMSInitiatingOccupancyFraction=" + initiatingOccupancyFraction,
                 "-XX:+CMSClassUnloadingEnabled",
                 "-XX:+ExplicitGCInvokesConcurrent",
-                "-XX:+ClassUnloadingWithConcurrentMark");
+                "-XX:+ClassUnloadingWithConcurrentMark",
+                "-XX:+CMSScavengeBeforeRemark");
     }
 
     public final void initiatingOccupancyFraction(int occipancyFraction) {
