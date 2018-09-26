@@ -91,11 +91,29 @@ class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     void createManifest() {
+        def dependencies = getDependencies(productDependenciesConfig, productDependencies, ignoredProductIds)
+                .collect { jsonMapper.convertValue(it, new TypeReference<Map<String, Object>>() {}) }
+
+        manifestExtensions.put("product-dependencies", dependencies)
+        getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
+                'manifest-version': '1.0',
+                'product-type'    : productType,
+                'product-group'   : serviceGroup,
+                'product-name'    : serviceName,
+                'product-version' : projectVersion,
+                'extensions'      : manifestExtensions,
+        ])))
+    }
+
+    private static List<ProductDependency> getDependencies(
+            Configuration dependenciesConfig,
+            Set<ProductDependency> productDependencies,
+            Set<ProductId> ignoredProductIds) {
         Map<String, Set<RecommendedProductDependency>> allRecommendedDepsByCoord = [:]
         Map<String, String> mavenCoordsByProductIds = [:]
         Map<String, RecommendedProductDependency> recommendedDepsByProductId = [:]
 
-        productDependenciesConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+        dependenciesConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
             String coord = identifierToCoord(artifact.moduleVersion.id)
 
             def manifest
@@ -152,12 +170,12 @@ class CreateManifestTask extends DefaultTask {
         }
 
         Set<String> seenRecommendedProductIds = []
-        def dependencies = []
+        List<ProductDependency> dependencies = []
         productDependencies.each { productDependency ->
             def productId = "${productDependency.productGroup}:${productDependency.productName}".toString()
 
             if (!productDependency.detectConstraints) {
-                dependencies.add(jsonMapper.convertValue(productDependency, new TypeReference<Map<String, Object>>() {}))
+                dependencies.add(productDependency)
             } else {
                 if (!recommendedDepsByProductId.containsKey(productId)) {
                     throw new GradleException("Product dependency '${productId}' has constraint detection enabled, " +
@@ -165,14 +183,13 @@ class CreateManifestTask extends DefaultTask {
                 }
                 def recommendedProductDep = recommendedDepsByProductId.get(productId)
                 try {
-                    dependencies.add(jsonMapper.convertValue(
+                    dependencies.add(
                             new ProductDependency(
                                     productDependency.productGroup,
                                     productDependency.productName,
                                     recommendedProductDep.minimumVersion,
                                     recommendedProductDep.maximumVersion,
-                                    recommendedProductDep.recommendedVersion),
-                            new TypeReference<Map<String, Object>>() {}))
+                                    recommendedProductDep.recommendedVersion))
 
                 } catch (IllegalArgumentException e) {
                     def mavenCoordSource = mavenCoordsByProductIds.get(productId)
@@ -192,18 +209,10 @@ class CreateManifestTask extends DefaultTask {
 
         if (!unseenProductIds.isEmpty()) {
             throw new GradleException("The following products are recommended as dependencies but do not appear in " +
-                    "the product dependencies or product dependencies ignored list: ${unseenProductIds}. See gradle-sls-packaging for more details")
+                    "the product dependencies or product dependencies ignored list: ${unseenProductIds}. See " +
+                    "gradle-sls-packaging for more details")
         }
-
-        manifestExtensions.put("product-dependencies", dependencies)
-        getManifestFile().setText(JsonOutput.prettyPrint(JsonOutput.toJson([
-                'manifest-version': '1.0',
-                'product-type'    : productType,
-                'product-group'   : serviceGroup,
-                'product-name'    : serviceName,
-                'product-version' : projectVersion,
-                'extensions'      : manifestExtensions,
-        ])))
+        dependencies
     }
 
     void configure(
