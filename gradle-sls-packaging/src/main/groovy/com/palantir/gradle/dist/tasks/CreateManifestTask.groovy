@@ -81,8 +81,11 @@ class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     void createManifest() {
+        // Make sure we ignore this product
+        def newIgnoredProductIds = ignoredProductIds + new ProductId(serviceGroup, serviceName)
+
         def dependencies = DependenciesUtil
-                .resolveDependencies(project, productDependenciesConfig, productDependencies, ignoredProductIds)
+                .resolveDependencies(project, productDependenciesConfig, productDependencies, newIgnoredProductIds)
                 .collect { DependenciesUtil.jsonMapper.convertValue(it, new TypeReference<Map<String, Object>>() {}) }
 
         manifestExtensions.put("product-dependencies", dependencies)

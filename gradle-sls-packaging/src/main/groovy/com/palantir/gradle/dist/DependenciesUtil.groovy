@@ -136,8 +136,6 @@ final class DependenciesUtil {
         def unseenProductIds = new HashSet<>(recommendedDepsByProductId.keySet())
         seenRecommendedProductIds.each { unseenProductIds.remove(it) }
         ignoredProductIds.each { unseenProductIds.remove(it.toString()) }
-        // TODO...
-        unseenProductIds.remove("${serviceGroup}:${serviceName}".toString())
 
         if (!unseenProductIds.isEmpty()) {
             throw new GradleException("The following products are recommended as dependencies but do not appear in " +
