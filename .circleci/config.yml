@@ -20,7 +20,7 @@ jobs:
       - restore_cache:
           key: gradle-cache-{{ checksum "versions.props" }}-{{ checksum "build.gradle" }}
 
-      - run: ./gradlew --profile --parallel resolveConfigurations
+      - run: ./gradlew --scan --parallel resolveConfigurations
 
       - save_cache:
           key: gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
@@ -31,7 +31,7 @@ jobs:
           paths:
             - ~/.gradle/caches
 
-      - run: ./gradlew --profile --parallel --continue build
+      - run: ./gradlew --scan --parallel --continue build
 
       - run:
           command: |
@@ -43,9 +43,9 @@ jobs:
           command: |
             # publishing snapshots to bintray does not work, so we only publish from tag builds (not develop)
             if [[ "${CIRCLE_TAG}" =~ [0-9]+(\.[0-9]+)+(-[a-zA-Z]+[0-9]*)* ]]; then
-              ./gradlew --profile --stacktrace --continue publish
+              ./gradlew --scan --stacktrace --continue publish
             else
-              ./gradlew --profile --parallel --continue publishToMavenLocal
+              ./gradlew --scan --parallel --continue publishToMavenLocal
               mkdir -p $CIRCLE_ARTIFACTS/poms
               find . -name 'pom-default.xml' -exec cp --parents {} $CIRCLE_ARTIFACTS/poms \;
             fi

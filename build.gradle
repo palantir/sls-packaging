@@ -67,3 +67,8 @@ subprojects {
 dependencies {
     baseline 'com.palantir.baseline:gradle-baseline-java-config:0.26.1@zip'
 }
+
+buildScan {
+    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+    termsOfServiceAgree = 'yes'
+}
