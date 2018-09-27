@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Set;
 import org.immutables.value.Value;
+import org.immutables.value.Value.Parameter;
 
 @Value.Immutable
 @Value.Style(jdkOnly = true)
@@ -29,13 +30,10 @@ import org.immutables.value.Value;
 public interface RecommendedProductDependencies {
 
     @JsonProperty("recommended-product-dependencies")
+    @Parameter
     Set<RecommendedProductDependency> recommendedProductDependencies();
 
-    static Builder builder() {
-        return new Builder();
+    static RecommendedProductDependencies of(Iterable<? extends RecommendedProductDependency> dependencies) {
+        return ImmutableRecommendedProductDependencies.of(dependencies);
     }
-
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {
-    }
-
 }
