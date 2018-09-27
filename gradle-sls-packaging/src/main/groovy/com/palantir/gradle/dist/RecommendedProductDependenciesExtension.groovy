@@ -20,13 +20,13 @@ import org.gradle.util.ConfigureUtil
 
 class RecommendedProductDependenciesExtension {
 
-    Set<ProductDependency> productDependencies = []
+    Set<ProductDependency> recommendedProductDependencies = []
 
     void productDependency(@DelegatesTo(ProductDependency) Closure<?> closure) {
         ProductDependency dep = new ProductDependency()
         ConfigureUtil.configureUsing(closure).execute(dep)
         dep.isValid()
-        productDependencies.add(dep)
+        recommendedProductDependencies.add(dep)
     }
 
 }
