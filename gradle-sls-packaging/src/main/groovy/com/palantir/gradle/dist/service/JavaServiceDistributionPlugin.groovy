@@ -17,9 +17,18 @@ package com.palantir.gradle.dist.service
 
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.pod.PodDistributionPlugin
-import com.palantir.gradle.dist.service.tasks.*
-import com.palantir.gradle.dist.tasks.CreateManifestTask
+import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
+import com.palantir.gradle.dist.service.tasks.CopyYourkitAgentTask
+import com.palantir.gradle.dist.service.tasks.CopyYourkitLicenseTask
+import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask
+import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask
+import com.palantir.gradle.dist.service.tasks.CreateStartScriptsTask
+import com.palantir.gradle.dist.service.tasks.DistTarTask
+import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
+import com.palantir.gradle.dist.service.tasks.ManifestClasspathJarTask
+import com.palantir.gradle.dist.service.tasks.RunTask
 import com.palantir.gradle.dist.tasks.ConfigTarTask
+import com.palantir.gradle.dist.tasks.CreateManifestTask
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -46,8 +55,8 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies {
-            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.5.0'
-            goJavaLauncherBinaries 'com.palantir.launching:go-init:1.5.0'
+            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.5.1'
+            goJavaLauncherBinaries 'com.palantir.launching:go-init:1.5.1'
         }
 
         def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
