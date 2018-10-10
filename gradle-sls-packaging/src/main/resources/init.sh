@@ -42,15 +42,23 @@ STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
 
 DEPRECATION_MESSAGE="Command is deprecated: the next major release of sls-packaging will only support start/status/stop"
 
+function print_help() {
+    echo "$0 forwards commands to go-init with the following usage."
+    echo ""
+}
+
+if [[ "$ACTION" =~ ^(-h|--help)$ && "$2" =~ ^(|start|stop|status)$ ]]; then
+    print_help
+    exec $GO_INIT_CMD --help "$2"
+fi
+
 case $ACTION in
-start)
-    $GO_INIT_CMD start
-;;
-status)
-    $GO_INIT_CMD status
-;;
-stop)
-    $GO_INIT_CMD stop
+start|status|stop)
+    if [[ "$2" =~ ^(-h|--help)$ ]]; then
+        print_help
+        exec $GO_INIT_CMD "$ACTION" $2
+    fi
+    exec $GO_INIT_CMD "$ACTION"
 ;;
 console)
     echo $DEPRECATION_MESSAGE
@@ -92,9 +100,7 @@ check)
         /bin/bash "$SCRIPT_DIR/init-$ACTION.sh" "$@"
         exit $?
     else
-        COMMANDS=$(ls $SCRIPT_DIR | sed -ne '/init-.*.sh/ { s/^init-\(.*\).sh$/|\1/g; p; }' | tr -d '\n')
-        echo "Usage: $0 {status|start|stop|console|restart|check${COMMANDS}}"
-        echo "All commands but start/status/stop are deprecated: the next major release will only support these commands"
-        exit 1
+        print_help
+        exec $GO_INIT_CMD
     fi
 esac
