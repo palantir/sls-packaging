@@ -1,45 +1,31 @@
 buildscript {
     repositories {
         jcenter()
-        maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "http://palantir.bintray.com/releases" }
+        maven { url 'https://plugins.gradle.org/m2/' }
+        maven { url 'https://palantir.bintray.com/releases' }
     }
 
     dependencies {
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
-        classpath 'com.palantir.baseline:gradle-baseline-java:0.26.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.3'
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:6.0.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:5.1.4'
+        classpath 'com.palantir.baseline:gradle-baseline-java:0.34.0'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:0.11.0'
-        classpath 'com.palantir.configurationresolver:gradle-configuration-resolver-plugin:0.3.0'
-        classpath 'gradle.plugin.org.inferred:gradle-processors:1.2.15'
         classpath 'de.undercouch:gradle-download-task:3.4.2'
+        classpath 'gradle.plugin.org.inferred:gradle-processors:1.3.0'
     }
 }
 
-plugins {
-    id 'com.palantir.circle.style' version '1.1.2'
-}
-
-apply plugin: 'com.palantir.configuration-resolver'
-apply plugin: 'com.palantir.baseline-config'
-apply plugin: 'idea'
+apply plugin: 'com.palantir.baseline'
+apply plugin: 'com.palantir.git-version'
 
 allprojects {
+    version gitVersion()
+    group 'com.palantir.sls-packaging'
+
     repositories {
         jcenter()
-        maven { url "http://palantir.bintray.com/releases" }
-    }
-    apply plugin: 'com.palantir.git-version'
-    apply plugin: 'nebula.dependency-recommender'
-
-    group 'com.palantir.sls-packaging'
-    version gitVersion()
-
-    dependencyRecommendations {
-        strategy OverrideTransitives
-        propertiesFile file: project.rootProject.file('versions.props')
+        maven { url 'https://palantir.bintray.com/releases' }
     }
 
     configurations.all {
@@ -50,20 +36,5 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'com.palantir.baseline-checkstyle'
-    apply plugin: 'com.palantir.baseline-eclipse'
-    apply plugin: 'com.palantir.baseline-class-uniqueness'
-    apply plugin: 'com.palantir.baseline-error-prone'
-    apply plugin: 'com.palantir.baseline-idea'
     apply plugin: 'java-library'
-
-    configurations.errorprone {
-        resolutionStrategy {
-            force 'com.google.guava:guava:21.0'
-        }
-    }
-}
-
-dependencies {
-    baseline 'com.palantir.baseline:gradle-baseline-java-config:0.26.1@zip'
 }
