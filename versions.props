@@ -8,5 +8,5 @@ junit:junit = 4.12
 org.assertj:assertj-core = 3.11.1
 
 # conflict resolution
-com.google.errorprone:error_prone_annotations = 2.3.1
-com.google.code.findbugs:jsr305 = 3.0.0
+com.google.errorprone:error_prone_annotations = 2.3.2
+com.google.code.findbugs:jsr305 = 3.0.2
