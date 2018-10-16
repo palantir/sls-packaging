@@ -7,7 +7,7 @@ apply plugin: 'org.inferred.processors'
 apply plugin: 'de.undercouch.download'
 
 dependencies {
-    processor 'org.immutables:value'
+    annotationProcessor 'org.immutables:value'
 
     compile project(':sls-versions')
     compile 'com.google.guava:guava'
