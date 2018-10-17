@@ -17,34 +17,26 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
+import org.gradle.api.tasks.Sync
 
-class CopyLauncherBinariesTask extends DefaultTask {
+class CopyLauncherBinariesTask extends Sync {
     CopyLauncherBinariesTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
         description = "Creates go-java-launcher binaries."
-        doLast {
-            ['go-java-launcher', 'go-init'].each { binary ->
-                project.copy { copySpec ->
-                    def zipPath = project.configurations.goJavaLauncherBinaries.find {
-                        it.name.startsWith(binary)
-                    }
-                    def zipFile = project.file(zipPath)
+        from { project.configurations.goJavaLauncherBinaries.collect {
+            project.tarTree(it)
+        } }
 
-                    copySpec.from project.tarTree(zipFile)
-                    copySpec.into "${project.buildDir}/scripts"
-                    copySpec.includeEmptyDirs = false
+        into "${project.buildDir}/scripts"
+        includeEmptyDirs = false
 
-                    // remove first three levels of directory structure from Tar container
-                    copySpec.eachFile { FileCopyDetails fcp ->
-                        fcp.relativePath = new RelativePath(
-                                !fcp.file.isDirectory(),
-                                fcp.relativePath.segments[3..-1] as String[])
-                    }
-                }
-            }
+        // remove first three levels of directory structure from Tar container
+        eachFile { FileCopyDetails fcp ->
+            fcp.relativePath = new RelativePath(
+                    !fcp.file.isDirectory(),
+                    fcp.relativePath.segments[3..-1] as String[])
         }
     }
 }
