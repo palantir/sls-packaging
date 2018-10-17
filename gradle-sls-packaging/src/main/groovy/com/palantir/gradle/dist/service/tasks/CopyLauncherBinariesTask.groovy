@@ -25,9 +25,7 @@ class CopyLauncherBinariesTask extends Sync {
     CopyLauncherBinariesTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
         description = "Creates go-java-launcher binaries."
-        from { project.configurations.goJavaLauncherBinaries.collect {
-            project.tarTree(it)
-        } }
+        from { project.configurations.goJavaLauncherBinaries.collect { project.tarTree(it) } }
 
         into "${project.buildDir}/scripts"
         includeEmptyDirs = false
