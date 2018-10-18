@@ -284,27 +284,36 @@ class CreateManifestTaskTest extends GradleTestSpec {
 
     def generateDependencies() {
         DependencyGraph dependencyGraph = new DependencyGraph(
-                "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0")
+                "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",
+                "pdep:pdep:1.0")
         GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
         mavenRepo = generator.generateTestMavenRepo()
 
+
+        // depends on group:name:[1.0.0, 1.x.x]:1.2.0
         Files.copy(
                 CreateManifestTaskTest.class.getResourceAsStream("/a-1.0.jar"),
                 new File(mavenRepo, "a/a/1.0/a-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
+        // depends on group:name2:[2.0.0, 2.x.x]:2.2.0
         Files.copy(
                 CreateManifestTaskTest.class.getResourceAsStream("/b-1.0.jar"),
                 new File(mavenRepo, "b/b/1.0/b-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
-        // Make d.jar a duplicate of b.jar, including the exact same recommendation
+        // Make d.jar a duplicate of b.jar
         Files.copy(
                 CreateManifestTaskTest.class.getResourceAsStream("/b-1.0.jar"),
                 new File(mavenRepo, "d/d/1.0/d-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
-        // Make e.jar a duplicate of b.jar, but with a different recommendation
+        // e-1.0.jar declares group:name2:[2.1.0, 2.6.x]:2.2.0
         Files.copy(
                 CreateManifestTaskTest.class.getResourceAsStream("/b-duplicate-different-versions-1.0.jar"),
                 new File(mavenRepo, "e/e/1.0/e-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+        // Make pdep-1.0.jar declare a pdep on group:name:[1.5.0, 1.8.x]:1.7.0
+        Files.copy(
+                CreateManifestTaskTest.class.getResourceAsStream("/pdep-1.0.jar"),
+                new File(mavenRepo, "pdep/pdep/1.0/pdep-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
     }
 }
