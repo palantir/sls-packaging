@@ -47,7 +47,7 @@ class CreateManifestTask extends DefaultTask {
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
-    public static final String PDEPS_FILE_PATH = "META-INF/pdeps.json"
+    public static final String PDEP_FILE_PATH = "META-INF/pdep.json"
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -102,7 +102,7 @@ class CreateManifestTask extends DefaultTask {
         productDependenciesConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
             String coord = identifierToCoord(artifact.moduleVersion.id)
 
-            def recommendedDeps = readProductDepsFromPdepsFile(artifact) ?: readProductDepsFromManifest(artifact)
+            def recommendedDeps = readProductDepsFromPdepFile(artifact) ?: readProductDepsFromManifest(artifact)
             if (recommendedDeps == null) {
                 return
             }
@@ -218,13 +218,13 @@ class CreateManifestTask extends DefaultTask {
         return jsonMapper.readValue(pdeps, RecommendedProductDependencies)
     }
 
-    RecommendedProductDependencies readProductDepsFromPdepsFile(ResolvedArtifact artifact) {
+    RecommendedProductDependencies readProductDepsFromPdepFile(ResolvedArtifact artifact) {
         def coord = identifierToCoord(artifact.moduleVersion.id)
         try {
             def zf = new ZipFile(artifact.file)
-            def entry = zf.getEntry(PDEPS_FILE_PATH)
+            def entry = zf.getEntry(PDEP_FILE_PATH)
             if (entry == null) {
-                logger.debug("Pdeps file {} does not exist in jar for '{}'", PDEPS_FILE_PATH, coord)
+                logger.debug("Pdeps file {} does not exist in jar for '{}'", PDEP_FILE_PATH, coord)
                 return null
             }
 
