@@ -143,7 +143,6 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
                 file('build/deployment/manifest.yml', projectDir).text, Map)
-        manifest.get("extensions").get("product-dependencies").size() == 2
         manifest.get("extensions").get("product-dependencies") == [
                 [
                         "product-group"      : "group",
@@ -199,7 +198,6 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
                 file('build/deployment/manifest.yml', projectDir).text, Map)
-        manifest.get("extensions").get("product-dependencies").size() == 1
         manifest.get("extensions").get("product-dependencies") == [
                 [
                         "product-group"      : "group",
