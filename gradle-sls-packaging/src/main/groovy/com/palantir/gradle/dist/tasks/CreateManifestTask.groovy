@@ -187,7 +187,7 @@ class CreateManifestTask extends DefaultTask {
 
         def unseenProductIds = new HashSet<>(recommendedDepsByProductId.keySet())
         seenRecommendedProductIds.each { unseenProductIds.remove(it) }
-        ignoredProductIds.each { unseenProductIds.remove(it.toString()) }
+        ignoredProductIds?.each { unseenProductIds.remove(it.toString()) }
         unseenProductIds.remove("${serviceGroup}:${serviceName}".toString())
 
         if (!unseenProductIds.isEmpty()) {
