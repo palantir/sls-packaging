@@ -35,6 +35,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -46,6 +47,7 @@ class CreateManifestTask extends DefaultTask {
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
+    public static final String PDEPS_FILE_PATH = "META-INF/pdeps.json"
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -100,28 +102,10 @@ class CreateManifestTask extends DefaultTask {
         productDependenciesConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
             String coord = identifierToCoord(artifact.moduleVersion.id)
 
-            def manifest
-            try {
-                def zf = new ZipFile(artifact.file)
-                def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
-                if (manifestEntry == null) {
-                    logger.debug("Manifest file does not exist in jar for '${coord}'")
-                    return
-                }
-                manifest = new Manifest(zf.getInputStream(manifestEntry))
-            } catch (IOException e) {
-                logger.warn("IOException encountered when processing artifact '{}', file '{}'", coord, artifact.file, e)
+            def recommendedDeps = readProductDepsFromPdepsFile(artifact) ?: readProductDepsFromManifest(artifact)
+            if (recommendedDeps == null) {
                 return
             }
-
-            def pdeps = manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY)
-
-            if (pdeps == null) {
-                logger.debug("No pdeps found in manifest for artifact '{}', file '{}'", coord, artifact.file)
-                return
-            }
-
-            def recommendedDeps = jsonMapper.readValue(pdeps, RecommendedProductDependencies.class)
 
             if (!allRecommendedDepsByCoord.containsKey(coord)) {
                 allRecommendedDepsByCoord.put(coord, new HashSet<RecommendedProductDependency>())
@@ -208,6 +192,50 @@ class CreateManifestTask extends DefaultTask {
         ])))
     }
 
+    RecommendedProductDependencies readProductDepsFromManifest(ResolvedArtifact artifact) {
+        def coord = identifierToCoord(artifact.moduleVersion.id)
+        def manifest
+        try {
+            def zf = new ZipFile(artifact.file)
+            def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
+            if (manifestEntry == null) {
+                logger.debug("Manifest file does not exist in jar for '{}'", coord)
+                return
+            }
+            manifest = new Manifest(zf.getInputStream(manifestEntry))
+        } catch (IOException e) {
+            logger.warn("IOException encountered when processing artifact '{}', file '{}'", coord, artifact.file, e)
+            return
+        }
+
+        def pdeps = manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY)
+
+        if (pdeps == null) {
+            logger.debug("No pdeps found in manifest for artifact '{}', file '{}'", coord, artifact.file)
+            return null
+        }
+
+        return jsonMapper.readValue(pdeps, RecommendedProductDependencies)
+    }
+
+    RecommendedProductDependencies readProductDepsFromPdepsFile(ResolvedArtifact artifact) {
+        def coord = identifierToCoord(artifact.moduleVersion.id)
+        try {
+            def zf = new ZipFile(artifact.file)
+            def entry = zf.getEntry(PDEPS_FILE_PATH)
+            if (entry == null) {
+                logger.debug("Pdeps file {} does not exist in jar for '{}'", PDEPS_FILE_PATH, coord)
+                return null
+            }
+
+            def dep = jsonMapper.readValue(zf.getInputStream(entry), RecommendedProductDependency)
+            return RecommendedProductDependencies.builder().addRecommendedProductDependencies(dep).build()
+        } catch (IOException e) {
+            logger.warn("IOException encountered when processing artifact '{}', file '{}'", coord, artifact.file, e)
+        }
+        return null
+    }
+
     void configure(
             String serviceName,
             String serviceGroup,
@@ -231,6 +259,7 @@ class CreateManifestTask extends DefaultTask {
         dependsOn(productDependenciesConfig)
     }
 
+    @CompileStatic
     static String identifierToCoord(ModuleVersionIdentifier identifier) {
         return "${identifier.group}:${identifier.name}:${identifier.version}".toString()
     }
