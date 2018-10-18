@@ -135,7 +135,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
                 ]
                 productDependenciesConfig = configurations.runtime
             }
-        """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+        """.stripIndent()
 
         when:
         runSuccessfully(':testCreateManifest')
@@ -191,7 +191,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
                 ]
                 productDependenciesConfig = configurations.runtime
             }
-        """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+        """.stripIndent()
 
         when:
         runSuccessfully(':testCreateManifest')
