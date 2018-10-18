@@ -310,10 +310,5 @@ class CreateManifestTaskTest extends GradleTestSpec {
                 CreateManifestTaskTest.class.getResourceAsStream("/b-duplicate-different-versions-1.0.jar"),
                 new File(mavenRepo, "e/e/1.0/e-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
-        // Make pdep-1.0.jar declare a pdep on group:name:[1.5.0, 1.8.x]:1.7.0
-        Files.copy(
-                CreateManifestTaskTest.class.getResourceAsStream("/pdep-1.0.jar"),
-                new File(mavenRepo, "pdep/pdep/1.0/pdep-1.0.jar").toPath(),
-                StandardCopyOption.REPLACE_EXISTING)
     }
 }
