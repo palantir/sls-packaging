@@ -146,17 +146,17 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         manifest.get("extensions").get("product-dependencies").size() == 2
         manifest.get("extensions").get("product-dependencies") == [
                 [
-                        "product-group": "group",
-                        "product-name": "name",
-                        "minimum-version": "1.0.0",
-                        "maximum-version": "1.x.x",
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.0.0",
+                        "maximum-version"    : "1.x.x",
                         "recommended-version": "1.2.0"
                 ],
                 [
-                        "product-group": "group",
-                        "product-name": "name2",
-                        "minimum-version": "2.0.0",
-                        "maximum-version": "2.x.x",
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "maximum-version"    : "2.x.x",
                         "recommended-version": "2.2.0"
                 ]
         ]
@@ -202,10 +202,10 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         manifest.get("extensions").get("product-dependencies").size() == 1
         manifest.get("extensions").get("product-dependencies") == [
                 [
-                        "product-group": "group",
-                        "product-name": "name2",
-                        "minimum-version": "2.0.0",
-                        "maximum-version": "2.x.x",
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "maximum-version"    : "2.x.x",
                         "recommended-version": "2.2.0"
                 ]
         ]
@@ -251,10 +251,10 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         manifest.get("extensions").get("product-dependencies").size() == 1
         manifest.get("extensions").get("product-dependencies") == [
                 [
-                        "product-group": "group",
-                        "product-name": "name2",
-                        "minimum-version": "2.1.0",
-                        "maximum-version": "2.6.x",
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.1.0",
+                        "maximum-version"    : "2.6.x",
                         "recommended-version": "2.2.0"
                 ]
         ]
