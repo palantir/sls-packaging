@@ -17,15 +17,14 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.GradleTestSpec
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 class CreateManifestTaskTest extends GradleTestSpec {
 
@@ -241,7 +240,7 @@ class CreateManifestTaskTest extends GradleTestSpec {
                 ]
                 productDependenciesConfig = configurations.runtime
             }
-        """.stripIndent().replace("{{mavenRepo}}", mavenRepo.getAbsolutePath())
+        """.stripIndent()
 
         when:
         def result = runSuccessfully(':testCreateManifest')
