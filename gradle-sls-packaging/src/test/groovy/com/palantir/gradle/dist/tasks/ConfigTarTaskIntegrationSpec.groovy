@@ -16,13 +16,13 @@
 
 package com.palantir.gradle.dist.tasks
 
-import com.palantir.gradle.dist.GradleTestSpec
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
-import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
 
-class ConfigTarTaskTest extends GradleTestSpec {
+class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'configTar task exists for services'() {
         setup:

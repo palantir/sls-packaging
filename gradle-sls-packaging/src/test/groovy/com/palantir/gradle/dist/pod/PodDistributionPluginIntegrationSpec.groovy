@@ -18,10 +18,10 @@ package com.palantir.gradle.dist.pod
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.dist.GradleTestSpec
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import org.gradle.testkit.runner.BuildResult
 
-class PodDistributionPluginTest extends GradleTestSpec {
+class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
     def 'manifest file contains expected fields'() {
         given:

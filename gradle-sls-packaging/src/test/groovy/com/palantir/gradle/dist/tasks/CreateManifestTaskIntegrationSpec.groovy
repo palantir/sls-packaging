@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
-import com.palantir.gradle.dist.GradleTestSpec
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
@@ -26,7 +26,7 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
-class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
+class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     File mavenRepo
 
