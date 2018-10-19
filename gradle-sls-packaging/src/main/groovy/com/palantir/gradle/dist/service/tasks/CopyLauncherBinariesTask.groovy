@@ -17,12 +17,10 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RelativePath
 
-@CompileStatic
 class CopyLauncherBinariesTask extends DefaultTask {
     CopyLauncherBinariesTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
