@@ -445,6 +445,51 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         expectedCheckConfig == actualCheckConfig
     }
 
+    def 'produce distribution with java 8 gc logging'() {
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar") }
+            tasks.jar.baseName = "internal"
+            distribution {
+                javaHome 'foo'
+                addJava8GCLogging true
+            }'''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        def expectedStaticConfig = new LaunchConfigTask.StaticLaunchConfig()
+        expectedStaticConfig.setConfigVersion(1)
+        expectedStaticConfig.setConfigType("java")
+        expectedStaticConfig.setMainClass("test.Test")
+        expectedStaticConfig.setServiceName("service-name")
+        expectedStaticConfig.setJavaHome("foo")
+        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+        expectedStaticConfig.setJvmOpts([
+                '-XX:+CrashOnOutOfMemoryError',
+                '-Djava.io.tmpdir=var/data/tmp',
+                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                '-Dsun.net.inetaddr.ttl=20',
+                '-XX:+UseParallelOldGC',
+                "-XX:+PrintGCDateStamps",
+                "-XX:+PrintGCDetails",
+                "-XX:-TraceClassUnloading",
+                "-XX:+UseGCLogFileRotation",
+                "-XX:GCLogFileSize=10M",
+                "-XX:NumberOfGCLogFiles=10",
+                "-Xloggc:var/log/gc-%t-%p.log",
+                "-verbose:gc",
+                '-XX:+UseParallelOldGC',
+                '-Xmx4M',
+                '-Djavax.net.ssl.trustStore=truststore.jks'])
+        expectedStaticConfig.setDirs(["var/data/tmp"])
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        expectedStaticConfig == actualStaticConfig
+    }
+
     def 'produce distribution bundle that populates check.sh'() {
         given:
         createUntarBuildFile(buildFile)

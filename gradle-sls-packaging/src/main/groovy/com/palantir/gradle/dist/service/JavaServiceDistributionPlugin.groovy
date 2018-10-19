@@ -90,6 +90,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.checkArgs,
                     distributionExtension.gc,
                     distributionExtension.defaultJvmOpts,
+                    distributionExtension.addJava8GCLogging,
                     distributionExtension.javaHome,
                     distributionExtension.env,
                     project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).outputs.files + project.configurations.getByName('runtimeClasspath'))

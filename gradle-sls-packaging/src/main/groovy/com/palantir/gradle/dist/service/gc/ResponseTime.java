@@ -37,16 +37,8 @@ public class ResponseTime implements GcProfile {
                 "-XX:+CMSScavengeBeforeRemark");
     }
 
-    public final void initiatingOccupancyFraction(int occipancyFraction) {
-        this.initiatingOccupancyFraction = occipancyFraction;
-    }
-
-    public final int getInitiatingOccupancyFraction() {
-        return initiatingOccupancyFraction;
-    }
-
-    public final void setInitiatingOccupancyFraction(int occipancyFraction) {
-        this.initiatingOccupancyFraction = occipancyFraction;
+    public final void initiatingOccupancyFraction(int occupancyFraction) {
+        this.initiatingOccupancyFraction = occupancyFraction;
     }
 
 }
