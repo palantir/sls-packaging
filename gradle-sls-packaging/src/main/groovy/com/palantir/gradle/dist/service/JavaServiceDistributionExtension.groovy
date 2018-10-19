@@ -40,6 +40,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     private String mainClass
     private GcProfile gc
+    private boolean addJava8GCLogging = false
     private List<String> args = []
     private List<String> checkArgs = []
     private List<String> defaultJvmOpts = []
@@ -167,4 +168,15 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
         gc(type, null)
     }
 
+    boolean getAddJava8GCLogging() {
+        return addJava8GCLogging
+    }
+
+    void setAddJava8GCLogging(boolean addJava8GCLogging) {
+        this.addJava8GCLogging = addJava8GCLogging
+    }
+
+    void addJava8GCLogging(boolean addJava8GCLogging) {
+        this.addJava8GCLogging = addJava8GCLogging
+    }
 }

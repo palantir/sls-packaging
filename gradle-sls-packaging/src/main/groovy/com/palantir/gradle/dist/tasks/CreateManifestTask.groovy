@@ -36,6 +36,8 @@ import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
@@ -67,9 +69,11 @@ class CreateManifestTask extends DefaultTask {
     @Input
     Map<String, Object> manifestExtensions
 
-    @Input
+    @InputFiles
     Configuration productDependenciesConfig
 
+    @Input
+    @Optional
     Set<ProductId> ignoredProductIds
 
     @Input

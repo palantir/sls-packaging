@@ -23,7 +23,6 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
 
-@CompileStatic
 class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
     @Override
@@ -34,9 +33,10 @@ class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
         project.afterEvaluate {
             ext.recommendedProductDependencies.each { recommendedProductDependency ->
-                def recommendedProductDeps = CreateManifestTask.jsonMapper.writeValueAsString(RecommendedProductDependencies.builder()
-                        .recommendedProductDependencies(ext.recommendedProductDependencies)
-                        .build())
+                def recommendedProductDeps = CreateManifestTask.jsonMapper
+                        .writeValueAsString(RecommendedProductDependencies.builder()
+                            .recommendedProductDependencies(ext.recommendedProductDependencies)
+                            .build())
                 Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME)
                 jar.manifest.attributes((CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY): recommendedProductDeps)
             }

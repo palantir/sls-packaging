@@ -33,13 +33,21 @@ import org.gradle.api.tasks.TaskAction
 
 class LaunchConfigTask extends DefaultTask {
 
-    static final List<String> tmpdirJvmOpts = ['-Djava.io.tmpdir=var/data/tmp']
-
-    static final List<String> loggingJvmOpts = [
-            '-XX:ErrorFile=var/log/hs_err_pid%p.log'
+    private static final List<String> java8gcLoggingOptions = [
+            "-XX:+PrintGCDateStamps",
+            "-XX:+PrintGCDetails",
+            "-XX:-TraceClassUnloading",
+            "-XX:+UseGCLogFileRotation",
+            "-XX:GCLogFileSize=10M",
+            "-XX:NumberOfGCLogFiles=10",
+            "-Xloggc:var/log/gc-%t-%p.log",
+            "-verbose:gc"
     ]
 
-    static final List<String> dnsJvmOpts = [
+    static final List<String> alwaysOnJvmOptions = [
+            '-XX:+CrashOnOutOfMemoryError',
+            '-Djava.io.tmpdir=var/data/tmp',
+            '-XX:ErrorFile=var/log/hs_err_pid%p.log',
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
             '-Dsun.net.inetaddr.ttl=20'
@@ -50,7 +58,7 @@ class LaunchConfigTask extends DefaultTask {
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
     // See https://issues.apache.org/jira/browse/HADOOP-7154
-    static final Map<String, String> defaultEnvironment = Collections.unmodifiableMap(['MALLOC_ARENA_MAX':'4'])
+    static final Map<String, String> defaultEnvironment = Collections.unmodifiableMap(['MALLOC_ARENA_MAX': '4'])
 
     @Input
     String mainClass
@@ -69,6 +77,9 @@ class LaunchConfigTask extends DefaultTask {
 
     @Input
     List<String> defaultJvmOpts
+
+    @Input
+    boolean addJava8GCLogging
 
     @Input
     Map<String, String> env
@@ -113,19 +124,23 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), assembleJvmOpts(), defaultEnvironment), getStaticLauncher())
-        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts, [:]), getCheckLauncher())
+        writeConfig(createConfig(
+                getArgs(),
+                alwaysOnJvmOptions + gcLoggingOptions() + gc.gcJvmOpts() + defaultJvmOpts,
+                defaultEnvironment),
+                getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs(), alwaysOnJvmOptions + defaultJvmOpts, [:]), getCheckLauncher())
     }
 
-    List<String> assembleJvmOpts() {
-        return tmpdirJvmOpts + gc.gcJvmOpts() + loggingJvmOpts + dnsJvmOpts + defaultJvmOpts
+    List<String> gcLoggingOptions() {
+        addJava8GCLogging ? java8gcLoggingOptions : []
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
         def outfile = project.buildDir.toPath().resolve(scriptFile.toPath())
         Files.createDirectories(outfile.parent)
-        outfile.withWriter { it ->
+        outfile.withWriter {it ->
             mapper.writeValue(it, config)
         }
     }
@@ -145,7 +160,7 @@ class LaunchConfigTask extends DefaultTask {
 
     private static List<String> relativizeToServiceLibDirectory(FileCollection files) {
         def output = []
-        files.each { output.add("service/lib/" + it.name) }
+        files.each {output.add("service/lib/" + it.name)}
         return output
     }
 
@@ -155,6 +170,7 @@ class LaunchConfigTask extends DefaultTask {
                    List<String> checkArgs,
                    GcProfile gcProfile,
                    List<String> defaultJvmOpts,
+                   boolean addJava8GCLogging,
                    String javaHome,
                    Map<String, String> env,
                    FileCollection classpath) {
@@ -164,6 +180,7 @@ class LaunchConfigTask extends DefaultTask {
         this.checkArgs = checkArgs
         this.gc = gcProfile
         this.defaultJvmOpts = defaultJvmOpts
+        this.addJava8GCLogging = addJava8GCLogging
         this.javaHome = javaHome
         this.env = env
         this.classpath = classpath
