@@ -31,6 +31,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     File mavenRepo
 
     def setup() {
+        generateDependencies()
         buildFile << """
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
@@ -54,7 +55,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'Fail on missing recommended product dependencies'() {
         setup:
-        generateDependencies()
         buildFile << """
             dependencies {
                 runtime 'a:a:1.0'
@@ -76,7 +76,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'Can ignore recommended product dependencies'() {
         setup:
-        generateDependencies()
         buildFile << """
             dependencies {
                 runtime 'a:a:1.0'
@@ -100,7 +99,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def "Can set product dependencies from recommended product dependencies"() {
         setup:
-        generateDependencies()
         buildFile << """
             dependencies {
                 runtime 'a:a:1.0'
@@ -140,7 +138,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def "Duplicate recommendations with same versions"() {
         setup:
-        generateDependencies()
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
@@ -173,7 +170,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def "Duplicate recommendations with different mergeable versions"() {
         setup:
-        generateDependencies()
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
