@@ -28,10 +28,10 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class GradleTestSpec extends Specification {
+class GradleIntegrationSpec extends Specification {
 
     @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    public TemporaryFolder folder = new TemporaryFolder()
 
     File projectDir
     File buildFile

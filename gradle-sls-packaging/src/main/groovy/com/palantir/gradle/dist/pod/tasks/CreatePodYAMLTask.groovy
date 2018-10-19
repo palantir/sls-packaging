@@ -23,12 +23,14 @@ import com.palantir.gradle.dist.pod.PodDistributionPlugin
 import com.palantir.gradle.dist.pod.PodServiceDefinition
 import com.palantir.gradle.dist.pod.PodVolumeDefinition
 import groovy.json.JsonOutput
+import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+@CompileStatic
 class CreatePodYAMLTask extends DefaultTask {
     private final static String VOLUME_NAME_REGEX = "^(?:[a-z0-9]+?-)*[a-z0-9]+\$"
     public final static String SERVICE_VALIDATION_FAIL_FORMAT = "Pod validation failed for service %s: %s"

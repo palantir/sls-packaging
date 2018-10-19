@@ -17,9 +17,9 @@
 package com.palantir.gradle.dist.asset
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.palantir.gradle.dist.GradleTestSpec
+import com.palantir.gradle.dist.GradleIntegrationSpec
 
-class AssetDistributionPluginTest extends GradleTestSpec {
+class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
     def 'manifest file contains expected fields'() {
         given:

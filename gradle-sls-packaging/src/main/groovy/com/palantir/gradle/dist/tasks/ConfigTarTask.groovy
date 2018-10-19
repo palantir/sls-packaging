@@ -17,15 +17,18 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Compression
 import org.gradle.api.tasks.bundling.Tar
 
+@CompileStatic
 class ConfigTarTask {
     private static final String PRODUCT_TYPE_REGEX = "^\\w+?\\.v\\d+\$"
 
     static Tar createConfigTarTask(Project project, String taskName, String productType) {
-        project.tasks.create(taskName, Tar) { p ->
+        project.tasks.<Tar>create(taskName, Tar) { p ->
             p.group = JavaServiceDistributionPlugin.GROUP_NAME
             p.description = "Creates a compressed, gzipped tar file that contains the sls configuration files for the product"
             // Set compression in constructor so that task output has the right name from the start.
@@ -39,6 +42,7 @@ class ConfigTarTask {
         }
     }
 
+    @CompileDynamic
     static void configure(Tar distTar, Project project, String serviceName) {
         distTar.configure {
             setBaseName(serviceName)

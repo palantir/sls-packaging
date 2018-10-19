@@ -17,11 +17,10 @@
 package com.palantir.gradle.dist
 
 import com.palantir.gradle.dist.tasks.CreateManifestTask
-
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
 
-class RecommendedProductDependenciesPluginTest extends GradleTestSpec {
+class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrationSpec {
 
     def "Adds recommended product dependencies to manifest"() {
         buildFile << """

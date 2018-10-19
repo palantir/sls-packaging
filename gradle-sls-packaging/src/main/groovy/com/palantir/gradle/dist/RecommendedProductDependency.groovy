@@ -19,12 +19,14 @@ package com.palantir.gradle.dist
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.transform.AutoClone
+import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
 @ToString
 @EqualsAndHashCode
 @AutoClone
+@CompileStatic
 class RecommendedProductDependency {
 
     @JsonProperty("product-group")

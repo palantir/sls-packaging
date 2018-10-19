@@ -16,9 +16,11 @@
 package com.palantir.gradle.dist.pod
 
 import com.palantir.gradle.dist.BaseDistributionExtension
+import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 
+@CompileStatic
 class PodDistributionExtension extends BaseDistributionExtension {
 
     private Map<String, PodServiceDefinition> services = [:]

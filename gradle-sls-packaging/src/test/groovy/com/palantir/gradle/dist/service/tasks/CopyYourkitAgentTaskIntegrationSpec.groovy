@@ -16,11 +16,11 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.GradleTestSpec
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
-class CopyYourkitAgentTaskTest extends GradleTestSpec {
+class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'copyYourkitAgent task is up to date if already run'() {
         setup:

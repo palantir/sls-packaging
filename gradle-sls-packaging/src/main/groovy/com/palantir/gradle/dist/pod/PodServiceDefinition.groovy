@@ -16,13 +16,14 @@
 package com.palantir.gradle.dist.pod
 
 import com.palantir.slspackaging.versions.SlsProductVersions
+import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-
 import javax.annotation.Nonnull
 
 @ToString
 @EqualsAndHashCode
+@CompileStatic
 class PodServiceDefinition implements Serializable {
 
     private static final long serialVersionUID = 1L

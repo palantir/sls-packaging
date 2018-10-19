@@ -15,16 +15,18 @@
  */
 package com.palantir.gradle.dist.pod
 
+import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.pod.tasks.CreatePodYAMLTask
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
-import com.palantir.gradle.dist.asset.AssetDistributionPlugin
-import com.palantir.gradle.dist.tasks.CreateManifestTask
 import com.palantir.gradle.dist.tasks.ConfigTarTask
+import com.palantir.gradle.dist.tasks.CreateManifestTask
+import groovy.transform.CompileStatic
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Tar
 
+@CompileStatic
 class PodDistributionPlugin implements Plugin<Project> {
 
     static final String GROUP_NAME = "Distribution"

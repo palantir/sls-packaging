@@ -15,12 +15,13 @@
  */
 package com.palantir.gradle.dist.pod
 
+import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import org.gradle.api.GradleException
 
 @ToString
 @EqualsAndHashCode
+@CompileStatic
 class PodVolumeDefinition implements Serializable {
     public static final String VOLUME_SIZE_REGEX = "^\\d+?(M|G|T)\$"
 

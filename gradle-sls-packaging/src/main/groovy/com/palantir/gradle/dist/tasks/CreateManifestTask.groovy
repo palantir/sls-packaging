@@ -28,6 +28,7 @@ import com.palantir.gradle.dist.RecommendedProductDependencyMerger
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.json.JsonOutput
+import groovy.transform.CompileStatic
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
 import org.gradle.api.DefaultTask
@@ -38,6 +39,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+@CompileStatic
 class CreateManifestTask extends DefaultTask {
 
     public static String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies"
@@ -187,7 +189,7 @@ class CreateManifestTask extends DefaultTask {
 
         def unseenProductIds = new HashSet<>(recommendedDepsByProductId.keySet())
         seenRecommendedProductIds.each { unseenProductIds.remove(it) }
-        ignoredProductIds.each { unseenProductIds.remove(it.toString()) }
+        ignoredProductIds?.each { unseenProductIds.remove(it.toString()) }
         unseenProductIds.remove("${serviceGroup}:${serviceName}".toString())
 
         if (!unseenProductIds.isEmpty()) {
@@ -222,7 +224,7 @@ class CreateManifestTask extends DefaultTask {
         this.serviceName = serviceName
         this.serviceGroup = serviceGroup
         this.productType = productType
-        this.productDependencies = productDependencies
+        this.productDependencies = productDependencies as Set
         this.manifestExtensions = manifestExtensions
         this.productDependenciesConfig = productDependenciesConfig
         this.ignoredProductIds = ignoredProductIds
