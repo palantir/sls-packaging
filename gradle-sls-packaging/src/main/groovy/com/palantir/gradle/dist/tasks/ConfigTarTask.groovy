@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Compression
@@ -41,8 +42,9 @@ class ConfigTarTask {
         }
     }
 
+    @CompileDynamic
     static void configure(Tar distTar, Project project, String serviceName) {
-        distTar.with {
+        distTar.configure {
             setBaseName(serviceName)
             // do the things that the java plugin would otherwise do for us
             def version = String.valueOf(project.version)

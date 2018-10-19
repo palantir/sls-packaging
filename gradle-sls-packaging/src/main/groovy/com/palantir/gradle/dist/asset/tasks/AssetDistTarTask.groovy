@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.asset.tasks
 
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Compression
@@ -35,6 +36,7 @@ class AssetDistTarTask {
         }
     }
 
+    @CompileDynamic
     static void configure(Tar distTar, String serviceName, Map<String, String> assetDirs) {
         distTar.with {
             setBaseName(serviceName)
