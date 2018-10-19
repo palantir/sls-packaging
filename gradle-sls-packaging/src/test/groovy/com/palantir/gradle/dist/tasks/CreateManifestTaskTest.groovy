@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.RecommendedProductDependencies
-import com.palantir.gradle.dist.RecommendedProductDependency
 import java.nio.file.Files
 import nebula.test.ProjectSpec
 
@@ -49,19 +48,18 @@ class CreateManifestTaskTest extends ProjectSpec {
         Files.copy(CreateManifestTaskTest.getResourceAsStream("/pdep-1.0.jar"), artifact)
 
         def expected = CreateManifestTask.jsonMapper.convertValue(
-                [
-                        "product-group": "group",
-                        "product-name": "name",
-                        "minimum-version": "1.5.0",
-                        "maximum-version": "1.8.x",
-                        "recommended-version": "1.7.0",
+                "recommended-product-dependencies": [
+                        [
+                            "product-group": "group",
+                            "product-name": "name",
+                            "minimum-version": "1.5.0",
+                            "maximum-version": "1.8.x",
+                            "recommended-version": "1.7.0"
+                        ],
                 ],
-                RecommendedProductDependency)
+                RecommendedProductDependencies)
 
         expect:
-        task.readProductDepsFromPdepFile("", artifact.toFile()) == RecommendedProductDependencies
-                .builder()
-                .addRecommendedProductDependencies(expected)
-                .build()
+        task.readProductDepsFromPdepFile("", artifact.toFile()) == expected
     }
 }
