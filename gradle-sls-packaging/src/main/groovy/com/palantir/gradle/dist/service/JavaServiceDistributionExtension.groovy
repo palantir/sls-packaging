@@ -15,7 +15,6 @@
  */
 package com.palantir.gradle.dist.service
 
-import com.google.common.collect.ImmutableMap
 import com.palantir.gradle.dist.BaseDistributionExtension
 import com.palantir.gradle.dist.service.gc.GcProfile
 import com.palantir.gradle.dist.service.gc.Hybrid
@@ -31,10 +30,11 @@ import org.gradle.util.ConfigureUtil
 @CompileStatic
 class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
-    private static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
-            "throughput", Throughput.class,
-            "response-time", ResponseTime.class,
-            "hybrid", Hybrid.class)
+    private static final Map<String, Class<? extends GcProfile>> profileNames = [
+            "throughput": Throughput,
+            "response-time": ResponseTime,
+            "hybrid": Hybrid,
+    ]
 
     private final ObjectFactory objects
 

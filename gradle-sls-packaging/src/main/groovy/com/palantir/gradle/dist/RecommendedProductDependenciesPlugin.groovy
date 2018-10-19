@@ -29,7 +29,8 @@ class RecommendedProductDependenciesPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         project.plugins.apply('java')
-        def ext = project.extensions.create('recommendedProductDependencies', RecommendedProductDependenciesExtension)
+        RecommendedProductDependenciesExtension ext = project.extensions.create(
+                'recommendedProductDependencies', RecommendedProductDependenciesExtension)
 
         project.afterEvaluate {
             ext.recommendedProductDependencies.each { recommendedProductDependency ->

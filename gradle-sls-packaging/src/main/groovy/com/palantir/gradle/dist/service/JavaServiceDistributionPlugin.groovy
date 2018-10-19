@@ -92,7 +92,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.defaultJvmOpts,
                     distributionExtension.javaHome,
                     distributionExtension.env,
-                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.getByName('runtimeClasspath'))
+                    project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).outputs.files + project.configurations.getByName('runtimeClasspath'))
         }
 
         CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
