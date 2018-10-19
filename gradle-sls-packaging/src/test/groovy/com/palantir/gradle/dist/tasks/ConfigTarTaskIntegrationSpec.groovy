@@ -17,8 +17,6 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
@@ -74,16 +72,6 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         files.contains('deployment')
         def manifest = file('dist/foo-asset-0.0.1/deployment/manifest.yml', projectDir).text
         manifest.contains('asset.v1')
-    }
-
-    def 'configTar task fails for invalid product types'() {
-        when:
-        Project project = ProjectBuilder.builder().withName("foo").build()
-        ConfigTarTask.createConfigTarTask(project, "configTar", "foo.bar")
-
-        then:
-        def err = thrown(IllegalArgumentException)
-        err.message.contains("Product type must end with")
     }
 
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {
