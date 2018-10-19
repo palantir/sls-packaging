@@ -31,6 +31,7 @@ import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
+import javax.annotation.Nullable
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
@@ -192,6 +193,7 @@ class CreateManifestTask extends DefaultTask {
         ])))
     }
 
+    @Nullable
     RecommendedProductDependencies readProductDepsFromManifest(String coord, File file) {
         def manifest
         try {
@@ -217,6 +219,7 @@ class CreateManifestTask extends DefaultTask {
         return jsonMapper.readValue(pdeps, RecommendedProductDependencies)
     }
 
+    @Nullable
     RecommendedProductDependencies readProductDepsFromPdepFile(String coord, File file) {
         try {
             def zf = new ZipFile(file)
