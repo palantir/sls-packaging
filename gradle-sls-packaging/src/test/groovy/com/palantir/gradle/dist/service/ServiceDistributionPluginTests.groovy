@@ -484,7 +484,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedStaticConfig.setDirs(["var/data/tmp"])
-        expectedStaticConfig.setEnv(["MALLOC_ARENA_MAX": 4])
+        expectedStaticConfig.setEnv(["MALLOC_ARENA_MAX": '4'])
         expectedStaticConfig.setArgs([])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
