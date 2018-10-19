@@ -155,6 +155,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     }
 
     def <T extends GcProfile> void gc(Class<T> type, @Nullable Action<T> action) {
+        // separate variable since 'gc' has type GcProfile and we need to give the action a 'T'
         def instance = objects.newInstance(type)
         gc = instance
         if (action != null) {
