@@ -21,7 +21,7 @@ import java.util.List;
 
 public class Hybrid implements GcProfile {
     @Override
-    public final List<String> gcProfileJvmOpts() {
+    public final List<String> gcJvmOpts() {
         return ImmutableList.of(
                 "-XX:+UseG1GC",
                 "-XX:+UseStringDeduplication",

@@ -16,26 +16,10 @@
 
 package com.palantir.gradle.dist.service.gc;
 
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 public interface GcProfile {
 
-    List<String> gcProfileJvmOpts();
-
-    default List<String> gcJvmOpts() {
-        return ImmutableList.<String>builder()
-                .add("-XX:+CrashOnOutOfMemoryError")  // requires JDK 8u92+
-                .add("-XX:+PrintGCDateStamps")
-                .add("-XX:+PrintGCDetails")
-                .add("-XX:-TraceClassUnloading")
-                .add("-XX:+UseGCLogFileRotation")
-                .add("-XX:GCLogFileSize=10M")
-                .add("-XX:NumberOfGCLogFiles=10")
-                .add("-Xloggc:var/log/gc-%t-%p.log")
-                .add("-verbose:gc")
-                .addAll(gcProfileJvmOpts())
-                .build();
-    }
+    List<String> gcJvmOpts();
 
 }

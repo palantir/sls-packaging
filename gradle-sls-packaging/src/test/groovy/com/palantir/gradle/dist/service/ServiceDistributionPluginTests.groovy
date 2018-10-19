@@ -412,19 +412,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
         expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
         expectedStaticConfig.setJvmOpts([
-                '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:+CrashOnOutOfMemoryError',
-                '-XX:+PrintGCDateStamps',
-                '-XX:+PrintGCDetails',
-                '-XX:-TraceClassUnloading',
-                '-XX:+UseGCLogFileRotation',
-                '-XX:GCLogFileSize=10M',
-                '-XX:NumberOfGCLogFiles=10',
-                '-Xloggc:var/log/gc-%t-%p.log',
-                '-verbose:gc',
-                '-XX:+UseParallelOldGC',
+                '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-XX:+UseParallelOldGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedStaticConfig.setEnv(LaunchConfigTask.defaultEnvironment + [
@@ -441,7 +433,10 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         LaunchConfigTask.defaultEnvironment.keySet().forEach { key -> expectedCheckConfig.env.remove(key) }
 
         expectedCheckConfig.setJvmOpts([
+                '-XX:+CrashOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
+                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])

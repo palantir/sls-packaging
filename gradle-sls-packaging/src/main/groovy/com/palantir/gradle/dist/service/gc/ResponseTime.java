@@ -26,7 +26,7 @@ public class ResponseTime implements GcProfile {
     public ResponseTime() { }
 
     @Override
-    public final List<String> gcProfileJvmOpts() {
+    public final List<String> gcJvmOpts() {
         return ImmutableList.of("-XX:+UseParNewGC",
                 "-XX:+UseConcMarkSweepGC",
                 "-XX:+UseCMSInitiatingOccupancyOnly",

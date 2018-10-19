@@ -1,3 +1,4 @@
 rootProject.name = 'sls-packaging'
 include 'gradle-sls-packaging'
 include 'sls-versions'
+enableFeaturePreview('STABLE_PUBLISHING')

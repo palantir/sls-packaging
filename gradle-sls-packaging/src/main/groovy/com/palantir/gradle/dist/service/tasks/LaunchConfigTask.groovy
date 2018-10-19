@@ -33,13 +33,10 @@ import org.gradle.api.tasks.TaskAction
 
 class LaunchConfigTask extends DefaultTask {
 
-    static final List<String> tmpdirJvmOpts = ['-Djava.io.tmpdir=var/data/tmp']
-
-    static final List<String> loggingJvmOpts = [
-            '-XX:ErrorFile=var/log/hs_err_pid%p.log'
-    ]
-
-    static final List<String> dnsJvmOpts = [
+    static final List<String> alwaysOnJvmOptions = [
+            '-XX:+CrashOnOutOfMemoryError',
+            '-Djava.io.tmpdir=var/data/tmp',
+            '-XX:ErrorFile=var/log/hs_err_pid%p.log',
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
             '-Dsun.net.inetaddr.ttl=20'
@@ -113,12 +110,10 @@ class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     void createConfig() {
-        writeConfig(createConfig(getArgs(), assembleJvmOpts(), defaultEnvironment), getStaticLauncher())
-        writeConfig(createConfig(getCheckArgs(), tmpdirJvmOpts + defaultJvmOpts, [:]), getCheckLauncher())
-    }
-
-    List<String> assembleJvmOpts() {
-        return tmpdirJvmOpts + gc.gcJvmOpts() + loggingJvmOpts + dnsJvmOpts + defaultJvmOpts
+        writeConfig(createConfig(
+            getArgs(), alwaysOnJvmOptions + gc.gcJvmOpts() + defaultJvmOpts, defaultEnvironment),
+            getStaticLauncher())
+        writeConfig(createConfig(getCheckArgs(), alwaysOnJvmOptions + defaultJvmOpts, [:]), getCheckLauncher())
     }
 
     void writeConfig(StaticLaunchConfig config, File scriptFile) {
