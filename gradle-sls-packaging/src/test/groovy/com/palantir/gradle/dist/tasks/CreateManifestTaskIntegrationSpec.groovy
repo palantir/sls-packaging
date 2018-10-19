@@ -30,9 +30,7 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
 
     File mavenRepo
 
-    def 'Fail on missing recommended product dependencies'() {
-        setup:
-        generateDependencies()
+    def setup() {
         buildFile << """
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
@@ -44,17 +42,26 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
 
             project.version = '1.0.0'
 
-            dependencies {
-                runtime 'a:a:1.0'
-            }
-
             task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
                 serviceName = "serviceName"
                 serviceGroup = "serviceGroup"
                 productType = "service"
                 manifestExtensions = [:]
-                productDependencies = []
                 productDependenciesConfig = configurations.runtime
+            }
+        """.stripIndent()
+    }
+
+    def 'Fail on missing recommended product dependencies'() {
+        setup:
+        generateDependencies()
+        buildFile << """
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+
+            tasks.testCreateManifest {
+                productDependencies = []
             }
         """.stripIndent()
 
@@ -71,27 +78,12 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         setup:
         generateDependencies()
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-java-service-distribution'
-            }
-
-            repositories {
-                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
-            }
-
-            project.version = '1.0.0'
-
             dependencies {
                 runtime 'a:a:1.0'
             }
 
-            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
-                serviceName = "serviceName"
-                serviceGroup = "serviceGroup"
-                productType = "service"
-                manifestExtensions = [:]
+            tasks.testCreateManifest {
                 productDependencies = []
-                productDependenciesConfig = configurations.runtime
                 ignoredProductIds = [
                     new com.palantir.gradle.dist.ProductId("group:name"), 
                     new com.palantir.gradle.dist.ProductId("group:name2")
@@ -110,30 +102,15 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         setup:
         generateDependencies()
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-java-service-distribution'
-            }
-
-            repositories {
-                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
-            }
-
-            project.version = '1.0.0'
-
             dependencies {
                 runtime 'a:a:1.0'
             }
 
-            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
-                serviceName = "serviceName"
-                serviceGroup = "serviceGroup"
-                productType = "service"
-                manifestExtensions = [:]
+            tasks.testCreateManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name"),
                     new com.palantir.gradle.dist.ProductDependency("group", "name2")
                 ]
-                productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
 
@@ -165,30 +142,15 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         setup:
         generateDependencies()
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-java-service-distribution'
-            }
-
-            repositories {
-                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
-            }
-
-            project.version = '1.0.0'
-
             dependencies {
                 runtime 'b:b:1.0'
                 runtime 'd:d:1.0'
             }
 
-            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
-                serviceName = "serviceName"
-                serviceGroup = "serviceGroup"
-                productType = "service"
-                manifestExtensions = [:]
+            tasks.testCreateManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name2")
                 ]
-                productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
 
@@ -213,30 +175,14 @@ class CreateManifestTaskIntegrationSpec extends GradleTestSpec {
         setup:
         generateDependencies()
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-java-service-distribution'
-            }
-
-            repositories {
-                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
-            }
-
-            project.version = '1.0.0'
-
             dependencies {
                 runtime 'b:b:1.0'
                 runtime 'e:e:1.0'
             }
-
-            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
-                serviceName = "serviceName"
-                serviceGroup = "serviceGroup"
-                productType = "service"
-                manifestExtensions = [:]
+            tasks.testCreateManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name2")
                 ]
-                productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
 
