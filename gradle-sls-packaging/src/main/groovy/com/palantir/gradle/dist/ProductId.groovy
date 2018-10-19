@@ -16,9 +16,11 @@
 
 package com.palantir.gradle.dist
 
+import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 
 @EqualsAndHashCode
+@CompileStatic
 class ProductId implements Serializable {
 
     private static final long serialVersionUID = 1L

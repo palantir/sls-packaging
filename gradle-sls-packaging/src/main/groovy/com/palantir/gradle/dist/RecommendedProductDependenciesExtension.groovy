@@ -16,8 +16,10 @@
 
 package com.palantir.gradle.dist
 
+import groovy.transform.CompileStatic
 import org.gradle.util.ConfigureUtil
 
+@CompileStatic
 class RecommendedProductDependenciesExtension {
 
     Set<RecommendedProductDependency> recommendedProductDependencies = []

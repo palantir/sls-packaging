@@ -16,13 +16,14 @@
 
 package com.palantir.gradle.dist
 
+import groovy.transform.CompileStatic
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.util.ConfigureUtil
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-
+@CompileStatic
 class BaseDistributionExtension {
 
     private static final Set<String> VALID_PRODUCT_TYPES = [
@@ -30,7 +31,7 @@ class BaseDistributionExtension {
             "daemon.v1",
             "asset.v1",
             "pod.v1"
-    ]
+    ] as Set
     private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
             + "(?<group>[^:@?]*):"
             + "(?<name>[^:@?]*):"

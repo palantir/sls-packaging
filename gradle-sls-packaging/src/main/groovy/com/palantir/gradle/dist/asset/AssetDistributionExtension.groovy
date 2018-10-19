@@ -16,8 +16,10 @@
 package com.palantir.gradle.dist.asset
 
 import com.palantir.gradle.dist.BaseDistributionExtension
+import groovy.transform.CompileStatic
 import org.gradle.api.Project
 
+@CompileStatic
 class AssetDistributionExtension extends BaseDistributionExtension {
 
     private Map<String, String> assets = [:]

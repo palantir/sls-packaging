@@ -21,12 +21,14 @@ import com.palantir.gradle.dist.service.gc.GcProfile
 import com.palantir.gradle.dist.service.gc.Hybrid
 import com.palantir.gradle.dist.service.gc.ResponseTime
 import com.palantir.gradle.dist.service.gc.Throughput
+import groovy.transform.CompileStatic
 import javax.annotation.Nullable
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.util.ConfigureUtil
 
+@CompileStatic
 class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     private static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
@@ -142,7 +144,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     }
 
     void gc(String type, @Nullable Closure configuration) {
-        gc = objects.newInstance(profileNames[type])
+        gc = objects.<GcProfile>newInstance(profileNames[type])
         if (configuration != null) {
             ConfigureUtil.configure(configuration, gc)
         }
@@ -153,9 +155,10 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     }
 
     def <T extends GcProfile> void gc(Class<T> type, @Nullable Action<T> action) {
-        gc = objects.newInstance(type)
+        def instance = objects.newInstance(type)
+        gc = instance
         if (action != null) {
-            action.execute(gc)
+            action.execute(instance)
         }
     }
 
