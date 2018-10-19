@@ -472,7 +472,6 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-Dsun.net.inetaddr.ttl=20',
-                '-XX:+UseParallelOldGC',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
                 "-XX:-TraceClassUnloading",
