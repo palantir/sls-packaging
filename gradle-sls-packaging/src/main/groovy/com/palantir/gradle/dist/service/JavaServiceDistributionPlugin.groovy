@@ -29,6 +29,7 @@ import com.palantir.gradle.dist.service.tasks.ManifestClasspathJarTask
 import com.palantir.gradle.dist.service.tasks.RunTask
 import com.palantir.gradle.dist.tasks.ConfigTarTask
 import com.palantir.gradle.dist.tasks.CreateManifestTask
+import groovy.transform.CompileStatic
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -38,6 +39,7 @@ import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.bundling.Tar
 import org.gradle.jvm.application.tasks.CreateStartScripts
 
+@CompileStatic
 class JavaServiceDistributionPlugin implements Plugin<Project> {
 
     static final String GROUP_NAME = "Distribution"
@@ -54,9 +56,9 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.extensions.create('distribution', JavaServiceDistributionExtension, project)
 
         project.configurations.create('goJavaLauncherBinaries')
-        project.dependencies {
-            goJavaLauncherBinaries 'com.palantir.launching:go-java-launcher:1.5.1'
-            goJavaLauncherBinaries 'com.palantir.launching:go-init:1.5.1'
+        project.dependencies.with {
+            add('goJavaLauncherBinaries', 'com.palantir.launching:go-java-launcher:1.5.1')
+            add('goJavaLauncherBinaries', 'com.palantir.launching:go-init:1.5.1')
         }
 
         def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
@@ -90,7 +92,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.defaultJvmOpts,
                     distributionExtension.javaHome,
                     distributionExtension.env,
-                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtimeClasspath)
+                    project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.getByName('runtimeClasspath'))
         }
 
         CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
