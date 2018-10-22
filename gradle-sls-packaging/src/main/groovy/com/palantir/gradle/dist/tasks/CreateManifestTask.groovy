@@ -229,7 +229,7 @@ class CreateManifestTask extends DefaultTask {
             def zf = new ZipFile(file)
             def entry = zf.getEntry(PDEPS_FILE_PATH)
             if (entry == null) {
-                logger.debug("Pdeps file {} does not exist in jar for '{}'", PDEPS_FILE_PATH, coord)
+                logger.debug("Product dependencies file {} does not exist in jar for '{}'", PDEPS_FILE_PATH, coord)
                 return null
             }
 
