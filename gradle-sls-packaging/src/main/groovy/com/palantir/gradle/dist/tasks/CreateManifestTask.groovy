@@ -229,7 +229,11 @@ class CreateManifestTask extends DefaultTask {
                 return null
             }
 
-            return jsonMapper.readValue(zf.getInputStream(entry), RecommendedProductDependencies)
+            List<RecommendedProductDependency> dependencies = jsonMapper.readValue(
+                    zf.getInputStream(entry), new TypeReference<List<RecommendedProductDependency>>() {})
+            return RecommendedProductDependencies.builder()
+                    .recommendedProductDependencies(dependencies)
+                    .build()
         } catch (IOException e) {
             logger.warn("IOException encountered when processing artifact '{}', file '{}'", coord, file, e)
         }

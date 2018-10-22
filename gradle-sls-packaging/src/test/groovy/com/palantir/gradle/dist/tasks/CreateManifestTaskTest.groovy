@@ -48,7 +48,7 @@ class CreateManifestTaskTest extends ProjectSpec {
         Files.copy(CreateManifestTaskTest.getResourceAsStream("/pdep-1.0.jar"), artifact)
 
         def expected = CreateManifestTask.jsonMapper.convertValue(
-                "recommended-product-dependencies": [
+                [
                         [
                             "product-group": "group",
                             "product-name": "name",
