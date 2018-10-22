@@ -49,7 +49,7 @@ class CreateManifestTask extends DefaultTask {
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
-    public static final String PDEPS_FILE_PATH = "META-INF/pdeps.json"
+    public static final String PDEPS_FILE_PATH = "META-INF/product-dependencies.json"
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
