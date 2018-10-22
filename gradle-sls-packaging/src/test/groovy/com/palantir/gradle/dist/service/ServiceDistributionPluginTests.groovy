@@ -412,19 +412,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
         expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
         expectedStaticConfig.setJvmOpts([
-                '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:+CrashOnOutOfMemoryError',
-                '-XX:+PrintGCDateStamps',
-                '-XX:+PrintGCDetails',
-                '-XX:-TraceClassUnloading',
-                '-XX:+UseGCLogFileRotation',
-                '-XX:GCLogFileSize=10M',
-                '-XX:NumberOfGCLogFiles=10',
-                '-Xloggc:var/log/gc-%t-%p.log',
-                '-verbose:gc',
-                '-XX:+UseParallelOldGC',
+                '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-XX:+UseParallelOldGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedStaticConfig.setEnv(LaunchConfigTask.defaultEnvironment + [
@@ -441,13 +433,62 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         LaunchConfigTask.defaultEnvironment.keySet().forEach { key -> expectedCheckConfig.env.remove(key) }
 
         expectedCheckConfig.setJvmOpts([
+                '-XX:+CrashOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
+                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
         def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
         expectedCheckConfig == actualCheckConfig
+    }
+
+    def 'produce distribution with java 8 gc logging'() {
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar") }
+            tasks.jar.baseName = "internal"
+            distribution {
+                javaHome 'foo'
+                addJava8GCLogging true
+            }'''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runSuccessfully(':build', ':distTar', ':untar')
+
+        then:
+        def expectedStaticConfig = new LaunchConfigTask.StaticLaunchConfig()
+        expectedStaticConfig.setConfigVersion(1)
+        expectedStaticConfig.setConfigType("java")
+        expectedStaticConfig.setMainClass("test.Test")
+        expectedStaticConfig.setServiceName("service-name")
+        expectedStaticConfig.setJavaHome("foo")
+        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+        expectedStaticConfig.setJvmOpts([
+                '-XX:+CrashOnOutOfMemoryError',
+                '-Djava.io.tmpdir=var/data/tmp',
+                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                '-Dsun.net.inetaddr.ttl=20',
+                "-XX:+PrintGCDateStamps",
+                "-XX:+PrintGCDetails",
+                "-XX:-TraceClassUnloading",
+                "-XX:+UseGCLogFileRotation",
+                "-XX:GCLogFileSize=10M",
+                "-XX:NumberOfGCLogFiles=10",
+                "-Xloggc:var/log/gc-%t-%p.log",
+                "-verbose:gc",
+                '-XX:+UseParallelOldGC',
+                '-Xmx4M',
+                '-Djavax.net.ssl.trustStore=truststore.jks'])
+        expectedStaticConfig.setDirs(["var/data/tmp"])
+        expectedStaticConfig.setEnv(["MALLOC_ARENA_MAX": '4'])
+        expectedStaticConfig.setArgs([])
+        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+        expectedStaticConfig == actualStaticConfig
     }
 
     def 'produce distribution bundle that populates check.sh'() {

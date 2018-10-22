@@ -6,13 +6,13 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.3'
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:5.1.4'
-        classpath 'com.palantir.baseline:gradle-baseline-java:0.34.0'
+        classpath 'com.gradle.publish:plugin-publish-plugin:0.10.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:9.1.1'
+        classpath 'com.palantir.baseline:gradle-baseline-java:0.37.4'
+        classpath 'de.undercouch:gradle-download-task:3.4.3'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:0.11.0'
-        classpath 'de.undercouch:gradle-download-task:3.4.2'
-        classpath 'gradle.plugin.org.inferred:gradle-processors:1.4.0'
+        classpath 'gradle.plugin.org.inferred:gradle-processors:2.0.0'
     }
 }
 
@@ -37,4 +37,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java-library'
+    java {
+        sourceCompatibility JavaVersion.VERSION_1_8
+    }
 }
