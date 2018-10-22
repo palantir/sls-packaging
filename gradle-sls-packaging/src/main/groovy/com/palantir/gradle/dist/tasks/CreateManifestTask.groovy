@@ -233,7 +233,7 @@ class CreateManifestTask extends DefaultTask {
                 return null
             }
 
-            List<RecommendedProductDependency> dependencies = jsonMapper.readValue(
+            List<RecommendedProductDependency> dependencies = jsonMapper.<List<RecommendedProductDependency>>readValue(
                     zf.getInputStream(entry), new TypeReference<List<RecommendedProductDependency>>() {})
             return RecommendedProductDependencies.builder()
                     .recommendedProductDependencies(dependencies)
