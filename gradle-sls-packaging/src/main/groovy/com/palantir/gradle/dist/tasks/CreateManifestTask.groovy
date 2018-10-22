@@ -216,7 +216,7 @@ class CreateManifestTask extends DefaultTask {
         def pdeps = manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY)
 
         if (pdeps == null) {
-            logger.debug("No pdeps found in manifest for artifact '{}', file '{}'", coord, file)
+            logger.debug("No product dependencies found in manifest for artifact '{}', file '{}'", coord, file)
             return null
         }
 
