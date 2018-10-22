@@ -49,7 +49,7 @@ class CreateManifestTask extends DefaultTask {
     public static ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
-    public static final String PDEP_FILE_PATH = "META-INF/pdep.json"
+    public static final String PDEPS_FILE_PATH = "META-INF/pdeps.json"
 
     CreateManifestTask() {
         group = JavaServiceDistributionPlugin.GROUP_NAME
@@ -227,9 +227,9 @@ class CreateManifestTask extends DefaultTask {
     RecommendedProductDependencies readProductDepsFromPdepFile(String coord, File file) {
         try {
             def zf = new ZipFile(file)
-            def entry = zf.getEntry(PDEP_FILE_PATH)
+            def entry = zf.getEntry(PDEPS_FILE_PATH)
             if (entry == null) {
-                logger.debug("Pdeps file {} does not exist in jar for '{}'", PDEP_FILE_PATH, coord)
+                logger.debug("Pdeps file {} does not exist in jar for '{}'", PDEPS_FILE_PATH, coord)
                 return null
             }
 
