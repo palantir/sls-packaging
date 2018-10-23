@@ -16,15 +16,13 @@
 
 package com.palantir.gradle.dist.tasks
 
-
+import com.palantir.gradle.dist.RecommendedProductDependencies
+import java.nio.file.Files
 import nebula.test.ProjectSpec
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
 
 class CreateManifestTaskTest extends ProjectSpec {
     def 'Can create CreateManifestTask when product.version is valid SLS version'() {
         when:
-        Project project = ProjectBuilder.builder().build()
         project.version = "1.0.0"
         CreateManifestTask task = project.tasks.create("m", CreateManifestTask)
 
@@ -34,7 +32,6 @@ class CreateManifestTaskTest extends ProjectSpec {
 
     def 'Cannot create CreateManifestTask when product.version is invalid SLS version'() {
         when:
-        Project project = ProjectBuilder.builder().build()
         project.version = "1.0.0foo"
         CreateManifestTask task = project.tasks.create("m", CreateManifestTask)
         task.getProjectVersion() == "1.0.0"
@@ -42,5 +39,27 @@ class CreateManifestTaskTest extends ProjectSpec {
         then:
         IllegalArgumentException exception = thrown()
         exception.message == "Project version must be a valid SLS version: 1.0.0foo"
+    }
+
+    def 'Can read pdep'() {
+        project.version = "1.0.0"
+        CreateManifestTask task = project.tasks.create("m", CreateManifestTask)
+        def artifact = projectDir.toPath().resolve("pdep-1.0.jar")
+        Files.copy(CreateManifestTaskTest.getResourceAsStream("/pdep-1.0.jar"), artifact)
+
+        def expected = CreateManifestTask.jsonMapper.convertValue(
+                "recommended-product-dependencies": [
+                        [
+                            "product-group": "group",
+                            "product-name": "name",
+                            "minimum-version": "1.5.0",
+                            "maximum-version": "1.8.x",
+                            "recommended-version": "1.7.0"
+                        ],
+                ],
+                RecommendedProductDependencies)
+
+        expect:
+        task.readProductDepsFromPdepFile("", artifact.toFile()) == expected
     }
 }
