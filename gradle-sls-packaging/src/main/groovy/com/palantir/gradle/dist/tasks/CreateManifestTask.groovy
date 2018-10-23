@@ -42,7 +42,6 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-@CompileStatic
 class CreateManifestTask extends DefaultTask {
 
     public static String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies"
