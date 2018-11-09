@@ -93,7 +93,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.addJava8GCLogging,
                     distributionExtension.javaHome,
                     distributionExtension.env,
-                    project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).outputs.files + project.configurations.getByName('runtimeClasspath'))
+                    project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).outputs.files + distributionExtension.productDependenciesConfig)
         }
 
         CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
@@ -109,7 +109,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         CopyYourkitAgentTask yourkitAgent = project.tasks.create('copyYourkitAgent', CopyYourkitAgentTask)
         CopyYourkitLicenseTask yourkitLicense = project.tasks.create('copyYourkitLicense', CopyYourkitLicenseTask)
 
-        distributionExtension.productDependenciesConfig = project.configurations.getByName("runtime")
+        distributionExtension.productDependenciesConfig = project.configurations.getByName("runtimeClasspath")
 
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
