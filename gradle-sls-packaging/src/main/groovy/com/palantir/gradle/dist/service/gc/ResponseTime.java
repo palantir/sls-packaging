@@ -34,7 +34,9 @@ public class ResponseTime implements GcProfile {
                 "-XX:+CMSClassUnloadingEnabled",
                 "-XX:+ExplicitGCInvokesConcurrent",
                 "-XX:+ClassUnloadingWithConcurrentMark",
-                "-XX:+CMSScavengeBeforeRemark");
+                "-XX:+CMSScavengeBeforeRemark",
+                // 'UseParNewGC' was removed in Java10: https://bugs.openjdk.java.net/browse/JDK-8173421
+                "-XX:+IgnoreUnrecognizedVMOptions");
     }
 
     public final void initiatingOccupancyFraction(int occupancyFraction) {
