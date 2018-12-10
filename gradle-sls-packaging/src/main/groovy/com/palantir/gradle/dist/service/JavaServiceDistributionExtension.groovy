@@ -19,6 +19,7 @@ import com.palantir.gradle.dist.BaseDistributionExtension
 import com.palantir.gradle.dist.service.gc.GcProfile
 import com.palantir.gradle.dist.service.gc.Hybrid
 import com.palantir.gradle.dist.service.gc.ResponseTime
+import com.palantir.gradle.dist.service.gc.ResponseTime11
 import com.palantir.gradle.dist.service.gc.Throughput
 import groovy.transform.CompileStatic
 import javax.annotation.Nullable
@@ -34,6 +35,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
             "throughput": Throughput,
             "response-time": ResponseTime,
             "hybrid": Hybrid,
+            "response-time-11": ResponseTime11
     ]
 
     private final ObjectFactory objects
