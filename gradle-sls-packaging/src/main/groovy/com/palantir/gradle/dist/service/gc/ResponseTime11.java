@@ -23,7 +23,9 @@ public final class ResponseTime11 implements GcProfile {
     @Override
     public List<String> gcJvmOpts() {
         return ImmutableList.of(
+                // https://wiki.openjdk.java.net/display/shenandoah/Main
                 "-XX:+UseShenandoahGC",
+                // "forces concurrent cycle instead of Full GC on System.gc()"
                 "-XX:+ExplicitGCInvokesConcurrent",
                 "-XX:+ClassUnloadingWithConcurrentMark");
     }

@@ -12,7 +12,7 @@ distributions from both are produced as a gzipped tar named `[service-name]-[pro
 ## Java Service Distribution Gradle Plugin
 
 Similar to the standard application plugin, this plugin helps package Java
-Gradle projects for easy distribution and execution. This distribution conforms with Palantir's 
+Gradle projects for easy distribution and execution. This distribution conforms with Palantir's
 SLS service layout conventions that attempt to split immutable files from mutable state and configuration.
 
 In particular, this plugin packages a project into a common deployment structure
@@ -119,8 +119,8 @@ And the complete list of configurable properties:
    defaulting to `['log', 'run']`.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
- * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
- * (optional) `addJava8GCLogging` add java 8 specific gc logging options. 
+ * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid`, `response-time` and `response-time-11`.
+ * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
 If there is a jar recommending a version of a dependency but that product is not listed in a `productDependency` block an error will be produced: `The following products are recommended as dependencies but do not appear in the product dependencies or product dependencies ignored list: ...`.
 
