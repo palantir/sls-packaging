@@ -21,7 +21,7 @@ import java.util.List;
 
 public class ResponseTime11 implements GcProfile {
     @Override
-    public List<String> gcJvmOpts() {
+    public final List<String> gcJvmOpts() {
         return ImmutableList.of(
                 // https://wiki.openjdk.java.net/display/shenandoah/Main
                 "-XX:+UseShenandoahGC",
