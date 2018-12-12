@@ -19,9 +19,9 @@ package com.palantir.gradle.dist.service.gc;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
-public final class ResponseTime11 implements GcProfile {
+public class ResponseTime11 implements GcProfile {
     @Override
-    public List<String> gcJvmOpts() {
+    public final List<String> gcJvmOpts() {
         return ImmutableList.of(
                 // https://wiki.openjdk.java.net/display/shenandoah/Main
                 "-XX:+UseShenandoahGC",
