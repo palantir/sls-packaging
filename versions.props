@@ -1,9 +1,9 @@
-com.fasterxml.jackson.*:* = 2.9.7
+com.fasterxml.jackson.*:* = 2.9.8
 com.google.guava:guava = 23.6.1-jre
 com.palantir.sls.versions:sls-versions = 0.9.0
-org.immutables:value = 2.7.3
+org.immutables:value = 2.7.4
 
-com.netflix.nebula:nebula-test = 7.1.0
+com.netflix.nebula:nebula-test = 7.1.6
 junit:junit = 4.12
 org.assertj:assertj-core = 3.11.1
 
