@@ -26,7 +26,6 @@ import groovy.transform.ToString
 @ToString
 @EqualsAndHashCode
 @AutoClone
-@CompileStatic
 class RecommendedProductDependency {
 
     @JsonProperty("product-group")
