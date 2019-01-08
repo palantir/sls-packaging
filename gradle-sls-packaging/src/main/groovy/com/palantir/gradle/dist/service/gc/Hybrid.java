@@ -24,7 +24,6 @@ public class Hybrid implements GcProfile {
     public final List<String> gcJvmOpts() {
         return ImmutableList.of(
                 "-XX:+UseG1GC",
-                "-XX:+UseStringDeduplication",
-                "-XX:+PrintStringDeduplicationStatistics");
+                "-XX:+UseStringDeduplication");
     }
 }
