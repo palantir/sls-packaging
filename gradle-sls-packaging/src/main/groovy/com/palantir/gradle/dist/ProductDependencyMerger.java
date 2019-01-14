@@ -19,18 +19,15 @@ package com.palantir.gradle.dist;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.VersionComparator;
 import com.palantir.slspackaging.versions.SlsProductVersions;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class RecommendedProductDependencyMerger {
-    private RecommendedProductDependencyMerger() { }
+public final class ProductDependencyMerger {
+    private ProductDependencyMerger() { }
 
-    public static RecommendedProductDependency merge(
-            RecommendedProductDependency dep1, RecommendedProductDependency dep2) {
+    public static ProductDependency merge(ProductDependency dep1, ProductDependency dep2) {
         // Ensure they are valid
-        Arrays.asList(dep1, dep2).forEach(RecommendedProductDependency::isValid);
         if (!dep1.getProductGroup().equals(dep2.getProductGroup())) {
             throw new IllegalArgumentException(String.format("Product groups differ: '%s' and '%s'",
                 dep1.getProductGroup(), dep2.getProductGroup()));
@@ -71,7 +68,7 @@ public final class RecommendedProductDependencyMerger {
                         && satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
 
-        RecommendedProductDependency result = new RecommendedProductDependency();
+        ProductDependency result = new ProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
         maximumVersion.map(Objects::toString).ifPresent(result::setMaximumVersion);
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
