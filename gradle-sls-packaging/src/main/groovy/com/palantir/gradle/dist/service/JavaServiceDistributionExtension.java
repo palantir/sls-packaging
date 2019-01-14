@@ -43,8 +43,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
             "throughput", Throughput.class,
             "response-time", ResponseTime.class,
             "hybrid", Hybrid.class,
-            "response-time-11", ResponseTime11.class
-    );
+            "response-time-11", ResponseTime11.class);
 
     private Property<String> mainClass;
     private Property<String> javaHome;
