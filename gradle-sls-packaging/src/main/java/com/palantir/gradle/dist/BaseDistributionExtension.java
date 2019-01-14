@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
@@ -33,6 +34,9 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 
 public class BaseDistributionExtension {
+
+    // TODO(forozco): can we kill this?
+    private Configuration productDependenciesConfig;
     private Property<String> serviceGroup;
     private Property<String> serviceName;
     private Property<String> podName;
@@ -109,6 +113,14 @@ public class BaseDistributionExtension {
 
     public final void setManifestExtension(String extensionName, Object extension) {
         manifestExtensions.put(extensionName, extension);
+    }
+
+    public final Configuration getProductDependenciesConfig() {
+        return productDependenciesConfig;
+    }
+
+    public final void setProductDependenciesConfig(Configuration productDependenciesConfig) {
+        this.productDependenciesConfig = productDependenciesConfig;
     }
 
     static String generateMaxVersion(String minimumVersion) {
