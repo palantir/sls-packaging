@@ -16,6 +16,8 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.palantir.gradle.dist.ProductType
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -25,20 +27,18 @@ import org.gradle.api.tasks.bundling.Tar
 
 @CompileStatic
 class ConfigTarTask {
+    private static final ObjectMapper OBJECT_WRITER = new ObjectMapper();
     private static final String PRODUCT_TYPE_REGEX = "^\\w+?\\.v\\d+\$"
 
-    static Tar createConfigTarTask(Project project, String taskName, String productType) {
+    static Tar createConfigTarTask(Project project, String taskName, ProductType productType) {
         project.tasks.<Tar>create(taskName, Tar) { p ->
             p.group = JavaServiceDistributionPlugin.GROUP_NAME
             p.description = "Creates a compressed, gzipped tar file that contains the sls configuration files for the product"
             // Set compression in constructor so that task output has the right name from the start.
             p.compression = Compression.GZIP
-            // The extension is the product type without the version
-            // service.v1 -> .service.config.tgz
-            if (!productType.matches(PRODUCT_TYPE_REGEX)) {
-                throw new IllegalArgumentException(String.format("Product type must end with '.v<VERSION_NUMBER>': %s", productType))
-            }
-            p.extension = productType.substring(0, productType.lastIndexOf('.')).concat(".config.tgz")
+
+            def productTypeString = OBJECT_WRITER.writeValueAsString(productType)
+            p.extension = productTypeString.substring(0, productTypeString.lastIndexOf('.')).concat(".config.tgz")
         }
     }
 

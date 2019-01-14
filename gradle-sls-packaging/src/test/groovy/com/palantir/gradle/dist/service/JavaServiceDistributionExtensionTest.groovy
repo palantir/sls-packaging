@@ -29,7 +29,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
 
     def 'collection modifiers are cumulative when varargs are given'() {
         given:
-        def ext = new JavaServiceDistributionExtension(project)
+        def ext = new JavaServiceDistributionExtension(project, project.getObjects())
 
         when:
         ext.with {
@@ -47,23 +47,19 @@ class JavaServiceDistributionExtensionTest extends Specification {
 
             env 'a': 'b'
             env 'c': 'd'
-
-            manifestExtensions 'a': 'b'
-            manifestExtensions 'c': 'd'
         }
 
         then:
-        ext.args == ['a', 'b', 'c', 'd']
-        ext.checkArgs == ['a', 'b', 'c', 'd']
-        ext.defaultJvmOpts == ['a', 'b', 'c', 'd']
-        ext.excludeFromVar == ['log', 'run', 'a', 'b', 'c', 'd']
-        ext.env == ['a': 'b', 'c': 'd']
-        ext.manifestExtensions == ['a': 'b', 'c': 'd']
+        ext.args.get() == ['a', 'b', 'c', 'd']
+        ext.checkArgs.get() == ['a', 'b', 'c', 'd']
+        ext.defaultJvmOpts.get() == ['a', 'b', 'c', 'd']
+        ext.excludeFromVar.get() == ['log', 'run', 'a', 'b', 'c', 'd']
+        ext.env.get() == ['a': 'b', 'c': 'd']
     }
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new JavaServiceDistributionExtension(project)
+        def ext = new JavaServiceDistributionExtension(project, project.getObjects())
 
         when:
         ext.with {
@@ -82,10 +78,10 @@ class JavaServiceDistributionExtensionTest extends Specification {
         }
 
         then:
-        ext.args == ['c', 'd']
-        ext.checkArgs == ['c', 'd']
-        ext.defaultJvmOpts == ['c', 'd']
-        ext.excludeFromVar == ['c', 'd']
-        ext.env == ['foo': 'bar']
+        ext.args.get() == ['c', 'd']
+        ext.checkArgs.get() == ['c', 'd']
+        ext.defaultJvmOpts.get() == ['c', 'd']
+        ext.excludeFromVar.get() == ['c', 'd']
+        ext.env.get() == ['foo': 'bar']
     }
 }

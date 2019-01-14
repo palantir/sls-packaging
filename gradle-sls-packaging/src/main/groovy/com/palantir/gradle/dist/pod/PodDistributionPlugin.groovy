@@ -49,23 +49,23 @@ class PodDistributionPlugin implements Plugin<Project> {
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
-                    distributionExtension.podName,
-                    distributionExtension.serviceGroup,
-                    distributionExtension.productType,
-                    distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies,
+                    distributionExtension.podName.get(),
+                    distributionExtension.serviceGroup.get(),
+                    distributionExtension.productType.get(),
+                    distributionExtension.manifestExtensions.get(),
+                    distributionExtension.productDependencies.get(),
                     distributionExtension.productDependenciesConfig,
-                    distributionExtension.ignoredProductIds)
+                    distributionExtension.ignoredProductIds.get())
         }
 
         CreatePodYAMLTask podYaml = project.tasks.create('createPodYaml', CreatePodYAMLTask)
         project.afterEvaluate {
-            podYaml.configure(distributionExtension.services, distributionExtension.volumes)
+            podYaml.configure(distributionExtension.services.get(), distributionExtension.volumes.get())
         }
 
-        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType)
+        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType.get())
         project.afterEvaluate {
-            ConfigTarTask.configure(configTar, project, distributionExtension.podName)
+            ConfigTarTask.configure(configTar, project, distributionExtension.podName.get())
         }
 
         project.configurations.create(SLS_CONFIGURATION_NAME)

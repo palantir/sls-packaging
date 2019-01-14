@@ -16,12 +16,15 @@
 
 package com.palantir.gradle.dist.asset
 
+import org.gradle.api.Project
+import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
 class AssetDistributionExtensionTest extends Specification {
+    Project project = ProjectBuilder.builder().build();
     def 'collection modifiers are cumulative'() {
         given:
-        def ext = new AssetDistributionExtension(null)
+        def ext = new AssetDistributionExtension(project, project.getObjects())
 
         when:
         ext.with {
@@ -40,7 +43,7 @@ class AssetDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new AssetDistributionExtension(null)
+        def ext = new AssetDistributionExtension(project, project.getObjects())
 
         when:
         ext.with {

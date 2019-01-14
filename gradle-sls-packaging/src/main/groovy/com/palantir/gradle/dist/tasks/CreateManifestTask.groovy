@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.palantir.gradle.dist.ProductDependency
 import com.palantir.gradle.dist.ProductId
+import com.palantir.gradle.dist.ProductType
 import com.palantir.gradle.dist.RecommendedProductDependencies
 import com.palantir.gradle.dist.RecommendedProductDependency
 import com.palantir.gradle.dist.RecommendedProductDependencyMerger
@@ -212,10 +213,11 @@ class CreateManifestTask extends DefaultTask {
         ])))
     }
 
+    // TODO(forozco): remove this
     void configure(
             String serviceName,
             String serviceGroup,
-            String productType,
+            ProductType productType,
             Map<String, Object> manifestExtensions,
             List<ProductDependency> productDependencies,
             Configuration productDependenciesConfig,

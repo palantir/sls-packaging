@@ -24,9 +24,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
 
     def "Adds recommended product dependencies to manifest"() {
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-recommended-dependencies'
-            }
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
 
             recommendedProductDependencies {
                 productDependency {

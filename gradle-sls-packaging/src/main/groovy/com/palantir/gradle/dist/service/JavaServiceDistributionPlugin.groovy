@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service
 
+
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.pod.PodDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
@@ -66,17 +67,17 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         // Create tasks
         Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")
         project.afterEvaluate {
-            manifestClasspathJar.onlyIf { distributionExtension.isEnableManifestClasspath() }
+            manifestClasspathJar.onlyIf { distributionExtension.enableManifestClasspath.get() }
         }
 
         CreateStartScripts startScripts = CreateStartScriptsTask.createStartScriptsTask(project, 'createStartScripts')
         project.afterEvaluate {
             CreateStartScriptsTask.configure(
                     startScripts,
-                    distributionExtension.mainClass,
-                    distributionExtension.serviceName,
-                    distributionExtension.defaultJvmOpts,
-                    distributionExtension.enableManifestClasspath)
+                    distributionExtension.mainClass.get(),
+                    distributionExtension.serviceName.get(),
+                    distributionExtension.defaultJvmOpts.get(),
+                    distributionExtension.enableManifestClasspath.get())
         }
 
         CopyLauncherBinariesTask copyLauncherBinaries = project.tasks.create('copyLauncherBinaries', CopyLauncherBinariesTask)
@@ -84,26 +85,26 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         LaunchConfigTask launchConfig = project.tasks.create('createLaunchConfig', LaunchConfigTask)
         project.afterEvaluate {
             launchConfig.configure(
-                    distributionExtension.mainClass,
-                    distributionExtension.serviceName,
-                    distributionExtension.args,
-                    distributionExtension.checkArgs,
+                    distributionExtension.mainClass.get(),
+                    distributionExtension.serviceName.get(),
+                    distributionExtension.args.get(),
+                    distributionExtension.checkArgs.get(),
                     distributionExtension.gc,
-                    distributionExtension.defaultJvmOpts,
-                    distributionExtension.addJava8GCLogging,
-                    distributionExtension.javaHome,
-                    distributionExtension.env,
+                    distributionExtension.defaultJvmOpts.get(),
+                    distributionExtension.addJava8GcLogging.get(),
+                    distributionExtension.javaHome.get(),
+                    distributionExtension.env.get(),
                     project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).outputs.files + distributionExtension.productDependenciesConfig)
         }
 
         CreateInitScriptTask initScript = project.tasks.create('createInitScript', CreateInitScriptTask)
         project.afterEvaluate {
-            initScript.configure(distributionExtension.serviceName)
+            initScript.configure(distributionExtension.serviceName.get())
         }
 
         CreateCheckScriptTask checkScript = project.tasks.create('createCheckScript', CreateCheckScriptTask)
         project.afterEvaluate {
-            checkScript.configure(distributionExtension.serviceName, distributionExtension.checkArgs)
+            checkScript.configure(distributionExtension.serviceName.get(), distributionExtension.checkArgs.get())
         }
 
         CopyYourkitAgentTask yourkitAgent = project.tasks.create('copyYourkitAgent', CopyYourkitAgentTask)
@@ -114,13 +115,13 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
-                    distributionExtension.serviceName,
-                    distributionExtension.serviceGroup,
-                    distributionExtension.productType,
-                    distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies,
+                    distributionExtension.serviceName.get(),
+                    distributionExtension.serviceGroup.get(),
+                    distributionExtension.productType.get(),
+                    distributionExtension.manifestExtensions.get(),
+                    distributionExtension.productDependencies.get(),
                     distributionExtension.productDependenciesConfig,
-                    distributionExtension.ignoredProductIds)
+                    distributionExtension.ignoredProductIds.get())
         }
 
         Tar distTar = DistTarTask.createDistTarTask(project, 'distTar')
@@ -128,19 +129,23 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             DistTarTask.configure(
                     distTar,
                     project,
-                    distributionExtension.serviceName,
-                    distributionExtension.excludeFromVar,
-                    distributionExtension.isEnableManifestClasspath())
+                    distributionExtension.serviceName.get(),
+                    distributionExtension.excludeFromVar.get(),
+                    distributionExtension.enableManifestClasspath.get())
         }
 
-        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType)
+        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType.get())
         project.afterEvaluate {
-            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName)
+            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName.get())
         }
 
         JavaExec run = RunTask.createRunTask(project, 'run')
         project.afterEvaluate {
-            RunTask.configure(run, distributionExtension.mainClass, distributionExtension.args, distributionExtension.defaultJvmOpts,)
+            RunTask.configure(
+                    run,
+                    distributionExtension.mainClass.get(),
+                    distributionExtension.args.get(),
+                    distributionExtension.defaultJvmOpts.get())
         }
 
         // Create configuration and exported artifacts

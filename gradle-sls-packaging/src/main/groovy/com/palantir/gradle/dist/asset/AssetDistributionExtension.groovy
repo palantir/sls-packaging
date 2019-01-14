@@ -16,17 +16,19 @@
 package com.palantir.gradle.dist.asset
 
 import com.palantir.gradle.dist.BaseDistributionExtension
+import com.palantir.gradle.dist.ProductType
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
 
 @CompileStatic
 class AssetDistributionExtension extends BaseDistributionExtension {
 
     private Map<String, String> assets = [:]
 
-    AssetDistributionExtension(Project project) {
-        super(project)
-        productType("asset.v1")
+    AssetDistributionExtension(Project project, ObjectFactory objectFactory) {
+        super(project, objectFactory)
+        setProductType(ProductType.ASSET_V1)
     }
 
     Map<String, String> getAssets() {

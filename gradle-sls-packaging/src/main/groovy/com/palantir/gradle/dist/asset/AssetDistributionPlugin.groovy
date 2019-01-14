@@ -50,21 +50,21 @@ class AssetDistributionPlugin implements Plugin<Project> {
         CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
         project.afterEvaluate {
             manifest.configure(
-                    distributionExtension.serviceName,
-                    distributionExtension.serviceGroup,
-                    distributionExtension.productType,
-                    distributionExtension.manifestExtensions,
-                    distributionExtension.serviceDependencies,
+                    distributionExtension.serviceName.get(),
+                    distributionExtension.serviceGroup.get(),
+                    distributionExtension.productType.get(),
+                    distributionExtension.manifestExtensions.get(),
+                    distributionExtension.productDependencies.get(),
                     distributionExtension.productDependenciesConfig,
-                    distributionExtension.ignoredProductIds)
+                    distributionExtension.ignoredProductIds.get())
         }
 
         Tar distTar = AssetDistTarTask.createAssetDistTarTask(project, 'distTar')
-        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType)
+        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType.get())
 
         project.afterEvaluate {
-            AssetDistTarTask.configure(distTar, distributionExtension.serviceName, distributionExtension.assets)
-            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName)
+            AssetDistTarTask.configure(distTar, distributionExtension.serviceName.get(), distributionExtension.assets)
+            ConfigTarTask.configure(configTar, project, distributionExtension.serviceName.get())
         }
 
         project.configurations.create(SLS_CONFIGURATION_NAME)

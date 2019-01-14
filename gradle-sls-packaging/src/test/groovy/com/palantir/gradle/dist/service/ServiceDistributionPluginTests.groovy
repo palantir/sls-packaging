@@ -452,7 +452,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.baseName = "internal"
             distribution {
                 javaHome 'foo'
-                addJava8GCLogging true
+                addJava8GcLogging true
             }'''.stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
