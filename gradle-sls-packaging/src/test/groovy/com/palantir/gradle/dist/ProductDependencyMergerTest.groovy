@@ -16,21 +16,17 @@
 
 package com.palantir.gradle.dist
 
-import org.codehaus.groovy.runtime.InvokerHelper
+
 import spock.lang.Specification
 
-class RecommendedProductDependencyMergerTest extends Specification {
-    def basicDep = new RecommendedProductDependency(
-        productGroup: "group",
-        productName: "name")
-
+class ProductDependencyMergerTest extends Specification {
     def "picks larger minimum version and smaller maximum version"() {
         given:
         def dep1 = newRecommendation("2.0.0", "2.6.x", "2.2.0")
         def dep2 = newRecommendation("2.1.0", "2.x.x", "2.2.0")
 
         when:
-        def merged = RecommendedProductDependencyMerger.merge(dep1, dep2)
+        def merged = ProductDependencyMerger.merge(dep1, dep2)
 
         then:
         merged.minimumVersion == "2.1.0"
@@ -45,8 +41,8 @@ class RecommendedProductDependencyMergerTest extends Specification {
         def dep3 = newRecommendation("2.2.0", "2.x.x", null)
 
         when:
-        def merged1 = RecommendedProductDependencyMerger.merge(dep1, dep2)
-        def merged2 = RecommendedProductDependencyMerger.merge(dep1, dep3)
+        def merged1 = ProductDependencyMerger.merge(dep1, dep2)
+        def merged2 = ProductDependencyMerger.merge(dep1, dep3)
 
         then:
         merged1.minimumVersion == "2.1.0"
@@ -64,7 +60,7 @@ class RecommendedProductDependencyMergerTest extends Specification {
         def dep2 = newRecommendation("2.7.0", "2.x.x", "2.8.0")
 
         when:
-        def merged = RecommendedProductDependencyMerger.merge(dep1, dep2)
+        def merged = ProductDependencyMerger.merge(dep1, dep2)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -77,7 +73,7 @@ class RecommendedProductDependencyMergerTest extends Specification {
         def dep2 = newRecommendation("2.7.0.dirty", "2.x.x", "2.8.0")
 
         when:
-        RecommendedProductDependencyMerger.merge(dep1, dep2)
+        ProductDependencyMerger.merge(dep1, dep2)
 
         then:
         def e = thrown(RuntimeException)
@@ -90,32 +86,14 @@ class RecommendedProductDependencyMergerTest extends Specification {
         def dep2 = newRecommendation("2.1.0", "2.5.0", null)
 
         when:
-        def merged = RecommendedProductDependencyMerger.merge(dep1, dep2)
+        def merged = ProductDependencyMerger.merge(dep1, dep2)
 
         then:
         def e = thrown(IllegalArgumentException)
         e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
-    def "max and recommended can be optional"() {
-        given:
-        def dep1 = newRecommendation("2.1.0", null, "2.6.0")
-        def dep2 = newRecommendation("2.2.0.dirty", "2.8.x", null)
-
-        when:
-        def merged = RecommendedProductDependencyMerger.merge(dep1, dep2)
-
-        then:
-        merged.minimumVersion == "2.1.0"
-        merged.maximumVersion == "2.8.x"
-        merged.recommendedVersion == "2.6.0"
-    }
-
-    private RecommendedProductDependency newRecommendation(String min, String max, String recommended) {
-        def rpd = basicDep.clone() as RecommendedProductDependency
-        use InvokerHelper, {
-            rpd.setProperties(minimumVersion: min, maximumVersion: max, recommendedVersion: recommended)
-        }
-        return rpd
+    private ProductDependency newRecommendation(String min, String max, String recommended) {
+        return new ProductDependency("group", "name", min, max, recommended);
     }
 }

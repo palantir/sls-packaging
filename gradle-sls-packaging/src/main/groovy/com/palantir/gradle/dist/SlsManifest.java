@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2018 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2019 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,36 @@ package com.palantir.gradle.dist;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.util.Set;
+import java.util.Map;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@Value.Style(jdkOnly = true)
-@JsonSerialize(as = ImmutableRecommendedProductDependencies.class)
-@JsonDeserialize(as = ImmutableRecommendedProductDependencies.class)
-public interface RecommendedProductDependencies {
+@JsonSerialize(as = ImmutableSlsManifest.class)
+@JsonDeserialize(as = ImmutableSlsManifest.class)
+public interface SlsManifest {
+    @JsonProperty("manifest-version")
+    String manifestVersion();
 
-    @JsonProperty("recommended-product-dependencies")
-    Set<ProductDependency> recommendedProductDependencies();
+    @JsonProperty("product-type")
+    ProductType productType();
+
+    @JsonProperty("product-group")
+    String productGroup();
+
+    @JsonProperty("product-name")
+    String productName();
+
+    @JsonProperty("product-version")
+    String productVersion();
+
+    @JsonProperty("extensions")
+    Map<String, Object> extensions();
 
     static Builder builder() {
         return new Builder();
     }
 
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {
+    final class Builder extends ImmutableSlsManifest.Builder {
     }
 
 }

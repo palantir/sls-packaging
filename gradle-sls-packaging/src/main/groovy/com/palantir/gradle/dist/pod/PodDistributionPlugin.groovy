@@ -46,17 +46,16 @@ class PodDistributionPlugin implements Plugin<Project> {
 
         distributionExtension.productDependenciesConfig = project.configurations.create("podBundle")
 
-        CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask)
-        project.afterEvaluate {
-            manifest.configure(
-                    distributionExtension.podName.get(),
-                    distributionExtension.serviceGroup.get(),
-                    distributionExtension.productType.get(),
-                    distributionExtension.manifestExtensions.get(),
-                    distributionExtension.productDependencies.get(),
-                    distributionExtension.productDependenciesConfig,
-                    distributionExtension.ignoredProductIds.get())
-        }
+        CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask, { task ->
+            task.serviceName.set(distributionExtension.serviceName)
+            task.serviceGroup.set(distributionExtension.serviceGroup)
+            task.productType.set(distributionExtension.productType)
+            task.manifestExtensions.set(distributionExtension.manifestExtensions)
+            task.manifestFile.set(new File(project.buildDir, "/deployment/manifest.yml"))
+            task.declaredProductDependencies.set(distributionExtension.productDependencies)
+            task.setProductDependenciesConfig(distributionExtension.productDependenciesConfig)
+            task.ignoredProductIds.set(distributionExtension.ignoredProductIds)
+        })
 
         CreatePodYAMLTask podYaml = project.tasks.create('createPodYaml', CreatePodYAMLTask)
         project.afterEvaluate {
