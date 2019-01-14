@@ -32,6 +32,7 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
+import org.gradle.util.ConfigureUtil;
 
 public class BaseDistributionExtension {
 
@@ -46,7 +47,7 @@ public class BaseDistributionExtension {
     private SetProperty<ProductId> ignoredProductIds;
 
     @Inject
-    BaseDistributionExtension(Project project, ObjectFactory objectFactory) {
+    public BaseDistributionExtension(Project project, ObjectFactory objectFactory) {
         serviceGroup = objectFactory.property(String.class).value(project.getGroup().toString());
         serviceName = objectFactory.property(String.class).value(project.getName());
         podName = objectFactory.property(String.class).value(project.getName());
@@ -94,9 +95,8 @@ public class BaseDistributionExtension {
 
     public final void setProductDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         ProductDependency dep = new ProductDependency();
-        closure.setDelegate(dep);
-        closure.call();
-        productDependencies.get().add(dep);
+        ConfigureUtil.configureUsing(closure).execute(dep);
+        productDependencies.add(dep);
     }
 
     public final Provider<Set<ProductId>> getIgnoredProductIds() {
@@ -111,8 +111,16 @@ public class BaseDistributionExtension {
         return this.manifestExtensions;
     }
 
+    public final void manifestExtensions(Map<String, Object> extensions) {
+        manifestExtensions.putAll(extensions);
+    }
+
     public final void setManifestExtension(String extensionName, Object extension) {
         manifestExtensions.put(extensionName, extension);
+    }
+
+    public final void setManifestExtensions(Map<String, Object> extensions) {
+        manifestExtensions.set(extensions);
     }
 
     public final Configuration getProductDependenciesConfig() {

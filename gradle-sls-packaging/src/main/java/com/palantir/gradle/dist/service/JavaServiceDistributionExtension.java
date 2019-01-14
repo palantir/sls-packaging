@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist;
+package com.palantir.gradle.dist.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.palantir.gradle.dist.BaseDistributionExtension;
+import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
 import com.palantir.gradle.dist.service.gc.Hybrid;
 import com.palantir.gradle.dist.service.gc.ResponseTime;
@@ -35,7 +37,7 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 
-public class JavaServiceDistributionExtension extends BaseDistributionExtension {
+class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     private static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
             "throughput", Throughput.class,
@@ -113,40 +115,60 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         return args;
     }
 
+    public final void args(String... newArgs) {
+        this.args.addAll(newArgs);
+    }
+
     public final void setArgs(Iterable<String> args) {
-        this.args.addAll(args);
+        this.args.set(args);
     }
 
     public final Provider<List<String>> getCheckArgs() {
         return checkArgs;
     }
 
+    public final void checkArgs(String... newCheckArgs) {
+        this.checkArgs.addAll(newCheckArgs);
+    }
+
     public final void setCheckArgs(Iterable<String> checkArgs) {
-        this.checkArgs.addAll(checkArgs);
+        this.checkArgs.set(checkArgs);
     }
 
     public final Provider<List<String>> getDefaultJvmOpts() {
         return defaultJvmOpts;
     }
 
+    public final void defaultJvmOpts(String... opts) {
+        this.defaultJvmOpts.addAll(opts);
+    }
+
     public final void setDefaultJvmOpts(Iterable<String> defaultJvmOpts) {
-        this.defaultJvmOpts.addAll(defaultJvmOpts);
+        this.defaultJvmOpts.set(defaultJvmOpts);
     }
 
     public final Provider<List<String>> getExcludeFromVar() {
         return excludeFromVar;
     }
 
+    public final void excludeFromVar(String... fromVar) {
+        this.excludeFromVar.addAll(fromVar);
+    }
+
     public final void setExcludeFromVar(Iterable<String> excludeFromVar) {
-        this.excludeFromVar.addAll(excludeFromVar);
+        this.excludeFromVar.set(excludeFromVar);
     }
 
     public final Provider<Map<String, String>> getEnv() {
         return env;
     }
 
+    public final void env(Map<String, String> newEnv) {
+        this.env.putAll(newEnv);
+    }
+
     public final void setEnv(Map<String, String> env) {
-        this.env.putAll(env);
+        this.env.set(env);
     }
 
     public final GcProfile getGc() {
