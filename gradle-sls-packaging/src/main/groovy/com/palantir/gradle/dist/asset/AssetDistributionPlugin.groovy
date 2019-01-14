@@ -41,9 +41,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
         if (project.getPlugins().hasPlugin(PodDistributionPlugin)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
         }
-        project.extensions.create("distribution", AssetDistributionExtension, project)
-
-        def distributionExtension = project.extensions.findByType(AssetDistributionExtension)
+        def distributionExtension = project.extensions.create("distribution", AssetDistributionExtension, project, project.objects)
 
         distributionExtension.productDependenciesConfig = project.configurations.create("assetBundle")
 
@@ -53,7 +51,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
             task.productType.set(distributionExtension.productType)
             task.manifestExtensions.set(distributionExtension.manifestExtensions)
             task.manifestFile.set(new File(project.buildDir, "/deployment/manifest.yml"))
-            task.declaredProductDependencies.set(distributionExtension.productDependencies)
+            task.productDependencies.set(distributionExtension.productDependencies)
             task.setProductDependenciesConfig(distributionExtension.productDependenciesConfig)
             task.ignoredProductIds.set(distributionExtension.ignoredProductIds)
         })
@@ -62,7 +60,7 @@ class AssetDistributionPlugin implements Plugin<Project> {
         Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType.get())
 
         project.afterEvaluate {
-            AssetDistTarTask.configure(distTar, distributionExtension.serviceName.get(), distributionExtension.assets)
+            AssetDistTarTask.configure(distTar, distributionExtension.serviceName.get(), distributionExtension.assets.get())
             ConfigTarTask.configure(configTar, project, distributionExtension.serviceName.get())
         }
 

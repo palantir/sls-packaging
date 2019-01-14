@@ -48,13 +48,17 @@ public class BaseDistributionExtension {
 
     @Inject
     public BaseDistributionExtension(Project project, ObjectFactory objectFactory) {
-        serviceGroup = objectFactory.property(String.class).value(project.getGroup().toString());
-        serviceName = objectFactory.property(String.class).value(project.getName());
-        podName = objectFactory.property(String.class).value(project.getName());
+        serviceGroup = objectFactory.property(String.class);
+        serviceName = objectFactory.property(String.class);
+        podName = objectFactory.property(String.class);
         productType = objectFactory.property(ProductType.class);
         manifestExtensions = objectFactory.mapProperty(String.class, Object.class).empty();
         productDependencies = objectFactory.listProperty(ProductDependency.class).empty();
         ignoredProductIds = objectFactory.setProperty(ProductId.class).empty();
+
+        serviceGroup.set(project.provider(() -> project.getGroup().toString()));
+        serviceName.set(project.provider(project::getName));
+        podName.set(project.provider(project::getName));
     }
 
     public final Provider<String> getServiceGroup() {

@@ -24,7 +24,7 @@ class AssetDistributionExtensionTest extends Specification {
     Project project = ProjectBuilder.builder().build();
     def 'collection modifiers are cumulative'() {
         given:
-        def ext = new AssetDistributionExtension(project, project.getObjects())
+        def ext = new AssetDistributionExtension(project, project.objects)
 
         when:
         ext.with {
@@ -43,7 +43,7 @@ class AssetDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new AssetDistributionExtension(project, project.getObjects())
+        def ext = new AssetDistributionExtension(project, project.objects)
 
         when:
         ext.with {

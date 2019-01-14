@@ -40,9 +40,8 @@ class PodDistributionPlugin implements Plugin<Project> {
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
         }
-        project.extensions.create("distribution", PodDistributionExtension, project)
-
-        def distributionExtension = project.extensions.findByType(PodDistributionExtension)
+        def distributionExtension = project.extensions.create(
+                'distribution', PodDistributionExtension, project, project.objects)
 
         distributionExtension.productDependenciesConfig = project.configurations.create("podBundle")
 
@@ -51,8 +50,8 @@ class PodDistributionPlugin implements Plugin<Project> {
             task.serviceGroup.set(distributionExtension.serviceGroup)
             task.productType.set(distributionExtension.productType)
             task.manifestExtensions.set(distributionExtension.manifestExtensions)
-            task.manifestFile.set(new File(project.buildDir, "/deployment/manifest.yml"))
-            task.declaredProductDependencies.set(distributionExtension.productDependencies)
+            task.manifestFile.set(new File(project.buildDir, '/deployment/manifest.yml'))
+            task.productDependencies.set(distributionExtension.productDependencies)
             task.setProductDependenciesConfig(distributionExtension.productDependenciesConfig)
             task.ignoredProductIds.set(distributionExtension.ignoredProductIds)
         })

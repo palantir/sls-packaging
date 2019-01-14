@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service
 
+
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin
 import com.palantir.gradle.dist.pod.PodDistributionPlugin
 import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask
@@ -53,15 +54,14 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
         }
         project.plugins.apply('java')
-        project.extensions.create('distribution', JavaServiceDistributionExtension, project)
+        def distributionExtension = project.extensions.create(
+                'distribution', JavaServiceDistributionExtension, project, project.objects)
 
         project.configurations.create('goJavaLauncherBinaries')
         project.dependencies.with {
             add('goJavaLauncherBinaries', 'com.palantir.launching:go-java-launcher:1.5.1')
             add('goJavaLauncherBinaries', 'com.palantir.launching:go-init:1.5.1')
         }
-
-        def distributionExtension = project.extensions.findByType(JavaServiceDistributionExtension)
 
         // Create tasks
         Task manifestClasspathJar = ManifestClasspathJarTask.createManifestClasspathJarTask(project, "manifestClasspathJar")
@@ -117,7 +117,7 @@ class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.productType.set(distributionExtension.productType)
             task.manifestExtensions.set(distributionExtension.manifestExtensions)
             task.manifestFile.set(new File(project.buildDir, "/deployment/manifest.yml"))
-            task.declaredProductDependencies.set(distributionExtension.productDependencies)
+            task.productDependencies.set(distributionExtension.productDependencies)
             task.setProductDependenciesConfig(distributionExtension.productDependenciesConfig)
             task.ignoredProductIds.set(distributionExtension.ignoredProductIds)
         })

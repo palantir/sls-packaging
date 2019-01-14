@@ -31,6 +31,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     def setup() {
         generateDependencies()
         buildFile << """
+            import com.palantir.gradle.dist.ProductType
+
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
             }
@@ -44,7 +46,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
                 serviceName = "serviceName"
                 serviceGroup = "serviceGroup"
-                productType = "service"
+                productType = ProductType.SERVICE_V1
                 manifestExtensions = [:]
                 productDependenciesConfig = configurations.runtime
             }
