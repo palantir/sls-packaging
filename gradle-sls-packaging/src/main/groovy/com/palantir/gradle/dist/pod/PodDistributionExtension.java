@@ -28,13 +28,13 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
 
-class PodDistributionExtension extends BaseDistributionExtension {
+public class PodDistributionExtension extends BaseDistributionExtension {
 
     private MapProperty<String, PodServiceDefinition> services;
     private MapProperty<String, PodVolumeDefinition> volumes;
 
     @Inject
-    PodDistributionExtension(Project project, ObjectFactory objectFactory) {
+    public PodDistributionExtension(Project project, ObjectFactory objectFactory) {
         super(project, objectFactory);
 
         services = objectFactory.mapProperty(String.class, PodServiceDefinition.class).empty();

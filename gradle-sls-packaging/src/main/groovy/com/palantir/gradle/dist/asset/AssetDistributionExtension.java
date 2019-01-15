@@ -24,30 +24,30 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 
-class AssetDistributionExtension extends BaseDistributionExtension {
+public class AssetDistributionExtension extends BaseDistributionExtension {
 
     private MapProperty<String, String> assets;
 
     @Inject
-    AssetDistributionExtension(Project project, ObjectFactory objectFactory) {
+    public AssetDistributionExtension(Project project, ObjectFactory objectFactory) {
         super(project, objectFactory);
         assets = objectFactory.mapProperty(String.class, String.class).empty();
         setProductType(ProductType.ASSET_V1);
     }
 
-    final Provider<Map<String, String>> getAssets() {
+    public final Provider<Map<String, String>> getAssets() {
         return assets;
     }
 
-    final void assets(String relativeSourcePath) {
+    public final void assets(String relativeSourcePath) {
         this.assets.put(relativeSourcePath, relativeSourcePath);
     }
 
-    final void assets(String relativeSourcePath, String relativeDestinationPath) {
+    public final void assets(String relativeSourcePath, String relativeDestinationPath) {
         this.assets.put(relativeSourcePath, relativeDestinationPath);
     }
 
-    final void setAssets(Map<String, String> assets) {
+    public final void setAssets(Map<String, String> assets) {
         this.assets.set(assets);
     }
 }

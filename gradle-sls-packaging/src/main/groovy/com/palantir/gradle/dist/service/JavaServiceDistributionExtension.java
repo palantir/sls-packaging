@@ -37,7 +37,7 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 
-class JavaServiceDistributionExtension extends BaseDistributionExtension {
+public class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
     private static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
             "throughput", Throughput.class,
@@ -59,7 +59,7 @@ class JavaServiceDistributionExtension extends BaseDistributionExtension {
     private ObjectFactory objectFactory;
 
     @Inject
-    JavaServiceDistributionExtension(Project project, ObjectFactory objectFactory) {
+    public JavaServiceDistributionExtension(Project project, ObjectFactory objectFactory) {
         super(project, objectFactory);
 
         this.objectFactory = objectFactory;
