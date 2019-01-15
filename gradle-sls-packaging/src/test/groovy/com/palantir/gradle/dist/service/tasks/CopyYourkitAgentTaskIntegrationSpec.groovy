@@ -16,27 +16,26 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import com.palantir.gradle.dist.GradleIntegrationSpec
-import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.TaskOutcome
+import nebula.test.IntegrationSpec
+import nebula.test.functional.ExecutionResult
 
-class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
+class CopyYourkitAgentTaskIntegrationSpec extends IntegrationSpec {
 
     def 'copyYourkitAgent task is up to date if already run'() {
         setup:
         createUntarBuildFile(buildFile)
 
         when:
-        BuildResult buildResult = run(':copyYourkitAgent').build()
+        ExecutionResult buildResult = runTasksSuccessfully(':copyYourkitAgent')
 
         then:
-        buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.SUCCESS
+        buildResult.wasExecuted(':copyYourkitAgent')
 
         when:
-        buildResult = run(':copyYourkitAgent').build()
+        buildResult = runTasksSuccessfully(':copyYourkitAgent')
 
         then:
-        buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.UP_TO_DATE
+        buildResult.wasUpToDate(':copyYourkitAgent')
     }
 
     def 'Build produces libyjpagent file and yourkit license'() {
@@ -44,7 +43,7 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         file('dist/service-name-0.0.1').exists()
@@ -54,18 +53,12 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         file('dist/service-name-0.0.1/service/lib/linux-x86-64/yourkit-license-redist.txt').getBytes().length > 0
     }
 
-    protected runSuccessfully(String... tasks) {
-        BuildResult buildResult = run(tasks).build()
-        tasks.each { buildResult.task(it).outcome == TaskOutcome.SUCCESS }
-        return buildResult
-    }
-
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            apply plugin: 'com.palantir.sls-java-service-distribution'
 
             project.group = 'service-group'
 

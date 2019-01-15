@@ -17,14 +17,14 @@ package com.palantir.gradle.dist.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
+import nebula.test.IntegrationSpec
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 
-class ServiceDistributionPluginTests extends GradleIntegrationSpec {
+class ServiceDistributionPluginTests extends IntegrationSpec {
 
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
@@ -58,7 +58,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         // try all of the service commands
@@ -97,13 +97,13 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
         buildFile << '''
             version '0.0.2'
         '''.stripIndent()
 
         then:
-        def version02BuildOutput = runSuccessfully(':build', ':distTar', ':untar02').output
+        def version02BuildOutput = runTasksSuccessfully(':build', ':distTar', ':untar02').output
         version02BuildOutput ==~ /(?m)(?s).*:createCheckScript UP-TO-DATE.*/
         version02BuildOutput ==~ /(?m)(?s).*:createInitScript UP-TO-DATE.*/
         version02BuildOutput ==~ /(?m)(?s).*:createLaunchConfig.*/
@@ -123,7 +123,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createFile('var/conf/service-name.yml')
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         file('dist/service-name-0.0.1').exists()
@@ -147,7 +147,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
@@ -160,9 +160,10 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         given:
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -192,7 +193,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createFile('var/conf/service-name.yml')
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         !file('dist/service-name-0.0.1/var/log').exists()
@@ -204,9 +205,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         given:
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -242,7 +245,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
@@ -254,7 +257,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
@@ -288,7 +291,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         def mapper = new ObjectMapper()
@@ -360,7 +363,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createFile('deployment/configuration.yml') << deploymentConfiguration
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         // clobbers deployment/manifest.yml
@@ -377,7 +380,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name', projectDir).text
@@ -400,18 +403,16 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = new LaunchConfigTask.StaticLaunchConfig()
-        expectedStaticConfig.setConfigVersion(1)
-        expectedStaticConfig.setConfigType("java")
-        expectedStaticConfig.setMainClass("test.Test")
-        expectedStaticConfig.setServiceName("service-name")
-        expectedStaticConfig.setJavaHome("foo")
-        expectedStaticConfig.setArgs(['myArg1', 'myArg2'])
-        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
-        expectedStaticConfig.setJvmOpts([
+        def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
+            .mainClass("test.Test")
+            .serviceName("service-name")
+            .javaHome("foo")
+            .args(["myArg1", "myArg2"])
+            .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+            .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
@@ -419,13 +420,13 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:+UseParallelOldGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
-        expectedStaticConfig.setEnv(LaunchConfigTask.defaultEnvironment + [
+            .env(LaunchConfigTask.defaultEnvironment + [
                 "key1": "val1",
-                "key2": "val2"
-        ])
-        expectedStaticConfig.setDirs(["var/data/tmp"])
+                "key2": "val2"])
+            .dirs(["var/data/tmp"])
+            .build()
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         expectedStaticConfig == actualStaticConfig
 
         def expectedCheckConfig = expectedStaticConfig
@@ -441,7 +442,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
         expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
         def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigTask.LaunchConfig)
         expectedCheckConfig == actualCheckConfig
     }
 
@@ -457,10 +458,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = new LaunchConfigTask.StaticLaunchConfig()
+        def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
+            .builder()
         expectedStaticConfig.setConfigVersion(1)
         expectedStaticConfig.setConfigType("java")
         expectedStaticConfig.setMainClass("test.Test")
@@ -487,7 +489,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         expectedStaticConfig.setEnv(["MALLOC_ARENA_MAX": '4'])
         expectedStaticConfig.setArgs([])
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         expectedStaticConfig == actualStaticConfig
     }
 
@@ -501,7 +503,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         file('dist/service-name-0.0.1/service/monitoring/bin/check.sh').exists()
@@ -520,7 +522,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
@@ -538,7 +540,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
@@ -578,7 +580,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         expect:
-        runSuccessfully(':tasks')
+        runTasksSuccessfully(':tasks')
     }
 
     def 'exposes an artifact through the sls configuration'() {
@@ -618,7 +620,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         ''')
 
         when:
-        BuildResult buildResult = runSuccessfully(':child:untar')
+        BuildResult buildResult = runTasksSuccessfully(':child:untar')
 
         then:
         buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
@@ -702,7 +704,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         ''')
 
         when:
-        runSuccessfully(':parent:build', ':parent:distTar', ':parent:untar')
+        runTasksSuccessfully(':parent:build', ':parent:distTar', ':parent:untar')
 
         then:
         def libFiles = new File(projectDir, 'parent/dist/service-name-0.0.1/service/lib/').listFiles()
@@ -738,17 +740,17 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         // verify launcher YAML files
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
 
-        LaunchConfigTask.StaticLaunchConfig launcherCheck = mapper.readValue(
+        LaunchConfigTask.LaunchConfig launcherCheck = mapper.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
-                LaunchConfigTask.StaticLaunchConfig.class)
+                LaunchConfigTask.LaunchConfig.class)
 
         launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
         launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
-        LaunchConfigTask.StaticLaunchConfig launcherStatic = mapper.readValue(
+        LaunchConfigTask.LaunchConfig launcherStatic = mapper.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfigTask.StaticLaunchConfig.class)
+                LaunchConfigTask.LaunchConfig.class)
 
         launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
@@ -768,7 +770,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/com/test/Test.class').exists()
@@ -805,11 +807,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':untar')
+        runTasksSuccessfully(':untar')
 
         then:
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
     }
 
@@ -842,20 +844,20 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':untar')
+        runTasksSuccessfully(':untar')
 
         then:
         def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.StaticLaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication'])
     }
 
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            apply plugin: 'com.palantir.sls-java-service-distribution'
 
             project.group = 'service-group'
 
@@ -891,4 +893,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def object = zf.entries().find { it.name == pathInZipFile }
         return zf.getInputStream(object).text
     }
+
+    def int execWithExitCode(String... tasks) {
+        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        int result = proc.waitFor()
+        return result
+    }
+
 }
