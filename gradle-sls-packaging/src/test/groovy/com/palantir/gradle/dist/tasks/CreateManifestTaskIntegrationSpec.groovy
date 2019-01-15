@@ -16,26 +16,22 @@
 
 package com.palantir.gradle.dist.tasks
 
-import com.palantir.gradle.dist.GradleIntegrationSpec
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
-import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.TaskOutcome
 
-class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
+class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
     File mavenRepo
 
     def setup() {
         generateDependencies()
         buildFile << """
-            import com.palantir.gradle.dist.ProductType
+            apply plugin: 'com.palantir.sls-java-service-distribution'
 
-            plugins {
-                id 'com.palantir.sls-java-service-distribution'
-            }
+            import com.palantir.gradle.dist.ProductType
 
             repositories {
                 maven {url "file:///${mavenRepo.getAbsolutePath()}"}
@@ -48,30 +44,120 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 serviceGroup = "serviceGroup"
                 productType = ProductType.SERVICE_V1
                 manifestExtensions = [:]
+                manifestFile = new File(project.buildDir, "/deployment/manifest.yml")
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
     }
 
-    def 'Fail on missing recommended product dependencies'() {
+    def 'throws if duplicate dependencies are declared'() {
+        setup:
+        buildFile << """
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def result = runTasksWithFailure(':testCreateManifest')
+
+
+        then:
+        result.standardError.contains('Encountered duplicate declared product')
+    }
+
+    def 'throws if declared dependency is also ignored'() {
+       setup:
+        buildFile << """
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                ]
+                ignoredProductIds = [
+                    new com.palantir.gradle.dist.ProductId("group:name"), 
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def result = runTasksWithFailure(':testCreateManifest')
+
+
+        then:
+        result.standardError.contains('Encountered product dependency declaration that was also ignored')
+    }
+
+    def 'Resolve unspecified productDependencies'() {
         setup:
         buildFile << """
             dependencies {
                 runtime 'a:a:1.0'
             }
+        """.stripIndent()
 
-            tasks.testCreateManifest {
-                productDependencies = []
+        when:
+        runTasksSuccessfully(':testCreateManifest')
+
+        then:
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.0.0",
+                        "maximum-version"    : "1.x.x",
+                        "recommended-version": "1.2.0"
+                ],
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "maximum-version"    : "2.x.x",
+                        "recommended-version": "2.2.0"
+                ]
+        ]
+    }
+
+    def 'Merges declared productDependencies with discovered dependencies'() {
+        setup:
+        buildFile << """
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+            
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                ]
             }
         """.stripIndent()
 
         when:
-        BuildResult buildResult = run(':testCreateManifest').buildAndFail()
+        def result = runTasksSuccessfully(':testCreateManifest')
 
         then:
-        buildResult.task(':testCreateManifest').outcome == TaskOutcome.FAILED
-        buildResult.output.contains("The following products are recommended as dependencies but do not appear in the " +
-                "product dependencies or product dependencies ignored list: [group:name2, group:name]")
+        result.standardOutput.contains(
+                "Encountered a declared product dependency for 'group:name' although there is a discovered dependency")
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.1.0",
+                        "maximum-version"    : "1.x.x",
+                        "recommended-version": "1.2.0"
+                ],
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "maximum-version"    : "2.x.x",
+                        "recommended-version": "2.2.0"
+                ]
+        ]
     }
 
     def 'Can ignore recommended product dependencies'() {
@@ -91,68 +177,24 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        BuildResult buildResult = run(':testCreateManifest').build()
+        runTasksSuccessfully(':testCreateManifest')
 
         then:
-        buildResult.task(':testCreateManifest').outcome == TaskOutcome.SUCCESS
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies").isEmpty()
     }
 
-    def "Can set product dependencies from recommended product dependencies"() {
-        setup:
-        buildFile << """
-            dependencies {
-                runtime 'a:a:1.0'
-            }
-
-            tasks.testCreateManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name"),
-                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
-                ]
-            }
-        """.stripIndent()
-
-        when:
-        runSuccessfully(':testCreateManifest')
-
-        then:
-        def manifest = CreateManifestTask.jsonMapper.readValue(
-                file('build/deployment/manifest.yml', projectDir).text, Map)
-        manifest.get("extensions").get("product-dependencies") == [
-                [
-                        "product-group"      : "group",
-                        "product-name"       : "name",
-                        "minimum-version"    : "1.0.0",
-                        "maximum-version"    : "1.x.x",
-                        "recommended-version": "1.2.0"
-                ],
-                [
-                        "product-group"      : "group",
-                        "product-name"       : "name2",
-                        "minimum-version"    : "2.0.0",
-                        "maximum-version"    : "2.x.x",
-                        "recommended-version": "2.2.0"
-                ]
-        ]
-    }
-
-    def "Duplicate recommendations with same versions"() {
+    def "Merges duplicate discovered dependencies with same version"() {
         setup:
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
                 runtime 'd:d:1.0'
             }
-
-            tasks.testCreateManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
-                ]
-            }
         """.stripIndent()
 
         when:
-        runSuccessfully(':testCreateManifest')
+        runTasksSuccessfully(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -168,22 +210,17 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         ]
     }
 
-    def "Duplicate recommendations with different mergeable versions"() {
+    def "Merges duplicate discovered dependencies with different mergeable versions"() {
         setup:
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
                 runtime 'e:e:1.0'
             }
-            tasks.testCreateManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
-                ]
-            }
         """.stripIndent()
 
         when:
-        def result = runSuccessfully(':testCreateManifest')
+        runTasksSuccessfully(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(

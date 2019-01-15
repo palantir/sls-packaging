@@ -40,6 +40,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -63,8 +64,8 @@ public class CreateManifestTask extends DefaultTask {
 
     private MapProperty<String, Object> manifestExtensions = getProject().getObjects()
             .mapProperty(String.class, Object.class);
-    private SetProperty<ProductDependency> productDependencies = getProject().getObjects()
-            .setProperty(ProductDependency.class);
+    private ListProperty<ProductDependency> productDependencies = getProject().getObjects()
+            .listProperty(ProductDependency.class);
     private SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class).empty();
 
     private RegularFileProperty manifestFile = getProject().getObjects().fileProperty();
@@ -91,7 +92,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    public final SetProperty<ProductDependency> getProductDependencies() {
+    public final ListProperty<ProductDependency> getProductDependencies() {
         return productDependencies;
     }
 
@@ -138,17 +139,17 @@ public class CreateManifestTask extends DefaultTask {
         }
 
         Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
-        getProductDependencies().get().forEach(dep -> {
-            ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
+        getProductDependencies().get().forEach(declaredDep -> {
+            ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
             if (getIgnoredProductIds().get().contains(productId)) {
                 throw new IllegalArgumentException(String.format(
-                        "Encountered product dependency declaration for '%s' that was also ignored, either remove the "
+                        "Encountered product dependency declaration that was also ignored for '%s', either remove the "
                                 + "dependency or ignore", productId));
             } else if (allProductDependencies.containsKey(productId)) {
                 throw new IllegalArgumentException(
                         String.format("Encountered duplicate declared product dependencies for '%s'", productId));
             }
-            allProductDependencies.put(productId, dep);
+            allProductDependencies.put(productId, declaredDep);
         });
 
         // Merge all discovered and declared product dependencies
@@ -160,10 +161,10 @@ public class CreateManifestTask extends DefaultTask {
             allProductDependencies.merge(
                     productId,
                     discoveredDependency,
-                    (key, declaredDependency) -> {
+                    (declaredDependency, newDependency) -> {
                         log.warn("Encountered a declared product dependency for '{}' although there is a "
                                 + "discovered dependency, you should remove the declared dependency, discovered "
-                                + "'{}', declared '{}'", productId, declaredDependency, discoveredDependency);
+                                + "'{}', declared '{}'", productId, discoveredDependency, declaredDependency);
                         return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
                     });
         });
