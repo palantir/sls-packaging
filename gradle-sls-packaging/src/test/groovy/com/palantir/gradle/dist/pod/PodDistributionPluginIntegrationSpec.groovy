@@ -18,38 +18,41 @@ package com.palantir.gradle.dist.pod
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.palantir.gradle.dist.GradleIntegrationSpec
-import org.gradle.testkit.runner.BuildResult
+import nebula.test.IntegrationSpec
 
-class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
+class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
 
     def 'manifest file contains expected fields'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
+                serviceName 'pod-name'
                 podName 'pod-name'
             }
         '''.stripIndent()
 
         when:
-        runSuccessfully(':configTar', ':untar')
+        runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        String manifest = file('dist/pod-name-0.0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"manifest-version": "1.0"')
-        manifest.contains('"product-group": "service-group"')
-        manifest.contains('"product-name": "pod-name"')
-        manifest.contains('"product-version": "0.0.1"')
-        manifest.contains('"product-type": "pod.v1"')
+        def manifest = MAPPER.readValue(file('dist/pod-name-0.0.1/deployment/manifest.yml'), Map)
+        manifest.get("manifest-version") == "1.0"
+        manifest.get("product-group") == "service-group"
+        manifest.get("product-name") == "pod-name"
+        manifest.get("product-version") == "0.0.1"
+        manifest.get("product-type") == "pod.v1"
     }
 
-    def 'podName defaults to project name '() {
+    def 'podName defaults to project name'() {
         given:
+        settingsFile << '''
+        rootProject.name = 'root-project'
+        '''
+
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-pod-distribution'
-            }
+            apply plugin: 'com.palantir.sls-pod-distribution'
 
             version "0.0.1"
             project.group = 'service-group'
@@ -71,15 +74,15 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':configTar', ':untar')
+        runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        String manifest = file('dist/root-project-0.0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"manifest-version": "1.0"')
-        manifest.contains('"product-group": "service-group"')
-        manifest.contains('"product-name": "root-project"')
-        manifest.contains('"product-version": "0.0.1"')
-        manifest.contains('"product-type": "pod.v1"')
+        def manifest = MAPPER.readValue(file('dist/root-project-0.0.1/deployment/manifest.yml'), Map)
+        manifest.get("manifest-version") == "1.0"
+        manifest.get("product-group") == "service-group"
+        manifest.get("product-name") == "root-project"
+        manifest.get("product-version") == "0.0.1"
+        manifest.get("product-type") == "pod.v1"
     }
 
     def 'pod file contains expected fields'() {
@@ -87,6 +90,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
+                serviceName 'pod-name'
                 podName 'pod-name'
 
                 service "bar-service", {
@@ -109,14 +113,11 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':configTar', ':untar')
+        runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        String pod = file('dist/pod-name-0.0.1/deployment/pod.yml', projectDir).text
-
         // verify pod YAML file contents
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        def podYaml = mapper.readTree(pod)
+        def podYaml = MAPPER.readTree(file('dist/pod-name-0.0.1/deployment/pod.yml'))
 
         podYaml.has("services")
         podYaml.get("services").has("bar-service")
@@ -154,10 +155,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service barService: service names must be kebab case")
+        buildResult.getStandardError().contains("Pod validation failed for service barService: service names must be kebab case")
     }
 
     def 'pod file creation fails with no product group'() {
@@ -178,10 +179,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service bar-service: product group must be specified for pod service")
+        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product group must be specified for pod service")
     }
 
     def 'pod file creation fails with no product name'() {
@@ -202,10 +203,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service bar-service: product name must be specified for pod service")
+        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product name must be specified for pod service")
     }
 
     def 'pod file creation fails with no product version '() {
@@ -226,10 +227,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
+        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
     }
 
     def 'pod file creation fails with invalid product version '() {
@@ -251,10 +252,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
+        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
     }
 
     def 'pod file creation fails with bad volume mappings'() {
@@ -284,10 +285,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for service baz-service: service volume mapping cannot contain undeclared volumes")
+        buildResult.getStandardError().contains("Pod validation failed for service baz-service: service volume mapping cannot contain undeclared volumes")
     }
 
     def 'pod file creation fails with volume name too long'() {
@@ -311,10 +312,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for volume aaaaaaaaaaaaaaaaaaaaaaaaaa: volume names must be fewer than 25 characters")
+        buildResult.getStandardError().contains("Pod validation failed for volume aaaaaaaaaaaaaaaaaaaaaaaaaa: volume names must be fewer than 25 characters")
     }
 
     def 'pod file creation fails with bad volume name'() {
@@ -338,10 +339,10 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for volume Not-A-Valid-Volume: volume name does not conform to the required regex")
+        buildResult.getStandardError().contains("Pod validation failed for volume Not-A-Valid-Volume: volume name does not conform to the required regex")
     }
 
     def 'pod file creation fails with bad volume desired size'() {
@@ -365,17 +366,15 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        BuildResult buildResult = run(':configTar').buildAndFail()
+        def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getOutput().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(M|G|T)\$")
+        buildResult.getStandardError().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(M|G|T)\$")
     }
 
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-pod-distribution'
-            }
+            apply plugin: 'com.palantir.sls-pod-distribution'
 
             version "0.0.1"
             project.group = 'service-group'
