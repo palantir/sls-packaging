@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.google.common.collect.Maps;
+import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
@@ -27,6 +28,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.slspackaging.versions.SlsProductVersions;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -36,6 +38,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.file.FileCollection;
@@ -48,6 +51,7 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,5 +232,19 @@ public class CreateManifestTask extends DefaultTask {
                 productDependency,
                 (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
         return discoveredProductDependencies;
+    }
+
+    public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
+        return project.getTasks().register(
+                "createManifest", CreateManifestTask.class, task -> {
+                    task.getServiceName().set(ext.getServiceName());
+                    task.getServiceGroup().set(ext.getServiceGroup());
+                    task.getProductType().set(ext.getProductType());
+                    task.getManifestExtensions().set(ext.getManifestExtensions());
+                    task.getManifestFile().set(new File(project.getBuildDir(), "/deployment/manifest.yml"));
+                    task.getProductDependencies().set(ext.getProductDependencies());
+                    task.setProductDependenciesConfig(ext.getProductDependenciesConfig());
+                    task.getIgnoredProductIds().set(ext.getIgnoredProductIds());
+                });
     }
 }

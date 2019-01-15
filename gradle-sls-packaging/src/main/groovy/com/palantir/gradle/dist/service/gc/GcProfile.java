@@ -16,9 +16,10 @@
 
 package com.palantir.gradle.dist.service.gc;
 
+import java.io.Serializable;
 import java.util.List;
 
-public interface GcProfile {
+public interface GcProfile extends Serializable {
 
     List<String> gcJvmOpts();
 

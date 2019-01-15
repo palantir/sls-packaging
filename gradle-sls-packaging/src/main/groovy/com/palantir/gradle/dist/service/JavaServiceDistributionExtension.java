@@ -49,13 +49,13 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private Property<String> javaHome;
     private Property<Boolean> addJava8GcLogging;
     private Property<Boolean> enableManifestClasspath;
+    private Property<GcProfile> gc;
     private ListProperty<String> args;
     private ListProperty<String> checkArgs;
     private ListProperty<String> defaultJvmOpts;
     private ListProperty<String> excludeFromVar;
     private MapProperty<String, String> env;
 
-    private GcProfile gc;
     private ObjectFactory objectFactory;
 
     @Inject
@@ -67,6 +67,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         javaHome = objectFactory.property(String.class);
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
         enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
+        gc = objectFactory.property(GcProfile.class).value(new Throughput());
         args = objectFactory.listProperty(String.class).empty();
         checkArgs = objectFactory.listProperty(String.class).empty();
         defaultJvmOpts = objectFactory.listProperty(String.class).empty();
@@ -75,7 +76,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         env = objectFactory.mapProperty(String.class, String.class).empty();
 
         setProductType(ProductType.SERVICE_V1);
-        gc = new Throughput();
     }
 
     public final Provider<String> getMainClass() {
@@ -170,16 +170,17 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.env.set(env);
     }
 
-    public final GcProfile getGc() {
+    public final Provider<GcProfile> getGc() {
         return gc;
     }
 
     public final void setGc(String type, @Nullable @DelegatesTo(GcProfile.class) Closure configuration) {
-        gc = objectFactory.<GcProfile>newInstance(profileNames.get(type));
+        GcProfile newGc = objectFactory.<GcProfile>newInstance(profileNames.get(type));
         if (configuration != null) {
             configuration.setDelegate(gc);
             configuration.call();
         }
+        gc.set(newGc);
     }
 
     public final void gc(String type) {

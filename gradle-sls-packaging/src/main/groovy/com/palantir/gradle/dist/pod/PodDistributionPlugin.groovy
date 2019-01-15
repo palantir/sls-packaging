@@ -24,6 +24,7 @@ import groovy.transform.CompileStatic
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Tar
 
 @CompileStatic
@@ -45,31 +46,18 @@ class PodDistributionPlugin implements Plugin<Project> {
 
         distributionExtension.productDependenciesConfig = project.configurations.create("podBundle")
 
-        CreateManifestTask manifest = project.tasks.create('createManifest', CreateManifestTask, { task ->
-            task.serviceName.set(distributionExtension.serviceName)
-            task.serviceGroup.set(distributionExtension.serviceGroup)
-            task.productType.set(distributionExtension.productType)
-            task.manifestExtensions.set(distributionExtension.manifestExtensions)
-            task.manifestFile.set(new File(project.buildDir, '/deployment/manifest.yml'))
-            task.productDependencies.set(distributionExtension.productDependencies)
-            task.setProductDependenciesConfig(distributionExtension.productDependenciesConfig)
-            task.ignoredProductIds.set(distributionExtension.ignoredProductIds)
-        })
+        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
+                project, distributionExtension);
 
         CreatePodYAMLTask podYaml = project.tasks.create('createPodYaml', CreatePodYAMLTask)
         project.afterEvaluate {
             podYaml.configure(distributionExtension.services.get(), distributionExtension.volumes.get())
         }
 
-        Tar configTar = ConfigTarTask.createConfigTarTask(project, 'configTar', distributionExtension.productType.get())
-        project.afterEvaluate {
-            ConfigTarTask.configure(configTar, project, distributionExtension.podName.get())
-        }
+        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension)
+        configTar.configure({task -> task.dependsOn(manifest, podYaml)})
 
         project.configurations.create(SLS_CONFIGURATION_NAME)
         project.artifacts.add(SLS_CONFIGURATION_NAME, configTar)
-
-        // Configure tasks
-        configTar.dependsOn manifest, podYaml
     }
 }
