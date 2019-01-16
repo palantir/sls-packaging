@@ -31,7 +31,7 @@ public class CreateInitScriptTask extends DefaultTask {
     private Property<String> serviceName = getProject().getObjects().property(String.class);
     private RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
-    CreateInitScriptTask() {
+    public CreateInitScriptTask() {
         outputFile.set(new File(getProject().getBuildDir(), "scripts/init.sh"));
     }
 
