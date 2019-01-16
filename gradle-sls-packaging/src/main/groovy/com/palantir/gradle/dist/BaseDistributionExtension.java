@@ -100,6 +100,7 @@ public class BaseDistributionExtension {
     public final void setProductDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         ProductDependency dep = new ProductDependency();
         ConfigureUtil.configureUsing(closure).execute(dep);
+        dep.isValid();
         productDependencies.add(dep);
     }
 

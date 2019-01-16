@@ -17,14 +17,16 @@ package com.palantir.gradle.dist.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.datatype.guava.GuavaModule
+import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
 import nebula.test.IntegrationSpec
-import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.TaskOutcome
-import org.gradle.testkit.runner.UnexpectedBuildFailure
+import org.junit.Assert
 
 class ServiceDistributionPluginTests extends IntegrationSpec {
+    private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
+            .registerModule(new GuavaModule())
 
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
@@ -58,9 +60,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        def result = runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
+        result.wasExecuted('createCheckScript')
         // try all of the service commands
         execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'start') == 0
         // wait for the Java process to start up and emit output
@@ -103,13 +106,14 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         then:
-        def version02BuildOutput = runTasksSuccessfully(':build', ':distTar', ':untar02').output
-        version02BuildOutput ==~ /(?m)(?s).*:createCheckScript UP-TO-DATE.*/
-        version02BuildOutput ==~ /(?m)(?s).*:createInitScript UP-TO-DATE.*/
-        version02BuildOutput ==~ /(?m)(?s).*:createLaunchConfig.*/
-        version02BuildOutput ==~ /(?m)(?s).*:createManifest.*/
-        version02BuildOutput ==~ /(?m)(?s).*:manifestClasspathJar.*/
-        version02BuildOutput ==~ /(?m)(?s).*:distTar.*/
+        def result = runTasksSuccessfully(':build', ':distTar', ':untar02')
+        result.wasUpToDate(':createCheckScript')
+        result.wasUpToDate(':createInitScript')
+        result.wasExecuted(':createLaunchConfig')
+        result.wasExecuted('createManifest')
+        result.wasExecuted(':manifestClasspathJar')
+        result.wasExecuted('distTar')
+
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'start') == 0
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'stop') == 0
     }
@@ -126,10 +130,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        file('dist/service-name-0.0.1').exists()
-        !file('dist/service-name-0.0.1/var/log').exists()
-        !file('dist/service-name-0.0.1/var/run').exists()
-        file('dist/service-name-0.0.1/var/conf/service-name.yml').exists()
+        fileExists('dist/service-name-0.0.1')
+        !fileExists('dist/service-name-0.0.1/var/log')
+        !fileExists('dist/service-name-0.0.1/var/run')
+        fileExists('dist/service-name-0.0.1/var/conf/service-name.yml')
     }
 
     def 'produce distribution bundle and check var/data/tmp is created and used for temporary files'() {
@@ -151,7 +155,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
 
         then:
         execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
-        sleep 1000
+        sleep( 1000)
         file('dist/service-name-0.0.1/var/data/tmp').listFiles().length == 1
         file('dist/service-name-0.0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
@@ -196,9 +200,9 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        !file('dist/service-name-0.0.1/var/log').exists()
-        !file('dist/service-name-0.0.1/var/data/database').exists()
-        file('dist/service-name-0.0.1/var/conf/service-name.yml').exists()
+        !fileExists('dist/service-name-0.0.1/var/log')
+        !fileExists('dist/service-name-0.0.1/var/data/database')
+        fileExists('dist/service-name-0.0.1/var/conf/service-name.yml')
     }
 
     def 'produce distribution bundle with a non-string version object'() {
@@ -248,8 +252,8 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"product-version": "0.0.1"')
+        def manifest = OBJECT_MAPPER.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml'), SlsManifest);
+        manifest.productVersion() == "0.0.1"
     }
 
     def 'manifest file contains expected fields'() {
@@ -260,13 +264,13 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         runTasksSuccessfully(':build', ':distTar', ':untar')
 
         then:
-        String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"manifest-version": "1.0"')
-        manifest.contains('"product-group": "service-group"')
-        manifest.contains('"product-name": "service-name"')
-        manifest.contains('"product-version": "0.0.1"')
-        manifest.contains('"product-type": "service.v1"')
-        manifest.replaceAll(/\s/, '').contains('"extensions":{"foo":{"bar":["1","2"]}')
+        def manifest = OBJECT_MAPPER.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml'), Map)
+        manifest.get("manifest-version") == "1.0"
+        manifest.get("product-group") == "service-group"
+        manifest.get("product-name") == "service-name"
+        manifest.get("product-version") == "0.0.1"
+        manifest.get("product-type") == "service.v1"
+        manifest.get("extensions").get("foo") == ["bar": ["1","2"]]
     }
 
     def 'can specify service dependencies'() {
@@ -274,18 +278,18 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
-                productDependency "group1", "name1", "1.0.0", "2.0.0"
                 productDependency {
-                    productGroup = "group2"
-                    productName = "name2"
+                    productGroup = "group1"
+                    productName = "name1"
                     minimumVersion = "1.0.0"
                     maximumVersion = "1.3.x"
                     recommendedVersion = "1.2.1"
                 }
                 productDependency {
-                    productGroup = "group3"
-                    productName = "name3"
+                    productGroup = "group2"
+                    productName = "name2"
                     minimumVersion = "1.0.0"
+                    maximumVersion = "1.x.x"
                 }
             }
         """.stripIndent()
@@ -301,40 +305,13 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         dep1['product-group'] == 'group1'
         dep1['product-name'] == 'name1'
         dep1['minimum-version'] == '1.0.0'
-        dep1['maximum-version'] == '2.0.0'
-        dep1['recommended-version'] == null
+        dep1['maximum-version'] == '1.3.x'
+        dep1['recommended-version'] == "1.2.1"
 
         def dep2 = manifest['extensions']['product-dependencies'][1]
         dep2['product-group'] == 'group2'
         dep2['product-name'] == 'name2'
         dep2['minimum-version'] == '1.0.0'
-        dep2['maximum-version'] == '1.3.x'
-        dep2['recommended-version'] == "1.2.1"
-
-        def dep3 = manifest['extensions']['product-dependencies'][2]
-        dep3['product-group'] == 'group3'
-        dep3['product-name'] == 'name3'
-    }
-
-    def 'cannot specify service dependencies with invalid versions'() {
-        given:
-        createUntarBuildFile(buildFile)
-        buildFile << """
-            distribution {
-                productDependency {
-                    productGroup = "group2"
-                    productName = "name2"
-                    minimumVersion = "1.0.x"
-                }
-            }
-        """.stripIndent()
-
-        when:
-        run(':distTar').build()
-
-        then:
-        UnexpectedBuildFailure exception = thrown()
-        exception.message.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
     }
 
     def 'cannot specify service dependencies with invalid versions, with closure constructor'() {
@@ -342,16 +319,20 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
-                productDependency "group1", "name1", "1.0.x", "2.0.0"
+                productDependency {
+                    productName = "name1"
+                    productGroup = "group1"
+                    minimumVersion = "1.0.x"
+                    maximumVersion = "2.0.0"
+                }
             }
         """.stripIndent()
 
         when:
-        run(':distTar').build()
+        def result = runTasksWithFailure('distTar')
 
         then:
-        UnexpectedBuildFailure exception = thrown()
-        exception.message.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
+        result.standardError.contains("minimum version must be a valid SlS version: 1.0.x")
     }
 
     def 'produce distribution bundle with files in deployment/'() {
@@ -367,12 +348,12 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
 
         then:
         // clobbers deployment/manifest.yml
-        String manifest = file('dist/service-name-0.0.1/deployment/manifest.yml', projectDir).text
-        manifest.contains('"product-name": "service-name"')
+        def manifest = OBJECT_MAPPER.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml'), SlsManifest)
+        manifest.productName() == "service-name"
 
         // check files in deployment/ copied successfully
-        String actualConfiguration = file('dist/service-name-0.0.1/deployment/configuration.yml', projectDir).text
-        actualConfiguration.equals(deploymentConfiguration)
+        String actualConfiguration = file('dist/service-name-0.0.1/deployment/configuration.yml').text
+        actualConfiguration == deploymentConfiguration
     }
 
     def 'produce distribution bundle with start script that passes default JVM options'() {
@@ -425,23 +406,27 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
                 "key2": "val2"])
             .dirs(["var/data/tmp"])
             .build()
-        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
-        expectedStaticConfig == actualStaticConfig
 
-        def expectedCheckConfig = expectedStaticConfig
-
-        LaunchConfigTask.defaultEnvironment.keySet().forEach { key -> expectedCheckConfig.env.remove(key) }
-
-        expectedCheckConfig.setJvmOpts([
+        def expectedCheckConfig = LaunchConfigTask.LaunchConfig.builder()
+            .mainClass(actualStaticConfig.mainClass())
+            .serviceName(actualStaticConfig.serviceName())
+            .javaHome(actualStaticConfig.javaHome())
+            .args(["myCheckArg1", "myCheckArg2"])
+            .classpath(actualStaticConfig.classpath())
+            .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
-        expectedCheckConfig.setArgs(['myCheckArg1', 'myCheckArg2'])
-        def actualCheckConfig = new ObjectMapper(new YAMLFactory()).readValue(
+            .env(LaunchConfigTask.defaultEnvironment)
+            .dirs(actualStaticConfig.dirs())
+            .build()
+
+        def actualCheckConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigTask.LaunchConfig)
         expectedCheckConfig == actualCheckConfig
     }
@@ -462,14 +447,11 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
 
         then:
         def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
-            .builder()
-        expectedStaticConfig.setConfigVersion(1)
-        expectedStaticConfig.setConfigType("java")
-        expectedStaticConfig.setMainClass("test.Test")
-        expectedStaticConfig.setServiceName("service-name")
-        expectedStaticConfig.setJavaHome("foo")
-        expectedStaticConfig.setClasspath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
-        expectedStaticConfig.setJvmOpts([
+            .mainClass("test.Test")
+            .serviceName("service-name")
+            .javaHome("foo")
+            .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+            .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
@@ -485,10 +467,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
                 '-XX:+UseParallelOldGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
-        expectedStaticConfig.setDirs(["var/data/tmp"])
-        expectedStaticConfig.setEnv(["MALLOC_ARENA_MAX": '4'])
-        expectedStaticConfig.setArgs([])
-        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+            .dirs(["var/data/tmp"])
+            .env(["MALLOC_ARENA_MAX": '4'])
+            .build()
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         expectedStaticConfig == actualStaticConfig
     }
@@ -512,6 +494,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
     def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
         given:
         createUntarBuildFile(buildFile)
+        settingsFile << '''
+        rootProject.name = 'root-project'
+        '''
+
         buildFile << '''
             distribution {
                 enableManifestClasspath true
@@ -554,9 +540,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         given:
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            
+            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -587,9 +574,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         given:
         helper.addSubproject('parent', '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            
+            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -602,7 +590,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
             }
         ''')
 
-        helper.addSubproject('child', '''
+        def childProject = helper.addSubproject('child', '''
             configurations {
                 fromOtherProject
             }
@@ -620,52 +608,50 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         ''')
 
         when:
-        BuildResult buildResult = runTasksSuccessfully(':child:untar')
+        def buildResult = runTasksSuccessfully(':child:untar')
 
         then:
-        buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
-        file('child/build/exploded/my-service-0.1/deployment/manifest.yml')
+        buildResult.wasExecuted(':parent:distTar')
+        new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
     }
 
     def 'fails when asset and service plugins are both applied'() {
         given:
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-asset-distribution'
-                id 'com.palantir.sls-java-service-distribution'
-            }
+            apply plugin: 'com.palantir.sls-asset-distribution'
+            apply plugin: 'com.palantir.sls-java-service-distribution'
         '''.stripIndent()
 
         when:
-        def result = run(":tasks").buildAndFail()
+        def result = runTasksWithFailure(":tasks")
 
         then:
-        result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.getStandardError().contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'fails when pod and service plugins are both applied'() {
         given:
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-pod-distribution'
-                id 'com.palantir.sls-java-service-distribution'
-            }
+            apply plugin: 'com.palantir.sls-pod-distribution'
+            apply plugin: 'com.palantir.sls-java-service-distribution'
         '''.stripIndent()
 
         when:
-        def result = run(":tasks").buildAndFail()
+        def result = runTasksWithFailure(":tasks")
 
         then:
-        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.getStandardError().contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
         helper.addSubproject('parent', '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
             version '0.0.1'
             distribution {
                 serviceName "service-name"
@@ -738,9 +724,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
         // verify launcher YAML files
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-
-        LaunchConfigTask.LaunchConfig launcherCheck = mapper.readValue(
+        LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
@@ -748,7 +732,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
         launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
-        LaunchConfigTask.LaunchConfig launcherStatic = mapper.readValue(
+        LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
@@ -780,9 +764,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         given:
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            
+            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -810,7 +795,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         runTasksSuccessfully(':untar')
 
         then:
-        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
     }
@@ -819,9 +804,10 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         given:
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
             }
+            
+            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -847,7 +833,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         runTasksSuccessfully(':untar')
 
         then:
-        def actualStaticConfig = new ObjectMapper(new YAMLFactory()).readValue(
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication'])
     }
@@ -894,10 +880,25 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         return zf.getInputStream(object).text
     }
 
-    def int execWithExitCode(String... tasks) {
+    int execWithExitCode(String... tasks) {
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         int result = proc.waitFor()
         return result
     }
 
+    String execWithOutput(String... tasks) {
+        StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
+        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        proc.consumeProcessOutput(sout, serr)
+        int result = proc.waitFor()
+        int expected = 0
+        Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'", tasks.join(' '), expected), expected, result)
+        return sout.toString()
+    }
+
+    String execAllowFail(String... tasks) {
+        new ProcessBuilder().command(tasks).directory(projectDir)
+                .start()
+                .waitFor()
+    }
 }

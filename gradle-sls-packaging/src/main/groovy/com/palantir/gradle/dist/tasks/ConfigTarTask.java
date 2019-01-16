@@ -29,7 +29,7 @@ public final class ConfigTarTask {
     private ConfigTarTask() {}
 
     public static TaskProvider<Tar> createConfigTarTask(Project project, BaseDistributionExtension ext) {
-        return project.getTasks().register("configTar", Tar.class, task -> {
+        TaskProvider<Tar> configTar = project.getTasks().register("configTar", Tar.class, task -> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription(
                     "Creates a compressed, gzipped tar file that contains the sls configuration files for the product");
@@ -49,8 +49,13 @@ public final class ConfigTarTask {
 
             task.from(new File(project.getProjectDir(), "deployment"));
             task.from(new File(project.getBuildDir(), "deployment"));
-            // TODO(forozco): make this lazy since into does not support providers, but does support callable
-            task.into(String.format("%s-%s/deployment", ext.getServiceName().get(), project.getVersion()));
         });
+
+        // HACKHACK
+        // TODO(forozco): make this lazy since into does not support providers, but does support callable
+        project.afterEvaluate(p -> configTar.configure(task ->
+                task.into(String.format("%s-%s/deployment", ext.getServiceName().get(), project.getVersion()))));
+
+        return configTar;
     }
 }

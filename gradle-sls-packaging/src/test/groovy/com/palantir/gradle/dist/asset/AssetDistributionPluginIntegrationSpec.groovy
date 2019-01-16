@@ -17,9 +17,9 @@
 package com.palantir.gradle.dist.asset
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.palantir.gradle.dist.GradleIntegrationSpec
+import nebula.test.IntegrationSpec
 
-class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
+class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
 
     def 'manifest file contains expected fields'() {
         given:
@@ -31,10 +31,10 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':distTar', ':untar')
+        runTasksSuccessfully(':distTar', ':untar')
 
         then:
-        String manifest = file('dist/asset-name-0.0.1/deployment/manifest.yml', projectDir).text
+        String manifest = file('dist/asset-name-0.0.1/deployment/manifest.yml').text
         manifest.contains('"manifest-version":"1.0"')
         manifest.contains('"product-group":"service-group"')
         manifest.contains('"product-name":"asset-name"')
@@ -59,12 +59,12 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
 
         when:
-        runSuccessfully(':distTar', ':untar')
+        runTasksSuccessfully(':distTar', ':untar')
 
         then:
-        file("dist/asset-name-0.0.1/asset/maven/abc").exists()
-        file("dist/asset-name-0.0.1/asset/maven/bar").exists()
-        file("dist/asset-name-0.0.1/asset/maven/abs").exists()
+        fileExists("dist/asset-name-0.0.1/asset/maven/abc")
+        fileExists("dist/asset-name-0.0.1/asset/maven/bar")
+        fileExists("dist/asset-name-0.0.1/asset/maven/abs")
 
         def lines = file("dist/asset-name-0.0.1/asset/maven/abc").readLines()
         lines.size() == 1
@@ -74,33 +74,29 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
     def 'fails when asset and service plugins are used'() {
         given:
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-java-service-distribution'
-                id 'com.palantir.sls-asset-distribution'
-            }
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            apply plugin: 'com.palantir.sls-asset-distribution'
         '''.stripIndent()
 
         when:
-        def result = run(":tasks").buildAndFail()
+        def result = runTasksWithFailure(":tasks")
 
         then:
-        result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.getStandardError().contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'fails when asset and pod plugins are used'() {
         given:
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-pod-distribution'
-                id 'com.palantir.sls-asset-distribution'
-            }
+            apply plugin: 'com.palantir.sls-pod-distribution'
+            apply plugin: 'com.palantir.sls-asset-distribution'
         '''.stripIndent()
 
         when:
-        def result = run(":tasks").buildAndFail()
+        def result = runTasksWithFailure(":tasks")
 
         then:
-        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
+        result.getStandardError().contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'can specify service dependencies'() {
@@ -119,16 +115,17 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
                     productGroup = "group2"
                     productName = "name2"
                     minimumVersion = "1.0.0"
+                    maximumVersion = "2.x.x"
                 }
             }
         """.stripIndent()
 
         when:
-        runSuccessfully(':distTar', ':untar')
+        runTasksSuccessfully(':distTar', ':untar')
 
         then:
         def mapper = new ObjectMapper()
-        def manifest = mapper.readValue(file('dist/asset-name-0.0.1/deployment/manifest.yml', projectDir), Map)
+        def manifest = mapper.readValue(file('dist/asset-name-0.0.1/deployment/manifest.yml'), Map)
 
         def dep1 = manifest['extensions']['product-dependencies'][0]
         dep1['product-group'] == 'group1'
@@ -140,14 +137,13 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def dep2 = manifest['extensions']['product-dependencies'][1]
         dep2['product-group'] == 'group2'
         dep2['product-name'] == 'name2'
-        dep1['minimum-version'] == '1.0.0'
+        dep2['minimum-version'] == '1.0.0'
+        dep2['maximum-version'] == '2.x.x'
     }
 
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
-            plugins {
-                id 'com.palantir.sls-asset-distribution'
-            }
+            apply plugin: 'com.palantir.sls-asset-distribution'
             
             distribution {
                 serviceName 'asset-name'

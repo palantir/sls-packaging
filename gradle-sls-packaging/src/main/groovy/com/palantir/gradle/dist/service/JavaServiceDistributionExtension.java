@@ -25,17 +25,18 @@ import com.palantir.gradle.dist.service.gc.ResponseTime;
 import com.palantir.gradle.dist.service.gc.ResponseTime11;
 import com.palantir.gradle.dist.service.gc.Throughput;
 import groovy.lang.Closure;
-import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.util.ConfigureUtil;
 
 public class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
@@ -174,29 +175,28 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         return gc;
     }
 
-    public final void setGc(String type, @Nullable @DelegatesTo(GcProfile.class) Closure configuration) {
-        GcProfile newGc = objectFactory.<GcProfile>newInstance(profileNames.get(type));
+    public final void gc(String type, @Nullable Closure configuration) {
+        GcProfile newGc = objectFactory.newInstance(profileNames.get(type));
         if (configuration != null) {
-            configuration.setDelegate(gc);
-            configuration.call();
+            ConfigureUtil.configure(configuration, newGc);
         }
         gc.set(newGc);
     }
 
     public final void gc(String type) {
-        setGc(type, null);
+        gc(type, null);
     }
 
-    // public void <T extends GcProfile> gc(Class<T> type, @Nullable Action<T> action) {
-    //     // separate variable since 'gc' has type GcProfile and we need to give the action a 'T'
-    //     T instance = objectFactory.newInstance(type);
-    //     gc = instance;
-    //     if (action != null) {
-    //         action.execute(instance);
-    //     }
-    // }
-    //
-    // void <T extends GcProfile> gc(Class<T> type) {
-    //     setGc(type, null);
-    // }
+    public final <T extends GcProfile> void gc(Class<T> type, @Nullable Action<T> action) {
+        // separate variable since 'gc' has type GcProfile and we need to give the action a 'T'
+        T instance = objectFactory.newInstance(type);
+        gc.set(instance);
+        if (action != null) {
+            action.execute(instance);
+        }
+    }
+
+    public final <T extends GcProfile> void gc(Class<T> type) {
+        gc(type, null);
+    }
 }
