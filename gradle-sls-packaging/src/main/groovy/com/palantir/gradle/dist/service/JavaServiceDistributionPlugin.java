@@ -78,7 +78,7 @@ public class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setDescription("Creates a jar containing a Class-Path manifest entry specifying the classpath "
                             + "using pathing jar rather than command line argument on Windows, since Windows path "
                             + "sizes are limited.");
-                    task.setAppendix("manifest-classpath");
+                    task.getArchiveAppendix().set("manifest-classpath");
 
                     task.doFirst(t -> {
                         String classPath = project.getConfigurations().getByName("runtimeClasspath")
@@ -145,9 +145,11 @@ public class JavaServiceDistributionPlugin implements Plugin<Project> {
                 });
 
         TaskProvider<CreateInitScriptTask> initScript = project.getTasks().register(
-                "createInitScript", CreateInitScriptTask.class);
-        project.afterEvaluate(p ->
-                initScript.configure(task -> task.configure(distributionExtension.getServiceName().get())));
+                "createInitScript", CreateInitScriptTask.class, task -> {
+                    task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
+                    task.setDescription("Generates daemonizing init.sh script.");
+                    task.getServiceName().set(distributionExtension.getServiceName());
+                });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks().register(
                 "createCheckScript", CreateCheckScriptTask.class, task -> {
