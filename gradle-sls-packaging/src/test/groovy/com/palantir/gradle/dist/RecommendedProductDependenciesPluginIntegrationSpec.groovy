@@ -20,14 +20,16 @@ import com.google.common.collect.Iterables
 import com.palantir.gradle.dist.tasks.CreateManifestTask
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
+import nebula.test.IntegrationSpec
 
-class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrationSpec {
+class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpec {
 
     def "Adds recommended product dependencies to manifest"() {
+        settingsFile  << """
+        rootProject.name = "root-project"
+        """.stripIndent()
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-recommended-dependencies'
-            }
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
 
             recommendedProductDependencies {
                 productDependency {
@@ -41,13 +43,13 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         """.stripIndent()
 
         when:
-        runSuccessfully(':jar')
+        runTasksSuccessfully(':jar')
 
         then:
-        def jar = new File(projectDir, "build/libs/root-project.jar")
-        jar.exists()
+        fileExists("build/libs/root-project.jar")
 
-        def dep = Iterables.getOnlyElement(readRecommendedProductDeps(jar).recommendedProductDependencies())
+        def dep = Iterables.getOnlyElement(
+                readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
         dep == new ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.3")
     }
 
@@ -57,7 +59,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         def manifest = new Manifest(zf.getInputStream(manifestEntry))
         return CreateManifestTask.jsonMapper.readValue(
                 manifest.getMainAttributes().getValue(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
-                RecommendedProductDependencies);
+                RecommendedProductDependencies)
     }
 
 }
