@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.tasks;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductDependency;
@@ -115,20 +116,9 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    final String getProjectVersion() {
-        String stringVersion = String.valueOf(getProject().getVersion());
-        if (!SlsProductVersions.isValidVersion(stringVersion)) {
-            throw new IllegalArgumentException("Project version must be a valid SLS version: " + stringVersion);
-        }
-
-        if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
-            getProject().getLogger().warn(
-                    "Version string in project {} is not orderable as per SLS specification: {}",
-                    getProject().getName(), stringVersion);
-        }
-        return stringVersion;
+    public final String getProjectVersion() {
+        return getProject().getVersion().toString();
     }
-
 
     @OutputFile
     public final RegularFileProperty getManifestFile() {
@@ -137,6 +127,7 @@ public class CreateManifestTask extends DefaultTask {
 
     @TaskAction
     final void createManifest() throws Exception {
+        validateProjectVersion();
         if (manifestExtensions.get().containsKey("product-dependencies")) {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
                     + "'service-dependencies' key in manifestExtensions");
@@ -233,6 +224,19 @@ public class CreateManifestTask extends DefaultTask {
                 (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
         return discoveredProductDependencies;
     }
+
+    private void validateProjectVersion() {
+        String stringVersion = getProjectVersion();
+        Preconditions.checkArgument(SlsProductVersions.isValidVersion(stringVersion),
+                "Project version must be a valid SLS version: " + stringVersion);
+        if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
+            getProject().getLogger().warn(
+                    "Version string in project {} is not orderable as per SLS specification: {}",
+                    getProject().getName(), stringVersion);
+        }
+    }
+
+
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         return project.getTasks().register(
