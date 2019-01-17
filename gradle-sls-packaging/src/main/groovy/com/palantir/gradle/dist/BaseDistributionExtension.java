@@ -35,7 +35,6 @@ import org.gradle.util.ConfigureUtil;
 
 public class BaseDistributionExtension {
 
-    // TODO(forozco): can we kill this?
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
     private final Property<String> podName;
@@ -44,6 +43,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductIds;
 
+    // TODO(forozco): can we kill this?
     private Configuration productDependenciesConfig;
 
     @Inject

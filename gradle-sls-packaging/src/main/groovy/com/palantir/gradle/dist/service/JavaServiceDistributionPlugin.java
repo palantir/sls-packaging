@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -64,8 +63,11 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply("java");
         JavaServiceDistributionExtension distributionExtension = project.getExtensions().create(
                 "distribution", JavaServiceDistributionExtension.class, project);
+
+        // Set default configuration to look for product dependencies to be runtimeClasspath
         distributionExtension.setProductDependenciesConfig(project.getConfigurations().getByName("runtimeClasspath"));
 
+        // Create configuration to load executable dependencies
         project.getConfigurations().maybeCreate(GO_JAVA_LAUNCHER_BINARIES);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_JAVA_LAUNCHER);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_INIT);
@@ -119,7 +121,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     });
                 });
 
-        // HACKHACK ensure runtimeClassPath exists
+        // HACKHACK setClasspath of CreateStartScript is eager so we configure it after evaluation to ensure everything
+        // has been correctly configured
         project.afterEvaluate(p -> startScripts.configure(task -> {
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
             task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles().plus(
@@ -180,7 +183,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.dependsOn(jarTaskProvider);
         });
 
-        // HACKHACK
+        // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
+        // been correctly configured
         project.afterEvaluate(p -> runTask.configure(task -> {
             TaskProvider<Jar> jarTaskProvider = project.getTasks().named("jar", Jar.class);
             Provider<RegularFile> jarArchive = jarTaskProvider.map(jarTask -> jarTask.getArchiveFile().get());

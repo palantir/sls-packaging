@@ -44,7 +44,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
 
         AssetDistributionExtension distributionExtension = project.getExtensions().create(
-                "distribution", AssetDistributionExtension.class, project, project.getObjects());
+                "distribution", AssetDistributionExtension.class, project);
         distributionExtension.setProductDependenciesConfig(project.getConfigurations().maybeCreate("assetBundle"));
 
         TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
@@ -65,7 +65,8 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.dependsOn(manifest);
         });
 
-        // HACKHACK after evaluate to configure task with all declared assets
+        // HACKHACK after evaluate to configure task with all declared assets, this is required since
+        // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
             String archiveRootDir = String.format("%s-%s",
                     distributionExtension.getServiceName().get(), p.getVersion());

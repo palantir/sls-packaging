@@ -51,7 +51,6 @@ public final class ConfigTarTask {
             task.from(new File(project.getBuildDir(), "deployment"));
         });
 
-        // HACKHACK
         // TODO(forozco): make this lazy since into does not support providers, but does support callable
         project.afterEvaluate(p -> configTar.configure(task ->
                 task.into(String.format("%s-%s/deployment", ext.getServiceName().get(), project.getVersion()))));

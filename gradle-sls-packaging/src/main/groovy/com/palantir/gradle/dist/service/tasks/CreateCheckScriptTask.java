@@ -59,8 +59,9 @@ public class CreateCheckScriptTask extends DefaultTask {
             EmitFiles.replaceVars(
                     JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
                     getOutputFile().getAsFile().get().toPath(),
-                    ImmutableMap.of("@serviceName@", serviceName.get(),
-                     "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))
+                    ImmutableMap.of(
+                            "@serviceName@", serviceName.get(),
+                            "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))
                     .toFile()
                     .setExecutable(true);
         }
