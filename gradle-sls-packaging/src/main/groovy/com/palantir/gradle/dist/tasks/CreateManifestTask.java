@@ -246,7 +246,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getManifestFile().set(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getProductDependencies());
                     task.setProductDependenciesConfig(ext.getProductDependenciesConfig());
-                    task.getIgnoredProductIds().set(ext.getIgnoredProductIds());
+                    task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                 });
     }
 }

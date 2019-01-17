@@ -30,6 +30,7 @@ import org.gradle.api.tasks.bundling.Tar;
 
 public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
+    public static final String ASSET_CONFIGURATION = "assetBundle";
     private static final String SLS_CONFIGURATION_NAME = "sls";
 
     @Override
@@ -45,7 +46,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
 
         AssetDistributionExtension distributionExtension = project.getExtensions().create(
                 "distribution", AssetDistributionExtension.class, project);
-        distributionExtension.setProductDependenciesConfig(project.getConfigurations().maybeCreate("assetBundle"));
+        distributionExtension.setProductDependenciesConfig(project.getConfigurations().create(ASSET_CONFIGURATION));
 
         TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
                 project, distributionExtension);

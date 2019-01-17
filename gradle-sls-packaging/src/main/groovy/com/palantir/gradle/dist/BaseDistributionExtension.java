@@ -41,7 +41,7 @@ public class BaseDistributionExtension {
     private final Property<ProductType> productType;
     private final MapProperty<String, Object> manifestExtensions;
     private final ListProperty<ProductDependency> productDependencies;
-    private final SetProperty<ProductId> ignoredProductIds;
+    private final SetProperty<ProductId> ignoredProductDependencies;
 
     // TODO(forozco): can we kill this?
     private Configuration productDependenciesConfig;
@@ -54,7 +54,7 @@ public class BaseDistributionExtension {
         productType = project.getObjects().property(ProductType.class);
         manifestExtensions = project.getObjects().mapProperty(String.class, Object.class).empty();
         productDependencies = project.getObjects().listProperty(ProductDependency.class).empty();
-        ignoredProductIds = project.getObjects().setProperty(ProductId.class).empty();
+        ignoredProductDependencies = project.getObjects().setProperty(ProductId.class).empty();
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
@@ -104,12 +104,16 @@ public class BaseDistributionExtension {
         productDependencies.add(dep);
     }
 
-    public final Provider<Set<ProductId>> getIgnoredProductIds() {
-        return ignoredProductIds;
+    public final Provider<Set<ProductId>> getIgnoredProductDependencies() {
+        return ignoredProductDependencies;
     }
 
-    public final void setIgnoredProductIds(String ignoredProductId) {
-        this.ignoredProductIds.add(new ProductId(ignoredProductId));
+    public final void ignoredProductDependency(String productGroup, String productName) {
+        this.ignoredProductDependencies.add(new ProductId(productGroup, productName));
+    }
+
+    public final void ignoredProductDependency(String ignoredProductId) {
+        this.ignoredProductDependencies.add(new ProductId(ignoredProductId));
     }
 
     public final Provider<Map<String, Object>> getManifestExtensions() {
