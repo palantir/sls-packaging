@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -43,7 +44,7 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.util.GFileUtils;
 
-public class JavaServiceDistributionPlugin implements Plugin<Project> {
+public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER_BINARIES = "goJavaLauncherBinaries";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.5.1";
     private static final String GO_INIT = "com.palantir.launching:go-init:1.5.1";
@@ -51,7 +52,7 @@ public class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String SLS_CONFIGURATION_NAME = "sls";
 
     @SuppressWarnings("checkstyle:methodlength")
-    public final void apply(Project project) {
+    public void apply(Project project) {
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");

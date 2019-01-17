@@ -28,8 +28,8 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 public class CreateInitScriptTask extends DefaultTask {
-    private Property<String> serviceName = getProject().getObjects().property(String.class);
-    private RegularFileProperty outputFile = getProject().getObjects().fileProperty();
+    private final Property<String> serviceName = getProject().getObjects().property(String.class);
+    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
     public CreateInitScriptTask() {
         outputFile.set(new File(getProject().getBuildDir(), "scripts/init.sh"));

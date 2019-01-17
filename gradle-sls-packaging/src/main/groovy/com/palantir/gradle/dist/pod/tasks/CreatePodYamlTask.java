@@ -42,11 +42,11 @@ public class CreatePodYamlTask extends DefaultTask {
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-    private MapProperty<String, PodServiceDefinition> serviceDefinitions =
+    private final MapProperty<String, PodServiceDefinition> serviceDefinitions =
             getProject().getObjects().mapProperty(String.class, PodServiceDefinition.class);
-    private MapProperty<String, PodVolumeDefinition> volumeDefinitions =
+    private final MapProperty<String, PodVolumeDefinition> volumeDefinitions =
             getProject().getObjects().mapProperty(String.class, PodVolumeDefinition.class);
-    private RegularFileProperty podYamlFile = getProject().getObjects().fileProperty();
+    private final RegularFileProperty podYamlFile = getProject().getObjects().fileProperty();
 
     public CreatePodYamlTask() {
         podYamlFile.set(new File(getProject().getBuildDir(), "deployment/pod.yml"));

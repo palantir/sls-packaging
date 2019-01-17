@@ -30,9 +30,9 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 public class CreateCheckScriptTask extends DefaultTask {
-    private Property<String> serviceName = getProject().getObjects().property(String.class);
-    private ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
-    private RegularFileProperty outputFile = getProject().getObjects().fileProperty();
+    private final Property<String> serviceName = getProject().getObjects().property(String.class);
+    private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
+    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
     public CreateCheckScriptTask() {
         outputFile.set(new File(getProject().getBuildDir(), "monitoring/check.sh"));

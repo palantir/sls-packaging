@@ -69,17 +69,18 @@ public class LaunchConfigTask extends DefaultTask {
     // See https://issues.apache.org/jira/browse/HADOOP-7154
     public static final Map<String, String> defaultEnvironment = ImmutableMap.of("MALLOC_ARENA_MAX", "4");
 
-    private Property<String> mainClass = getProject().getObjects().property(String.class);
-    private Property<String> serviceName = getProject().getObjects().property(String.class);
-    private Property<GcProfile> gc = getProject().getObjects().property(GcProfile.class);
-    private Property<Boolean> addJava8GcLogging = getProject().getObjects().property(Boolean.class);
-    private Property<String> javaHome = getProject().getObjects().property(String.class);
-    private RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
-    private RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
-    private ListProperty<String> args = getProject().getObjects().listProperty(String.class).empty();
-    private ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class).empty();
-    private ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class).empty();
-    private MapProperty<String, String> env = getProject().getObjects().mapProperty(String.class, String.class).empty();
+    private final Property<String> mainClass = getProject().getObjects().property(String.class);
+    private final Property<String> serviceName = getProject().getObjects().property(String.class);
+    private final Property<GcProfile> gc = getProject().getObjects().property(GcProfile.class);
+    private final Property<Boolean> addJava8GcLogging = getProject().getObjects().property(Boolean.class);
+    private final Property<String> javaHome = getProject().getObjects().property(String.class);
+    private final RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
+    private final RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
+    private final ListProperty<String> args = getProject().getObjects().listProperty(String.class).empty();
+    private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class).empty();
+    private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class).empty();
+    private final MapProperty<String, String> env = getProject().getObjects()
+            .mapProperty(String.class, String.class).empty();
 
     private FileCollection classpath;
 

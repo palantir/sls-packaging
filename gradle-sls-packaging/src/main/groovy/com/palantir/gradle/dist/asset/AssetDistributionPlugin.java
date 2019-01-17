@@ -28,12 +28,12 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
 
-public class AssetDistributionPlugin implements Plugin<Project> {
+public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
     private static final String SLS_CONFIGURATION_NAME = "sls";
 
     @Override
-    public final void apply(Project project) {
+    public void apply(Project project) {
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
