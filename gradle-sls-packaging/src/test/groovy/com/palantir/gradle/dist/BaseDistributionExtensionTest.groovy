@@ -29,11 +29,11 @@ class BaseDistributionExtensionTest extends Specification {
     }
 
     def 'serviceName uses project group as default'() {
-        new BaseDistributionExtension(project, project.getObjects()).serviceName.get() == "foo"
+        new BaseDistributionExtension(project).serviceName.get() == "foo"
     }
 
     def 'serviceName can be overwritten'() {
-        def ext = new BaseDistributionExtension(project, project.getObjects())
+        def ext = new BaseDistributionExtension(project)
         ext.serviceName("bar")
         ext.serviceName == "bar"
     }
@@ -44,7 +44,7 @@ class BaseDistributionExtensionTest extends Specification {
         Project child = ProjectBuilder.builder().withName("child").withParent(parent).build()
 
         then:
-        new BaseDistributionExtension(child, child.getObjects()).serviceName.get() == "child"
+        new BaseDistributionExtension(child).serviceName.get() == "child"
     }
 
     def 'serviceGroup uses project group as default'() {
@@ -52,7 +52,7 @@ class BaseDistributionExtensionTest extends Specification {
         project.group = "foo"
 
         then:
-        new BaseDistributionExtension(project, project.getObjects()).serviceGroup.get() == "foo"
+        new BaseDistributionExtension(project).serviceGroup.get() == "foo"
     }
 
     def 'serviceGroup can be overwritten'() {
@@ -60,7 +60,7 @@ class BaseDistributionExtensionTest extends Specification {
         project.group = "foo"
 
         then:
-        def ext = new BaseDistributionExtension(project, project.getObjects())
+        def ext = new BaseDistributionExtension(project)
         ext.setServiceGroup("bar")
         ext.serviceGroup.get() == "bar"
     }
@@ -68,7 +68,7 @@ class BaseDistributionExtensionTest extends Specification {
     // TODO(forozco): verify that enums work correctly
 //    def 'productType only accepts valid values'() {
 //        when:
-//        def ext = new BaseDistributionExtension(project, project.getObjects())
+//        def ext = new BaseDistributionExtension(project)
 //        ext.setProductType("foobar")
 //
 //        then:
@@ -78,7 +78,7 @@ class BaseDistributionExtensionTest extends Specification {
 
     def "productDependencies from closure"() {
         when:
-        def ext = new BaseDistributionExtension(project, project.getObjects())
+        def ext = new BaseDistributionExtension(project)
         ext.setProductDependency {
             productGroup = "group"
             productName = "name"
@@ -99,7 +99,7 @@ class BaseDistributionExtensionTest extends Specification {
 
     def "updates to collections are cumullative"() {
         when:
-        def ext = new BaseDistributionExtension(project, project.getObjects())
+        def ext = new BaseDistributionExtension(project)
         ext.with {
             manifestExtensions 'a': 'b'
             manifestExtensions 'c': 'd'

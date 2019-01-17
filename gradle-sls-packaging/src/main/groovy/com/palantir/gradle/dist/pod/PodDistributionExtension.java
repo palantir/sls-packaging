@@ -23,22 +23,21 @@ import groovy.lang.DelegatesTo;
 import java.util.Map;
 import javax.inject.Inject;
 import org.gradle.api.Project;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
 
 public class PodDistributionExtension extends BaseDistributionExtension {
 
-    private MapProperty<String, PodServiceDefinition> services;
-    private MapProperty<String, PodVolumeDefinition> volumes;
+    private final MapProperty<String, PodServiceDefinition> services;
+    private final MapProperty<String, PodVolumeDefinition> volumes;
 
     @Inject
-    public PodDistributionExtension(Project project, ObjectFactory objectFactory) {
-        super(project, objectFactory);
+    public PodDistributionExtension(Project project) {
+        super(project);
 
-        services = objectFactory.mapProperty(String.class, PodServiceDefinition.class).empty();
-        volumes = objectFactory.mapProperty(String.class, PodVolumeDefinition.class).empty();
+        services = project.getObjects().mapProperty(String.class, PodServiceDefinition.class).empty();
+        volumes = project.getObjects().mapProperty(String.class, PodVolumeDefinition.class).empty();
 
         setProductType(ProductType.POD_V1);
     }

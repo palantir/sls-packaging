@@ -28,7 +28,7 @@ class PodDistributionExtensionTest extends Specification {
 
     def 'collection modifiers are cumulative'() {
         given:
-        def ext = new PodDistributionExtension(project, project.objects)
+        def ext = new PodDistributionExtension(project)
         def barService = new PodServiceDefinition("com.palantir.foo", "bar", "1.0.0", [:])
         def bazService = new PodServiceDefinition("com.palantir.foo", "baz", "1.0.0", [:])
 
@@ -46,7 +46,7 @@ class PodDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new PodDistributionExtension(project, project.objects)
+        def ext = new PodDistributionExtension(project)
         def barService = new PodServiceDefinition("com.palantir.foo", "bar", "1.0.0", [:])
         def bazService = new PodServiceDefinition("com.palantir.foo", "baz", "1.0.0", [:])
 

@@ -46,24 +46,24 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
             "hybrid", Hybrid.class,
             "response-time-11", ResponseTime11.class);
 
-    private Property<String> mainClass;
-    private Property<String> javaHome;
-    private Property<Boolean> addJava8GcLogging;
-    private Property<Boolean> enableManifestClasspath;
-    private Property<GcProfile> gc;
-    private ListProperty<String> args;
-    private ListProperty<String> checkArgs;
-    private ListProperty<String> defaultJvmOpts;
-    private ListProperty<String> excludeFromVar;
-    private MapProperty<String, String> env;
+    private final Property<String> mainClass;
+    private final Property<String> javaHome;
+    private final Property<Boolean> addJava8GcLogging;
+    private final Property<Boolean> enableManifestClasspath;
+    private final Property<GcProfile> gc;
+    private final ListProperty<String> args;
+    private final ListProperty<String> checkArgs;
+    private final ListProperty<String> defaultJvmOpts;
+    private final ListProperty<String> excludeFromVar;
+    private final MapProperty<String, String> env;
 
-    private ObjectFactory objectFactory;
+    private final ObjectFactory objectFactory;
 
     @Inject
-    public JavaServiceDistributionExtension(Project project, ObjectFactory objectFactory) {
-        super(project, objectFactory);
+    public JavaServiceDistributionExtension(Project project) {
+        super(project);
 
-        this.objectFactory = objectFactory;
+        this.objectFactory = project.getObjects();
         mainClass = objectFactory.property(String.class);
         javaHome = objectFactory.property(String.class);
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);

@@ -62,7 +62,7 @@ public class JavaServiceDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply("java");
         JavaServiceDistributionExtension distributionExtension = project.getExtensions().create(
-                "distribution", JavaServiceDistributionExtension.class, project, project.getObjects());
+                "distribution", JavaServiceDistributionExtension.class, project);
         distributionExtension.setProductDependenciesConfig(project.getConfigurations().getByName("runtimeClasspath"));
 
         project.getConfigurations().maybeCreate(GO_JAVA_LAUNCHER_BINARIES);

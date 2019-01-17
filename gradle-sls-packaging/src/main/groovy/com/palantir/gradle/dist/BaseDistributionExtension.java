@@ -26,7 +26,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -37,24 +36,25 @@ import org.gradle.util.ConfigureUtil;
 public class BaseDistributionExtension {
 
     // TODO(forozco): can we kill this?
+    private final Property<String> serviceGroup;
+    private final Property<String> serviceName;
+    private final Property<String> podName;
+    private final Property<ProductType> productType;
+    private final MapProperty<String, Object> manifestExtensions;
+    private final ListProperty<ProductDependency> productDependencies;
+    private final SetProperty<ProductId> ignoredProductIds;
+
     private Configuration productDependenciesConfig;
-    private Property<String> serviceGroup;
-    private Property<String> serviceName;
-    private Property<String> podName;
-    private Property<ProductType> productType;
-    private MapProperty<String, Object> manifestExtensions;
-    private ListProperty<ProductDependency> productDependencies;
-    private SetProperty<ProductId> ignoredProductIds;
 
     @Inject
-    public BaseDistributionExtension(Project project, ObjectFactory objectFactory) {
-        serviceGroup = objectFactory.property(String.class);
-        serviceName = objectFactory.property(String.class);
-        podName = objectFactory.property(String.class);
-        productType = objectFactory.property(ProductType.class);
-        manifestExtensions = objectFactory.mapProperty(String.class, Object.class).empty();
-        productDependencies = objectFactory.listProperty(ProductDependency.class).empty();
-        ignoredProductIds = objectFactory.setProperty(ProductId.class).empty();
+    public BaseDistributionExtension(Project project) {
+        serviceGroup = project.getObjects().property(String.class);
+        serviceName = project.getObjects().property(String.class);
+        podName = project.getObjects().property(String.class);
+        productType = project.getObjects().property(ProductType.class);
+        manifestExtensions = project.getObjects().mapProperty(String.class, Object.class).empty();
+        productDependencies = project.getObjects().listProperty(ProductDependency.class).empty();
+        ignoredProductIds = project.getObjects().setProperty(ProductId.class).empty();
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));

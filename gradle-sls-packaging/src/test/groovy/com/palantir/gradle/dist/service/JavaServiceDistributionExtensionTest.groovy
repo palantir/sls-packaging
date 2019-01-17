@@ -29,7 +29,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
 
     def 'collection modifiers are cumulative when varargs are given'() {
         given:
-        def ext = new JavaServiceDistributionExtension(project, project.objects)
+        def ext = new JavaServiceDistributionExtension(project)
 
         when:
         ext.with {
@@ -59,7 +59,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new JavaServiceDistributionExtension(project, project.objects)
+        def ext = new JavaServiceDistributionExtension(project)
 
         when:
         ext.with {
