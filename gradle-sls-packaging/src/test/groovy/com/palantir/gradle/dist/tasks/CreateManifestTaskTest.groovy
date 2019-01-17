@@ -33,11 +33,13 @@ class CreateManifestTaskTest extends ProjectSpec {
     }
 
     def 'Cannot create CreateManifestTask when product.version is invalid SLS version'() {
-        when:
+        given:
         Project project = ProjectBuilder.builder().build()
         project.version = "1.0.0foo"
         CreateManifestTask task = project.tasks.create("m", CreateManifestTask)
-        task.getProjectVersion() == "1.0.0"
+
+        when:
+        task.createManifest()
 
         then:
         IllegalArgumentException exception = thrown()
