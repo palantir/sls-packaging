@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public interface GcProfile extends Serializable {
+    long serialVersionUID = 1L;
 
     List<String> gcJvmOpts();
 

@@ -80,8 +80,8 @@ task extractYourkitAgent(type: Copy, dependsOn: verifyYourkitDist) {
     includeEmptyDirs = false // Cleanup empty Yourkit dist directories
 }
 
-//tasks.idea.dependsOn extractYourkitAgent
-//tasks.compileJava.dependsOn extractYourkitAgent
+tasks.idea.dependsOn extractYourkitAgent
+tasks.compileJava.dependsOn extractYourkitAgent
 
 publishPlugins.onlyIf {
     project.version ==~ /[0-9]+(\.[0-9]+)+(-rc[0-9]+)?(-alpha[0-9]+)?/

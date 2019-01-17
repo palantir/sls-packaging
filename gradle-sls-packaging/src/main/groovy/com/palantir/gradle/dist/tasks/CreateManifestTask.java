@@ -236,8 +236,6 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-
-
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         return project.getTasks().register(
                 "createManifest", CreateManifestTask.class, task -> {
