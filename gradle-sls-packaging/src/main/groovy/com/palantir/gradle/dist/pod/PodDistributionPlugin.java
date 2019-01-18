@@ -52,9 +52,11 @@ public final class PodDistributionPlugin implements Plugin<Project> {
                 "createPodYaml", CreatePodYamlTask.class, task -> {
                     task.setGroup(PodDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates a simple yaml file describing a pods constituent services.");
-                    task.getServiceDefinitions().set(distributionExtension.getServices());
-                    task.getVolumeDefinitions().set(distributionExtension.getVolumes());
                 });
+        project.afterEvaluate(p -> podYaml.configure(task -> {
+            task.setServiceDefinitions(distributionExtension.getServices());
+            task.setVolumeDefinitions(distributionExtension.getVolumes());
+        }));
 
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest, podYaml));

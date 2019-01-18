@@ -332,7 +332,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         def result = runTasksWithFailure('distTar')
 
         then:
-        result.standardError.contains("minimum version must be a valid SlS version: 1.0.x")
+        result.standardError.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
     }
 
     def 'produce distribution bundle with files in deployment/'() {

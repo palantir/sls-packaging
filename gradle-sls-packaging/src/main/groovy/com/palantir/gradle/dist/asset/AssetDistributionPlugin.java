@@ -72,7 +72,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             String archiveRootDir = String.format("%s-%s",
                     distributionExtension.getServiceName().get(), p.getVersion());
             task.into(String.format("%s/deployment", archiveRootDir));
-            distributionExtension.getAssets().get().forEach((key, value) -> {
+            distributionExtension.getAssets().forEach((key, value) -> {
                 task.from(p.file(key));
                 task.into(String.format("%s/asset/%s", archiveRootDir, value));
             });

@@ -18,32 +18,39 @@ package com.palantir.gradle.dist;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import groovy.lang.Closure;
-import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
 
 public class BaseDistributionExtension {
+    private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
+            + "(?<group>[^:@?]*):"
+            + "(?<name>[^:@?]*):"
+            + "(?<version>[^:@?]*)"
+            + "(:(?<classifier>[^:@?]*))?"
+            + "(@(?<type>[^:@?]*))?");
 
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
     private final Property<String> podName;
     private final Property<ProductType> productType;
-    private final MapProperty<String, Object> manifestExtensions;
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
 
-    // TODO(forozco): can we kill this?
+    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
+    private Map<String, Object> manifestExtensions;
     private Configuration productDependenciesConfig;
 
     @Inject
@@ -52,13 +59,14 @@ public class BaseDistributionExtension {
         serviceName = project.getObjects().property(String.class);
         podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
-        manifestExtensions = project.getObjects().mapProperty(String.class, Object.class).empty();
         productDependencies = project.getObjects().listProperty(ProductDependency.class).empty();
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class).empty();
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
         podName.set(project.provider(project::getName));
+
+        manifestExtensions = Maps.newHashMap();
     }
 
     public final Provider<String> getServiceGroup() {
@@ -97,7 +105,51 @@ public class BaseDistributionExtension {
         return productDependencies;
     }
 
-    public final void setProductDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
+
+    public final void productDependency(String mavenCoordVersionRange) {
+        productDependency(mavenCoordVersionRange, null);
+    }
+    public final void productDependency(String mavenCoordVersionRange, String recommendedVersion) {
+        Matcher matcher = MAVEN_COORDINATE_PATTERN.matcher(mavenCoordVersionRange);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("String '${mavenCoordVersionRange}' is not a valid maven coordinate. "
+                    + "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are "
+                    + "optional.");
+        }
+        String minVersion = matcher.group("version");
+        productDependencies.add(new ProductDependency(
+                matcher.group("group"),
+                matcher.group("name"),
+                minVersion,
+                generateMaxVersion(minVersion),
+                recommendedVersion));
+    }
+
+    public final void productDependency(String dependencyGroup, String dependencyName, String minVersion) {
+        productDependency(dependencyGroup, dependencyName, minVersion, null, null);
+    }
+
+    public final void productDependency(
+            String dependencyGroup, String dependencyName, String minVersion, String maxVersion) {
+        productDependency(dependencyGroup, dependencyName, minVersion, maxVersion,  null);
+    }
+
+    public final void productDependency(
+            String dependencyGroup,
+            String dependencyName,
+            String minVersion,
+            String maxVersion, String recommendedVersion) {
+        productDependencies.add(new ProductDependency(
+                dependencyGroup,
+                dependencyName,
+                minVersion,
+                maxVersion == null
+                        ? generateMaxVersion(minVersion)
+                        : maxVersion,
+                recommendedVersion));
+    }
+
+    public final void productDependency(Closure closure) {
         ProductDependency dep = new ProductDependency();
         ConfigureUtil.configureUsing(closure).execute(dep);
         dep.isValid();
@@ -116,7 +168,7 @@ public class BaseDistributionExtension {
         this.ignoredProductDependencies.add(new ProductId(ignoredProductId));
     }
 
-    public final Provider<Map<String, Object>> getManifestExtensions() {
+    public final Map<String, Object> getManifestExtensions() {
         return this.manifestExtensions;
     }
 
@@ -129,7 +181,7 @@ public class BaseDistributionExtension {
     }
 
     public final void setManifestExtensions(Map<String, Object> extensions) {
-        manifestExtensions.set(extensions);
+        manifestExtensions = extensions;
     }
 
     public final Configuration getProductDependenciesConfig() {

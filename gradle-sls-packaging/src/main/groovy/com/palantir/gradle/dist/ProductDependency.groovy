@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.palantir.slspackaging.versions.SlsProductVersions
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
@@ -30,22 +30,27 @@ class ProductDependency implements Serializable {
 
     private static final long serialVersionUID = 1L
 
-    @JsonProperty("product-group")
     String productGroup
-
-    @JsonProperty("product-name")
     String productName
 
-    @JsonProperty("minimum-version")
-    String minimumVersion
+    @JsonIgnore
+    boolean detectConstraints
 
-    @JsonProperty("recommended-version")
+    @Nullable
+    String minimumVersion
+    @Nullable
+    String maximumVersion
+    @Nullable
     String recommendedVersion
 
-    @JsonProperty("maximum-version")
-    String maximumVersion
-
     ProductDependency() {}
+
+    ProductDependency(String productGroup, String productName) {
+        this.productGroup = productGroup
+        this.productName = productName
+        this.detectConstraints = true
+        isValid()
+    }
 
     ProductDependency(
             String productGroup,
@@ -55,6 +60,7 @@ class ProductDependency implements Serializable {
             @Nullable String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
+        this.detectConstraints = false
         this.minimumVersion = minimumVersion
         this.maximumVersion = maximumVersion
         this.recommendedVersion = recommendedVersion
@@ -62,28 +68,39 @@ class ProductDependency implements Serializable {
     }
 
     def isValid() {
-        if (productGroup == null) {
-            throw new IllegalArgumentException("productGroup must be specified for a recommended product dependency")
-        }
-        if (productName == null) {
-            throw new IllegalArgumentException("productName must be specified for a recommended product dependency")
-        }
-        if (minimumVersion == null || !SlsProductVersions.isValidVersion(minimumVersion)) {
-            throw new IllegalArgumentException("minimum version must be a valid SlS version: " + minimumVersion)
-        }
-        if (maximumVersion == null || !SlsProductVersions.isValidVersionOrMatcher(maximumVersion)) {
-            throw new IllegalArgumentException(
-                    "maximumVersion must be valid SLS version or version matcher: " + maximumVersion)
-        }
-        [minimumVersion, recommendedVersion].each {
-            if (it && !SlsProductVersions.isValidVersion(it)) {
-                throw new IllegalArgumentException(
-                        "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
+        if (detectConstraints) {
+            if (minimumVersion != null) {
+                throw new IllegalArgumentException("minimum version must not be specified if detectConstraints is enabled")
             }
-        }
-        if (minimumVersion == maximumVersion) {
-            throw new IllegalArgumentException("minimumVersion and maximumVersion must be different "
-                    + "in product dependency on " + this.productName)
+            if (maximumVersion != null) {
+                throw new IllegalArgumentException("maximum version must not be specified if detectConstraints is enabled")
+            }
+            if (recommendedVersion != null) {
+                throw new IllegalArgumentException("recommended version must not be specified if detectConstraints is enabled")
+            }
+        } else {
+            if (minimumVersion == null) {
+                throw new IllegalArgumentException("minimum version must be specified");
+            }
+
+            [maximumVersion].each {
+                if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {
+                    throw new IllegalArgumentException(
+                            "maximumVersion must be valid SLS version or version matcher: " + it)
+                }
+            }
+
+            [minimumVersion, recommendedVersion].each {
+                if (it && !SlsProductVersions.isValidVersion(it)) {
+                    throw new IllegalArgumentException(
+                            "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
+                }
+            }
+
+            if (minimumVersion == maximumVersion) {
+                throw new IllegalArgumentException("minimumVersion and maximumVersion must be different "
+                        + "in product dependency on " + this.productName)
+            }
         }
     }
 

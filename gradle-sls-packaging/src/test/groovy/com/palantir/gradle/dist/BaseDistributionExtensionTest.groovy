@@ -65,27 +65,49 @@ class BaseDistributionExtensionTest extends Specification {
         ext.serviceGroup.get() == "bar"
     }
 
-    // TODO(forozco): verify that enums work correctly
-//    def 'productType only accepts valid values'() {
-//        when:
-//        def ext = new BaseDistributionExtension(project)
-//        ext.setProductType("foobar")
-//
-//        then:
-//        def ex = thrown IllegalArgumentException
-//        ex.message == "Invalid product type 'foobar' specified; supported types: [service.v1, daemon.v1, asset.v1, pod.v1]."
-//    }
-
-    def "productDependencies from closure"() {
+    def "productDependencies from invalid maven coordinate"() {
         when:
         def ext = new BaseDistributionExtension(project)
-        ext.setProductDependency {
-            productGroup = "group"
-            productName = "name"
-            minimumVersion = "1.2.3"
-            recommendedVersion = "1.2.4"
-            maximumVersion = "1.x.x"
-        }
+        ext.productDependency("group:name")
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "productDependencies from maven coordinate and no recommended version"() {
+        when:
+        def ext = new BaseDistributionExtension(project)
+        ext.productDependency("group:name:1.2.3")
+
+        then:
+        def productDependencies = ext.getProductDependencies().get()
+        productDependencies.size() == 1
+        productDependencies.get(0).productGroup == "group"
+        productDependencies.get(0).productName == "name"
+        productDependencies.get(0).minimumVersion == "1.2.3"
+        productDependencies.get(0).maximumVersion == "1.x.x"
+        productDependencies.get(0).recommendedVersion == null
+    }
+
+    def "productDependencies from maven coordinate with all fields and no recommended version"() {
+        when:
+        def ext = new BaseDistributionExtension(project)
+        ext.productDependency("group:name:1.2.3:classifier@tgz")
+
+        then:
+        def productDependencies = ext.getProductDependencies().get()
+        productDependencies.size() == 1
+        productDependencies.get(0).productGroup == "group"
+        productDependencies.get(0).productName == "name"
+        productDependencies.get(0).minimumVersion == "1.2.3"
+        productDependencies.get(0).maximumVersion == "1.x.x"
+        productDependencies.get(0).recommendedVersion == null
+    }
+
+    def "productDependencies from maven coordinate"() {
+        when:
+        def ext = new BaseDistributionExtension(project)
+        ext.productDependency("group:name:1.2.3:classifier@tgz", "1.2.4")
 
         then:
         def productDependencies = ext.getProductDependencies().get()
@@ -95,17 +117,5 @@ class BaseDistributionExtensionTest extends Specification {
         productDependencies.get(0).minimumVersion == "1.2.3"
         productDependencies.get(0).maximumVersion == "1.x.x"
         productDependencies.get(0).recommendedVersion == "1.2.4"
-    }
-
-    def "updates to collections are cumullative"() {
-        when:
-        def ext = new BaseDistributionExtension(project)
-        ext.with {
-            manifestExtensions 'a': 'b'
-            manifestExtensions 'c': 'd'
-        }
-
-        then:
-        ext.manifestExtensions.get() == ['a': 'b', 'c': 'd']
     }
 }

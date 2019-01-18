@@ -22,10 +22,10 @@ import org.gradle.util.ConfigureUtil
 @CompileStatic
 class RecommendedProductDependenciesExtension {
 
-    Set<ProductDependency> recommendedProductDependencies = []
+    Set<RecommendedProductDependency> recommendedProductDependencies = []
 
     void productDependency(Closure<?> closure) {
-        ProductDependency dep = new ProductDependency()
+        RecommendedProductDependency dep = new RecommendedProductDependency()
         ConfigureUtil.configureUsing(closure).execute(dep)
         dep.isValid()
         recommendedProductDependencies.add(dep)

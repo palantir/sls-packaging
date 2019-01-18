@@ -34,7 +34,7 @@ class AssetDistributionExtensionTest extends Specification {
         }
 
         then:
-        ext.getAssets().get() == [
+        ext.getAssets() == [
                 "path/to/src" : "relocated/dest",
                 "path/to/src2": "relocated/dest2",
                 "path/to/foo" : "path/to/foo"
@@ -52,6 +52,6 @@ class AssetDistributionExtensionTest extends Specification {
         }
 
         then:
-        ext.getAssets().get() == ["path/to/src2": "relocated/dest2"]
+        ext.getAssets() == ["path/to/src2": "relocated/dest2"]
     }
 }

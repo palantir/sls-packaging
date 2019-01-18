@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.service.gc.GcProfile;
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +34,6 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -79,12 +79,12 @@ public class LaunchConfigTask extends DefaultTask {
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class).empty();
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class).empty();
     private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class).empty();
-    private final MapProperty<String, String> env = getProject().getObjects()
-            .mapProperty(String.class, String.class).empty();
+    private final Property<Map> env = getProject().getObjects().property(Map.class);
 
     private FileCollection classpath;
 
     public LaunchConfigTask() {
+        env.set(Maps.newHashMap());
         staticLauncher.set(new File(getProject().getBuildDir(), "scripts/launcher-static.yml"));
         checkLauncher.set(new File(getProject().getBuildDir(), "scripts/launcher-check.yml"));
     }
@@ -136,7 +136,7 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     @Input
-    public final MapProperty<String, String> getEnv() {
+    public final Property<Map> getEnv() {
         return env;
     }
 

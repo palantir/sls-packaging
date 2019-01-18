@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
@@ -33,7 +34,6 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
@@ -55,7 +55,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> checkArgs;
     private final ListProperty<String> defaultJvmOpts;
     private final ListProperty<String> excludeFromVar;
-    private final MapProperty<String, String> env;
+    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
+    private Map<String, String> env;
 
     private final ObjectFactory objectFactory;
 
@@ -74,7 +75,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         defaultJvmOpts = objectFactory.listProperty(String.class).empty();
         excludeFromVar = objectFactory.listProperty(String.class).empty();
         excludeFromVar.addAll("log", "run");
-        env = objectFactory.mapProperty(String.class, String.class).empty();
+        env = Maps.newHashMap();
 
         setProductType(ProductType.SERVICE_V1);
     }
@@ -159,7 +160,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.excludeFromVar.set(excludeFromVar);
     }
 
-    public final Provider<Map<String, String>> getEnv() {
+    public final Map<String, String> getEnv() {
         return env;
     }
 
@@ -168,7 +169,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     }
 
     public final void setEnv(Map<String, String> env) {
-        this.env.set(env);
+        this.env = env;
     }
 
     public final Provider<GcProfile> getGc() {

@@ -39,7 +39,7 @@ class PodDistributionExtensionTest extends Specification {
         }
 
         then:
-        def ks = ext.getServices().get().keySet()
+        def ks = ext.getServices().keySet()
         ks.contains("bar")
         ks.contains("baz")
     }
@@ -57,7 +57,7 @@ class PodDistributionExtensionTest extends Specification {
         }
 
         then:
-        def ks = ext.getServices().get().keySet()
+        def ks = ext.getServices().keySet()
         ks.contains("baz")
         !ks.contains("bar")
     }

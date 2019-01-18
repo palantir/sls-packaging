@@ -50,7 +50,11 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
 
         def dep = Iterables.getOnlyElement(
                 readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
-        dep == new ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.3")
+        dep.productGroup == "group"
+        dep.productName == "name"
+        dep.minimumVersion == "1.0.0"
+        dep.maximumVersion == "1.x.x"
+        dep.recommendedVersion == "1.2.3"
     }
 
     def readRecommendedProductDeps(File jarFile) {

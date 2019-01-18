@@ -158,7 +158,8 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         def buildResult = runTasksWithFailure(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for service barService: service names must be kebab case")
+        buildResult.getStandardError().contains("Pod validation failed")
+        buildResult.getStandardError().contains("service names must be kebab case")
     }
 
     def 'pod file creation fails with no product group'() {

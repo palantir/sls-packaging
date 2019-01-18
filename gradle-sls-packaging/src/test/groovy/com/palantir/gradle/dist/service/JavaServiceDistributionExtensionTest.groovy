@@ -54,7 +54,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.checkArgs.get() == ['a', 'b', 'c', 'd']
         ext.defaultJvmOpts.get() == ['a', 'b', 'c', 'd']
         ext.excludeFromVar.get() == ['log', 'run', 'a', 'b', 'c', 'd']
-        ext.env.get() == ['a': 'b', 'c': 'd']
+        ext.env == ['a': 'b', 'c': 'd']
     }
 
     def 'collection setters replace existing data'() {
@@ -82,6 +82,6 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.checkArgs.get() == ['c', 'd']
         ext.defaultJvmOpts.get() == ['c', 'd']
         ext.excludeFromVar.get() == ['c', 'd']
-        ext.env.get() == ['foo': 'bar']
+        ext.env == ['foo': 'bar']
     }
 }

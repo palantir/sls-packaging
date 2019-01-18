@@ -23,10 +23,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class ProductDependencyMerger {
-    private ProductDependencyMerger() { }
+public final class RecommendedProductDependencyMerger {
+    private RecommendedProductDependencyMerger() { }
 
-    public static ProductDependency merge(ProductDependency dep1, ProductDependency dep2) {
+    public static RecommendedProductDependency merge(
+            RecommendedProductDependency dep1, RecommendedProductDependency dep2) {
         // Ensure they are valid
         if (!dep1.getProductGroup().equals(dep2.getProductGroup())) {
             throw new IllegalArgumentException(String.format("Product groups differ: '%s' and '%s'",
@@ -68,7 +69,7 @@ public final class ProductDependencyMerger {
                         && satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
 
-        ProductDependency result = new ProductDependency();
+        RecommendedProductDependency result = new RecommendedProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
         maximumVersion.map(Objects::toString).ifPresent(result::setMaximumVersion);
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);

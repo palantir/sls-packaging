@@ -42,7 +42,7 @@ class CreateManifestTaskTest extends ProjectSpec {
         task.createManifest()
 
         then:
-        IllegalArgumentException exception = thrown()
-        exception.message == "Project version must be a valid SLS version: 1.0.0foo"
+        Exception exception = thrown()
+        exception.message.contains("Project version must be a valid SLS version: 1.0.0foo")
     }
 }
