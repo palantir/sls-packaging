@@ -59,8 +59,8 @@ public class BaseDistributionExtension {
         serviceName = project.getObjects().property(String.class);
         podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
-        productDependencies = project.getObjects().listProperty(ProductDependency.class).empty();
-        ignoredProductDependencies = project.getObjects().setProperty(ProductId.class).empty();
+        productDependencies = project.getObjects().listProperty(ProductDependency.class);
+        ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));

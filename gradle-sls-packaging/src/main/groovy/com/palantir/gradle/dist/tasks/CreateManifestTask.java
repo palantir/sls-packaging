@@ -76,7 +76,7 @@ public class CreateManifestTask extends DefaultTask {
     private Map<String, Object> manifestExtensions = Maps.newHashMap();
     private ListProperty<ProductDependency> productDependencies = getProject().getObjects()
             .listProperty(ProductDependency.class);
-    private SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class).empty();
+    private SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
 
     private RegularFileProperty manifestFile = getProject().getObjects().fileProperty();
     private Configuration productDependenciesConfig;

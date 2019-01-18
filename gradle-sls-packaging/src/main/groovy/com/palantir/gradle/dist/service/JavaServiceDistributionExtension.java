@@ -70,10 +70,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
         enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
         gc = objectFactory.property(GcProfile.class).value(new Throughput());
-        args = objectFactory.listProperty(String.class).empty();
-        checkArgs = objectFactory.listProperty(String.class).empty();
-        defaultJvmOpts = objectFactory.listProperty(String.class).empty();
-        excludeFromVar = objectFactory.listProperty(String.class).empty();
+        args = objectFactory.listProperty(String.class);
+        checkArgs = objectFactory.listProperty(String.class);
+        defaultJvmOpts = objectFactory.listProperty(String.class);
+        excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
         env = Maps.newHashMap();
 

@@ -76,9 +76,9 @@ public class LaunchConfigTask extends DefaultTask {
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
     private final RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
     private final RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
-    private final ListProperty<String> args = getProject().getObjects().listProperty(String.class).empty();
-    private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class).empty();
-    private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class).empty();
+    private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
+    private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
+    private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class);
     private final Property<Map> env = getProject().getObjects().property(Map.class);
 
     private FileCollection classpath;
