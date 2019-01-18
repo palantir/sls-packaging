@@ -42,7 +42,7 @@ public final class ConfigTarTask {
         project.afterEvaluate(p -> configTar.configure(task -> {
             // TODO(forozco): Use provider based API when minimum version is 5.1
             task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
-            task.setArchiveName(ext.getServiceName().get());
+            task.setBaseName(ext.getServiceName().get());
             task.setVersion(project.getVersion().toString());
             task.setExtension(ext.getProductType().map(productType -> {
                 try {

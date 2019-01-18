@@ -99,9 +99,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates standard Java start scripts.");
                     task.setOutputDir(new File(project.getBuildDir(), "scripts"));
-                    task.setMainClassName(distributionExtension.getMainClass().get());
-                    task.setApplicationName(distributionExtension.getServiceName().get());
-                    task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
 
                     task.doLast(t -> {
                         if (distributionExtension.getEnableManifestClasspath().get()) {
@@ -122,9 +119,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     });
                 });
 
-        // HACKHACK setClasspath of CreateStartScript is eager so we configure it after evaluation to ensure everything
-        // has been correctly configured
+        // HACKHACK all fields of CreateStartScript are eager so we configure the task after evaluation to
+        // ensure everything has been correctly configured
         project.afterEvaluate(p -> startScripts.configure(task -> {
+            task.setMainClassName(distributionExtension.getMainClass().get());
+            task.setApplicationName(distributionExtension.getServiceName().get());
+            task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
+
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
             task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles().plus(
                     javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
