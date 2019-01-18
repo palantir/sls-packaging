@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.Map;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -44,11 +43,7 @@ public class CreatePodYamlTask extends DefaultTask {
     // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
     private Map<String, PodServiceDefinition> serviceDefinitions;
     private Map<String, PodVolumeDefinition> volumeDefinitions;
-    private final RegularFileProperty podYamlFile = getProject().getObjects().fileProperty();
-
-    public CreatePodYamlTask() {
-        podYamlFile.set(new File(getProject().getBuildDir(), "deployment/pod.yml"));
-    }
+    private File podYamlFile = new File(getProject().getBuildDir(), "deployment/pod.yml");
 
     @Input
     public final Map<String, PodServiceDefinition> getServiceDefinitions() {
@@ -69,14 +64,18 @@ public class CreatePodYamlTask extends DefaultTask {
     }
 
     @OutputFile
-    public final RegularFileProperty getPodYamlFile() {
+    public final File getPodYamlFile() {
         return podYamlFile;
+    }
+
+    public final void setPodYamlFile(File podYamlFile) {
+        this.podYamlFile = podYamlFile;
     }
 
     @TaskAction
     final void createPodYaml() throws IOException {
         validatePodYaml();
-        OBJECT_MAPPER.writeValue(getPodYamlFile().getAsFile().get(), ImmutableMap.of(
+        OBJECT_MAPPER.writeValue(getPodYamlFile(), ImmutableMap.of(
                 "services",
                 OBJECT_MAPPER.convertValue(this.serviceDefinitions, new TypeReference<Map<String, Object>>() {}),
                 "volumes",

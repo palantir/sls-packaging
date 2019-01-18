@@ -49,7 +49,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -68,17 +67,18 @@ public class CreateManifestTask extends DefaultTask {
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE);
 
-    private Property<String> serviceName = getProject().getObjects().property(String.class);
-    private Property<String> serviceGroup = getProject().getObjects().property(String.class);
-    private Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
+    private final Property<String> serviceName = getProject().getObjects().property(String.class);
+    private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
+    private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
 
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, Object> manifestExtensions = Maps.newHashMap();
-    private ListProperty<ProductDependency> productDependencies = getProject().getObjects()
+    private final ListProperty<ProductDependency> productDependencies = getProject().getObjects()
             .listProperty(ProductDependency.class);
-    private SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
+    private final SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
 
-    private RegularFileProperty manifestFile = getProject().getObjects().fileProperty();
+    // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
+    private Map<String, Object> manifestExtensions = Maps.newHashMap();
+    private File manifestFile;
+
     private Configuration productDependenciesConfig;
 
     @Input
@@ -130,8 +130,12 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @OutputFile
-    public final RegularFileProperty getManifestFile() {
+    public final File getManifestFile() {
         return manifestFile;
+    }
+
+    public final void setManifestFile(File manifestFile) {
+        this.manifestFile = manifestFile;
     }
 
     @TaskAction
@@ -239,7 +243,7 @@ public class CreateManifestTask extends DefaultTask {
                     + "gradle-sls-packaging for more details", unseenProductIds));
         }
 
-        jsonMapper.writeValue(getManifestFile().getAsFile().get(), SlsManifest.builder()
+        jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
                 .manifestVersion("1.0")
                 .productType(productType.get())
                 .productGroup(serviceGroup.get())
@@ -272,7 +276,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getServiceName().set(ext.getServiceName());
                     task.getServiceGroup().set(ext.getServiceGroup());
                     task.getProductType().set(ext.getProductType());
-                    task.getManifestFile().set(new File(project.getBuildDir(), "/deployment/manifest.yml"));
+                    task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getProductDependencies());
                     task.setProductDependenciesConfig(ext.getProductDependenciesConfig());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());

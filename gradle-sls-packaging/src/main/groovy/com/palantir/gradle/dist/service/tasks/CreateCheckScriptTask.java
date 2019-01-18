@@ -22,7 +22,6 @@ import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
 import java.io.File;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -32,11 +31,9 @@ import org.gradle.api.tasks.TaskAction;
 public class CreateCheckScriptTask extends DefaultTask {
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
-    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
-    public CreateCheckScriptTask() {
-        outputFile.set(new File(getProject().getBuildDir(), "monitoring/check.sh"));
-    }
+    // TODO(forozco): Use RegularFileProperty once our minimum supported version is 5.0
+    private File outputFile = new File(getProject().getBuildDir(), "monitoring/check.sh");
 
     @Input
     public final Property<String> getServiceName() {
@@ -49,8 +46,12 @@ public class CreateCheckScriptTask extends DefaultTask {
     }
 
     @OutputFile
-    public final RegularFileProperty getOutputFile() {
+    public final File getOutputFile() {
         return outputFile;
+    }
+
+    public final void setOutputFile(File outputFile) {
+        this.outputFile = outputFile;
     }
 
     @TaskAction
@@ -58,7 +59,7 @@ public class CreateCheckScriptTask extends DefaultTask {
         if (!checkArgs.get().isEmpty()) {
             EmitFiles.replaceVars(
                     JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
-                    getOutputFile().getAsFile().get().toPath(),
+                    getOutputFile().toPath(),
                     ImmutableMap.of(
                             "@serviceName@", serviceName.get(),
                             "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))
