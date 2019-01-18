@@ -29,13 +29,13 @@ class BaseDistributionExtensionTest extends Specification {
     }
 
     def 'serviceName uses project group as default'() {
-        new BaseDistributionExtension(project).serviceName.get() == "foo"
+        new BaseDistributionExtension(project).distributionServiceName.get() == "foo"
     }
 
     def 'serviceName can be overwritten'() {
         def ext = new BaseDistributionExtension(project)
-        ext.serviceName("bar")
-        ext.serviceName == "bar"
+        ext.distributionServiceName("bar")
+        ext.distributionServiceName == "bar"
     }
 
     def 'serviceName in nested project'() {
@@ -44,7 +44,7 @@ class BaseDistributionExtensionTest extends Specification {
         Project child = ProjectBuilder.builder().withName("child").withParent(parent).build()
 
         then:
-        new BaseDistributionExtension(child).serviceName.get() == "child"
+        new BaseDistributionExtension(child).distributionServiceName.get() == "child"
     }
 
     def 'serviceGroup uses project group as default'() {
@@ -52,7 +52,7 @@ class BaseDistributionExtensionTest extends Specification {
         project.group = "foo"
 
         then:
-        new BaseDistributionExtension(project).serviceGroup.get() == "foo"
+        new BaseDistributionExtension(project).distributionServiceGroup.get() == "foo"
     }
 
     def 'serviceGroup can be overwritten'() {
@@ -62,7 +62,7 @@ class BaseDistributionExtensionTest extends Specification {
         then:
         def ext = new BaseDistributionExtension(project)
         ext.setServiceGroup("bar")
-        ext.serviceGroup.get() == "bar"
+        ext.distributionServiceGroup.get() == "bar"
     }
 
     def "productDependencies from invalid maven coordinate"() {

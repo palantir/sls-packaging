@@ -122,7 +122,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         // ensure everything has been correctly configured
         project.afterEvaluate(p -> startScripts.configure(task -> {
             task.setMainClassName(distributionExtension.getMainClass().get());
-            task.setApplicationName(distributionExtension.getServiceName().get());
+            task.setApplicationName(distributionExtension.getDistributionServiceName().get());
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
 
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
@@ -136,7 +136,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setDescription("Generates launcher-static.yml and launcher-check.yml configurations.");
 
                     task.getMainClass().set(distributionExtension.getMainClass());
-                    task.getServiceName().set(distributionExtension.getServiceName());
+                    task.getServiceName().set(distributionExtension.getDistributionServiceName());
                     task.getArgs().set(distributionExtension.getArgs());
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
                     task.getGc().set(distributionExtension.getGc());
@@ -153,14 +153,14 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 "createInitScript", CreateInitScriptTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
-                    task.getServiceName().set(distributionExtension.getServiceName());
+                    task.getServiceName().set(distributionExtension.getDistributionServiceName());
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks().register(
                 "createCheckScript", CreateCheckScriptTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates healthcheck (service/monitoring/bin/check.sh) script.");
-                    task.getServiceName().set(distributionExtension.getServiceName());
+                    task.getServiceName().set(distributionExtension.getDistributionServiceName());
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
                 });
 
@@ -206,7 +206,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate(p -> DistTarTask.configure(
                 distTar.get(),
                 project,
-                distributionExtension.getServiceName().get(),
+                distributionExtension.getDistributionServiceName().get(),
                 distributionExtension.getExcludeFromVar().get(),
                 distributionExtension.getEnableManifestClasspath().get()));
 

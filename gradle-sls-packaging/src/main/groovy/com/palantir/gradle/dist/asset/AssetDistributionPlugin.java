@@ -63,7 +63,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate(p -> distTar.configure(task -> {
             // TODO(forozco): Use provider based API when minimum version is 5.1
             task.setExtension("sls.tgz");
-            task.setBaseName(distributionExtension.getServiceName().get());
+            task.setBaseName(distributionExtension.getDistributionServiceName().get());
             task.setVersion(project.getVersion().toString());
             task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
         }));
@@ -72,7 +72,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
             String archiveRootDir = String.format("%s-%s",
-                    distributionExtension.getServiceName().get(), p.getVersion());
+                    distributionExtension.getDistributionServiceName().get(), p.getVersion());
             task.into(String.format("%s/deployment", archiveRootDir));
             distributionExtension.getAssets().forEach((key, value) -> {
                 task.from(p.file(key));

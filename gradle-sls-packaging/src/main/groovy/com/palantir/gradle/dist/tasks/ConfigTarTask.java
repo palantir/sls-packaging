@@ -42,7 +42,7 @@ public final class ConfigTarTask {
         project.afterEvaluate(p -> configTar.configure(task -> {
             // TODO(forozco): Use provider based API when minimum version is 5.1
             task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
-            task.setBaseName(ext.getServiceName().get());
+            task.setBaseName(ext.getDistributionServiceName().get());
             task.setVersion(project.getVersion().toString());
             task.setExtension(ext.getProductType().map(productType -> {
                 try {
@@ -54,7 +54,7 @@ public final class ConfigTarTask {
             }).get());
 
             // TODO(forozco): make this lazy since into does not support providers, but does support callable
-            task.into(String.format("%s-%s/deployment", ext.getServiceName().get(), project.getVersion()));
+            task.into(String.format("%s-%s/deployment", ext.getDistributionServiceName().get(), project.getVersion()));
         }));
 
         return configTar;

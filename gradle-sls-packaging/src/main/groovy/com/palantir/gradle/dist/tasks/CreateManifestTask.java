@@ -273,8 +273,8 @@ public class CreateManifestTask extends DefaultTask {
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         TaskProvider<CreateManifestTask> createManifest = project.getTasks().register(
                 "createManifest", CreateManifestTask.class, task -> {
-                    task.getServiceName().set(ext.getServiceName());
-                    task.getServiceGroup().set(ext.getServiceGroup());
+                    task.getServiceName().set(ext.getDistributionServiceName());
+                    task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getProductDependencies());

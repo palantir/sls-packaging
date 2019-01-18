@@ -69,16 +69,36 @@ public class BaseDistributionExtension {
         manifestExtensions = Maps.newHashMap();
     }
 
-    public final Provider<String> getServiceGroup() {
+    public final Provider<String> getDistributionServiceGroup() {
         return serviceGroup;
+    }
+
+    /**
+     * The group of the distribution being created.
+     *
+     * @deprecated Do not use this method directly, instead use getDistributionServiceGroup.
+     */
+    @Deprecated
+    public final String getServiceGroup() {
+        return serviceGroup.get();
     }
 
     public final void setServiceGroup(String serviceGroup) {
         this.serviceGroup.set(serviceGroup);
     }
 
-    public final Provider<String> getServiceName() {
+    public final Provider<String> getDistributionServiceName() {
         return serviceName;
+    }
+
+    /**
+     * The name of the distribution being created.
+     *
+     * @deprecated Do not use this method directly, instead use getDistributionServiceName.
+     */
+    @Deprecated
+    public final String getServiceName() {
+        return serviceName.get();
     }
 
     public final void setServiceName(String serviceName) {
