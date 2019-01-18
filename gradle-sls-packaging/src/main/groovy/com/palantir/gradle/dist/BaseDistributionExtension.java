@@ -125,7 +125,6 @@ public class BaseDistributionExtension {
         return productDependencies;
     }
 
-
     public final void productDependency(String mavenCoordVersionRange) {
         productDependency(mavenCoordVersionRange, null);
     }
