@@ -31,10 +31,9 @@ import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.file.RegularFile;
+import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.application.CreateStartScripts;
@@ -178,7 +177,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
 
         TaskProvider<JavaExec> runTask = project.getTasks().register("run", JavaExec.class, task -> {
-            TaskProvider<Jar> jarTaskProvider = project.getTasks().named("jar", Jar.class);
+            Task jarTaskProvider = project.getTasks().getByName("jar");
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
 
@@ -188,9 +187,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
         // been correctly configured
         project.afterEvaluate(p -> runTask.configure(task -> {
-            TaskProvider<Jar> jarTaskProvider = project.getTasks().named("jar", Jar.class);
-            Provider<RegularFile> jarArchive = jarTaskProvider.map(jarTask -> jarTask.getArchiveFile().get());
-            task.setClasspath(project.files(jarArchive, p.getConfigurations().getByName("runtimeClasspath")));
+            Jar jarTask = (Jar) project.getTasks().getByName("jar");
+            task.setClasspath(project.files(
+                    jarTask.getArchivePath(), p.getConfigurations().getByName("runtimeClasspath")));
         }));
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
