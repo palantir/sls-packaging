@@ -35,25 +35,27 @@ public final class ConfigTarTask {
                     "Creates a compressed, gzipped tar file that contains the sls configuration files for the product");
             task.setCompression(Compression.GZIP);
 
-            task.getDestinationDirectory().set(new File(project.getBuildDir(), "distributions"));
-            task.getArchiveBaseName().set(ext.getServiceName());
-            task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
-            task.getArchiveExtension().set(ext.getProductType().map(productType -> {
+            task.from(new File(project.getProjectDir(), "deployment"));
+            task.from(new File(project.getBuildDir(), "deployment"));
+        });
+
+        project.afterEvaluate(p -> configTar.configure(task -> {
+            // TODO(forozco): Use provider based API when minimum version is 5.1
+            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
+            task.setArchiveName(ext.getServiceName().get());
+            task.setVersion(project.getVersion().toString());
+            task.setExtension(ext.getProductType().map(productType -> {
                 try {
                     String productTypeString = CreateManifestTask.jsonMapper.writeValueAsString(productType);
                     return productTypeString.substring(1, productTypeString.lastIndexOf('.')).concat(".config.tgz");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }));
+            }).get());
 
-            task.from(new File(project.getProjectDir(), "deployment"));
-            task.from(new File(project.getBuildDir(), "deployment"));
-        });
-
-        // TODO(forozco): make this lazy since into does not support providers, but does support callable
-        project.afterEvaluate(p -> configTar.configure(task ->
-                task.into(String.format("%s-%s/deployment", ext.getServiceName().get(), project.getVersion()))));
+            // TODO(forozco): make this lazy since into does not support providers, but does support callable
+            task.into(String.format("%s-%s/deployment", ext.getServiceName().get(), project.getVersion()));
+        }));
 
         return configTar;
     }

@@ -56,15 +56,17 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);
 
-            task.getArchiveExtension().set("sls.tgz");
-            task.getArchiveBaseName().set(distributionExtension.getServiceName());
-            task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
-            task.getDestinationDirectory().set(new File(project.getBuildDir(), "distributions"));
-
             task.from(new File(project.getProjectDir(), "deployment"));
             task.from(new File(project.getBuildDir(), "deployment"));
             task.dependsOn(manifest);
         });
+        project.afterEvaluate(p -> distTar.configure(task -> {
+            // TODO(forozco): Use provider based API when minimum version is 5.1
+            task.setExtension("sls.tgz");
+            task.setBaseName(distributionExtension.getServiceName().get());
+            task.setVersion(project.getVersion().toString());
+            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
+        }));
 
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers

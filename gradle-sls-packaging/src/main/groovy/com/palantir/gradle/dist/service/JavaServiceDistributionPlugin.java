@@ -81,7 +81,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setDescription("Creates a jar containing a Class-Path manifest entry specifying the classpath "
                             + "using pathing jar rather than command line argument on Windows, since Windows path "
                             + "sizes are limited.");
-                    task.getArchiveAppendix().set("manifest-classpath");
+                    // TODO(forozco): Use provider based API when minimum version is 5.1
+                    task.setAppendix("manifest-classpath");
 
                     task.doFirst(t -> {
                         String classPath = project.getConfigurations().getByName("runtimeClasspath")
@@ -196,7 +197,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDescription("Creates a compressed, gzipped tar file that contains required runtime resources.");
             // Set compression in constructor so that task output has the right name from the start.
             task.setCompression(Compression.GZIP);
-            task.getArchiveExtension().set("sls.tgz");
+            task.setExtension("sls.tgz");
 
             task.dependsOn(startScripts, initScript, checkScript, yourkitAgent, yourkitLicense);
             task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);
