@@ -67,9 +67,12 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.objectFactory = project.getObjects();
         mainClass = objectFactory.property(String.class);
         javaHome = objectFactory.property(String.class);
-        addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
-        enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
-        gc = objectFactory.property(GcProfile.class).value(new Throughput());
+        addJava8GcLogging = objectFactory.property(Boolean.class);
+        addJava8GcLogging.set(false);
+        enableManifestClasspath = objectFactory.property(Boolean.class);
+        enableManifestClasspath.set(false);
+        gc = objectFactory.property(GcProfile.class);
+        gc.set(new Throughput());
         args = objectFactory.listProperty(String.class);
         checkArgs = objectFactory.listProperty(String.class);
         defaultJvmOpts = objectFactory.listProperty(String.class);
