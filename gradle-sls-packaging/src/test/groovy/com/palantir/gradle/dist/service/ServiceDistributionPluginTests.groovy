@@ -63,7 +63,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def result = runTasks(':build', ':distTar', ':untar')
 
         then:
-        result.wasExecuted('createCheckScript')
+        result.task('createCheckScript').outcome == TaskOutcome.SUCCESS
         // try all of the service commands
         execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'start') == 0
         // wait for the Java process to start up and emit output
@@ -107,12 +107,12 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def result = runTasks(':build', ':distTar', ':untar02')
-        result.wasUpToDate(':createCheckScript')
-        result.wasUpToDate(':createInitScript')
-        result.wasExecuted(':createLaunchConfig')
-        result.wasExecuted('createManifest')
-        result.wasExecuted(':manifestClasspathJar')
-        result.wasExecuted('distTar')
+        result.task(':createCheckScript').outcome == TaskOutcome.UP_TO_DATE
+        result.task(':createInitScript').outcome == TaskOutcome.UP_TO_DATE
+        result.task(':createLaunchConfig').outcome == TaskOutcome.SUCCESS
+        result.task('createManifest').outcome == TaskOutcome.SUCCESS
+        result.task(':manifestClasspathJar').outcome == TaskOutcome.SUCCESS
+        result.task('distTar').outcome == TaskOutcome.SUCCESS
 
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'start') == 0
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'stop') == 0
@@ -610,7 +610,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def buildResult = runTasks(':child:untar')
 
         then:
-        buildResult.wasExecuted(':parent:distTar')
+        buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
         new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
     }
 

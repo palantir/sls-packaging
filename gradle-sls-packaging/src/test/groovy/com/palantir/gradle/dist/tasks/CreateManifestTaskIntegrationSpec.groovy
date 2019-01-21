@@ -92,7 +92,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasks(':testCreateManifest')
 
         then:
-        buildResult.wasExecuted(':testCreateManifest')
+        buildResult.task(':testCreateManifest').outcome == TaskOutcome.SUCCESS
     }
 
     def "Can set product dependencies from recommended product dependencies"() {

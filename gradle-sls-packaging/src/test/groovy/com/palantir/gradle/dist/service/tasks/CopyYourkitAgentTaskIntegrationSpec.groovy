@@ -17,7 +17,8 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
-import nebula.test.functional.ExecutionResult
+import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
 
 class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -26,16 +27,16 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        ExecutionResult buildResult = runTasks(':copyYourkitAgent')
+        BuildResult buildResult = runTasks(':copyYourkitAgent')
 
         then:
-        buildResult.wasExecuted(':copyYourkitAgent')
+        buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.SUCCESS
 
         when:
         buildResult = runTasks(':copyYourkitAgent')
 
         then:
-        buildResult.wasUpToDate(':copyYourkitAgent')
+        buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.UP_TO_DATE
     }
 
     def 'Build produces libyjpagent file and yourkit license'() {
