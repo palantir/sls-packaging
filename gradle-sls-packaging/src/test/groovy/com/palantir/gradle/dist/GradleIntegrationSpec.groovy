@@ -23,6 +23,7 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
     protected MultiProjectIntegrationHelper helper
 
     def setup() {
+        keepFiles = true
         System.setProperty("ignoreDeprecations", "true")
         settingsFile.createNewFile()
         helper = new MultiProjectIntegrationHelper(getProjectDir(), settingsFile)
