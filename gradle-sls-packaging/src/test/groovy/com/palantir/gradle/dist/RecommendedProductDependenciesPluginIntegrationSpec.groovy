@@ -28,7 +28,9 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         rootProject.name = "root-project"
         """.stripIndent()
         buildFile << """
-            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            plugins {
+                id 'com.palantir.sls-recommended-dependencies'
+            }
 
             recommendedProductDependencies {
                 productDependency {

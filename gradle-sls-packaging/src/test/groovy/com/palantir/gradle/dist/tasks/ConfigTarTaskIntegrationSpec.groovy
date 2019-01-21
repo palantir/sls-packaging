@@ -74,7 +74,9 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
 
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {
         buildFile << """
-            apply plugin: 'com.palantir.sls-${pluginType}-distribution'
+            plugins {
+                id 'com.palantir.sls-${pluginType}-distribution'
+            }
             
             distribution {
                 serviceName '${name}'

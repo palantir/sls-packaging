@@ -52,7 +52,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         '''
 
         buildFile << '''
-            apply plugin: 'com.palantir.sls-pod-distribution'
+            plugins { id 'com.palantir.sls-pod-distribution' }
 
             version "0.0.1"
             project.group = 'service-group'
@@ -375,7 +375,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
-            apply plugin: 'com.palantir.sls-pod-distribution'
+            plugins { id 'com.palantir.sls-pod-distribution' }
 
             version "0.0.1"
             project.group = 'service-group'

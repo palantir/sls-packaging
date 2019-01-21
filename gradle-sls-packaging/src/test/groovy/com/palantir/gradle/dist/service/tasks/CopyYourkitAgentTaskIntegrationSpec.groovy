@@ -57,8 +57,8 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
-            apply plugin: 'com.palantir.sls-java-service-distribution'
 
             project.group = 'service-group'
 

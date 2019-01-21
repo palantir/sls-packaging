@@ -74,8 +74,10 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
     def 'fails when asset and service plugins are used'() {
         given:
         buildFile << '''
-            apply plugin: 'com.palantir.sls-java-service-distribution'
-            apply plugin: 'com.palantir.sls-asset-distribution'
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+                id 'com.palantir.sls-asset-distribution'
+            }
         '''.stripIndent()
 
         when:
@@ -88,8 +90,10 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
     def 'fails when asset and pod plugins are used'() {
         given:
         buildFile << '''
-            apply plugin: 'com.palantir.sls-pod-distribution'
-            apply plugin: 'com.palantir.sls-asset-distribution'
+            plugins {
+                id 'com.palantir.sls-pod-distribution'
+                id 'com.palantir.sls-asset-distribution'
+            }
         '''.stripIndent()
 
         when:
@@ -143,7 +147,9 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
-            apply plugin: 'com.palantir.sls-asset-distribution'
+            plugins {
+                id 'com.palantir.sls-asset-distribution'
+            }
             
             distribution {
                 serviceName 'asset-name'

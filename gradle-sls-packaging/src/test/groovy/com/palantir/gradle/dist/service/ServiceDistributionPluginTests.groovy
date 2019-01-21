@@ -165,8 +165,8 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             
             repositories {
                 jcenter()
@@ -210,9 +210,8 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
-            
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             
             repositories {
                 jcenter()
@@ -541,9 +540,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
             
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -575,9 +574,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         helper.addSubproject('parent', '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
             
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -618,8 +617,10 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'fails when asset and service plugins are both applied'() {
         given:
         buildFile << '''
-            apply plugin: 'com.palantir.sls-asset-distribution'
-            apply plugin: 'com.palantir.sls-java-service-distribution'
+            plugins {
+                id 'com.palantir.sls-asset-distribution'
+                id 'com.palantir.sls-java-service-distribution'
+            }
         '''.stripIndent()
 
         when:
@@ -632,8 +633,10 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'fails when pod and service plugins are both applied'() {
         given:
         buildFile << '''
-            apply plugin: 'com.palantir.sls-pod-distribution'
-            apply plugin: 'com.palantir.sls-java-service-distribution'
+            plugins {
+                id 'com.palantir.sls-pod-distribution'
+                id 'com.palantir.sls-java-service-distribution'
+            }
         '''.stripIndent()
 
         when:
@@ -648,9 +651,8 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         helper.addSubproject('parent', '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
-            
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             
             version '0.0.1'
             distribution {
@@ -765,9 +767,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
             
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -805,9 +807,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
             
-            apply plugin: 'com.palantir.sls-java-service-distribution'
             repositories {
                 jcenter()
                 maven { url "http://palantir.bintray.com/releases" }
@@ -842,8 +844,8 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             plugins {
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
-            apply plugin: 'com.palantir.sls-java-service-distribution'
 
             project.group = 'service-group'
 

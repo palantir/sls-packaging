@@ -29,7 +29,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     def setup() {
         generateDependencies()
         buildFile << """
-            apply plugin: 'com.palantir.sls-java-service-distribution'
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+            }
 
             import com.palantir.gradle.dist.ProductType
 
