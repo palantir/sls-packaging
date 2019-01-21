@@ -19,7 +19,14 @@ package com.palantir.gradle.dist
 import nebula.test.IntegrationTestKitSpec
 
 class GradleIntegrationSpec extends IntegrationTestKitSpec {
+    def setup() {
+        System.setProperty("ignoreDeprecations", "true")
+        settingsFile.createNewFile()
+    }
+
     protected boolean fileExists(String path) {
         new File(projectDir, path).exists()
     }
+
+
 }
