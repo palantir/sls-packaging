@@ -113,7 +113,7 @@ public class CreatePodYamlTask extends DefaultTask {
 
             if (!key.matches(VOLUME_NAME_REGEX)) {
                 throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, key,
-                        "volume name does not conform to the required regex ${VOLUME_NAME_REGEX}"));
+                        String.format("volume name does not conform to the required regex %s", VOLUME_NAME_REGEX)));
             }
 
             if (!value.isValidPodVolumeDefinition()) {

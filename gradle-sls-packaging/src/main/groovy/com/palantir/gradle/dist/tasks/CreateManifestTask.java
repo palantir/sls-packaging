@@ -154,7 +154,7 @@ public class CreateManifestTask extends DefaultTask {
                 ZipFile zf = new ZipFile(artifact.getFile());
                 ZipEntry manifestEntry = zf.getEntry("META-INF/MANIFEST.MF");
                 if (manifestEntry == null) {
-                    log.debug("Manifest file does not exist in jar for '${coord}'");
+                    log.debug("Manifest file does not exist in jar for '{}'", coord);
                     continue;
                 }
                 manifest = new Manifest(zf.getInputStream(manifestEntry));
