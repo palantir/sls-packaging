@@ -18,9 +18,8 @@ package com.palantir.gradle.dist.pod
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import nebula.test.IntegrationSpec
 
-class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
+class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
 
     def 'manifest file contains expected fields'() {
@@ -34,7 +33,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':configTar', ':untar')
+        runTasks(':configTar', ':untar')
 
         then:
         def manifest = MAPPER.readValue(file('dist/pod-name-0.0.1/deployment/manifest.yml'), Map)
@@ -74,7 +73,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':configTar', ':untar')
+        runTasks(':configTar', ':untar')
 
         then:
         def manifest = MAPPER.readValue(file('dist/root-project-0.0.1/deployment/manifest.yml'), Map)
@@ -113,7 +112,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':configTar', ':untar')
+        runTasks(':configTar', ':untar')
 
         then:
         // verify pod YAML file contents
@@ -155,7 +154,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed")
@@ -180,7 +179,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for service bar-service: product group must be specified for pod service")
@@ -204,7 +203,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for service bar-service: product name must be specified for pod service")
@@ -228,7 +227,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
@@ -253,7 +252,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
@@ -286,7 +285,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for service baz-service: service volume mapping cannot contain undeclared volumes")
@@ -313,7 +312,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for volume aaaaaaaaaaaaaaaaaaaaaaaaaa: volume names must be fewer than 25 characters")
@@ -340,7 +339,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for volume Not-A-Valid-Volume: volume name does not conform to the required regex")
@@ -367,7 +366,7 @@ class PodDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':configTar')
+        def buildResult = runTasksAndFail(':configTar')
 
         then:
         buildResult.getStandardError().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(M|G|T)\$")

@@ -17,9 +17,9 @@
 package com.palantir.gradle.dist.asset
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import nebula.test.IntegrationSpec
+import com.palantir.gradle.dist.GradleIntegrationSpec
 
-class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
+class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
     def 'manifest file contains expected fields'() {
         given:
@@ -31,7 +31,7 @@ class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':distTar', ':untar')
+        runTasks(':distTar', ':untar')
 
         then:
         String manifest = file('dist/asset-name-0.0.1/deployment/manifest.yml').text
@@ -59,7 +59,7 @@ class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':distTar', ':untar')
+        runTasks(':distTar', ':untar')
 
         then:
         fileExists("dist/asset-name-0.0.1/asset/maven/abc")
@@ -79,7 +79,7 @@ class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def result = runTasksWithFailure(":tasks")
+        def result = runTasksAndFail(":tasks")
 
         then:
         result.getStandardError().contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
@@ -93,7 +93,7 @@ class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def result = runTasksWithFailure(":tasks")
+        def result = runTasksAndFail(":tasks")
 
         then:
         result.getStandardError().contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
@@ -121,7 +121,7 @@ class AssetDistributionPluginIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':distTar', ':untar')
+        runTasks(':distTar', ':untar')
 
         then:
         def mapper = new ObjectMapper()

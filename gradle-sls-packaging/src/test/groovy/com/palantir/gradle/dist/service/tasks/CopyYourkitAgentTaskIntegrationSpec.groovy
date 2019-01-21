@@ -16,23 +16,23 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-import nebula.test.IntegrationSpec
+
 import nebula.test.functional.ExecutionResult
 
-class CopyYourkitAgentTaskIntegrationSpec extends IntegrationSpec {
+class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'copyYourkitAgent task is up to date if already run'() {
         setup:
         createUntarBuildFile(buildFile)
 
         when:
-        ExecutionResult buildResult = runTasksSuccessfully(':copyYourkitAgent')
+        ExecutionResult buildResult = runTasks(':copyYourkitAgent')
 
         then:
         buildResult.wasExecuted(':copyYourkitAgent')
 
         when:
-        buildResult = runTasksSuccessfully(':copyYourkitAgent')
+        buildResult = runTasks(':copyYourkitAgent')
 
         then:
         buildResult.wasUpToDate(':copyYourkitAgent')
@@ -43,7 +43,7 @@ class CopyYourkitAgentTaskIntegrationSpec extends IntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         file('dist/service-name-0.0.1').exists()

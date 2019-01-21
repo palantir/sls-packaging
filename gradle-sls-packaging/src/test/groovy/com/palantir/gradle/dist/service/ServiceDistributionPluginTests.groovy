@@ -21,10 +21,9 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
-import nebula.test.IntegrationSpec
 import org.junit.Assert
 
-class ServiceDistributionPluginTests extends IntegrationSpec {
+class ServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
             .registerModule(new GuavaModule())
 
@@ -60,7 +59,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def result = runTasksSuccessfully(':build', ':distTar', ':untar')
+        def result = runTasks(':build', ':distTar', ':untar')
 
         then:
         result.wasExecuted('createCheckScript')
@@ -100,13 +99,13 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
         buildFile << '''
             version '0.0.2'
         '''.stripIndent()
 
         then:
-        def result = runTasksSuccessfully(':build', ':distTar', ':untar02')
+        def result = runTasks(':build', ':distTar', ':untar02')
         result.wasUpToDate(':createCheckScript')
         result.wasUpToDate(':createInitScript')
         result.wasExecuted(':createLaunchConfig')
@@ -127,7 +126,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createFile('var/conf/service-name.yml')
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         fileExists('dist/service-name-0.0.1')
@@ -151,7 +150,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
@@ -197,7 +196,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createFile('var/conf/service-name.yml')
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         !fileExists('dist/service-name-0.0.1/var/log')
@@ -249,7 +248,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         def manifest = OBJECT_MAPPER.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml'), SlsManifest);
@@ -261,7 +260,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         def manifest = OBJECT_MAPPER.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml'), Map)
@@ -295,7 +294,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         def mapper = new ObjectMapper()
@@ -329,7 +328,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasksWithFailure('distTar')
+        def result = runTasksAndFail('distTar')
 
         then:
         result.standardError.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
@@ -344,7 +343,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createFile('deployment/configuration.yml') << deploymentConfiguration
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         // clobbers deployment/manifest.yml
@@ -361,7 +360,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name', projectDir).text
@@ -384,7 +383,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
@@ -443,7 +442,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
@@ -485,7 +484,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         file('dist/service-name-0.0.1/service/monitoring/bin/check.sh').exists()
@@ -508,7 +507,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
@@ -526,7 +525,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         String startScript = file('dist/service-name-0.0.1/service/bin/service-name.bat', projectDir).text
@@ -567,7 +566,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         expect:
-        runTasksSuccessfully(':tasks')
+        runTasks(':tasks')
     }
 
     def 'exposes an artifact through the sls configuration'() {
@@ -608,7 +607,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         ''')
 
         when:
-        def buildResult = runTasksSuccessfully(':child:untar')
+        def buildResult = runTasks(':child:untar')
 
         then:
         buildResult.wasExecuted(':parent:distTar')
@@ -623,7 +622,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def result = runTasksWithFailure(":tasks")
+        def result = runTasksAndFail(":tasks")
 
         then:
         result.getStandardError().contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
@@ -637,7 +636,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        def result = runTasksWithFailure(":tasks")
+        def result = runTasksAndFail(":tasks")
 
         then:
         result.getStandardError().contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
@@ -690,7 +689,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         ''')
 
         when:
-        runTasksSuccessfully(':parent:build', ':parent:distTar', ':parent:untar')
+        runTasks(':parent:build', ':parent:distTar', ':parent:untar')
 
         then:
         def libFiles = new File(projectDir, 'parent/dist/service-name-0.0.1/service/lib/').listFiles()
@@ -754,7 +753,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/com/test/Test.class').exists()
@@ -792,7 +791,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':untar')
+        runTasks(':untar')
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
@@ -830,7 +829,7 @@ class ServiceDistributionPluginTests extends IntegrationSpec {
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully(':untar')
+        runTasks(':untar')
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(

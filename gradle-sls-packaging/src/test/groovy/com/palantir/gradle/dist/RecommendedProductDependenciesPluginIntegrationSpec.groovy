@@ -20,9 +20,8 @@ import com.google.common.collect.Iterables
 import com.palantir.gradle.dist.tasks.CreateManifestTask
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
-import nebula.test.IntegrationSpec
 
-class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpec {
+class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrationSpec {
 
     def "Adds recommended product dependencies to manifest"() {
         settingsFile  << """
@@ -43,7 +42,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':jar')
+        runTasks(':jar')
 
         then:
         fileExists("build/libs/root-project.jar")

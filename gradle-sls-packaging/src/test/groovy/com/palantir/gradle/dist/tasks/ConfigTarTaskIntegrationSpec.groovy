@@ -16,16 +16,14 @@
 
 package com.palantir.gradle.dist.tasks
 
-import nebula.test.IntegrationSpec
-
-class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
+class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'configTar task exists for services'() {
         setup:
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
-        runTasksSuccessfully(':configTar')
+        runTasks(':configTar')
 
         then:
         fileExists('build/distributions/foo-service-0.0.1.service.config.tgz')
@@ -36,7 +34,7 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
-        runTasksSuccessfully(':configTar')
+        runTasks(':configTar')
 
         then:
         fileExists('build/distributions/foo-asset-0.0.1.asset.config.tgz')
@@ -47,7 +45,7 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
-        runTasksSuccessfully(':configTar', ':untar')
+        runTasks(':configTar', ':untar')
 
         then:
         def files = directory('dist/foo-service-0.0.1/', projectDir).list()
@@ -62,7 +60,7 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
-        runTasksSuccessfully(':configTar', ':untar')
+        runTasks(':configTar', ':untar')
 
         then:
         def files = directory('dist/foo-asset-0.0.1/', projectDir).list()

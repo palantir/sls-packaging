@@ -16,13 +16,13 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 
-class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
+class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     File mavenRepo
 
@@ -63,7 +63,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasksWithFailure(':testCreateManifest')
+        def buildResult = runTasksAndFail(':testCreateManifest')
 
         then:
         buildResult.getStandardError().contains("The following products are recommended as dependencies but do not appear in the " +
@@ -87,7 +87,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasksSuccessfully(':testCreateManifest')
+        def buildResult = runTasks(':testCreateManifest')
 
         then:
         buildResult.wasExecuted(':testCreateManifest')
@@ -109,7 +109,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -148,7 +148,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -179,7 +179,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
