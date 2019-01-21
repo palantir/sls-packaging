@@ -332,7 +332,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def result = runTasksAndFail('distTar')
 
         then:
-        result.standardError.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
+        result.output.contains("minimumVersion and recommendedVersions must be valid SLS versions: 1.0.x")
     }
 
     def 'produce distribution bundle with files in deployment/'() {
