@@ -90,6 +90,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                 .collect(Collectors.joining(" "));
                         task.getManifest().getAttributes().put("Class-Path", classPath + " " + task.getArchiveName());
                     });
+                    task.onlyIf(t -> distributionExtension.getEnableManifestClasspath().get());
                 });
 
         TaskProvider<CreateStartScripts> startScripts = project.getTasks().register("createStartScripts",
