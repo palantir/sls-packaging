@@ -27,6 +27,4 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
     protected boolean fileExists(String path) {
         new File(projectDir, path).exists()
     }
-
-
 }
