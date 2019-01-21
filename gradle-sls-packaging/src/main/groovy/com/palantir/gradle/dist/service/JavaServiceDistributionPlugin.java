@@ -117,6 +117,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     });
                 });
 
+        TaskProvider<Jar> jarTask = project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME);
+
         // HACKHACK all fields of CreateStartScript are eager so we configure the task after evaluation to
         // ensure everything has been correctly configured
         project.afterEvaluate(p -> startScripts.configure(task -> {
@@ -125,7 +127,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
 
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
-            task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles().plus(
+            task.setClasspath(jarTask.get().getOutputs().getFiles().plus(
                     javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
         }));
 
@@ -144,7 +146,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getEnv().set(distributionExtension.getEnv());
                     task.setClasspath(
-                            project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME).getOutputs().getFiles().plus(
+                            jarTask.get().getOutputs().getFiles().plus(
                                     distributionExtension.getProductDependenciesConfig()));
                 });
 
