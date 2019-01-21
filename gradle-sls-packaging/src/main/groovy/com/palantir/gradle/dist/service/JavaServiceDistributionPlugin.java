@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.JavaExec;
@@ -177,17 +176,15 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
 
         TaskProvider<JavaExec> runTask = project.getTasks().register("run", JavaExec.class, task -> {
-            Task jarTaskProvider = project.getTasks().getByName("jar");
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
-
-            task.dependsOn(jarTaskProvider);
+            task.dependsOn("jar");
         });
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
         // been correctly configured
         project.afterEvaluate(p -> runTask.configure(task -> {
-            Jar jarTask = (Jar) project.getTasks().getByName("jar");
+            Jar jarTask = project.getTasks().withType(Jar.class).getByName("jar");
             task.setClasspath(project.files(
                     jarTask.getArchivePath(), p.getConfigurations().getByName("runtimeClasspath")));
         }));
