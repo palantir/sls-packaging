@@ -64,7 +64,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def result = runTasks(':build', ':distTar', ':untar')
 
         then:
-        result.task('createCheckScript').outcome == TaskOutcome.SUCCESS
+        result.task(':createCheckScript').outcome == TaskOutcome.SUCCESS
         // try all of the service commands
         execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'start') == 0
         // wait for the Java process to start up and emit output
@@ -111,9 +111,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         result.task(':createCheckScript').outcome == TaskOutcome.UP_TO_DATE
         result.task(':createInitScript').outcome == TaskOutcome.UP_TO_DATE
         result.task(':createLaunchConfig').outcome == TaskOutcome.SUCCESS
-        result.task('createManifest').outcome == TaskOutcome.SUCCESS
+        result.task(':createManifest').outcome == TaskOutcome.SUCCESS
         result.task(':manifestClasspathJar').outcome == TaskOutcome.SUCCESS
-        result.task('distTar').outcome == TaskOutcome.SUCCESS
+        result.task(':distTar').outcome == TaskOutcome.SUCCESS
 
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'start') == 0
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'stop') == 0
