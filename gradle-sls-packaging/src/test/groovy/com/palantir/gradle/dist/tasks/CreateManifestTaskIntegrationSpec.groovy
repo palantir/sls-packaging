@@ -203,7 +203,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         DependencyGraph dependencyGraph = new DependencyGraph(
                 "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",
                 "pdep:pdep:1.0")
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
+        GradleDependencyGenerator generator = new GradleDependencyGenerator(
+                dependencyGraph, new File(projectDir, "build/testrepogen").toString())
         mavenRepo = generator.generateTestMavenRepo()
 
 
