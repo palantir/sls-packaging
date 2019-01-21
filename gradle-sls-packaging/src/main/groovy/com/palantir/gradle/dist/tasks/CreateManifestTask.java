@@ -258,7 +258,7 @@ public class CreateManifestTask extends DefaultTask {
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
         Preconditions.checkArgument(SlsProductVersions.isValidVersion(stringVersion),
-                "Project version must be a valid SLS version: " + stringVersion);
+                "Project version must be a valid SLS version: %s", stringVersion);
         if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
             getProject().getLogger().warn(
                     "Version string in project {} is not orderable as per SLS specification: {}",
