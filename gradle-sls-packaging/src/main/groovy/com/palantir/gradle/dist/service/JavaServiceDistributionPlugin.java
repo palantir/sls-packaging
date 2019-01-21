@@ -98,6 +98,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates standard Java start scripts.");
                     task.setOutputDir(new File(project.getBuildDir(), "scripts"));
+                    // Since we write out the name of this task's output (when it's enabled), we should depend on it
+                    task.dependsOn(manifestClassPathTask);
 
                     task.doLast(t -> {
                         if (distributionExtension.getEnableManifestClasspath().get()) {
