@@ -17,11 +17,15 @@
 package com.palantir.gradle.dist
 
 import nebula.test.IntegrationTestKitSpec
+import nebula.test.multiproject.MultiProjectIntegrationHelper
 
 class GradleIntegrationSpec extends IntegrationTestKitSpec {
+    protected MultiProjectIntegrationHelper helper
+
     def setup() {
         System.setProperty("ignoreDeprecations", "true")
         settingsFile.createNewFile()
+        helper = new MultiProjectIntegrationHelper(getProjectDir(), settingsFile)
     }
 
     protected boolean fileExists(String path) {
