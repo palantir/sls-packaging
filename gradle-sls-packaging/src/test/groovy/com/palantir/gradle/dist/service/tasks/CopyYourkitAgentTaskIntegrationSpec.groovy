@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist.service.tasks
 
-
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import nebula.test.functional.ExecutionResult
 
 class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {

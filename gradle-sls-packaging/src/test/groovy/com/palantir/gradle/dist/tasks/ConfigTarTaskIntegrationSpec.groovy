@@ -16,6 +16,8 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.GradleIntegrationSpec
+
 class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'configTar task exists for services'() {

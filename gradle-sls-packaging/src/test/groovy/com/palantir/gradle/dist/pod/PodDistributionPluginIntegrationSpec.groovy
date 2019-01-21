@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.pod
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.palantir.gradle.dist.GradleIntegrationSpec
 
 class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())

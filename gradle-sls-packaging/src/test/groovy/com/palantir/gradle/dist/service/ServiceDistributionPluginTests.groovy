@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
