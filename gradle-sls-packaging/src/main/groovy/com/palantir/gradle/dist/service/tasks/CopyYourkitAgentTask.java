@@ -18,7 +18,7 @@ public class CopyYourkitAgentTask extends DefaultTask {
 
     @OutputFile
     public File getOutputFile() {
-        return new File(String.valueOf(getProject().getBuildDir()) + "/libs/linux-x86-64/libyjpagent.so");
+        return new File(getProject().getBuildDir() + "/libs/linux-x86-64/libyjpagent.so");
     }
 
     @TaskAction
