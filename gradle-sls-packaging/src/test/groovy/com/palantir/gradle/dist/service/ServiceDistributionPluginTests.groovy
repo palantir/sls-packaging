@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
 
 class ServiceDistributionPluginTests extends GradleIntegrationSpec {
