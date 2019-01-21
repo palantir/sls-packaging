@@ -628,7 +628,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def result = runTasksAndFail(":tasks")
 
         then:
-        result.getStandardError().contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'fails when pod and service plugins are both applied'() {
@@ -644,7 +644,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def result = runTasksAndFail(":tasks")
 
         then:
-        result.getStandardError().contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {

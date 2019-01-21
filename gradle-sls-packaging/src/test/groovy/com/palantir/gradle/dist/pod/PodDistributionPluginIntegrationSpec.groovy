@@ -158,8 +158,8 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed")
-        buildResult.getStandardError().contains("service names must be kebab case")
+        buildResult.output.contains("Pod validation failed")
+        buildResult.output.contains("service names must be kebab case")
     }
 
     def 'pod file creation fails with no product group'() {
@@ -183,7 +183,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product group must be specified for pod service")
+        buildResult.output.contains("Pod validation failed for service bar-service: product group must be specified for pod service")
     }
 
     def 'pod file creation fails with no product name'() {
@@ -207,7 +207,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product name must be specified for pod service")
+        buildResult.output.contains("Pod validation failed for service bar-service: product name must be specified for pod service")
     }
 
     def 'pod file creation fails with no product version '() {
@@ -231,7 +231,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
+        buildResult.output.contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
     }
 
     def 'pod file creation fails with invalid product version '() {
@@ -256,7 +256,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
+        buildResult.output.contains("Pod validation failed for service bar-service: product version must be specified and be a valid SLS version for pod service")
     }
 
     def 'pod file creation fails with bad volume mappings'() {
@@ -289,7 +289,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for service baz-service: service volume mapping cannot contain undeclared volumes")
+        buildResult.output.contains("Pod validation failed for service baz-service: service volume mapping cannot contain undeclared volumes")
     }
 
     def 'pod file creation fails with volume name too long'() {
@@ -316,7 +316,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for volume aaaaaaaaaaaaaaaaaaaaaaaaaa: volume names must be fewer than 25 characters")
+        buildResult.output.contains("Pod validation failed for volume aaaaaaaaaaaaaaaaaaaaaaaaaa: volume names must be fewer than 25 characters")
     }
 
     def 'pod file creation fails with bad volume name'() {
@@ -343,7 +343,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for volume Not-A-Valid-Volume: volume name does not conform to the required regex")
+        buildResult.output.contains("Pod validation failed for volume Not-A-Valid-Volume: volume name does not conform to the required regex")
     }
 
     def 'pod file creation fails with bad volume desired size'() {
@@ -370,7 +370,7 @@ class PodDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':configTar')
 
         then:
-        buildResult.getStandardError().contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(M|G|T)\$")
+        buildResult.output.contains("Pod validation failed for volume random-volume: volume desired size of 10 GiB does not conform to the required regex ^\\d+?(M|G|T)\$")
     }
 
     private static createUntarBuildFile(buildFile) {

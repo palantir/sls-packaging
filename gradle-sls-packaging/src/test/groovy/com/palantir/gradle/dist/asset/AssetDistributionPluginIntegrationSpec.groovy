@@ -84,7 +84,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def result = runTasksAndFail(":tasks")
 
         then:
-        result.getStandardError().contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'fails when asset and pod plugins are used'() {
@@ -100,7 +100,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def result = runTasksAndFail(":tasks")
 
         then:
-        result.getStandardError().contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
+        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'can specify service dependencies'() {
