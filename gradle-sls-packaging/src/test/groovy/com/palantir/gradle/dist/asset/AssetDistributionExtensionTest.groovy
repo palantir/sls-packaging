@@ -16,12 +16,9 @@
 
 package com.palantir.gradle.dist.asset
 
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
-import spock.lang.Specification
+import nebula.test.ProjectSpec
 
-class AssetDistributionExtensionTest extends Specification {
-    Project project = ProjectBuilder.builder().build();
+class AssetDistributionExtensionTest extends ProjectSpec {
     def 'collection modifiers are cumulative'() {
         given:
         def ext = new AssetDistributionExtension(project)
