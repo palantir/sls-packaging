@@ -17,8 +17,6 @@
 package com.palantir.gradle.dist.tasks
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
-import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.TaskOutcome
 
 class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -27,10 +25,10 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
-        BuildResult buildResult = run(':configTar').build()
+        runTasks(':configTar')
 
         then:
-        buildResult.task(':configTar').outcome == TaskOutcome.SUCCESS
+        fileExists('build/distributions/foo-service-0.0.1.service.config.tgz')
     }
 
     def 'configTar task exists for assets'() {
@@ -38,10 +36,10 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
-        BuildResult buildResult = run(':configTar').build()
+        runTasks(':configTar')
 
         then:
-        buildResult.task(':configTar').outcome == TaskOutcome.SUCCESS
+        fileExists('build/distributions/foo-asset-0.0.1.asset.config.tgz')
     }
 
     def 'configTar task contains the necessary deployment files for services'() {
@@ -49,7 +47,7 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
-        run(':configTar', ':untar').build()
+        runTasks(':configTar', ':untar')
 
         then:
         def files = directory('dist/foo-service-0.0.1/', projectDir).list()
@@ -64,7 +62,7 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
-        run(':configTar', ':untar').build()
+        runTasks(':configTar', ':untar')
 
         then:
         def files = directory('dist/foo-asset-0.0.1/', projectDir).list()

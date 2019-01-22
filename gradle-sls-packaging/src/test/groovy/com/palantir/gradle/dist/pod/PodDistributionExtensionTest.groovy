@@ -16,19 +16,26 @@
 
 package com.palantir.gradle.dist.pod
 
+import org.gradle.api.Project
+import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
 class PodDistributionExtensionTest extends Specification {
+    Project project;
+    def setup() {
+        project = ProjectBuilder.builder().build();
+    }
+
     def 'collection modifiers are cumulative'() {
         given:
-        def ext = new PodDistributionExtension(null)
+        def ext = new PodDistributionExtension(project)
         def barService = new PodServiceDefinition("com.palantir.foo", "bar", "1.0.0", [:])
         def bazService = new PodServiceDefinition("com.palantir.foo", "baz", "1.0.0", [:])
 
         when:
         ext.with {
-            services "bar", barService
-            services "baz", bazService
+            setService "bar", barService
+            setService "baz", bazService
         }
 
         then:
@@ -39,7 +46,7 @@ class PodDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new PodDistributionExtension(null)
+        def ext = new PodDistributionExtension(project)
         def barService = new PodServiceDefinition("com.palantir.foo", "bar", "1.0.0", [:])
         def bazService = new PodServiceDefinition("com.palantir.foo", "baz", "1.0.0", [:])
 
@@ -52,5 +59,6 @@ class PodDistributionExtensionTest extends Specification {
         then:
         def ks = ext.getServices().keySet()
         ks.contains("baz")
+        !ks.contains("bar")
     }
 }

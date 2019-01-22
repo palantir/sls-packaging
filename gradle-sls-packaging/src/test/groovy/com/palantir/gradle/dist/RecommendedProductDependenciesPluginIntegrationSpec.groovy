@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+import com.google.common.collect.Iterables
 import com.palantir.gradle.dist.tasks.CreateManifestTask
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
@@ -23,6 +24,9 @@ import java.util.zip.ZipFile
 class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrationSpec {
 
     def "Adds recommended product dependencies to manifest"() {
+        settingsFile  << """
+        rootProject.name = "root-project"
+        """.stripIndent()
         buildFile << """
             plugins {
                 id 'com.palantir.sls-recommended-dependencies'
@@ -40,20 +44,27 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         """.stripIndent()
 
         when:
-        runSuccessfully(':jar')
+        runTasks(':jar')
 
         then:
-        def jar = new File(projectDir, "build/libs/root-project.jar")
-        jar.exists()
-        def recommendedDeps = readRecommendedProductDeps(jar)
-        recommendedDeps == "{\"recommended-product-dependencies\":[{\"product-group\":\"group\",\"product-name\":\"name\",\"minimum-version\":\"1.0.0\",\"maximum-version\":\"1.x.x\",\"recommended-version\":\"1.2.3\"}]}"
+        fileExists("build/libs/root-project.jar")
+
+        def dep = Iterables.getOnlyElement(
+                readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
+        dep.productGroup == "group"
+        dep.productName == "name"
+        dep.minimumVersion == "1.0.0"
+        dep.maximumVersion == "1.x.x"
+        dep.recommendedVersion == "1.2.3"
     }
 
     def readRecommendedProductDeps(File jarFile) {
         def zf = new ZipFile(jarFile)
         def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
         def manifest = new Manifest(zf.getInputStream(manifestEntry))
-        return manifest.getMainAttributes().getValue(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY)
+        return CreateManifestTask.jsonMapper.readValue(
+                manifest.getMainAttributes().getValue(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
+                RecommendedProductDependencies)
     }
 
 }

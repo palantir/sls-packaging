@@ -16,12 +16,12 @@
 
 package com.palantir.gradle.dist.asset
 
-import spock.lang.Specification
+import nebula.test.ProjectSpec
 
-class AssetDistributionExtensionTest extends Specification {
+class AssetDistributionExtensionTest extends ProjectSpec {
     def 'collection modifiers are cumulative'() {
         given:
-        def ext = new AssetDistributionExtension(null)
+        def ext = new AssetDistributionExtension(project)
 
         when:
         ext.with {
@@ -31,7 +31,7 @@ class AssetDistributionExtensionTest extends Specification {
         }
 
         then:
-        ext.assets == [
+        ext.getAssets() == [
                 "path/to/src" : "relocated/dest",
                 "path/to/src2": "relocated/dest2",
                 "path/to/foo" : "path/to/foo"
@@ -40,7 +40,7 @@ class AssetDistributionExtensionTest extends Specification {
 
     def 'collection setters replace existing data'() {
         given:
-        def ext = new AssetDistributionExtension(null)
+        def ext = new AssetDistributionExtension(project)
 
         when:
         ext.with {
@@ -49,6 +49,6 @@ class AssetDistributionExtensionTest extends Specification {
         }
 
         then:
-        ext.assets == ["path/to/src2": "relocated/dest2"]
+        ext.getAssets() == ["path/to/src2": "relocated/dest2"]
     }
 }

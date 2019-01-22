@@ -27,13 +27,13 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        BuildResult buildResult = run(':copyYourkitAgent').build()
+        BuildResult buildResult = runTasks(':copyYourkitAgent')
 
         then:
         buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.SUCCESS
 
         when:
-        buildResult = run(':copyYourkitAgent').build()
+        buildResult = runTasks(':copyYourkitAgent')
 
         then:
         buildResult.task(':copyYourkitAgent').outcome == TaskOutcome.UP_TO_DATE
@@ -44,7 +44,7 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         when:
-        runSuccessfully(':build', ':distTar', ':untar')
+        runTasks(':build', ':distTar', ':untar')
 
         then:
         file('dist/service-name-0.0.1').exists()
@@ -54,17 +54,11 @@ class CopyYourkitAgentTaskIntegrationSpec extends GradleIntegrationSpec {
         file('dist/service-name-0.0.1/service/lib/linux-x86-64/yourkit-license-redist.txt').getBytes().length > 0
     }
 
-    protected runSuccessfully(String... tasks) {
-        BuildResult buildResult = run(tasks).build()
-        tasks.each { buildResult.task(it).outcome == TaskOutcome.SUCCESS }
-        return buildResult
-    }
-
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
-                id 'com.palantir.sls-java-service-distribution'
                 id 'java'
+                id 'com.palantir.sls-java-service-distribution'
             }
 
             project.group = 'service-group'

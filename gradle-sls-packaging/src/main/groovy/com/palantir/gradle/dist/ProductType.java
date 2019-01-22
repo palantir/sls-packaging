@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist
+package com.palantir.gradle.dist;
 
-import nebula.test.IntegrationTestKitSpec
-import nebula.test.multiproject.MultiProjectIntegrationHelper
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-class GradleIntegrationSpec extends IntegrationTestKitSpec {
-    protected MultiProjectIntegrationHelper helper
+public enum ProductType {
+    @JsonProperty("service.v1")
+    SERVICE_V1,
 
-    def setup() {
-        keepFiles = true
-        System.setProperty("ignoreDeprecations", "true")
-        settingsFile.createNewFile()
-        helper = new MultiProjectIntegrationHelper(getProjectDir(), settingsFile)
-    }
+    @JsonProperty("daemon.v1")
+    DAEMON_V1,
 
-    protected boolean fileExists(String path) {
-        new File(projectDir, path).exists()
-    }
+    @JsonProperty("asset.v1")
+    ASSET_V1,
+
+    @JsonProperty("pod.v1")
+    POD_V1,
 }

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2018 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2019 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
-import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
@@ -35,6 +34,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 id 'com.palantir.sls-java-service-distribution'
             }
 
+            import com.palantir.gradle.dist.ProductType
+
             repositories {
                 maven {url "file:///${mavenRepo.getAbsolutePath()}"}
             }
@@ -44,8 +45,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
                 serviceName = "serviceName"
                 serviceGroup = "serviceGroup"
-                productType = "service"
+                productType = ProductType.SERVICE_V1
                 manifestExtensions = [:]
+                manifestFile = new File(project.buildDir, "/deployment/manifest.yml")
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
@@ -64,10 +66,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        BuildResult buildResult = run(':testCreateManifest').buildAndFail()
+        def buildResult = runTasksAndFail(':testCreateManifest')
 
         then:
-        buildResult.task(':testCreateManifest').outcome == TaskOutcome.FAILED
         buildResult.output.contains("The following products are recommended as dependencies but do not appear in the " +
                 "product dependencies or product dependencies ignored list: [group:name2, group:name]")
     }
@@ -89,7 +90,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        BuildResult buildResult = run(':testCreateManifest').build()
+        def buildResult = runTasks(':testCreateManifest')
 
         then:
         buildResult.task(':testCreateManifest').outcome == TaskOutcome.SUCCESS
@@ -111,7 +112,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -150,7 +151,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -181,7 +182,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -202,7 +203,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         DependencyGraph dependencyGraph = new DependencyGraph(
                 "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",
                 "pdep:pdep:1.0")
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
+        GradleDependencyGenerator generator = new GradleDependencyGenerator(
+                dependencyGraph, new File(projectDir, "build/testrepogen").toString())
         mavenRepo = generator.generateTestMavenRepo()
 
 

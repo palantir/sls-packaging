@@ -97,20 +97,6 @@ class RecommendedProductDependencyMergerTest extends Specification {
         e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
-    def "max and recommended can be optional"() {
-        given:
-        def dep1 = newRecommendation("2.1.0", null, "2.6.0")
-        def dep2 = newRecommendation("2.2.0.dirty", "2.8.x", null)
-
-        when:
-        def merged = RecommendedProductDependencyMerger.merge(dep1, dep2)
-
-        then:
-        merged.minimumVersion == "2.1.0"
-        merged.maximumVersion == "2.8.x"
-        merged.recommendedVersion == "2.6.0"
-    }
-
     private RecommendedProductDependency newRecommendation(String min, String max, String recommended) {
         def rpd = basicDep.clone() as RecommendedProductDependency
         use InvokerHelper, {
