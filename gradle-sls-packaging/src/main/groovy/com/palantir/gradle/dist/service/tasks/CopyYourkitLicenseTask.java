@@ -18,13 +18,11 @@ package com.palantir.gradle.dist.service.tasks;
 
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URISyntaxException;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GFileUtils;
 
 public class CopyYourkitLicenseTask extends DefaultTask {
     public CopyYourkitLicenseTask() {
@@ -34,15 +32,13 @@ public class CopyYourkitLicenseTask extends DefaultTask {
 
     @OutputFile
     public final File getOutputFile() {
-        return new File(getProject().getBuildDir() + "/libs/linux-x86-64/yourkit-license-redist.txt");
+        return new File(getProject().getBuildDir(), "/libs/linux-x86-64/yourkit-license-redist.txt");
     }
 
     @TaskAction
-    public final void copyYourkitLicense() throws IOException {
-        InputStream src = JavaServiceDistributionPlugin.class.getResourceAsStream("/yourkit-license-redist.txt");
-        Path dest = getOutputFile().toPath();
-        dest.getParent().toFile().mkdirs();
-        Files.copy(src, dest);
+    public final void copyYourkitLicense() throws URISyntaxException {
+        File src = new File(JavaServiceDistributionPlugin.class.getResource("/yourkit-license-redist.txt").toURI());
+        GFileUtils.copyFile(src, getOutputFile());
     }
 
 }
