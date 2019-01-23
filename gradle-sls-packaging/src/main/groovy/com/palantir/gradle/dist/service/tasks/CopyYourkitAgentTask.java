@@ -19,12 +19,11 @@ package com.palantir.gradle.dist.service.tasks;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URISyntaxException;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GFileUtils;
 
 public class CopyYourkitAgentTask extends DefaultTask {
     public CopyYourkitAgentTask() {
@@ -34,15 +33,13 @@ public class CopyYourkitAgentTask extends DefaultTask {
 
     @OutputFile
     public final File getOutputFile() {
-        return new File(getProject().getBuildDir() + "/libs/linux-x86-64/libyjpagent.so");
+        return new File(getProject().getBuildDir(), "/libs/linux-x86-64/libyjpagent.so");
     }
 
     @TaskAction
-    public final void copyYourkitAgent() throws IOException {
-        InputStream src = JavaServiceDistributionPlugin.class.getResourceAsStream("/linux-x86-64/libyjpagent.so");
-        Path dest = getOutputFile().toPath();
-        dest.getParent().toFile().mkdirs();
-        Files.copy(src, dest);
+    public final void copyYourkitAgent() throws IOException, URISyntaxException {
+        File src = new File(JavaServiceDistributionPlugin.class.getResource("/linux-x86-64/libyjpagent.so").toURI());
+        GFileUtils.copyFile(src, getOutputFile());
     }
 
 }
