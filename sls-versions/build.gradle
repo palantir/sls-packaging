@@ -1,6 +1,0 @@
-apply from: "${rootDir}/gradle/publish-jar.gradle"
-
-dependencies {
-    testCompile 'junit:junit'
-    testCompile 'org.assertj:assertj-core'
-}
