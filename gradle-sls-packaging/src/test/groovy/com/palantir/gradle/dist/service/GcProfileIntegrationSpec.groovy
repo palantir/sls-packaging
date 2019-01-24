@@ -23,6 +23,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import org.awaitility.Awaitility
 import spock.lang.Unroll
+import spock.util.environment.Jvm
 
 class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
@@ -74,8 +75,12 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         runTasks(':unpackTgz')
 
         then:
-        assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
-        Awaitility.await("file exists").until({signalFile.exists()})
+        if (!gc.toString().endsWith("-11") || Jvm.getCurrent().isJava9Compatible()) {
+            assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
+            Awaitility.await("file exists").until({signalFile.exists()})
+        } else {
+            println "Intentionally skipping test for ${gc} on ${Jvm.getCurrent().getJavaVersion()}"
+        }
 
         where:
         gc << JavaServiceDistributionExtension.profileNames.keySet().toArray()
