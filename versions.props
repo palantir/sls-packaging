@@ -5,7 +5,6 @@ org.immutables:value = 2.7.5
 
 com.netflix.nebula:nebula-test = 7.1.7
 junit:junit = 4.12
-org.assertj:assertj-core = 3.11.1
 
 # conflict resolution
 com.google.errorprone:error_prone_annotations = 2.3.2
