@@ -22,6 +22,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import org.awaitility.Awaitility
+import org.junit.Assume
 import spock.lang.Unroll
 import spock.util.environment.Jvm
 
@@ -50,7 +51,7 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
                 args '${signalFile.getAbsolutePath()}'
             }
             
-            task unpackTgz(type: Copy, dependsOn: distTar) {
+            task extractDistTarForTest(type: Copy, dependsOn: distTar) {
                 from { tarTree(distTar.outputs.files.singleFile) }
                 into projectDir
             }
@@ -64,6 +65,10 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
     @Unroll
     def 'successfully create a distribution using gc: #gc'() {
+        Assume.assumeTrue(
+                "Intentionally skipping test for ${gc} on ${Jvm.getCurrent().getJavaVersion()}".toString(),
+                !gc.toString().endsWith("-11") || Jvm.getCurrent().isJava9Compatible())
+
         setup:
         buildFile << """
         distribution {
@@ -72,15 +77,13 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasks(':unpackTgz')
+        runTasks(':extractDistTarForTest')
 
         then:
-        if (!gc.toString().endsWith("-11") || Jvm.getCurrent().isJava9Compatible()) {
-            assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
-            Awaitility.await("file exists").until({signalFile.exists()})
-        } else {
-            println "Intentionally skipping test for ${gc} on ${Jvm.getCurrent().getJavaVersion()}"
-        }
+        assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
+        Awaitility.await("file exists").until({
+            signalFile.exists()
+        })
 
         where:
         gc << JavaServiceDistributionExtension.profileNames.keySet().toArray()
