@@ -24,7 +24,6 @@ import java.nio.file.Paths
 import org.awaitility.Awaitility
 import org.junit.Assume
 import spock.lang.Unroll
-import spock.util.environment.Jvm
 
 class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
@@ -66,8 +65,8 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
     @Unroll
     def 'successfully create a distribution using gc: #gc'() {
         Assume.assumeTrue(
-                "Intentionally skipping test for ${gc} on ${Jvm.getCurrent().getJavaVersion()}".toString(),
-                !gc.toString().endsWith("-11") || Jvm.getCurrent().isJava9Compatible())
+                "response-time-11 only works on Shenandoah-enabled JVMs and CI only has OpenJDK",
+                !gc.equals("response-time-11"))
 
         setup:
         buildFile << """
@@ -81,9 +80,12 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
-        Awaitility.await("file exists").until({
+        Awaitility.await("file created using ${gc}").until({
             signalFile.exists()
         })
+
+        cleanup:
+        println file("touch-service-1.0.0/var/log/startup.log").text
 
         where:
         gc << JavaServiceDistributionExtension.profileNames.keySet().toArray()
