@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
@@ -40,7 +41,8 @@ import org.gradle.util.ConfigureUtil;
 
 public class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
-    private static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
+    @VisibleForTesting
+    static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
             "throughput", Throughput.class,
             "response-time", ResponseTime.class,
             "hybrid", Hybrid.class,

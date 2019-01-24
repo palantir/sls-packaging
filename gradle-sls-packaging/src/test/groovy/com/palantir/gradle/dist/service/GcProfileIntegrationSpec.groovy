@@ -17,16 +17,20 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.service.JavaServiceDistributionExtension
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import org.awaitility.Awaitility
+import spock.lang.Unroll
 
 class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
     static Path touchService = Paths.get("src/test/groovy/com/palantir/gradle/dist/service/ExampleTouchService.java")
+    File signalFile
 
     def setup() {
-        File signalFile = new File(getProjectDir(), "example-touch-service-started")
+        signalFile = new File(getProjectDir(), "example-touch-service-started")
         buildFile << """
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
@@ -44,25 +48,36 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
                 mainClass 'com.palantir.gradle.dist.service.ExampleTouchService'
                 args '${signalFile.getAbsolutePath()}'
             }
+            
+            task unpackTgz(type: Copy, dependsOn: distTar) {
+                from { tarTree(distTar.outputs.files.singleFile) }
+                into projectDir
+            }
         """.stripIndent()
-        Path path = projectDir.toPath().resolve("src/main/java/com/palantir/gradle/dist/service/ExampleTouchService.java")
+        Path path = projectDir.toPath().resolve(
+                "src/main/java/com/palantir/gradle/dist/service/ExampleTouchService.java")
         Files.createDirectories(path.getParent())
         Files.copy(touchService, path)
         assert signalFile.exists() == false
     }
 
-    def 'successfully create a distribution'() {
+    @Unroll
+    def 'successfully create a distribution using gc: #gc'() {
         setup:
         buildFile << """
         distribution {
-            gc 'throughput'
+            gc '${gc}'
         }
         """.stripIndent()
 
         when:
-        def buildResult = runTasks(':distTar')
+        runTasks(':unpackTgz')
 
         then:
-        println buildResult.output
+        assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
+        Awaitility.await("file exists").until({signalFile.exists()})
+
+        where:
+        gc << JavaServiceDistributionExtension.profileNames.keySet().toArray()
     }
 }
