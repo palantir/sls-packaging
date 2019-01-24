@@ -30,7 +30,8 @@ import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependency;
 import com.palantir.gradle.dist.RecommendedProductDependencyMerger;
 import com.palantir.gradle.dist.SlsManifest;
-import com.palantir.slspackaging.versions.SlsProductVersions;
+import com.palantir.sls.versions.OrderableSlsVersion;
+import com.palantir.sls.versions.SlsVersion;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -257,9 +258,9 @@ public class CreateManifestTask extends DefaultTask {
 
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
-        Preconditions.checkArgument(SlsProductVersions.isValidVersion(stringVersion),
+        Preconditions.checkArgument(SlsVersion.check(stringVersion),
                 "Project version must be a valid SLS version: %s", stringVersion);
-        if (!SlsProductVersions.isOrderableVersion(stringVersion)) {
+        if (!OrderableSlsVersion.check(stringVersion)) {
             getProject().getLogger().warn(
                     "Version string in project {} is not orderable as per SLS specification: {}",
                     getProject().getName(), stringVersion);

@@ -17,7 +17,8 @@
 package com.palantir.gradle.dist
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.palantir.slspackaging.versions.SlsProductVersions
+import com.palantir.sls.versions.SlsVersion
+import com.palantir.sls.versions.SlsVersionMatcher
 import groovy.transform.AutoClone
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
@@ -55,13 +56,13 @@ class RecommendedProductDependency {
             throw new IllegalArgumentException("minimum version must be specified")
         }
         [maximumVersion].each {
-            if (it && !SlsProductVersions.isValidVersionOrMatcher(it)) {
+            if (it && !SlsVersion.check(it) && !SlsVersionMatcher.safeValueOf(it).isPresent()) {
                 throw new IllegalArgumentException(
                         "maximumVersion must be valid SLS version or version matcher: " + it)
             }
         }
         [minimumVersion, recommendedVersion].each {
-            if (it && !SlsProductVersions.isValidVersion(it)) {
+            if (it && !SlsVersion.check(it)) {
                 throw new IllegalArgumentException(
                         "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
             }

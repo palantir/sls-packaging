@@ -10,7 +10,6 @@ dependencies {
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'
 
-    compile project(':sls-versions')
     compile 'com.google.guava:guava'
     compile gradleApi()
     compile 'com.fasterxml.jackson.core:jackson-databind'

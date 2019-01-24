@@ -18,7 +18,6 @@ package com.palantir.gradle.dist;
 
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.VersionComparator;
-import com.palantir.slspackaging.versions.SlsProductVersions;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -39,7 +38,7 @@ public final class RecommendedProductDependencyMerger {
         }
 
         OrderableSlsVersion minimumVersion = Stream.of(dep1.getMinimumVersion(), dep2.getMinimumVersion())
-                .filter(SlsProductVersions::isOrderableVersion)
+                .filter(OrderableSlsVersion::check)
                 .map(OrderableSlsVersion::valueOf)
                 .max(VersionComparator.INSTANCE)
                 .orElseThrow(() -> new RuntimeException("Unable to determine minimum version"));
@@ -63,7 +62,7 @@ public final class RecommendedProductDependencyMerger {
         Optional<OrderableSlsVersion> recommendedVersion = Stream
                 .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
                 .filter(Objects::nonNull)
-                .filter(SlsProductVersions::isOrderableVersion)
+                .filter(OrderableSlsVersion::check)
                 .map(OrderableSlsVersion::valueOf)
                 .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
                         && satisfiesMaxVersion(maximumVersion, version))
