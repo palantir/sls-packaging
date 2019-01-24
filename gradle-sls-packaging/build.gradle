@@ -19,6 +19,7 @@ dependencies {
 
     testCompile gradleTestKit()
     testCompile 'com.netflix.nebula:nebula-test'
+    testCompile 'org.awaitility:awaitility'
 }
 
 pluginBundle {
