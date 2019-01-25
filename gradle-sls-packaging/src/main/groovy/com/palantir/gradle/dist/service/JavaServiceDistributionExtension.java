@@ -94,20 +94,12 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.mainClass.set(newMainClass);
     }
 
-    public final void setMainClass(Provider<String> mainClass) {
-        this.mainClass.set(mainClass);
-    }
-
     public final Provider<String> getJavaHome() {
         return javaHome;
     }
 
     public final void javaHome(String newJavaHome) {
         this.javaHome.set(newJavaHome);
-    }
-
-    public final void setJavaHome(Provider<String> javaHome) {
-        this.javaHome.set(javaHome);
     }
 
     public final Provider<Boolean> getAddJava8GcLogging() {
@@ -130,10 +122,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.enableManifestClasspath.set(newEnableManifestClasspath);
     }
 
-    public final void setEnableManifestClasspath(Provider<Boolean> enableManifestClasspath) {
-        this.enableManifestClasspath.set(enableManifestClasspath);
-    }
-
     public final Provider<List<String>> getArgs() {
         return args;
     }
@@ -147,10 +135,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     }
 
     public final void setArgs(Iterable<String> args) {
-        this.args.set(args);
-    }
-
-    public final void setArgs(Provider<Iterable<String>> args) {
         this.args.set(args);
     }
 
@@ -170,10 +154,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.checkArgs.set(checkArgs);
     }
 
-    public final void setCheckArgs(Provider<Iterable<String>> checkArgs) {
-        this.checkArgs.set(checkArgs);
-    }
-
     public final Provider<List<String>> getDefaultJvmOpts() {
         return defaultJvmOpts;
     }
@@ -190,10 +170,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.defaultJvmOpts.set(defaultJvmOpts);
     }
 
-    public final void setDefaultJvmOpts(Provider<Iterable<String>> defaultJvmOpts) {
-        this.defaultJvmOpts.set(defaultJvmOpts);
-    }
-
     public final Provider<List<String>> getExcludeFromVar() {
         return excludeFromVar;
     }
@@ -207,10 +183,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     }
 
     public final void setExcludeFromVar(Iterable<String> excludeFromVar) {
-        this.excludeFromVar.set(excludeFromVar);
-    }
-
-    public final void setExcludeFromVar(Provider<Iterable<String>> excludeFromVar) {
         this.excludeFromVar.set(excludeFromVar);
     }
 
