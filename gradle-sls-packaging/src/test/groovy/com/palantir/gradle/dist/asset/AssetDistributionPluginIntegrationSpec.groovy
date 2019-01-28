@@ -35,11 +35,11 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         String manifest = file('dist/asset-name-0.0.1/deployment/manifest.yml').text
-        manifest.contains('"manifest-version":"1.0"')
-        manifest.contains('"product-group":"service-group"')
-        manifest.contains('"product-name":"asset-name"')
-        manifest.contains('"product-version":"0.0.1"')
-        manifest.contains('"product-type":"asset.v1"')
+        manifest.contains('"manifest-version" : "1.0"')
+        manifest.contains('"product-group" : "service-group"')
+        manifest.contains('"product-name" : "asset-name"')
+        manifest.contains('"product-version" : "0.0.1"')
+        manifest.contains('"product-type" : "asset.v1"')
     }
 
     def 'asset dirs are copied correctly'() {

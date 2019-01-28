@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.Iterables
 import com.palantir.gradle.dist.tasks.CreateManifestTask
 import java.util.jar.Manifest
@@ -62,7 +63,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         def zf = new ZipFile(jarFile)
         def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
         def manifest = new Manifest(zf.getInputStream(manifestEntry))
-        return CreateManifestTask.jsonMapper.readValue(
+        return new ObjectMapper().readValue(
                 manifest.getMainAttributes().getValue(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
                 RecommendedProductDependencies)
     }
