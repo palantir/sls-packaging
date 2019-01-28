@@ -67,8 +67,8 @@ public class CreateManifestTask extends DefaultTask {
     public static final String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE);
+            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
