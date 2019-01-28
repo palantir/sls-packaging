@@ -16,8 +16,8 @@
 
 package com.palantir.gradle.dist
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.tasks.CreateManifestTask
-import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -33,7 +33,7 @@ class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
         project.afterEvaluate {
             ext.recommendedProductDependencies.each { recommendedProductDependency ->
-                def recommendedProductDeps = CreateManifestTask.jsonMapper
+                def recommendedProductDeps = new ObjectMapper()
                         .writeValueAsString(RecommendedProductDependencies.builder()
                             .recommendedProductDependencies(ext.recommendedProductDependencies)
                             .build())
