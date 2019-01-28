@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.tasks;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -66,6 +67,7 @@ public class CreateManifestTask extends DefaultTask {
     public static final String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .enable(SerializationFeature.INDENT_OUTPUT)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE);
 
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
