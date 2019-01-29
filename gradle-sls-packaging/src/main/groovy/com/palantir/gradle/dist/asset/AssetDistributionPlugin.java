@@ -55,29 +55,31 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);
+            task.setExtension("sls.tgz");
+            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
 
-            task.from(new File(project.getProjectDir(), "deployment"));
-            task.from(new File(project.getBuildDir(), "deployment"));
             task.dependsOn(manifest);
         });
-        project.afterEvaluate(p -> distTar.configure(task -> {
-            // TODO(forozco): Use provider based API when minimum version is 5.1
-            task.setExtension("sls.tgz");
-            task.setBaseName(distributionExtension.getDistributionServiceName().get());
-            task.setVersion(project.getVersion().toString());
-            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
-        }));
 
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
+            // TODO(forozco): Use provider based API when minimum version is 5.1
+            task.setBaseName(distributionExtension.getDistributionServiceName().get());
+            task.setVersion(project.getVersion().toString());
+
             String archiveRootDir = String.format("%s-%s",
                     distributionExtension.getDistributionServiceName().get(), p.getVersion());
-            task.into(String.format("%s/deployment", archiveRootDir));
-            distributionExtension.getAssets().forEach((key, value) -> {
-                task.from(p.file(key));
-                task.into(String.format("%s/asset/%s", archiveRootDir, value));
-            });
+
+            task.from(new File(project.getProjectDir(), "deployment"), t ->
+                    t.into(new File(String.format("%s/deployment", archiveRootDir))));
+
+            task.from(new File(project.getBuildDir(), "deployment"), t ->
+                    t.into(new File(String.format("%s/deployment", archiveRootDir))));
+
+            distributionExtension.getAssets().forEach((key, value) ->
+                    task.from(p.file(key), t ->
+                            t.into(String.format("%s/asset/%s", archiveRootDir, value))));
         }));
 
 

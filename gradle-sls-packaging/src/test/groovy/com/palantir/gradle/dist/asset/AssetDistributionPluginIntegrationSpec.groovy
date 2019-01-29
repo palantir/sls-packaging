@@ -65,6 +65,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         fileExists("dist/asset-name-0.0.1/asset/maven/abc")
         fileExists("dist/asset-name-0.0.1/asset/maven/bar")
         fileExists("dist/asset-name-0.0.1/asset/maven/abs")
+        fileExists("dist/asset-name-0.0.1/deployment/manifest.yml")
 
         def lines = file("dist/asset-name-0.0.1/asset/maven/abc").readLines()
         lines.size() == 1
