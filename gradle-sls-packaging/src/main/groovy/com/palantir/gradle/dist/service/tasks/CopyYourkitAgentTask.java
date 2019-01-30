@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -34,7 +35,7 @@ public class CopyYourkitAgentTask extends DefaultTask {
 
     @OutputFile
     public final File getOutputFile() {
-        return new File(getProject().getBuildDir() + "/libs/linux-x86-64/libyjpagent.so");
+        return new File(getProject().getBuildDir(), "libs/linux-x86-64/libyjpagent.so");
     }
 
     @TaskAction
@@ -42,7 +43,7 @@ public class CopyYourkitAgentTask extends DefaultTask {
         InputStream src = JavaServiceDistributionPlugin.class.getResourceAsStream("/linux-x86-64/libyjpagent.so");
         Path dest = getOutputFile().toPath();
         dest.getParent().toFile().mkdirs();
-        Files.copy(src, dest);
+        Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
     }
 
 }
