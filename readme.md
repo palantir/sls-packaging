@@ -56,6 +56,8 @@ requirements about shared resources, such as shared disk.
 
 ## Usage
 
+_This plugin requires at least Gradle 4.3._
+
 ### Java Service Distribution plugin
 
 Apply the plugin using standard Gradle convention:
