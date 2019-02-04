@@ -25,7 +25,7 @@ import com.palantir.sls.versions.VersionComparator;
 import java.util.Optional;
 
 /**
- * A typed version of a maximum version as declared in {@link RecommendedProductDependency#maximumVersion}.
+ * A typed version of a maximum version as declared in {@link ProductDependency#getMaximumVersion}.
  * It can be represented by either:
  * <ul>
  *     <li>an {@link OrderableSlsVersion}, or</li>
