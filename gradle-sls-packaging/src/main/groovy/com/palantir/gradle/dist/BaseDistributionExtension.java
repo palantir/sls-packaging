@@ -16,16 +16,14 @@
 
 package com.palantir.gradle.dist;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -36,12 +34,6 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
 
 public class BaseDistributionExtension {
-    private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
-            + "(?<group>[^:@?]*):"
-            + "(?<name>[^:@?]*):"
-            + "(?<version>[^:@?]*)"
-            + "(:(?<classifier>[^:@?]*))?"
-            + "(@(?<type>[^:@?]*))?");
 
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
@@ -126,48 +118,7 @@ public class BaseDistributionExtension {
         return productDependencies;
     }
 
-    public final void productDependency(String mavenCoordVersionRange) {
-        productDependency(mavenCoordVersionRange, null);
-    }
-    public final void productDependency(String mavenCoordVersionRange, String recommendedVersion) {
-        Matcher matcher = MAVEN_COORDINATE_PATTERN.matcher(mavenCoordVersionRange);
-        Preconditions.checkArgument(matcher.matches(), "String '%s' is not a valid maven coordinate. "
-                    + "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are "
-                    + "optional.", mavenCoordVersionRange);
-        String minVersion = matcher.group("version");
-        productDependencies.add(new ProductDependency(
-                matcher.group("group"),
-                matcher.group("name"),
-                minVersion,
-                generateMaxVersion(minVersion),
-                recommendedVersion));
-    }
-
-    public final void productDependency(String dependencyGroup, String dependencyName, String minVersion) {
-        productDependency(dependencyGroup, dependencyName, minVersion, null, null);
-    }
-
-    public final void productDependency(
-            String dependencyGroup, String dependencyName, String minVersion, String maxVersion) {
-        productDependency(dependencyGroup, dependencyName, minVersion, maxVersion,  null);
-    }
-
-    public final void productDependency(
-            String dependencyGroup,
-            String dependencyName,
-            String minVersion,
-            String maxVersion, String recommendedVersion) {
-        productDependencies.add(new ProductDependency(
-                dependencyGroup,
-                dependencyName,
-                minVersion,
-                maxVersion == null
-                        ? generateMaxVersion(minVersion)
-                        : maxVersion,
-                recommendedVersion));
-    }
-
-    public final void productDependency(Closure closure) {
+    public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         ProductDependency dep = new ProductDependency();
         ConfigureUtil.configureUsing(closure).execute(dep);
         dep.isValid();
