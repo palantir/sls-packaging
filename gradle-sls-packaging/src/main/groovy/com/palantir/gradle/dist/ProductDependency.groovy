@@ -18,6 +18,8 @@ package com.palantir.gradle.dist
 
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.palantir.sls.versions.SlsVersion
+import com.palantir.sls.versions.SlsVersionMatcher
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
@@ -63,22 +65,24 @@ class ProductDependency implements Serializable {
 
     def isValid() {
         if (productGroup == null) {
-            throw new IllegalArgumentException("productGroup must be specified for a recommended product dependency")
+            throw new IllegalArgumentException("productGroup must be specified")
         }
         if (productName == null) {
-            throw new IllegalArgumentException("productName must be specified for a recommended product dependency")
+            throw new IllegalArgumentException("productName must be specified")
         }
-        if (minimumVersion == null || !SlsProductVersions.isValidVersion(minimumVersion)) {
-            throw new IllegalArgumentException("minimum version must be a valid SlS version: " + minimumVersion)
+        if (minimumVersion == null) {
+            throw new IllegalArgumentException("minimum version must be specified")
         }
-        if (maximumVersion == null || !SlsProductVersions.isValidVersionOrMatcher(maximumVersion)) {
-            throw new IllegalArgumentException(
-                    "maximumVersion must be valid SLS version or version matcher: " + maximumVersion)
+        maximumVersion.with {
+            if (it == null || !SlsVersion.check(it) && !SlsVersionMatcher.safeValueOf(it).isPresent()) {
+                throw new IllegalArgumentException(
+                        "maximumVersion must be valid SLS version or version matcher: " + it)
+            }
         }
         [minimumVersion, recommendedVersion].each {
-            if (it && !SlsProductVersions.isValidVersion(it)) {
+            if (!SlsVersion.check(it)) {
                 throw new IllegalArgumentException(
-                        "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
+                        "minimumVersion and recommendedVersion must be valid SLS versions: " + it)
             }
         }
         if (minimumVersion == maximumVersion) {
