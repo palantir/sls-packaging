@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductDependency;
+import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
