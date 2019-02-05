@@ -67,8 +67,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':testCreateManifest')
 
         then:
-        buildResult.output.contains("The following products are recommended as dependencies but do not appear in the " +
-                "product dependencies or product dependencies ignored list: [group:name2, group:name]")
         buildResult.output.contains('Encountered duplicate declared product')
     }
 
