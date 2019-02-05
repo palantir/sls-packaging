@@ -80,15 +80,7 @@ A sample configuration for the Service plugin:
             productName = "other-service"
             minimumVersion = "1.1.0"
             maximumVersion = "1.5.x"
-            recommendedVersion = "1.3.0"
-        }
-        productDependency {
-            productGroup = "other-group2"
-            productName = "other-service2"
-            // Automatically detect the constraints based on the runtime configuration
-            // API jars that publish recommended product dependencies.
-            // See the recommended product dependencies plugin section below.
-            detectConstraints = true
+            recommendedVersion = "1.3.0"  // optional
         }
     }
 
@@ -124,9 +116,24 @@ And the complete list of configurable properties:
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid`, `response-time` and `response-time-11`.
  * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
-If there is a jar recommending a version of a dependency but that product is not listed in a `productDependency` block an error will be produced: `The following products are recommended as dependencies but do not appear in the product dependencies or product dependencies ignored list: ...`.
+#### Product dependencies
 
-The solution is to either add the product as a dependency via a `productDependency` block, or to explicitly ignore it:
+Based on the declared `productDependency` blocks, sls-packaging will populate your SLS product dependencies at publish time.
+
+Product dependencies are also automatically populated from library dependencies. This means that unless you want different min/max versions than what is automatically recommended by a library you consume (either directly or transitively), you can rely on sls-packaging to correctly populate SLS product dependencies from these libraries instead of manually specifying them.
+
+To visualize the SLS product dependencies that will be produced, run the `createManifest` task:
+```gradle
+./gradlew createManifest
+```
+and inspect the `$projectDir/build/deployment/manifest.yml` file.
+
+It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a 
+`productDependency` block - this will be merged with any constraints detected from other jars.
+If all the constraints on a given product don't overlap, then an error will the thrown:
+`Could not merge recommended product dependencies as their version ranges do not overlap`. 
+
+It's also possible to explicitly ignore a dependency if it comes as a recommendation from a jar:
 
     ignoredProductDependency('other-group3', 'other-service3')
 
