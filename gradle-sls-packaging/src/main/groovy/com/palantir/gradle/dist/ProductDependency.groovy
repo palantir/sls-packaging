@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.google.common.base.Preconditions
 import com.palantir.sls.versions.SlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
 import groovy.transform.CompileStatic
@@ -62,31 +63,22 @@ class ProductDependency implements Serializable {
     }
 
     def isValid() {
-        if (productGroup == null) {
-            throw new IllegalArgumentException("productGroup must be specified")
-        }
-        if (productName == null) {
-            throw new IllegalArgumentException("productName must be specified")
-        }
-        if (minimumVersion == null) {
-            throw new IllegalArgumentException("minimum version must be specified")
-        }
+        Preconditions.checkNotNull(productGroup, "productGroup must be specified")
+        Preconditions.checkNotNull(productName, "productName must be specified")
+        Preconditions.checkNotNull(minimumVersion, "minimumVersion must be specified")
         maximumVersion.with {
-            if (it == null || !SlsVersion.check(it) && !SlsVersionMatcher.safeValueOf(it).isPresent()) {
-                throw new IllegalArgumentException(
-                        "maximumVersion must be valid SLS version or version matcher: " + it)
-            }
+            Preconditions.checkArgument(
+                    it != null && SlsVersionMatcher.safeValueOf(it).isPresent(),
+                    "maximumVersion must be a valid version matcher: " + it)
         }
-        [minimumVersion, recommendedVersion].each {
-            if (!SlsVersion.check(it)) {
-                throw new IllegalArgumentException(
-                        "minimumVersion and recommendedVersion must be valid SLS versions: " + it)
-            }
-        }
-        if (minimumVersion == maximumVersion) {
-            throw new IllegalArgumentException("minimumVersion and maximumVersion must be different "
-                    + "in product dependency on " + this.productName)
-        }
-    }
+        Preconditions.checkArgument(
+                SlsVersion.check(minimumVersion), "minimumVersion must be a valid SLS version: " + minimumVersion)
+        Preconditions.checkArgument(
+                SlsVersion.check(recommendedVersion),
+                "recommendedVersion must be a valid SLS version: " + recommendedVersion)
 
+        Preconditions.checkArgument(
+                minimumVersion != maximumVersion,
+                "minimumVersion and maximumVersion must be different in product dependency on " + this.productName)
+    }
 }
