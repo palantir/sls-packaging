@@ -144,7 +144,7 @@ public class BaseDistributionExtension {
                 matcher.group("name"),
                 minVersion,
                 generateMaxVersion(minVersion),
-                recommendedVersion != null ? recommendedVersion : minVersion));
+                recommendedVersion));
     }
 
     public final void productDependency(String dependencyGroup, String dependencyName, String minVersion) {
