@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -133,11 +134,10 @@ public class BaseDistributionExtension {
 
     public final void productDependency(String mavenCoordVersionRange, String recommendedVersion) {
         Matcher matcher = MAVEN_COORDINATE_PATTERN.matcher(mavenCoordVersionRange);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("String '${mavenCoordVersionRange}' is not a valid maven coordinate. "
+        Preconditions.checkArgument(matcher.matches(),
+                "String '%s' is not a valid maven coordinate. "
                     + "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are "
-                    + "optional.");
-        }
+                    + "optional.", mavenCoordVersionRange);
         String minVersion = matcher.group("version");
         productDependencies.add(new ProductDependency(
                 matcher.group("group"),
