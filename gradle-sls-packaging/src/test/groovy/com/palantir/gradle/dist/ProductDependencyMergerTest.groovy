@@ -37,7 +37,7 @@ class ProductDependencyMergerTest extends Specification {
     def "non-orderable versions will not be picked"() {
         given:
         def dep1 = newRecommendation("2.1.0", "2.6.x", "2.3.0.dirty")
-        def dep2 = newRecommendation("2.2.0", "2.x.x", "2.4.0-dirty")
+        def dep2 = newRecommendation("2.2.0", "2.x.x", null)
 
         when:
         def merged1 = ProductDependencyMerger.merge(dep1, dep2)
@@ -45,7 +45,7 @@ class ProductDependencyMergerTest extends Specification {
         then:
         merged1.minimumVersion == "2.2.0"
         merged1.maximumVersion == "2.6.x"
-        merged1.recommendedVersion == "2.2.0"
+        merged1.recommendedVersion == null
     }
 
     def "fails if new min is greater than new max"() {
@@ -75,6 +75,6 @@ class ProductDependencyMergerTest extends Specification {
     }
 
     private ProductDependency newRecommendation(String min, String max, String recommended = null) {
-        return new ProductDependency("group", "name", min, max, recommended ?: min)
+        return new ProductDependency("group", "name", min, max, recommended)
     }
 }

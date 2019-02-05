@@ -20,6 +20,8 @@ import com.google.common.base.Preconditions;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class ProductDependencyMerger {
@@ -55,19 +57,18 @@ public final class ProductDependencyMerger {
                 dep1, dep2, minimumVersion, maximumVersion);
 
         // Recommended version. Check that it matches the inferred min and max.
-        // If none of them do, then pick the min version.
-        OrderableSlsVersion recommendedVersion = Stream
+        Optional<OrderableSlsVersion> recommendedVersion = Stream
                 .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
+                .filter(Objects::nonNull)
                 .flatMap(version -> OrderableSlsVersion.safeValueOf(version).map(Stream::of).orElse(Stream.empty()))
                 .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
                         && satisfiesMaxVersion(maximumVersion, version))
-                .max(VersionComparator.INSTANCE)
-                .orElse(minimumVersion);
+                .max(VersionComparator.INSTANCE);
 
         ProductDependency result = new ProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
         result.setMaximumVersion(maximumVersion.toString());
-        result.setRecommendedVersion(recommendedVersion.toString());
+        recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
         result.isValid();
