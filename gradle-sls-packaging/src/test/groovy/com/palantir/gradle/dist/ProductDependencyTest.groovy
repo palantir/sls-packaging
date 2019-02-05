@@ -40,7 +40,7 @@ class ProductDependencyTest extends Specification {
         new ProductDependency("", "", null, "1.2.x", "1.2.3").isValid()
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(NullPointerException)
     }
 
     def 'recommended version must not be matcher'() {
