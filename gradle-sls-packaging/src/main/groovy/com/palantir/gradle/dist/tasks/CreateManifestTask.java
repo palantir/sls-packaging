@@ -140,7 +140,7 @@ public class CreateManifestTask extends DefaultTask {
         validateProjectVersion();
         if (manifestExtensions.containsKey("product-dependencies")) {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
-                    + "'service-dependencies' key in manifestExtensions");
+                    + "'product-dependencies' key in manifestExtensions");
         }
 
         Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
