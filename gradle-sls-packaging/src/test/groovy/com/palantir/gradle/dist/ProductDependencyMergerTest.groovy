@@ -51,7 +51,7 @@ class ProductDependencyMergerTest extends Specification {
 
         merged2.minimumVersion == "2.2.0"
         merged2.maximumVersion == "2.6.x"
-        merged2.recommendedVersion == null
+        merged2.recommendedVersion == "2.2.0"
     }
 
     def "fails if new min is greater than new max"() {
@@ -82,8 +82,8 @@ class ProductDependencyMergerTest extends Specification {
 
     def "fails if min == max"() {
         given:
-        def dep1 = newRecommendation("2.5.0", "2.x.x", null)
-        def dep2 = newRecommendation("2.1.0", "2.5.0", null)
+        def dep1 = newRecommendation("2.5.0", "2.x.x")
+        def dep2 = newRecommendation("2.1.0", "2.5.0")
 
         when:
         def merged = ProductDependencyMerger.merge(dep1, dep2)
@@ -93,7 +93,7 @@ class ProductDependencyMergerTest extends Specification {
         e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
-    private ProductDependency newRecommendation(String min, String max, String recommended) {
-        return new ProductDependency("group", "name", min, max, recommended);
+    private ProductDependency newRecommendation(String min, String max, String recommended = null) {
+        return new ProductDependency("group", "name", min, max, recommended ?: min)
     }
 }
