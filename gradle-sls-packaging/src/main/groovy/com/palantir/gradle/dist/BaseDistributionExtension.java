@@ -24,6 +24,8 @@ import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -34,6 +36,13 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
 
 public class BaseDistributionExtension {
+
+    private static final Pattern MAVEN_COORDINATE_PATTERN = Pattern.compile(""
+            + "(?<group>[^:@?]*):"
+            + "(?<name>[^:@?]*):"
+            + "(?<version>[^:@?]*)"
+            + "(:(?<classifier>[^:@?]*))?"
+            + "(@(?<type>[^:@?]*))?");
 
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
@@ -116,6 +125,26 @@ public class BaseDistributionExtension {
 
     public final Provider<List<ProductDependency>> getProductDependencies() {
         return productDependencies;
+    }
+
+    public final void productDependency(String mavenCoordVersionRange) {
+        productDependency(mavenCoordVersionRange, null);
+    }
+
+    public final void productDependency(String mavenCoordVersionRange, String recommendedVersion) {
+        Matcher matcher = MAVEN_COORDINATE_PATTERN.matcher(mavenCoordVersionRange);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("String '${mavenCoordVersionRange}' is not a valid maven coordinate. "
+                    + "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are "
+                    + "optional.");
+        }
+        String minVersion = matcher.group("version");
+        productDependencies.add(new ProductDependency(
+                matcher.group("group"),
+                matcher.group("name"),
+                minVersion,
+                generateMaxVersion(minVersion),
+                recommendedVersion != null ? recommendedVersion : minVersion));
     }
 
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
