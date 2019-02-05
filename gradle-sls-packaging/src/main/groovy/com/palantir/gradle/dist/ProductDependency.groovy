@@ -103,6 +103,8 @@ class ProductDependency implements Serializable {
 
         Preconditions.checkArgument(
                 minimumVersion != maximumVersion,
-                "minimumVersion and maximumVersion must be different in product dependency on " + this.productName)
+                "minimumVersion and maximumVersion must be different in product dependency on %s. This prevents a "
+                        + "known antipattern where services declare themselves to require a lockstep upgrade.",
+                productName)
     }
 }
