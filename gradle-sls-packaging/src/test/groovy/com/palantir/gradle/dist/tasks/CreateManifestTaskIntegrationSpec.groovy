@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
-import org.gradle.testkit.runner.TaskOutcome
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -87,10 +86,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasks(':testCreateManifest')
+        def buildResult = runTasksAndFail(':testCreateManifest')
 
         then:
-        buildResult.task(':testCreateManifest').outcome == TaskOutcome.SUCCESS
         buildResult.output.contains('Encountered product dependency declaration that was also ignored')
     }
 
@@ -140,10 +138,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully(':testCreateManifest')
+        def result = runTasks(':testCreateManifest')
 
         then:
-        result.standardOutput.contains(
+        result.output.contains(
                 "Encountered a declared product dependency for 'group:name' although there is a discovered dependency")
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
         manifest.get("extensions").get("product-dependencies") == [
@@ -181,7 +179,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':testCreateManifest')
+        runTasks(':testCreateManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
