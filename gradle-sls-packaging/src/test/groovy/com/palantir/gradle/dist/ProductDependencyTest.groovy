@@ -35,14 +35,6 @@ class ProductDependencyTest extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'min version must not be null'() {
-        when:
-        new ProductDependency("", "", null, "1.2.x", "1.2.3").isValid()
-
-        then:
-        thrown(NullPointerException)
-    }
-
     def 'recommended version must not be matcher'() {
         when:
         new ProductDependency("", "", "1.2.3", "1.2.x", "1.2.x").isValid()
