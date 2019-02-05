@@ -130,6 +130,8 @@ and inspect the `$projectDir/build/deployment/manifest.yml` file.
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a 
 `productDependency` block - this will be merged with any constraints detected from other jars.
+If all the constraints on a given product don't overlap, then an error will the thrown:
+`Could not merge recommended product dependencies as their version ranges do not overlap`. 
 
 It's also possible to explicitly ignore a dependency if it comes as a recommendation from a jar:
 
