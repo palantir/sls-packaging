@@ -16,9 +16,11 @@
 
 package com.palantir.gradle.dist
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.palantir.sls.versions.SlsVersion
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.google.common.base.Preconditions
+import com.palantir.sls.versions.OrderableSlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
+import com.palantir.sls.versions.VersionComparator
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
@@ -31,37 +33,32 @@ class ProductDependency implements Serializable {
 
     private static final long serialVersionUID = 1L
 
+    @JsonProperty("product-group")
     String productGroup
+
+    @JsonProperty("product-name")
     String productName
 
-    @JsonIgnore
-    boolean detectConstraints
-
-    @Nullable
+    @JsonProperty("minimum-version")
     String minimumVersion
-    @Nullable
-    String maximumVersion
+
+    @JsonProperty("recommended-version")
     @Nullable
     String recommendedVersion
 
-    ProductDependency() {}
+    @JsonProperty("maximum-version")
+    String maximumVersion
 
-    ProductDependency(String productGroup, String productName) {
-        this.productGroup = productGroup
-        this.productName = productName
-        this.detectConstraints = true
-        isValid()
-    }
+    ProductDependency() {}
 
     ProductDependency(
             String productGroup,
             String productName,
-            @Nullable String minimumVersion,
-            @Nullable String maximumVersion,
-            @Nullable String recommendedVersion) {
+            String minimumVersion,
+            String maximumVersion,
+            String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
-        this.detectConstraints = false
         this.minimumVersion = minimumVersion
         this.maximumVersion = maximumVersion
         this.recommendedVersion = recommendedVersion
@@ -69,40 +66,45 @@ class ProductDependency implements Serializable {
     }
 
     def isValid() {
-        if (detectConstraints) {
-            if (minimumVersion != null) {
-                throw new IllegalArgumentException("minimum version must not be specified if detectConstraints is enabled")
-            }
-            if (maximumVersion != null) {
-                throw new IllegalArgumentException("maximum version must not be specified if detectConstraints is enabled")
-            }
-            if (recommendedVersion != null) {
-                throw new IllegalArgumentException("recommended version must not be specified if detectConstraints is enabled")
-            }
-        } else {
-            if (minimumVersion == null) {
-                throw new IllegalArgumentException("minimum version must be specified");
-            }
+        Preconditions.checkNotNull(productGroup, "productGroup must be specified")
+        Preconditions.checkNotNull(productName, "productName must be specified")
+        Preconditions.checkNotNull(minimumVersion, "minimumVersion must be specified")
+        Preconditions.checkNotNull(maximumVersion, "maximumVersion must be specified")
 
-            [maximumVersion].each {
-                if (it && !SlsVersion.check(it) && !SlsVersionMatcher.safeValueOf(it).isPresent()) {
-                    throw new IllegalArgumentException(
-                            "maximumVersion must be valid SLS version or version matcher: " + it)
-                }
-            }
+        def maximumOpt = SlsVersionMatcher.safeValueOf(maximumVersion)
+        Preconditions.checkArgument(
+                maximumOpt.isPresent(), "maximumVersion must be a valid version matcher: " + maximumVersion)
 
-            [minimumVersion, recommendedVersion].each {
-                if (it && !SlsVersion.check(it)) {
-                    throw new IllegalArgumentException(
-                            "minimumVersion and recommendedVersions must be valid SLS versions: " + it)
-                }
-            }
+        Preconditions.checkArgument(
+                OrderableSlsVersion.check(minimumVersion),
+                "minimumVersion must be an orderable SLS version: " + minimumVersion)
 
-            if (minimumVersion == maximumVersion) {
-                throw new IllegalArgumentException("minimumVersion and maximumVersion must be different "
-                        + "in product dependency on " + this.productName)
-            }
+        def minimum = OrderableSlsVersion.valueOf(minimumVersion)
+        def maximum = maximumOpt.get()
+
+        Preconditions.checkArgument(maximum.compare(minimum) >= 0,
+                "Minimum version (%s) is greater than maximum version (%s)",
+                minimumVersion, maximumVersion)
+
+        if (recommendedVersion) {
+            Preconditions.checkArgument(
+                    OrderableSlsVersion.check(recommendedVersion),
+                    "recommendedVersion must be an orderable SLS version: " + recommendedVersion)
+            def recommended = OrderableSlsVersion.valueOf(recommendedVersion)
+            Preconditions.checkArgument(
+                    VersionComparator.INSTANCE.compare(recommended, minimum) >= 0,
+                    "Recommended version (%s) is not greater than minimum version (%s)",
+                    recommendedVersion, minimumVersion)
+            Preconditions.checkArgument(
+                    maximum.compare(recommended) >= 0,
+                    "Recommended version (%s) is greater than maximum version (%s)",
+                    recommendedVersion, maximumVersion)
         }
-    }
 
+        Preconditions.checkArgument(
+                minimumVersion != maximumVersion,
+                "minimumVersion and maximumVersion must be different in product dependency on %s. This prevents a "
+                        + "known antipattern where services declare themselves to require a lockstep upgrade.",
+                productName)
+    }
 }

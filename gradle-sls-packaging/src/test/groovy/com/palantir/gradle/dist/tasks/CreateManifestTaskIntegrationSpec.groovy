@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
-import org.gradle.testkit.runner.TaskOutcome
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -53,15 +52,14 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
     }
 
-    def 'Fail on missing recommended product dependencies'() {
+    def 'throws if duplicate dependencies are declared'() {
         setup:
         buildFile << """
-            dependencies {
-                runtime 'a:a:1.0'
-            }
-
-            tasks.testCreateManifest {
-                productDependencies = []
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                ]
             }
         """.stripIndent()
 
@@ -69,8 +67,97 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         def buildResult = runTasksAndFail(':testCreateManifest')
 
         then:
-        buildResult.output.contains("The following products are recommended as dependencies but do not appear in the " +
-                "product dependencies or product dependencies ignored list: [group:name2, group:name]")
+        buildResult.output.contains('Encountered duplicate declared product')
+    }
+
+    def 'throws if declared dependency is also ignored'() {
+       setup:
+        buildFile << """
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                ]
+                ignoredProductIds = [
+                    new com.palantir.gradle.dist.ProductId("group:name"), 
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksAndFail(':testCreateManifest')
+
+        then:
+        buildResult.output.contains('Encountered product dependency declaration that was also ignored')
+    }
+
+    def 'Resolve unspecified productDependencies'() {
+        setup:
+        buildFile << """
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+        """.stripIndent()
+
+        when:
+        runTasks(':testCreateManifest')
+
+        then:
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.0.0",
+                        "maximum-version"    : "1.x.x",
+                        "recommended-version": "1.2.0"
+                ],
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "maximum-version"    : "2.x.x",
+                        "recommended-version": "2.2.0"
+                ]
+        ]
+    }
+
+    def 'Merges declared productDependencies with discovered dependencies'() {
+        setup:
+        buildFile << """
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+            
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def result = runTasks(':testCreateManifest')
+
+        then:
+        result.output.contains(
+                "Encountered a declared product dependency for 'group:name' although there is a discovered dependency")
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.1.0",
+                        "maximum-version"    : "1.x.x",
+                        "recommended-version": "1.2.0"
+                ],
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "maximum-version"    : "2.x.x",
+                        "recommended-version": "2.2.0"
+                ]
+        ]
     }
 
     def 'Can ignore recommended product dependencies'() {
@@ -90,64 +177,20 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasks(':testCreateManifest')
-
-        then:
-        buildResult.task(':testCreateManifest').outcome == TaskOutcome.SUCCESS
-    }
-
-    def "Can set product dependencies from recommended product dependencies"() {
-        setup:
-        buildFile << """
-            dependencies {
-                runtime 'a:a:1.0'
-            }
-
-            tasks.testCreateManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name"),
-                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
-                ]
-            }
-        """.stripIndent()
-
-        when:
         runTasks(':testCreateManifest')
 
         then:
-        def manifest = CreateManifestTask.jsonMapper.readValue(
-                file('build/deployment/manifest.yml', projectDir).text, Map)
-        manifest.get("extensions").get("product-dependencies") == [
-                [
-                        "product-group"      : "group",
-                        "product-name"       : "name",
-                        "minimum-version"    : "1.0.0",
-                        "maximum-version"    : "1.x.x",
-                        "recommended-version": "1.2.0"
-                ],
-                [
-                        "product-group"      : "group",
-                        "product-name"       : "name2",
-                        "minimum-version"    : "2.0.0",
-                        "maximum-version"    : "2.x.x",
-                        "recommended-version": "2.2.0"
-                ]
-        ]
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies").isEmpty()
     }
 
-    def "Duplicate recommendations with same versions"() {
+    def "Merges duplicate discovered dependencies with same version"() {
         setup:
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
                 runtime 'd:d:1.0'
             }
-
-            tasks.testCreateManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
-                ]
-            }
         """.stripIndent()
 
         when:
@@ -167,17 +210,12 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         ]
     }
 
-    def "Duplicate recommendations with different mergeable versions"() {
+    def "Merges duplicate discovered dependencies with different mergeable versions"() {
         setup:
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
                 runtime 'e:e:1.0'
-            }
-            tasks.testCreateManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name2")
-                ]
             }
         """.stripIndent()
 

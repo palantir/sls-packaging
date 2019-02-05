@@ -22,34 +22,28 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductDependency;
+import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
-import com.palantir.gradle.dist.RecommendedProductDependency;
-import com.palantir.gradle.dist.RecommendedProductDependencyMerger;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -142,109 +136,43 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @TaskAction
-    @SuppressWarnings("checkstyle:cyclomaticComplexity")
-    final void createManifest() throws IOException {
+    final void createManifest() throws Exception {
         validateProjectVersion();
-        Map<String, Set<RecommendedProductDependency>> allRecommendedDepsByCoord = Maps.newHashMap();
-        Map<String, String> mavenCoordsByProductIds = Maps.newHashMap();
-        Map<String, RecommendedProductDependency> recommendedDepsByProductId = Maps.newHashMap();
-
-        for (ResolvedArtifact artifact : productDependenciesConfig.getResolvedConfiguration().getResolvedArtifacts()) {
-            String coord = identifierToCoord(artifact.getModuleVersion().getId());
-
-            Manifest manifest;
-            try {
-                ZipFile zf = new ZipFile(artifact.getFile());
-                ZipEntry manifestEntry = zf.getEntry("META-INF/MANIFEST.MF");
-                if (manifestEntry == null) {
-                    log.debug("Manifest file does not exist in jar for '{}'", coord);
-                    continue;
-                }
-                manifest = new Manifest(zf.getInputStream(manifestEntry));
-            } catch (IOException e) {
-                log.warn("IOException encountered when processing artifact '{}', file '{}'",
-                        coord, artifact.getFile(), e);
-                continue;
-            }
-
-            String pdeps = manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY);
-            if (pdeps == null) {
-                log.debug("No pdeps found in manifest for artifact '{}', file '{}'", coord, artifact.getFile());
-                continue;
-            }
-
-            RecommendedProductDependencies recommendedDeps = jsonMapper.readValue(
-                    pdeps, RecommendedProductDependencies.class);
-
-            allRecommendedDepsByCoord.getOrDefault(coord, new HashSet<>())
-                    .addAll(recommendedDeps.recommendedProductDependencies());
-
-            recommendedDeps.recommendedProductDependencies().forEach(recommendedDep -> {
-                String productId = String.format("%s:%s",
-                        recommendedDep.getProductGroup(), recommendedDep.getProductName());
-                RecommendedProductDependency existingDep = recommendedDepsByProductId.get(productId);
-                RecommendedProductDependency dep = recommendedDep;
-                if (mavenCoordsByProductIds.containsKey(productId)
-                        && !Objects.equals(existingDep, recommendedDep)) {
-                    String othercoord = mavenCoordsByProductIds.get(productId);
-                    // Try to merge
-                    log.info(
-                            "Trying to merge duplicate product dependencies found for {} in '{}' and '{}': {} and {}",
-                            productId,
-                            coord,
-                            othercoord,
-                            recommendedDep,
-                            existingDep);
-                    dep = RecommendedProductDependencyMerger.merge(recommendedDep, existingDep);
-                }
-
-                mavenCoordsByProductIds.put(productId, coord);
-                recommendedDepsByProductId.put(productId, dep);
-            });
+        if (manifestExtensions.containsKey("product-dependencies")) {
+            throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
+                    + "'product-dependencies' key in manifestExtensions");
         }
 
-        Set<String> seenRecommendedProductIds = Sets.newHashSet();
-        List<ProductDependency> dependencies = productDependencies.get().stream().map(productDependency -> {
-            String productId = String.format(
-                    "%s:%s", productDependency.getProductGroup(), productDependency.getProductName());
-            seenRecommendedProductIds.add(productId);
-
-            if (!productDependency.getDetectConstraints()) {
-                return productDependency;
-            } else {
-                if (!recommendedDepsByProductId.containsKey(productId)) {
-                    throw new GradleException(String.format("Product dependency '%s' has constraint detection enabled, "
-                                    + "but could not find any recommendations in %s configuration",
-                            productId, productDependenciesConfig.getName()));
-                }
-                RecommendedProductDependency recommendedProductDependency = recommendedDepsByProductId.get(productId);
-                try {
-                    return new ProductDependency(
-                            productDependency.getProductGroup(),
-                            productDependency.getProductName(),
-                            recommendedProductDependency.getMinimumVersion(),
-                            recommendedProductDependency.getMaximumVersion(),
-                            recommendedProductDependency.getRecommendedVersion());
-
-                } catch (IllegalArgumentException e) {
-                    String mavenCoordSource = mavenCoordsByProductIds.get(productId);
-                    throw new GradleException(String.format("IllegalArgumentException encountered when generating "
-                                    + "ProductDependency from recommended dependency for %s from %s",
-                            productId, mavenCoordSource), e);
-                }
+        Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
+        getProductDependencies().get().forEach(declaredDep -> {
+            ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
+            if (getIgnoredProductIds().get().contains(productId)) {
+                throw new IllegalArgumentException(String.format(
+                        "Encountered product dependency declaration that was also ignored for '%s', either remove the "
+                                + "dependency or ignore", productId));
+            } else if (allProductDependencies.containsKey(productId)) {
+                throw new IllegalArgumentException(
+                        String.format("Encountered duplicate declared product dependencies for '%s'", productId));
             }
-        }).collect(Collectors.toList());
+            allProductDependencies.put(productId, declaredDep);
+        });
 
-        Set<String> unseenProductIds = new HashSet<>(recommendedDepsByProductId.keySet());
-        unseenProductIds.removeAll(seenRecommendedProductIds);
-        ignoredProductIds.get().forEach(ignored -> unseenProductIds.remove(ignored.toString()));
-        unseenProductIds.remove(String.format("%s:%s", serviceGroup.get(), serviceName.get()));
-
-        if (!unseenProductIds.isEmpty()) {
-            throw new GradleException(String.format("The following products are recommended as dependencies but do not "
-                    + "appear in the product dependencies or product dependencies ignored list: %s. See "
-                    + "gradle-sls-packaging for more details", unseenProductIds));
-        }
+        // Merge all discovered and declared product dependencies
+        discoverProductDependencies(productDependenciesConfig).forEach((productId, discoveredDependency) -> {
+            if (getIgnoredProductIds().get().contains(productId)) {
+                log.trace("Ignored product dependency for '{}'", productId);
+                return;
+            }
+            allProductDependencies.merge(
+                    productId,
+                    discoveredDependency,
+                    (declaredDependency, newDependency) -> {
+                        log.warn("Encountered a declared product dependency for '{}' although there is a "
+                                + "discovered dependency, you should remove the declared dependency, discovered "
+                                + "'{}', declared '{}'", productId, discoveredDependency, declaredDependency);
+                        return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
+                    });
+        });
 
         jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
                 .manifestVersion("1.0")
@@ -253,9 +181,58 @@ public class CreateManifestTask extends DefaultTask {
                 .productName(serviceName.get())
                 .productVersion(getProjectVersion())
                 .putAllExtensions(manifestExtensions)
-                .putExtensions("product-dependencies", dependencies)
+                .putExtensions("product-dependencies", new ArrayList<>(allProductDependencies.values()))
                 .build()
         );
+    }
+
+    private Map<ProductId, ProductDependency> discoverProductDependencies(Configuration config) {
+        Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
+        config.getResolvedConfiguration().getResolvedArtifacts().stream().flatMap(artifact -> {
+            ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
+            String coord = String.format("%s:%s:%s", id.getGroup(), id.getName(), id.getVersion());
+
+            Manifest manifest;
+            try {
+                ZipFile zipFile = new ZipFile(artifact.getFile());
+                ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
+                if (manifestEntry == null) {
+                    log.debug("Manifest file does not exist in jar for '${coord}'");
+                    return Stream.empty();
+                }
+                manifest = new Manifest(zipFile.getInputStream(manifestEntry));
+            } catch (IOException e) {
+                log.warn("IOException encountered when processing artifact '{}', file '{}', {}",
+                        coord, artifact.getFile(), e);
+                return Stream.empty();
+            }
+
+            Optional<String> pdeps = Optional.ofNullable(
+                    manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
+            if (!pdeps.isPresent()) {
+                log.debug("No product dependency found for artifact '{}', file '{}'", coord, artifact.getFile());
+                return Stream.empty();
+            }
+
+            try {
+                RecommendedProductDependencies recommendedDeps = jsonMapper.readValue(pdeps.get(),
+                        RecommendedProductDependencies.class);
+                return recommendedDeps.recommendedProductDependencies().stream()
+                        .map(recommendedDep -> new ProductDependency(
+                                recommendedDep.getProductGroup(),
+                                recommendedDep.getProductName(),
+                                recommendedDep.getMinimumVersion(),
+                                recommendedDep.getMaximumVersion(),
+                                recommendedDep.getRecommendedVersion()));
+            } catch (IOException e) {
+                log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'", coord, artifact, e);
+                return Stream.empty();
+            }
+        }).forEach(productDependency -> discoveredProductDependencies.merge(
+                new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
+                productDependency,
+                (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
+        return discoveredProductDependencies;
     }
 
     private void validateProjectVersion() {
@@ -267,10 +244,6 @@ public class CreateManifestTask extends DefaultTask {
                     "Version string in project {} is not orderable as per SLS specification: {}",
                     getProject().getName(), stringVersion);
         }
-    }
-
-    static String identifierToCoord(ModuleVersionIdentifier identifier) {
-        return String.format("%s:%s:%s", identifier.getGroup(), identifier.getName(), identifier.getVersion());
     }
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
