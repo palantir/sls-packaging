@@ -147,6 +147,31 @@ public class BaseDistributionExtension {
                 recommendedVersion != null ? recommendedVersion : minVersion));
     }
 
+    public final void productDependency(String dependencyGroup, String dependencyName, String minVersion) {
+        productDependency(dependencyGroup, dependencyName, minVersion, null, null);
+    }
+
+    public final void productDependency(
+            String dependencyGroup, String dependencyName, String minVersion, String maxVersion) {
+        productDependency(dependencyGroup, dependencyName, minVersion, maxVersion,  null);
+    }
+
+    public final void productDependency(
+            String dependencyGroup,
+            String dependencyName,
+            String minVersion,
+            String maxVersion,
+            String recommendedVersion) {
+        productDependencies.add(new ProductDependency(
+                dependencyGroup,
+                dependencyName,
+                minVersion,
+                maxVersion == null
+                        ? generateMaxVersion(minVersion)
+                        : maxVersion,
+                recommendedVersion));
+    }
+
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         ProductDependency dep = new ProductDependency();
         ConfigureUtil.configureUsing(closure).execute(dep);
