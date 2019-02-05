@@ -19,7 +19,6 @@ package com.palantir.gradle.dist
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.base.Preconditions
 import com.palantir.sls.versions.OrderableSlsVersion
-import com.palantir.sls.versions.SlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
 import com.palantir.sls.versions.VersionComparator
 import groovy.transform.CompileStatic
@@ -76,32 +75,30 @@ class ProductDependency implements Serializable {
         Preconditions.checkArgument(
                 maximumOpt.isPresent(), "maximumVersion must be a valid version matcher: " + maximumVersion)
 
-        // There's no SlsVersion.safeValueOf so we have to check first for a better error message, then parse again.
         Preconditions.checkArgument(
-                SlsVersion.check(minimumVersion), "minimumVersion must be a valid SLS version: " + minimumVersion)
+                OrderableSlsVersion.check(minimumVersion),
+                "minimumVersion must be an orderable SLS version: " + minimumVersion)
 
-        def minimum = SlsVersion.valueOf(minimumVersion)
+        def minimum = OrderableSlsVersion.valueOf(minimumVersion)
         def maximum = maximumOpt.get()
 
-        Preconditions.checkArgument(
-                minimum instanceof OrderableSlsVersion,
-                "minimumVersion must be an orderable SLS version: " + minimumVersion)
+        Preconditions.checkArgument(maximum.compare(minimum) >= 0,
+                "Minimum version (%s) is greater than maximum version (%s)",
+                minimumVersion, maximumVersion)
 
         if (recommendedVersion) {
             Preconditions.checkArgument(
-                    SlsVersion.check(recommendedVersion),
-                    "recommendedVersion must be a valid SLS version: " + recommendedVersion)
-            def recommended = SlsVersion.valueOf(recommendedVersion)
-            if (recommended instanceof OrderableSlsVersion) {
-                Preconditions.checkArgument(
-                        VersionComparator.INSTANCE.compare(recommended, minimum as OrderableSlsVersion) >= 0,
-                        "Recommended version (%s) is not greater than minimum version (%s)",
-                        recommendedVersion, minimumVersion)
-                Preconditions.checkArgument(
-                        maximum.compare(recommended) >= 0,
-                        "Recommended version (%s) is greater than maximum version (%s)",
-                        recommendedVersion, maximumVersion)
-            }
+                    OrderableSlsVersion.check(recommendedVersion),
+                    "recommendedVersion must be an orderable SLS version: " + recommendedVersion)
+            def recommended = OrderableSlsVersion.valueOf(recommendedVersion)
+            Preconditions.checkArgument(
+                    VersionComparator.INSTANCE.compare(recommended, minimum) >= 0,
+                    "Recommended version (%s) is not greater than minimum version (%s)",
+                    recommendedVersion, minimumVersion)
+            Preconditions.checkArgument(
+                    maximum.compare(recommended) >= 0,
+                    "Recommended version (%s) is greater than maximum version (%s)",
+                    recommendedVersion, maximumVersion)
         }
 
         Preconditions.checkArgument(
