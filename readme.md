@@ -116,8 +116,17 @@ And the complete list of configurable properties:
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid`, `response-time` and `response-time-11`.
  * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
-If there is a jar recommending a version of a dependency, that version constraint will be picked up and published in the
-service's manifest, even if that product is not listed in a `productDependency` block. 
+#### Product dependencies
+
+Based on the declared `productDependency` blocks, sls-packaging will populate your SLS product dependencies at publish time.
+
+Product dependencies are also automatically populated from library dependencies. This means that unless you want different min/max versions than what is automatically recommended by the library you consume (either directly or transitively), you can rely on sls-packaging to correctly populate SLS product dependencies from these libraries instead of manually specifying them.
+
+To visualize the SLS product dependencies that wizard publish will produce, run the `createManifest` task:
+```gradle
+./gradlew createManifest
+```
+and inspect the `$projectDir/build/deployment/manifest.yml` file.
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a 
 `productDependency` block - this will be merged with any constraints detected from other jars.
