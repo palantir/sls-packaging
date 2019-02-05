@@ -122,7 +122,7 @@ Based on the declared `productDependency` blocks, sls-packaging will populate yo
 
 Product dependencies are also automatically populated from library dependencies. This means that unless you want different min/max versions than what is automatically recommended by the library you consume (either directly or transitively), you can rely on sls-packaging to correctly populate SLS product dependencies from these libraries instead of manually specifying them.
 
-To visualize the SLS product dependencies that wizard publish will produce, run the `createManifest` task:
+To visualize the SLS product dependencies that will be produced, run the `createManifest` task:
 ```gradle
 ./gradlew createManifest
 ```
