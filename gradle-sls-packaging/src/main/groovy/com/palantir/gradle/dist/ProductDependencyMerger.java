@@ -16,10 +16,10 @@
 
 package com.palantir.gradle.dist;
 
+import com.google.common.base.Preconditions;
 import com.palantir.sls.versions.OrderableSlsVersion;
+import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class ProductDependencyMerger {
@@ -41,45 +41,43 @@ public final class ProductDependencyMerger {
                 .max(VersionComparator.INSTANCE)
                 .orElseThrow(() -> new RuntimeException("Unable to determine minimum version"));
 
-        Optional<MaximumVersion> maximumVersion = Stream
+        SlsVersionMatcher maximumVersion = Stream
                 .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
-                .filter(Objects::nonNull)
-                .map(MaximumVersion::valueOf
-                )
-                .min(MaximumVersionComparator.INSTANCE);
+                .map(SlsVersionMatcher::valueOf)
+                .min(SlsVersionMatcher.MATCHER_COMPARATOR)
+                .orElseThrow(() -> new RuntimeException("Impossible"));
 
         // Sanity check: min has to be <= max
-        if (!satisfiesMaxVersion(maximumVersion, minimumVersion)) {
-            throw new IllegalArgumentException(String.format(
-            "Could not merge recommended product dependencies as their version ranges do not overlap: '%s' and '%s'. "
-                        + "Merged min: %s, merged max: %s",
-                dep1, dep2, minimumVersion, maximumVersion));
-        }
+        Preconditions.checkArgument(
+                satisfiesMaxVersion(maximumVersion, minimumVersion),
+                "Could not merge recommended product dependencies as their version ranges do not overlap: '%s' "
+                        + "and '%s'. Merged min: %s, merged max: %s",
+                dep1, dep2, minimumVersion, maximumVersion);
 
         // Recommended version. Check that it matches the inferred min and max.
         // If none of them do, then pick the min version.
-        Optional<OrderableSlsVersion> recommendedVersion = Stream
+        OrderableSlsVersion recommendedVersion = Stream
                 .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
-                .filter(Objects::nonNull)
                 .flatMap(version -> OrderableSlsVersion.safeValueOf(version).map(Stream::of).orElse(Stream.empty()))
                 .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
                         && satisfiesMaxVersion(maximumVersion, version))
-                .max(VersionComparator.INSTANCE);
+                .max(VersionComparator.INSTANCE)
+                .orElse(minimumVersion);
 
         ProductDependency result = new ProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
-        maximumVersion.map(Objects::toString).ifPresent(result::setMaximumVersion);
-        recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
+        result.setMaximumVersion(maximumVersion.toString());
+        result.setRecommendedVersion(recommendedVersion.toString());
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
         result.isValid();
         return result;
     }
 
-    private static boolean satisfiesMaxVersion(Optional<MaximumVersion> maximumVersion, OrderableSlsVersion version) {
+    private static boolean satisfiesMaxVersion(SlsVersionMatcher maximumVersion, OrderableSlsVersion version) {
         // If maximumVersion is 1.5.x we should still accept e.g. 1.3.0 so we use '>= 0'
         // (comparison result is from the point of view of the matcher)
-        return maximumVersion.map(maxVer -> maxVer.isSatisfiedBy(version)).orElse(true);
+        return maximumVersion.compare(version) >= 0;
     }
 
 }
