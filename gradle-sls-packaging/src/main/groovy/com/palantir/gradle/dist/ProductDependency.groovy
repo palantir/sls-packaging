@@ -16,14 +16,12 @@
 
 package com.palantir.gradle.dist
 
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.palantir.sls.versions.SlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import javax.annotation.Nullable
 
 @ToString
 @EqualsAndHashCode
@@ -52,9 +50,9 @@ class ProductDependency implements Serializable {
     ProductDependency(
             String productGroup,
             String productName,
-            @Nullable String minimumVersion,
-            @Nullable String maximumVersion,
-            @Nullable String recommendedVersion) {
+            String minimumVersion,
+            String maximumVersion,
+            String recommendedVersion) {
         this.productGroup = productGroup
         this.productName = productName
         this.minimumVersion = minimumVersion
