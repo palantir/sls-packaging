@@ -80,15 +80,7 @@ A sample configuration for the Service plugin:
             productName = "other-service"
             minimumVersion = "1.1.0"
             maximumVersion = "1.5.x"
-            recommendedVersion = "1.3.0"
-        }
-        productDependency {
-            productGroup = "other-group2"
-            productName = "other-service2"
-            // Automatically detect the constraints based on the runtime configuration
-            // API jars that publish recommended product dependencies.
-            // See the recommended product dependencies plugin section below.
-            detectConstraints = true
+            recommendedVersion = "1.3.0"  // optional
         }
     }
 
@@ -124,9 +116,13 @@ And the complete list of configurable properties:
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid`, `response-time` and `response-time-11`.
  * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
-If there is a jar recommending a version of a dependency but that product is not listed in a `productDependency` block an error will be produced: `The following products are recommended as dependencies but do not appear in the product dependencies or product dependencies ignored list: ...`.
+If there is a jar recommending a version of a dependency, that version constraint will be picked up and published in the
+service's manifest, even if that product is not listed in a `productDependency` block. 
 
-The solution is to either add the product as a dependency via a `productDependency` block, or to explicitly ignore it:
+It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a 
+`productDependency` block - this will be merged with any constraints detected from other jars.
+
+It's also possible to explicitly ignore a dependency if it comes as a recommendation from a jar:
 
     ignoredProductDependency('other-group3', 'other-service3')
 
