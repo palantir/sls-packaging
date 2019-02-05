@@ -169,7 +169,7 @@ public class BaseDistributionExtension {
                 maxVersion == null
                         ? generateMaxVersion(minVersion)
                         : maxVersion,
-                recommendedVersion));
+                recommendedVersion != null ? recommendedVersion : minVersion));
     }
 
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
