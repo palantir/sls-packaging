@@ -146,6 +146,10 @@ public class CreateManifestTask extends DefaultTask {
         Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
         getProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
+            Preconditions.checkArgument(!serviceGroup.get().equals(productId.getProductGroup())
+                    || !serviceName.get().equals(productId.getProductName()),
+                    "Invalid for product to declare an explicit dependency on itself, please remove: %s",
+                    declaredDep);
             if (getIgnoredProductIds().get().contains(productId)) {
                 throw new IllegalArgumentException(String.format(
                         "Encountered product dependency declaration that was also ignored for '%s', either remove the "
