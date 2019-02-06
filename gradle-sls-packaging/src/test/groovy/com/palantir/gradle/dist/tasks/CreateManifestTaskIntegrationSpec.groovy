@@ -57,8 +57,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         buildFile << """
             testCreateManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
-                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
                 ]
             }
         """.stripIndent()
@@ -75,7 +75,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         buildFile << """
             testCreateManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
                 ]
                 ignoredProductIds = [
                     new com.palantir.gradle.dist.ProductId("group:name"), 
@@ -130,7 +130,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             
             testCreateManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
                 ]
             }
         """.stripIndent()
@@ -253,47 +253,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
         manifest.get("extensions").get("product-dependencies").isEmpty()
-    }
-
-    def 'filters out recommended product dependency on self'() {
-        setup:
-        buildFile << """
-        allprojects {
-            project.version = '1.0.0-rc1.dirty'
-        }
-        """
-        helper.addSubproject("foo-api", """
-            apply plugin: 'java'
-            apply plugin: 'com.palantir.sls-recommended-dependencies'
-            
-            recommendedProductDependencies {
-                productDependency {
-                    productGroup = 'com.palantir.group'
-                    productName = 'my-service'
-                    minimumVersion = rootProject.version
-                    maximumVersion = '1.x.x'
-                    recommendedVersion = rootProject.version
-                }
-            }
-        """.stripIndent())
-        helper.addSubproject("foo-server", """
-            apply plugin: 'com.palantir.sls-java-service-distribution'
-            dependencies {
-                compile project(':foo-api')
-            }
-            distribution {
-                serviceGroup 'com.palantir.group'
-                serviceName 'my-service'
-                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
-                args 'server', 'var/conf/my-service.yml'
-            }
-        """.stripIndent())
-
-        when:
-        runTasks(':foo-server:createManifest', '-i')
-
-        then:
-        true
     }
 
     def generateDependencies() {

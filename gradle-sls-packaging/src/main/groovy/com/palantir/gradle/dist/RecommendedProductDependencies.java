@@ -29,7 +29,7 @@ import org.immutables.value.Value;
 public interface RecommendedProductDependencies {
 
     @JsonProperty("recommended-product-dependencies")
-    Set<RawProductDependency> recommendedProductDependencies();
+    Set<ProductDependency> recommendedProductDependencies();
 
     static Builder builder() {
         return new Builder();
