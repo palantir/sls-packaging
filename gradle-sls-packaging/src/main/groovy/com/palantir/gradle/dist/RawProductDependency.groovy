@@ -72,12 +72,11 @@ class RawProductDependency implements Serializable {
                 OrderableSlsVersion.check(minimumVersion),
                 "minimumVersion must be an orderable SLS version: " + minimumVersion)
 
-        // TODO(dfox): move
-//        if (recommendedVersion) {
-//            Preconditions.checkArgument(
-//                    OrderableSlsVersion.check(recommendedVersion),
-//                    "recommendedVersion must be an orderable SLS version: " + recommendedVersion)
-//        }
+        if (recommendedVersion) {
+            Preconditions.checkArgument(
+                    OrderableSlsVersion.check(recommendedVersion),
+                    "recommendedVersion must be an orderable SLS version: " + recommendedVersion)
+        }
 
         return ImmutableProductDependency.builder()
                 .productGroup(productGroup)
