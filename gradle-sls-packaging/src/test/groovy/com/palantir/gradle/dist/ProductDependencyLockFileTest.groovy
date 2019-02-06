@@ -16,52 +16,23 @@
 
 package com.palantir.gradle.dist
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+
 import spock.lang.Specification
 
 class ProductDependencyLockFileTest extends Specification {
 
-    private static final List<ProductDependency> sample = [
-            new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null),
-            new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null)
-    ]
-
-    @Rule
-    TemporaryFolder folder = new TemporaryFolder()
-
-    def 'deserialize' () {
-        when:
-        def file = folder.newFile("whatever.lock")
-        file << """
-        # Run ./gradlew --write-locks to regenerate this file
-        com.palantir.product:foo (1.20.0, 1.x.x)
-        com.palantir.other:bar (0.2.0, 0.x.x)
-        """.stripIndent()
-
-        then:
-        ProductDependencyLockFile.fromFile(file) == sample
-    }
-
     def 'serialize' () {
         when:
-        def file = folder.newFile("whatever.lock")
-        ProductDependencyLockFile.writeToFile(file, sample)
+        List<ProductDependency> sample = [
+                new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null),
+                new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null)
+        ]
 
         then:
-        file.text == """
+        ProductDependencyLockFile.asString(sample) == """
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:foo (1.20.0, 1.x.x)
         com.palantir.other:bar (0.2.0, 0.x.x)
         """.stripIndent().trim()
-    }
-
-    def 'round-trip' () {
-        when:
-        def file = folder.newFile("whatever.lock")
-        ProductDependencyLockFile.writeToFile(file, sample)
-
-        then:
-        ProductDependencyLockFile.fromFile(file) == sample
     }
 }

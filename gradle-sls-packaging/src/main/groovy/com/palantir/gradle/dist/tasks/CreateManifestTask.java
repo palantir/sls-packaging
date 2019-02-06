@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductDependency;
+import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
@@ -34,6 +35,7 @@ import com.palantir.sls.versions.SlsVersion;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Manifest;
@@ -53,6 +55,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.util.GFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -177,6 +180,20 @@ public class CreateManifestTask extends DefaultTask {
                         return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
                     });
         });
+        List<ProductDependency> productDependencies = new ArrayList<>(allProductDependencies.values());
+
+        File lockfile = getProject().file("product-dependencies.lock");
+        if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
+            GFileUtils.writeFile(ProductDependencyLockFile.asString(productDependencies), lockfile);
+        } else {
+            String actual = ProductDependencyLockFile.asString(productDependencies);
+            System.out.println("ACTUAL" + actual);
+            String fromDisk = GFileUtils.readFile(lockfile);
+            Preconditions.checkState(
+                    actual.equals(fromDisk),
+                    "%s is out of date, please run ./gradlew createManifest --write-locks",
+                    lockfile);
+        }
 
         jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
                 .manifestVersion("1.0")
@@ -185,7 +202,7 @@ public class CreateManifestTask extends DefaultTask {
                 .productName(serviceName.get())
                 .productVersion(getProjectVersion())
                 .putAllExtensions(manifestExtensions)
-                .putExtensions("product-dependencies", new ArrayList<>(allProductDependencies.values()))
+                .putExtensions("product-dependencies", productDependencies)
                 .build()
         );
     }
