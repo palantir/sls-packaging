@@ -223,9 +223,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         runTasks(':testCreateManifest')
 
         then:
-        def manifest = CreateManifestTask.jsonMapper.readValue(
-                file('build/deployment/manifest.yml', projectDir).text, Map)
-        manifest.get("extensions").get("product-dependencies").size() == 1
+        def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
         manifest.get("extensions").get("product-dependencies") == [
                 [
                         "product-group"      : "group",
@@ -235,6 +233,26 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "recommended-version": "2.2.0"
                 ]
         ]
+    }
+
+    def "Does not include self dependency"() {
+        buildFile << """
+            dependencies {
+                runtime 'b:b:1.0'
+            }
+            // Configure this service to have the same coordinates as the (sole) dependency coming from b:b:1.0
+            tasks.testCreateManifest {
+                serviceGroup = "group"
+                serviceName = "name2"
+            }
+        """.stripIndent()
+
+        when:
+        runTasks(':testCreateManifest')
+
+        then:
+        def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
+        manifest.get("extensions").get("product-dependencies").isEmpty()
     }
 
     def generateDependencies() {
