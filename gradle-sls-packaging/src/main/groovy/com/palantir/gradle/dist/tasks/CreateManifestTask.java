@@ -215,8 +215,8 @@ public class CreateManifestTask extends DefaultTask {
             }
 
             try {
-                RecommendedProductDependencies recommendedDeps = jsonMapper.readValue(pdeps.get(),
-                        RecommendedProductDependencies.class);
+                RecommendedProductDependencies recommendedDeps =
+                        jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
                 return recommendedDeps.recommendedProductDependencies().stream()
                         .map(recommendedDep -> new ProductDependency(
                                 recommendedDep.getProductGroup(),
