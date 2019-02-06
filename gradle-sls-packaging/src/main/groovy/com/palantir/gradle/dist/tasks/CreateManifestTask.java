@@ -146,6 +146,10 @@ public class CreateManifestTask extends DefaultTask {
         Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
         getProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
+            Preconditions.checkArgument(!serviceGroup.get().equals(productId.getProductGroup())
+                    || !serviceName.get().equals(productId.getProductName()),
+                    "Invalid for product to declare an explicit dependency on itself, please remove: %s",
+                    declaredDep);
             if (getIgnoredProductIds().get().contains(productId)) {
                 throw new IllegalArgumentException(String.format(
                         "Encountered product dependency declaration that was also ignored for '%s', either remove the "
@@ -215,8 +219,8 @@ public class CreateManifestTask extends DefaultTask {
             }
 
             try {
-                RecommendedProductDependencies recommendedDeps = jsonMapper.readValue(pdeps.get(),
-                        RecommendedProductDependencies.class);
+                RecommendedProductDependencies recommendedDeps =
+                        jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
                 return recommendedDeps.recommendedProductDependencies().stream()
                         .map(recommendedDep -> new ProductDependency(
                                 recommendedDep.getProductGroup(),
@@ -228,11 +232,18 @@ public class CreateManifestTask extends DefaultTask {
                 log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'", coord, artifact, e);
                 return Stream.empty();
             }
-        }).forEach(productDependency -> discoveredProductDependencies.merge(
-                new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
-                productDependency,
-                (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
+        })
+                .filter(this::isNotSelfProductDependency)
+                .forEach(productDependency -> discoveredProductDependencies.merge(
+                        new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
+                        productDependency,
+                        (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
         return discoveredProductDependencies;
+    }
+
+    private boolean isNotSelfProductDependency(ProductDependency dependency) {
+        return !serviceGroup.get().equals(dependency.getProductGroup())
+                || !serviceName.get().equals(dependency.getProductName());
     }
 
     private void validateProjectVersion() {
