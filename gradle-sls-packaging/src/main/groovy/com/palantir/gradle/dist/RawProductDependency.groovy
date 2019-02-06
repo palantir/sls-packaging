@@ -29,7 +29,7 @@ import javax.annotation.Nullable
 @ToString
 @EqualsAndHashCode
 @CompileStatic
-class ProductDependency implements Serializable {
+class RawProductDependency implements Serializable {
 
     private static final long serialVersionUID = 1L
 
@@ -49,9 +49,9 @@ class ProductDependency implements Serializable {
     @JsonProperty("maximum-version")
     String maximumVersion
 
-    ProductDependency() {}
+    RawProductDependency() {}
 
-    ProductDependency(
+    RawProductDependency(
             String productGroup,
             String productName,
             String minimumVersion,

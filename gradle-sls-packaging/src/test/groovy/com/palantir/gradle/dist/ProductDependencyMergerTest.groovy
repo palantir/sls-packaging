@@ -60,7 +60,7 @@ class ProductDependencyMergerTest extends Specification {
         e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
-    private ProductDependency newRecommendation(String min, String max, String recommended = null) {
-        return new ProductDependency("group", "name", min, max, recommended)
+    private RawProductDependency newRecommendation(String min, String max, String recommended = null) {
+        return new RawProductDependency("group", "name", min, max, recommended)
     }
 }

@@ -57,8 +57,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         buildFile << """
             testCreateManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
                 ]
             }
         """.stripIndent()
@@ -75,7 +75,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         buildFile << """
             testCreateManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
                 ]
                 ignoredProductIds = [
                     new com.palantir.gradle.dist.ProductId("group:name"), 
@@ -130,7 +130,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             
             testCreateManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.RawProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
                 ]
             }
         """.stripIndent()

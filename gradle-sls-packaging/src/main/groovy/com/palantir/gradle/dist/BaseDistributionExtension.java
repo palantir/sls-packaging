@@ -49,7 +49,7 @@ public class BaseDistributionExtension {
     private final Property<String> serviceName;
     private final Property<String> podName;
     private final Property<ProductType> productType;
-    private final ListProperty<ProductDependency> productDependencies;
+    private final ListProperty<RawProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
 
     // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
@@ -62,7 +62,7 @@ public class BaseDistributionExtension {
         serviceName = project.getObjects().property(String.class);
         podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
-        productDependencies = project.getObjects().listProperty(ProductDependency.class);
+        productDependencies = project.getObjects().listProperty(RawProductDependency.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
@@ -124,7 +124,7 @@ public class BaseDistributionExtension {
         this.productType.set(productType);
     }
 
-    public final Provider<List<ProductDependency>> getProductDependencies() {
+    public final Provider<List<RawProductDependency>> getProductDependencies() {
         return productDependencies;
     }
 
@@ -139,7 +139,7 @@ public class BaseDistributionExtension {
                     + "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are "
                     + "optional.", mavenCoordVersionRange);
         String minVersion = matcher.group("version");
-        productDependencies.add(new ProductDependency(
+        productDependencies.add(new RawProductDependency(
                 matcher.group("group"),
                 matcher.group("name"),
                 minVersion,
@@ -162,7 +162,7 @@ public class BaseDistributionExtension {
             String minVersion,
             String maxVersion,
             String recommendedVersion) {
-        productDependencies.add(new ProductDependency(
+        productDependencies.add(new RawProductDependency(
                 dependencyGroup,
                 dependencyName,
                 minVersion,
@@ -173,7 +173,7 @@ public class BaseDistributionExtension {
     }
 
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
-        ProductDependency dep = new ProductDependency();
+        RawProductDependency dep = new RawProductDependency();
         ConfigureUtil.configureUsing(closure).execute(dep);
         dep.isValid();
         productDependencies.add(dep);

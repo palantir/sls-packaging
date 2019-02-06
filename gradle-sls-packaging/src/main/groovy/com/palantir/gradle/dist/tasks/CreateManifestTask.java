@@ -23,10 +23,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
+import com.palantir.gradle.dist.RawProductDependency;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.sls.versions.OrderableSlsVersion;
@@ -68,8 +68,8 @@ public class CreateManifestTask extends DefaultTask {
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
     private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
 
-    private final ListProperty<ProductDependency> productDependencies = getProject().getObjects()
-            .listProperty(ProductDependency.class);
+    private final ListProperty<RawProductDependency> productDependencies = getProject().getObjects()
+            .listProperty(RawProductDependency.class);
     private final SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
 
     // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
@@ -103,7 +103,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    public final ListProperty<ProductDependency> getProductDependencies() {
+    public final ListProperty<RawProductDependency> getProductDependencies() {
         return productDependencies;
     }
 
@@ -143,7 +143,7 @@ public class CreateManifestTask extends DefaultTask {
                     + "'product-dependencies' key in manifestExtensions");
         }
 
-        Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
+        Map<ProductId, RawProductDependency> allProductDependencies = Maps.newHashMap();
         getProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
             Preconditions.checkArgument(!serviceGroup.get().equals(productId.getProductGroup())
@@ -190,8 +190,8 @@ public class CreateManifestTask extends DefaultTask {
         );
     }
 
-    private Map<ProductId, ProductDependency> discoverProductDependencies(Configuration config) {
-        Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
+    private Map<ProductId, RawProductDependency> discoverProductDependencies(Configuration config) {
+        Map<ProductId, RawProductDependency> discoveredProductDependencies = Maps.newHashMap();
         config.getResolvedConfiguration().getResolvedArtifacts().stream().flatMap(artifact -> {
             ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
             String coord = String.format("%s:%s:%s", id.getGroup(), id.getName(), id.getVersion());
@@ -222,7 +222,7 @@ public class CreateManifestTask extends DefaultTask {
                 RecommendedProductDependencies recommendedDeps =
                         jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
                 return recommendedDeps.recommendedProductDependencies().stream()
-                        .map(recommendedDep -> new ProductDependency(
+                        .map(recommendedDep -> new RawProductDependency(
                                 recommendedDep.getProductGroup(),
                                 recommendedDep.getProductName(),
                                 recommendedDep.getMinimumVersion(),
@@ -241,7 +241,7 @@ public class CreateManifestTask extends DefaultTask {
         return discoveredProductDependencies;
     }
 
-    private boolean isNotSelfProductDependency(ProductDependency dependency) {
+    private boolean isNotSelfProductDependency(RawProductDependency dependency) {
         return !serviceGroup.get().equals(dependency.getProductGroup())
                 || !serviceName.get().equals(dependency.getProductName());
     }

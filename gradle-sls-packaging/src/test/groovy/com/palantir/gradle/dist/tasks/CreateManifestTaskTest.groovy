@@ -16,7 +16,8 @@
 
 package com.palantir.gradle.dist.tasks
 
-import com.palantir.gradle.dist.ProductDependency
+
+import com.palantir.gradle.dist.RawProductDependency
 import nebula.test.ProjectSpec
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -52,7 +53,7 @@ class CreateManifestTaskTest extends ProjectSpec {
         task.serviceGroup = "serviceGroup"
         task.serviceName = "serviceName"
         task.productDependencies = [
-                new ProductDependency("serviceGroup", "serviceName", "1.1.0", "1.x.x", "1.2.0"),
+                new RawProductDependency("serviceGroup", "serviceName", "1.1.0", "1.x.x", "1.2.0"),
         ]
 
         when:
