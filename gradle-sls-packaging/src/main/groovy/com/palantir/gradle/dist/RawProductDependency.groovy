@@ -65,6 +65,17 @@ class RawProductDependency implements Serializable {
         isValid()
     }
 
+    ProductDependency validate() {
+        isValid()
+        return ImmutableProductDependency.builder()
+            .productGroup(productGroup)
+            .productName(productName)
+            .minimumVersion(OrderableSlsVersion.valueOf(minimumVersion))
+            .recommendedVersion(Optional.ofNullable(recommendedVersion).map({ s -> OrderableSlsVersion.valueOf(s) }))
+            .maximumVersion(SlsVersionMatcher.valueOf(maximumVersion))
+            .build()
+    }
+
     def isValid() {
         Preconditions.checkNotNull(productGroup, "productGroup must be specified")
         Preconditions.checkNotNull(productName, "productName must be specified")
