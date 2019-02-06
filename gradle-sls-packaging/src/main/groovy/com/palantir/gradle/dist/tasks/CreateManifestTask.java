@@ -228,7 +228,7 @@ public class CreateManifestTask extends DefaultTask {
                                 recommendedDep.getMinimumVersion(),
                                 recommendedDep.getMaximumVersion(),
                                 recommendedDep.getRecommendedVersion()));
-            } catch (IOException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'", coord, artifact, e);
                 return Stream.empty();
             }
