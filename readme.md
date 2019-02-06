@@ -120,7 +120,7 @@ And the complete list of configurable properties:
 
 Based on the declared `productDependency` blocks, sls-packaging will populate your SLS product dependencies at publish time.
 
-Product dependencies are also automatically populated from library dependencies. This means that unless you want different min/max versions than what is automatically recommended by a library you consume (either directly or transitively), you can rely on sls-packaging to correctly populate SLS product dependencies from these libraries instead of manually specifying them.
+Product dependencies are also automatically populated from library dependencies. This means that unless you want different min/max versions than what is [automatically recommended][recommended-product-dependencies-plugin] by a library you consume (either directly or transitively), you can rely on sls-packaging to correctly populate SLS product dependencies from these libraries instead of manually specifying them.
 
 To visualize the SLS product dependencies that will be produced, run the `createManifest` task:
 ```gradle
@@ -325,6 +325,7 @@ Specific to the Java Service plugin:
  * `run`: runs the specified `mainClass` with default `args`
 
 ## Recommended Product Dependencies Plugin
+[recommended-product-dependencies-plugin]: #recommended-product-dependencies-plugin
 
 This plugin allows API jars to declare the recommended product dependencies an SLS service distribution should take.
 
