@@ -228,11 +228,18 @@ public class CreateManifestTask extends DefaultTask {
                 log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'", coord, artifact, e);
                 return Stream.empty();
             }
-        }).forEach(productDependency -> discoveredProductDependencies.merge(
-                new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
-                productDependency,
-                (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
+        })
+                .filter(this::isNotSelfProductDependency)
+                .forEach(productDependency -> discoveredProductDependencies.merge(
+                        new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
+                        productDependency,
+                        (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
         return discoveredProductDependencies;
+    }
+
+    private boolean isNotSelfProductDependency(ProductDependency dependency) {
+        return !serviceGroup.get().equals(dependency.getProductGroup())
+                || !serviceName.get().equals(dependency.getProductName());
     }
 
     private void validateProjectVersion() {
