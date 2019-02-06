@@ -65,7 +65,7 @@ public interface ProductDependency extends Serializable {
 
         Preconditions.checkArgument(
                 !getMinimumVersion().toString().equals(getMaximumVersion().toString()),
-                "getMinimumVersion and getMaximumVersion must be different in product dependency on %s. This prevents a "
+                "minimumVersion and maximumVersion must be different in product dependency on %s. This prevents a "
                         + "known antipattern where services declare themselves to require a lockstep upgrade.",
                 getProductName());
     }

@@ -21,7 +21,7 @@ import spock.lang.Specification
 class ProductDependencyTest extends Specification {
     def 'max version may be matcher'() {
         when:
-        new RawProductDependency("", "", "1.2.3", "1.2.x", "1.2.3").isValid()
+        new RawProductDependency("", "", "1.2.3", "1.2.x", "1.2.3").validate()
 
         then:
         true
@@ -29,7 +29,7 @@ class ProductDependencyTest extends Specification {
 
     def 'min version must not be matcher'() {
         when:
-        new RawProductDependency("", "", "1.2.x", "1.2.x", "1.2.3").isValid()
+        new RawProductDependency("", "", "1.2.x", "1.2.x", "1.2.3").validate()
 
         then:
         thrown(IllegalArgumentException)
@@ -37,7 +37,7 @@ class ProductDependencyTest extends Specification {
 
     def 'recommended version must not be matcher'() {
         when:
-        new RawProductDependency("", "", "1.2.3", "1.2.x", "1.2.x").isValid()
+        new RawProductDependency("", "", "1.2.3", "1.2.x", "1.2.x").validate()
 
         then:
         thrown(IllegalArgumentException)
@@ -53,7 +53,7 @@ class ProductDependencyTest extends Specification {
 
     def 'minimumVersion and maximumVersion must not be equal' () {
         when:
-        new RawProductDependency("", "", "1.2.3", "1.2.3", null).isValid()
+        new RawProductDependency("", "", "1.2.3", "1.2.3", null).validate()
 
         then:
         thrown(IllegalArgumentException)

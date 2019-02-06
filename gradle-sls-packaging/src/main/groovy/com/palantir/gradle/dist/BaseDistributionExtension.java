@@ -172,10 +172,10 @@ public class BaseDistributionExtension {
                 recommendedVersion));
     }
 
-    public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
+    public final void productDependency(@DelegatesTo(RawProductDependency.class) Closure closure) {
         RawProductDependency dep = new RawProductDependency();
         ConfigureUtil.configureUsing(closure).execute(dep);
-        dep.isValid();
+        dep.validate();
         productDependencies.add(dep);
     }
 

@@ -27,7 +27,7 @@ class RecommendedProductDependenciesExtension {
     void productDependency(Closure<?> closure) {
         RawProductDependency dep = new RawProductDependency()
         ConfigureUtil.configureUsing(closure).execute(dep)
-        dep.isValid()
+        dep.validate()
         recommendedProductDependencies.add(dep)
     }
 

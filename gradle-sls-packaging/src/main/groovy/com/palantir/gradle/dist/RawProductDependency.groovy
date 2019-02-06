@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.base.Preconditions
 import com.palantir.sls.versions.OrderableSlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
-import com.palantir.sls.versions.VersionComparator
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
@@ -62,60 +61,30 @@ class RawProductDependency implements Serializable {
         this.minimumVersion = minimumVersion
         this.maximumVersion = maximumVersion
         this.recommendedVersion = recommendedVersion
-        isValid()
+        validate()
     }
 
     ProductDependency validate() {
-        isValid()
-        return ImmutableProductDependency.builder()
-            .productGroup(productGroup)
-            .productName(productName)
-            .minimumVersion(OrderableSlsVersion.valueOf(minimumVersion))
-            .recommendedVersion(Optional.ofNullable(recommendedVersion).map({ s -> OrderableSlsVersion.valueOf(s) }))
-            .maximumVersion(SlsVersionMatcher.valueOf(maximumVersion))
-            .build()
-    }
-
-    def isValid() {
-        Preconditions.checkNotNull(productGroup, "productGroup must be specified")
-        Preconditions.checkNotNull(productName, "productName must be specified")
-        Preconditions.checkNotNull(minimumVersion, "minimumVersion must be specified")
-        Preconditions.checkNotNull(maximumVersion, "maximumVersion must be specified")
-
         def maximumOpt = SlsVersionMatcher.safeValueOf(maximumVersion)
         Preconditions.checkArgument(
                 maximumOpt.isPresent(), "maximumVersion must be a valid version matcher: " + maximumVersion)
-
         Preconditions.checkArgument(
                 OrderableSlsVersion.check(minimumVersion),
                 "minimumVersion must be an orderable SLS version: " + minimumVersion)
 
-        def minimum = OrderableSlsVersion.valueOf(minimumVersion)
-        def maximum = maximumOpt.get()
+        // TODO(dfox): move
+//        if (recommendedVersion) {
+//            Preconditions.checkArgument(
+//                    OrderableSlsVersion.check(recommendedVersion),
+//                    "recommendedVersion must be an orderable SLS version: " + recommendedVersion)
+//        }
 
-        Preconditions.checkArgument(maximum.compare(minimum) >= 0,
-                "Minimum version (%s) is greater than maximum version (%s)",
-                minimumVersion, maximumVersion)
-
-        if (recommendedVersion) {
-            Preconditions.checkArgument(
-                    OrderableSlsVersion.check(recommendedVersion),
-                    "recommendedVersion must be an orderable SLS version: " + recommendedVersion)
-            def recommended = OrderableSlsVersion.valueOf(recommendedVersion)
-            Preconditions.checkArgument(
-                    VersionComparator.INSTANCE.compare(recommended, minimum) >= 0,
-                    "Recommended version (%s) is not greater than minimum version (%s)",
-                    recommendedVersion, minimumVersion)
-            Preconditions.checkArgument(
-                    maximum.compare(recommended) >= 0,
-                    "Recommended version (%s) is greater than maximum version (%s)",
-                    recommendedVersion, maximumVersion)
-        }
-
-        Preconditions.checkArgument(
-                minimumVersion != maximumVersion,
-                "minimumVersion and maximumVersion must be different in product dependency on %s. This prevents a "
-                        + "known antipattern where services declare themselves to require a lockstep upgrade.",
-                productName)
+        return ImmutableProductDependency.builder()
+                .productGroup(productGroup)
+                .productName(productName)
+                .minimumVersion(OrderableSlsVersion.valueOf(minimumVersion))
+                .recommendedVersion(Optional.ofNullable(recommendedVersion).map({s -> OrderableSlsVersion.valueOf(s)}))
+                .maximumVersion(SlsVersionMatcher.valueOf(maximumVersion))
+                .build()
     }
 }

@@ -71,7 +71,7 @@ public final class ProductDependencyMerger {
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
-        result.isValid();
+        result.validate();
         return result;
     }
 
