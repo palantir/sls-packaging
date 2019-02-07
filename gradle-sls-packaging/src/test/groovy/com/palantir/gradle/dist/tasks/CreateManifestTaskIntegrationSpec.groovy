@@ -255,6 +255,47 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         manifest.get("extensions").get("product-dependencies").isEmpty()
     }
 
+    def 'filters out recommended product dependency on self'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'my-service'
+                    minimumVersion = rootProject.version
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'my-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        when:
+        runTasks(':foo-server:createManifest', '-i')
+
+        then:
+        true
+    }
+
     def generateDependencies() {
         DependencyGraph dependencyGraph = new DependencyGraph(
                 "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",
