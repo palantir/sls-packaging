@@ -137,4 +137,14 @@ class ProductDependency implements Serializable {
 
         return maximumOpt.get()
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s:%s(min: %s, recommended: %s, max: %s)",
+                productGroup,
+                productName,
+                minimumVersion,
+                recommendedVersion,
+                maximumVersion);
+    }
 }
