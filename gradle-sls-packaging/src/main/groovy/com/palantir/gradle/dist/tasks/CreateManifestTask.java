@@ -171,9 +171,9 @@ public class CreateManifestTask extends DefaultTask {
                     productId,
                     discoveredDependency,
                     (declaredDependency, newDependency) -> {
-                        log.warn("Encountered a declared product dependency for '{}' although there is a "
-                                + "discovered dependency, you should remove the declared dependency, discovered "
-                                + "'{}', declared '{}'", productId, discoveredDependency, declaredDependency);
+                        getLogger().error("Please remove your declared product dependency on '{}' because it is"
+                                + " already provided by a jar dependency:\n\n\tProvided: {}\n\tYou declared: {}",
+                                productId, discoveredDependency, declaredDependency);
                         return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
                     });
         });
@@ -195,6 +195,11 @@ public class CreateManifestTask extends DefaultTask {
         config.getResolvedConfiguration().getResolvedArtifacts().stream().flatMap(artifact -> {
             ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
             String coord = String.format("%s:%s:%s", id.getGroup(), id.getName(), id.getVersion());
+
+            if (!artifact.getFile().exists()) {
+                log.debug("Artifact did not exist: {}", artifact.getFile());
+                return Stream.empty();
+            }
 
             Manifest manifest;
             try {

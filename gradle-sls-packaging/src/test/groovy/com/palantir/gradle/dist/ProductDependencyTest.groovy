@@ -43,7 +43,7 @@ class ProductDependencyTest extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'non-deafult maximumVersion'() {
+    def 'non-default maximumVersion'() {
         when:
         def dep = new ProductDependency("", "", "1.2.3", "2.x.x", "1.2.4")
 
@@ -57,5 +57,13 @@ class ProductDependencyTest extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'reasonable toString for logging' () {
+        when:
+        def string = new ProductDependency("com.palantir.foo", "my-service", "1.2.3", "2.x.x", "1.2.4").toString()
+
+        then:
+        string == "com.palantir.foo:my-service(min: 1.2.3, recommended: 1.2.4, max: 2.x.x)"
     }
 }
