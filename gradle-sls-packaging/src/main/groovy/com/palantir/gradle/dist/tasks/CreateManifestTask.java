@@ -196,6 +196,11 @@ public class CreateManifestTask extends DefaultTask {
             ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
             String coord = String.format("%s:%s:%s", id.getGroup(), id.getName(), id.getVersion());
 
+            if (!artifact.getFile().exists()) {
+                log.debug("Artifact did not exist: {}", artifact.getFile());
+                return Stream.empty();
+            }
+
             Manifest manifest;
             try {
                 ZipFile zipFile = new ZipFile(artifact.getFile());
