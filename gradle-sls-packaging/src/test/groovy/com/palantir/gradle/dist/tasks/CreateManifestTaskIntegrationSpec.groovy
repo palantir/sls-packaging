@@ -50,6 +50,28 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.0.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
+    }
+
+    def 'fails if lockfile is not up to date'() {
+        buildFile << """
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"),
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksAndFail(':testCreateManifest')
+
+        then:
+        buildResult.output.contains(
+                "product-dependencies.lock is out of date, please run `./gradlew testCreateManifest --write-locks` to update it")
     }
 
     def 'throws if duplicate dependencies are declared'() {
@@ -97,6 +119,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'a:a:1.0'
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.0.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
 
         when:
         runTasks(':testCreateManifest')
@@ -133,6 +160,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                     new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
                 ]
             }
+        """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.1.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
         """.stripIndent()
 
         when:
@@ -175,6 +207,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 ]
             }
         """.stripIndent()
+        file('product-dependencies.lock').delete()
 
         when:
         runTasks(':testCreateManifest')
@@ -191,6 +224,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'b:b:1.0'
                 runtime 'd:d:1.0'
             }
+        """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name2 (2.0.0, 2.x.x)
         """.stripIndent()
 
         when:
@@ -217,6 +254,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'b:b:1.0'
                 runtime 'e:e:1.0'
             }
+        """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name2 (2.1.0, 2.6.x)
         """.stripIndent()
 
         when:
@@ -246,6 +287,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 serviceName = "name2"
             }
         """.stripIndent()
+        file('product-dependencies.lock').delete()
 
         when:
         runTasks(':testCreateManifest')

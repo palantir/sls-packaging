@@ -293,6 +293,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 }
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group1:name1 (1.0.0, 1.3.x)
+        group2:name2 (1.0.0, 1.x.x)
+        """.stripIndent()
 
         when:
         runTasks(':build', ':distTar', ':untar')
