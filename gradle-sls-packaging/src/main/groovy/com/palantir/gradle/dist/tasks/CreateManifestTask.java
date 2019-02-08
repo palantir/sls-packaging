@@ -257,7 +257,7 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    /** Provide a rich diff so the user understands what change will be made before they run --write-locks */
+    /** Provide a rich diff so the user understands what change will be made before they run --write-locks. */
     private Optional<String> diff(File existing, String upToDateContents) {
         try {
             File tempFile = Files.createTempFile("product-dependencies", "lock").toFile();
