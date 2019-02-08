@@ -116,27 +116,43 @@ And the complete list of configurable properties:
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid`, `response-time` and `response-time-11`.
  * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
-#### Product dependencies
+## Product dependencies
 
-Based on the declared `productDependency` blocks, sls-packaging will populate your SLS product dependencies at publish time.
+'Product dependencies' are declarative metadata about the services your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
 
-Product dependencies are also automatically populated from library dependencies (please see the [Recommended Product Dependencies Plugin][] for how to declare such dependencies from libraries). 
-This means that unless you want different min/max versions than what is automatically recommended by a library you consume (either directly or transitively), you can rely on sls-packaging to correctly populate SLS product dependencies from these libraries instead of manually specifying them. 
+Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
 
-To visualize the SLS product dependencies that will be produced, run the `createManifest` task:
+However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise):
+
 ```gradle
-./gradlew createManifest
+distribution {
+    productDependency {
+        productGroup = "com.palantir.group"
+        productName = "my-service"
+        minimumVersion = "1.0.0"
+        maximumVersion = "1.x.x"
+        recommendedVersion = "1.2.1"
+    }
+}
 ```
-and inspect the `$projectDir/build/deployment/manifest.yml` file.
 
-It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a 
+sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it.
+
+It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
 `productDependency` block - this will be merged with any constraints detected from other jars.
 If all the constraints on a given product don't overlap, then an error will the thrown:
-`Could not merge recommended product dependencies as their version ranges do not overlap`. 
+`Could not merge recommended product dependencies as their version ranges do not overlap`.
 
 It's also possible to explicitly ignore a dependency if it comes as a recommendation from a jar:
 
+```gradle
+distribution {
+    productDependency {
+        // ...
+    }
     ignoredProductDependency('other-group3', 'other-service3')
+}
+```
 
 #### JVM Options
 
