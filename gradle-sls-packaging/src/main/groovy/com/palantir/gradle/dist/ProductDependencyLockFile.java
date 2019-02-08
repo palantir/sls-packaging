@@ -31,7 +31,7 @@ public final class ProductDependencyLockFile {
                             dep.getMinimumVersion(),
                             dep.getMaximumVersion()))
                     .sorted()
-                    .collect(Collectors.joining("\n", HEADER, "\n"));
+                    .collect(Collectors.joining("\n", HEADER, ""));
     }
 
     private ProductDependencyLockFile() {}

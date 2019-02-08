@@ -186,7 +186,11 @@ public class CreateManifestTask extends DefaultTask {
         });
         List<ProductDependency> productDeps = new ArrayList<>(allProductDependencies.values());
 
-        ensureLockfileIsUpToDate(productDeps);
+        if (productDeps.isEmpty()) {
+            requireAbsentLockfile();
+        } else {
+            ensureLockfileIsUpToDate(productDeps);
+        }
 
         jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
                 .manifestVersion("1.0")
@@ -200,16 +204,32 @@ public class CreateManifestTask extends DefaultTask {
         );
     }
 
+    private void requireAbsentLockfile() {
+        File lockfile = getProject().file("product-dependencies.lock");
+        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
+
+        if (!lockfile.exists()) {
+            return;
+        }
+
+        if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
+            lockfile.delete();
+            getLogger().lifecycle("Deleted {}", relativePath);
+        } else {
+            throw new GradleException(String.format(
+                    "%s must not exist, please run `./gradlew %s --write-locks` to delete it",
+                    relativePath, getName()));
+        }
+    }
+
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getProject().file("product-dependencies.lock");
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(productDeps);
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            boolean lockFileAlreadyExists = lockfile.exists();
             GFileUtils.writeFile(upToDateContents, lockfile);
-
-            if (!lockFileAlreadyExists) {
+            if (!lockfile.exists()) {
                 getLogger().lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
             } else if (!GFileUtils.readFile(lockfile).equals(upToDateContents)) {
                 getLogger().lifecycle("Updated {}", relativePath);
@@ -219,13 +239,13 @@ public class CreateManifestTask extends DefaultTask {
                 throw new GradleException(String.format(
                         "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
                         relativePath, getName()));
+            } else {
+                String fromDisk = GFileUtils.readFile(lockfile);
+                Preconditions.checkState(
+                        fromDisk.equals(upToDateContents),
+                        "%s is out of date, please run `./gradlew %s --write-locks` to update it:\n%s",
+                        relativePath, getName(), upToDateContents);
             }
-
-            String fromDisk = GFileUtils.readFile(lockfile);
-            Preconditions.checkState(
-                    fromDisk.equals(upToDateContents),
-                    "%s is out of date, please run `./gradlew %s --write-locks` to update it:\n%s",
-                    relativePath, getName(), upToDateContents);
         }
     }
 

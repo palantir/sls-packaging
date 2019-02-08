@@ -30,8 +30,8 @@ class ProductDependencyLockFileTest extends Specification {
         then:
         ProductDependencyLockFile.asString(sample) == """
         # Run ./gradlew --write-locks to regenerate this file
-        com.palantir.product:foo (1.20.0, 1.x.x)
         com.palantir.other:bar (0.2.0, 0.x.x)
+        com.palantir.product:foo (1.20.0, 1.x.x)
         """.stripIndent().trim()
     }
 }

@@ -50,7 +50,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
-        file('product-dependencies.lock') << """
+        file('product-dependencies.lock').text = """
         # Run ./gradlew --write-locks to regenerate this file
         group:name (1.0.0, 1.x.x)
         group:name2 (2.0.0, 2.x.x)
@@ -190,7 +190,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 ]
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = emptyLockfile()
+        file('product-dependencies.lock').delete()
 
         when:
         runTasks(':testCreateManifest')
@@ -270,7 +270,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 serviceName = "name2"
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = emptyLockfile()
+        file('product-dependencies.lock').delete()
 
         when:
         runTasks(':testCreateManifest')
@@ -317,7 +317,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 args 'server', 'var/conf/my-service.yml'
             }
         """.stripIndent())
-        file('foo-server/product-dependencies.lock').text = emptyLockfile()
+        file('foo-server/product-dependencies.lock').delete()
 
         when:
         runTasks(':foo-server:createManifest', '-i')
