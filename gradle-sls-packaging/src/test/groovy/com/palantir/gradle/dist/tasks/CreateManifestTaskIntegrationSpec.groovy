@@ -50,11 +50,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """
+        file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
         group:name (1.0.0, 1.x.x)
         group:name2 (2.0.0, 2.x.x)
-        """.stripIndent().trim()
+        """.stripIndent()
     }
 
     def 'throws if duplicate dependencies are declared'() {
@@ -102,11 +102,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'a:a:1.0'
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """
+        file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
         group:name (1.0.0, 1.x.x)
         group:name2 (2.0.0, 2.x.x)
-        """.stripIndent().trim()
+        """.stripIndent()
 
         when:
         runTasks(':testCreateManifest')
@@ -144,11 +144,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 ]
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """
+        file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
         group:name (1.1.0, 1.x.x)
         group:name2 (2.0.0, 2.x.x)
-        """.stripIndent().trim()
+        """.stripIndent()
 
         when:
         def result = runTasks(':testCreateManifest')
@@ -208,10 +208,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'd:d:1.0'
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """
+        file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
         group:name2 (2.0.0, 2.x.x)
-        """.stripIndent().trim()
+        """.stripIndent()
 
         when:
         runTasks(':testCreateManifest')
@@ -238,10 +238,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'e:e:1.0'
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """
+        file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
         group:name2 (2.1.0, 2.6.x)
-        """.stripIndent().trim()
+        """.stripIndent()
 
         when:
         runTasks(':testCreateManifest')

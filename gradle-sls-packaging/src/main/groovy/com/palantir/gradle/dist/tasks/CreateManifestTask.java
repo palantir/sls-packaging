@@ -21,7 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
@@ -32,14 +34,18 @@ import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -243,9 +249,31 @@ public class CreateManifestTask extends DefaultTask {
                 String fromDisk = GFileUtils.readFile(lockfile);
                 Preconditions.checkState(
                         fromDisk.equals(upToDateContents),
-                        "%s is out of date, please run `./gradlew %s --write-locks` to update it:\n%s",
-                        relativePath, getName(), upToDateContents);
+                        "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
+                        relativePath, getName(), diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
             }
+        }
+    }
+
+    /** Provide a rich diff so the user understands what change will be made before they run --write-locks */
+    private Optional<String> diff(File existing, String upToDateContents) {
+        try {
+            File tempFile = Files.createTempFile("product-dependencies", "lock").toFile();
+            GFileUtils.writeFile(upToDateContents, tempFile);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            getProject().exec(spec -> {
+                spec.commandLine("diff", "-u", existing.getAbsolutePath(), tempFile.getAbsolutePath());
+                spec.setStandardOutput(baos);
+                spec.setIgnoreExitValue(true);
+            });
+            return Optional.of(
+                    Streams.stream(Splitter.on("\n").split(new String(baos.toByteArray(), StandardCharsets.UTF_8)))
+                            .skip(2)
+                            .collect(Collectors.joining("\n")));
+        } catch (IOException e) {
+            getLogger().debug("Unable to provide diff", e);
+            return Optional.empty();
         }
     }
 
