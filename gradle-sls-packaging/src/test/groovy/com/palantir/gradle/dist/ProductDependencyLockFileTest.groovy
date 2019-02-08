@@ -16,12 +16,11 @@
 
 package com.palantir.gradle.dist
 
-
 import spock.lang.Specification
 
 class ProductDependencyLockFileTest extends Specification {
 
-    def 'serialize' () {
+    def 'serialize'() {
         when:
         List<ProductDependency> sample = [
                 new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null),

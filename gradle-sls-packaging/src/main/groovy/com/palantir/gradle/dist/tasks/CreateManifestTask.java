@@ -203,22 +203,29 @@ public class CreateManifestTask extends DefaultTask {
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getProject().file("product-dependencies.lock");
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
-
-        if (!lockfile.exists()) {
-            throw new GradleException(String.format(
-                    "%s does not exist, please run `./gradlew %s --write-locks` to create it",
-                    relativePath, getName()));
-        }
+        String upToDateContents = ProductDependencyLockFile.asString(productDeps);
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            GFileUtils.writeFile(ProductDependencyLockFile.asString(productDeps), lockfile);
+            boolean lockFileAlreadyExists = lockfile.exists();
+            GFileUtils.writeFile(upToDateContents, lockfile);
+
+            if (!lockFileAlreadyExists) {
+                getLogger().lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
+            } else if (!GFileUtils.readFile(lockfile).equals(upToDateContents)) {
+                getLogger().lifecycle("Updated {}", relativePath);
+            }
         } else {
-            String latest = ProductDependencyLockFile.asString(productDeps);
+            if (!lockfile.exists()) {
+                throw new GradleException(String.format(
+                        "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
+                        relativePath, getName()));
+            }
+
             String fromDisk = GFileUtils.readFile(lockfile);
             Preconditions.checkState(
-                    fromDisk.equals(latest),
+                    fromDisk.equals(upToDateContents),
                     "%s is out of date, please run `./gradlew %s --write-locks` to update it:\n%s",
-                    relativePath, getName(), latest);
+                    relativePath, getName(), upToDateContents);
         }
     }
 
