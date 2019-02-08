@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -362,6 +364,18 @@ public class CreateManifestTask extends DefaultTask {
                 });
         project.afterEvaluate(p ->
                 createManifest.configure(task -> task.setManifestExtensions(ext.getManifestExtensions())));
+
+        // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
+        // We can't do this at configuration time because it would mess up gradle-consistent-versions.
+        StartParameter startParam = project.getGradle().getStartParameter();
+        if (startParam.isWriteDependencyLocks() && !startParam.getTaskNames().contains("createManifest")) {
+            List<String> taskNames = ImmutableList.<String>builder()
+                    .addAll(startParam.getTaskNames())
+                    .add("createManifest")
+                    .build();
+            startParam.setTaskNames(taskNames);
+        }
+
         return createManifest;
     }
 }

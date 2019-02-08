@@ -57,6 +57,23 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
     }
 
+    def 'fails if lockfile is not up to date'() {
+        buildFile << """
+            testCreateManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"),
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksAndFail(':testCreateManifest')
+
+        then:
+        buildResult.output.contains(
+                "product-dependencies.lock is out of date, please run `./gradlew testCreateManifest --write-locks` to update it")
+    }
+
     def 'throws if duplicate dependencies are declared'() {
         setup:
         buildFile << """
