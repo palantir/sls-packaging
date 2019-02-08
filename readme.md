@@ -118,7 +118,7 @@ And the complete list of configurable properties:
 
 ## Product dependencies
 
-'Product dependencies' are declarative metadata about the services your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
+'Product dependencies' are declarative metadata about the products your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
 
 Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
 

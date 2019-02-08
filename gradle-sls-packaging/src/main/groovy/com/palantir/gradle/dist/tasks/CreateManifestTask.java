@@ -234,16 +234,17 @@ public class CreateManifestTask extends DefaultTask {
         File lockfile = getProject().file("product-dependencies.lock");
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(productDeps);
+        boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
             GFileUtils.writeFile(upToDateContents, lockfile);
-            if (!lockfile.exists()) {
+            if (!lockfileExists) {
                 getLogger().lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
-            } else if (!GFileUtils.readFile(lockfile).equals(upToDateContents)) {
+            } else {
                 getLogger().lifecycle("Updated {}", relativePath);
             }
         } else {
-            if (!lockfile.exists()) {
+            if (!lockfileExists) {
                 throw new GradleException(String.format(
                         "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
                         relativePath, getName()));

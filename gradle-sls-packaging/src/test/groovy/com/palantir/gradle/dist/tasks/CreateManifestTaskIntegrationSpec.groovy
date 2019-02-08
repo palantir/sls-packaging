@@ -297,10 +297,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         manifest.get("extensions").get("product-dependencies").isEmpty()
     }
 
-    String emptyLockfile() {
-        return "# Run ./gradlew --write-locks to regenerate this file\n"
-    }
-
     def 'filters out recommended product dependency on self'() {
         setup:
         buildFile << """
@@ -334,7 +330,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 args 'server', 'var/conf/my-service.yml'
             }
         """.stripIndent())
-        file('foo-server/product-dependencies.lock').delete()
 
         when:
         runTasks(':foo-server:createManifest', '-i')
