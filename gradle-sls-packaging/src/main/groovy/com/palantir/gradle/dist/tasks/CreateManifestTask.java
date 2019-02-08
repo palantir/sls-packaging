@@ -184,9 +184,9 @@ public class CreateManifestTask extends DefaultTask {
                         return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
                     });
         });
-        List<ProductDependency> productDependencies = new ArrayList<>(allProductDependencies.values());
+        List<ProductDependency> productDeps = new ArrayList<>(allProductDependencies.values());
 
-        ensureLockfileIsUpToDate(productDependencies);
+        ensureLockfileIsUpToDate(productDeps);
 
         jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
                 .manifestVersion("1.0")
@@ -195,12 +195,12 @@ public class CreateManifestTask extends DefaultTask {
                 .productName(serviceName.get())
                 .productVersion(getProjectVersion())
                 .putAllExtensions(manifestExtensions)
-                .putExtensions("product-dependencies", productDependencies)
+                .putExtensions("product-dependencies", productDeps)
                 .build()
         );
     }
 
-    private void ensureLockfileIsUpToDate(List<ProductDependency> productDependencies) {
+    private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getProject().file("product-dependencies.lock");
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
@@ -211,9 +211,9 @@ public class CreateManifestTask extends DefaultTask {
         }
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            GFileUtils.writeFile(ProductDependencyLockFile.asString(productDependencies), lockfile);
+            GFileUtils.writeFile(ProductDependencyLockFile.asString(productDeps), lockfile);
         } else {
-            String latest = ProductDependencyLockFile.asString(productDependencies);
+            String latest = ProductDependencyLockFile.asString(productDeps);
             String fromDisk = GFileUtils.readFile(lockfile);
             Preconditions.checkState(
                     fromDisk.equals(latest),
