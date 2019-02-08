@@ -34,6 +34,7 @@ import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
@@ -175,25 +177,16 @@ public class CreateManifestTask extends DefaultTask {
                     discoveredDependency,
                     (declaredDependency, newDependency) -> {
                         getLogger().error("Please remove your declared product dependency on '{}' because it is"
-                                + " already provided by a jar dependency:\n\n\tProvided: {}\n\tYou declared: {}",
+                                + " already provided by a jar dependency:\n\n"
+                                        + "\tProvided:     {}\n"
+                                        + "\tYou declared: {}",
                                 productId, discoveredDependency, declaredDependency);
                         return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
                     });
         });
         List<ProductDependency> productDependencies = new ArrayList<>(allProductDependencies.values());
 
-        File lockfile = getProject().file("product-dependencies.lock");
-        if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            GFileUtils.writeFile(ProductDependencyLockFile.asString(productDependencies), lockfile);
-        } else {
-            String actual = ProductDependencyLockFile.asString(productDependencies);
-            System.out.println("ACTUAL" + actual);
-            String fromDisk = GFileUtils.readFile(lockfile);
-            Preconditions.checkState(
-                    actual.equals(fromDisk),
-                    "%s is out of date, please run ./gradlew createManifest --write-locks",
-                    lockfile);
-        }
+        ensureLockfileIsUpToDate(productDependencies);
 
         jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
                 .manifestVersion("1.0")
@@ -205,6 +198,29 @@ public class CreateManifestTask extends DefaultTask {
                 .putExtensions("product-dependencies", productDependencies)
                 .build()
         );
+    }
+
+    private void ensureLockfileIsUpToDate(List<ProductDependency> productDependencies) {
+        File lockfile = getProject().file("product-dependencies.lock");
+        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
+
+        if (!lockfile.exists()) {
+            throw new GradleException(String.format(
+                    "%s does not exist, please run `./gradlew %s --write-locks` to create it",
+                    relativePath, getName()));
+        }
+
+        if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
+            GFileUtils.writeFile(ProductDependencyLockFile.asString(productDependencies), lockfile);
+        } else {
+            String latest = ProductDependencyLockFile.asString(productDependencies);
+            System.out.println("ACTUAL" + latest);
+            String fromDisk = GFileUtils.readFile(lockfile);
+            Preconditions.checkState(
+                    fromDisk.equals(latest),
+                    "%s is out of date, please run `./gradlew %s --write-locks` to update it:\n%s",
+                    relativePath, getName(), latest);
+        }
     }
 
     private Map<ProductId, ProductDependency> discoverProductDependencies(Configuration config) {

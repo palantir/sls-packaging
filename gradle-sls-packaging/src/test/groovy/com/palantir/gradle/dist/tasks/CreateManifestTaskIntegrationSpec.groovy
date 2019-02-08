@@ -50,6 +50,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
+        file('product-dependencies.lock') << """
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.0.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
+        """.stripIndent().trim()
     }
 
     def 'throws if duplicate dependencies are declared'() {
@@ -97,6 +102,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'a:a:1.0'
             }
         """.stripIndent()
+        file('product-dependencies.lock') << """
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.0.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
+        """.stripIndent().trim()
 
         when:
         runTasks(':testCreateManifest')
@@ -134,6 +144,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 ]
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = """
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.1.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
+        """.stripIndent().trim()
 
         when:
         def result = runTasks(':testCreateManifest')
@@ -175,6 +190,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 ]
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = emptyLockfile()
 
         when:
         runTasks(':testCreateManifest')
@@ -192,6 +208,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'd:d:1.0'
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = """
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name2 (2.1.0, 2.6.x)
+        """.stripIndent().trim()
 
         when:
         runTasks(':testCreateManifest')
@@ -246,6 +266,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 serviceName = "name2"
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = emptyLockfile()
 
         when:
         runTasks(':testCreateManifest')
@@ -253,6 +274,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
         manifest.get("extensions").get("product-dependencies").isEmpty()
+    }
+
+    String emptyLockfile() {
+        return "# Run ./gradlew --write-locks to regenerate this file\n"
     }
 
     def 'filters out recommended product dependency on self'() {
@@ -288,6 +313,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 args 'server', 'var/conf/my-service.yml'
             }
         """.stripIndent())
+        file('foo-server/product-dependencies.lock').text = emptyLockfile()
 
         when:
         runTasks(':foo-server:createManifest', '-i')
