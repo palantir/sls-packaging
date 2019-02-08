@@ -102,7 +102,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'a:a:1.0'
             }
         """.stripIndent()
-        file('product-dependencies.lock') << """
+        file('product-dependencies.lock').text = """
         # Run ./gradlew --write-locks to regenerate this file
         group:name (1.0.0, 1.x.x)
         group:name2 (2.0.0, 2.x.x)
@@ -210,7 +210,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
         file('product-dependencies.lock').text = """
         # Run ./gradlew --write-locks to regenerate this file
-        group:name2 (2.1.0, 2.6.x)
+        group:name2 (2.0.0, 2.x.x)
         """.stripIndent().trim()
 
         when:
@@ -238,6 +238,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'e:e:1.0'
             }
         """.stripIndent()
+        file('product-dependencies.lock').text = """
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name2 (2.1.0, 2.6.x)
+        """.stripIndent().trim()
 
         when:
         runTasks(':testCreateManifest')

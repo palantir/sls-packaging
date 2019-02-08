@@ -214,7 +214,6 @@ public class CreateManifestTask extends DefaultTask {
             GFileUtils.writeFile(ProductDependencyLockFile.asString(productDependencies), lockfile);
         } else {
             String latest = ProductDependencyLockFile.asString(productDependencies);
-            System.out.println("ACTUAL" + latest);
             String fromDisk = GFileUtils.readFile(lockfile);
             Preconditions.checkState(
                     fromDisk.equals(latest),
