@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+import com.google.common.base.Preconditions
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 
@@ -47,5 +48,10 @@ class ProductId implements Serializable {
     @Override
     String toString() {
         return productGroup + ":" + productName
+    }
+
+    void isValid() {
+        Preconditions.checkNotNull(productGroup, "productGroup must be specified")
+        Preconditions.checkNotNull(productName, "productName must be specified")
     }
 }

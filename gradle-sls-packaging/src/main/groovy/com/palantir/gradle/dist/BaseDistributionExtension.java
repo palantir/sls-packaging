@@ -194,6 +194,7 @@ public class BaseDistributionExtension {
     public final void ignoredProductDependency(@DelegatesTo(ProductId.class) Closure closure) {
         ProductId id = new ProductId();
         ConfigureUtil.configureUsing(closure).execute(id);
+        id.isValid();
         this.ignoredProductDependencies.add(id);
     }
 
