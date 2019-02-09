@@ -191,6 +191,12 @@ public class BaseDistributionExtension {
         this.ignoredProductDependencies.add(new ProductId(ignoredProductId));
     }
 
+    public final void ignoredProductDependency(@DelegatesTo(ProductId.class) Closure closure) {
+        ProductId id = new ProductId();
+        ConfigureUtil.configureUsing(closure).execute(id);
+        this.ignoredProductDependencies.add(id);
+    }
+
     public final Map<String, Object> getManifestExtensions() {
         return this.manifestExtensions;
     }

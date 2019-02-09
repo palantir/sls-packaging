@@ -28,6 +28,8 @@ class ProductId implements Serializable {
     String productGroup
     String productName
 
+    ProductId() {}
+
     ProductId(String productGroup, String productName) {
         this.productGroup = productGroup
         this.productName = productName
