@@ -34,6 +34,12 @@ public final class ProductDependencyLockFile {
                 dep.getMaximumVersion())).sorted().collect(Collectors.joining("\n", HEADER, "\n"));
     }
 
+    /**
+     * If a product ends up taking a product dependency on another product that's published in the same repo,
+     * and the minimum version in that dependency tracks the project's version, then the lock file would have to be
+     * regenerated every commit, such that all PRs will end up conflicting with each other.
+     * To avoid this, we replace the minimum version of such dependencies with a placeholder, {@code $projectVersion}.
+     */
     private static String renderDepMinimumVersion(
             Set<ProductId> servicesDeclaredInProject, String projectVersion, ProductDependency dep) {
         ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
