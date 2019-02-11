@@ -290,7 +290,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         file('product-dependencies.lock').delete()
 
         when:
-        runTasks(':testCreateManifest')
+        runTasks(':testCreateManifest', '--write-locks')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
