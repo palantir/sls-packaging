@@ -44,7 +44,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             // If we create a custom task and then do --write-locks, the original task will be invoked anyway
             // So, let's just configure the original task, yea?
             tasks.createManifest {
-                dependsOn = [] // don't want to test these dependencies
                 serviceName = "serviceName"
                 serviceGroup = "serviceGroup"
                 productType = ProductType.SERVICE_V1
