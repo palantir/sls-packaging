@@ -295,6 +295,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
         manifest.get("extensions").get("product-dependencies").isEmpty()
+
+        !fileExists('product-dependencies.lock')
     }
 
     def 'filters out recommended product dependency on self'() {
@@ -334,8 +336,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         when:
         runTasks(':foo-server:createManifest', '-i')
 
-        then:
-        true
+        then: 'foo-server does not include transitively discovered self dependency'
+        !fileExists('foo-server/product-dependencies.lock')
     }
 
     def generateDependencies() {
