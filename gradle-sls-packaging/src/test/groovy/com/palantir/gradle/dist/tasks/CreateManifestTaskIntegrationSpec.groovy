@@ -41,7 +41,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
             project.version = '1.0.0'
 
-            task testCreateManifest(type: com.palantir.gradle.dist.tasks.CreateManifestTask) {
+            // If we create a custom task and then do --write-locks, the original task will be invoked anyway
+            // So, let's just configure the original task, yea?
+            tasks.createManifest {
                 serviceName = "serviceName"
                 serviceGroup = "serviceGroup"
                 productType = ProductType.SERVICE_V1
@@ -59,7 +61,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'fails if lockfile is not up to date'() {
         buildFile << """
-            testCreateManifest {
+            createManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"),
                 ]
@@ -67,17 +69,17 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasksAndFail(':testCreateManifest')
+        def buildResult = runTasksAndFail(':createManifest')
 
         then:
         buildResult.output.contains(
-                "product-dependencies.lock is out of date, please run `./gradlew testCreateManifest --write-locks` to update it")
+                "product-dependencies.lock is out of date, please run `./gradlew createManifest --write-locks` to update it")
     }
 
     def 'throws if duplicate dependencies are declared'() {
         setup:
         buildFile << """
-            testCreateManifest {
+            createManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
                     new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
@@ -86,7 +88,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasksAndFail(':testCreateManifest')
+        def buildResult = runTasksAndFail(':createManifest')
 
         then:
         buildResult.output.contains('Encountered duplicate declared product')
@@ -95,7 +97,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     def 'throws if declared dependency is also ignored'() {
        setup:
         buildFile << """
-            testCreateManifest {
+            createManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
                 ]
@@ -106,7 +108,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasksAndFail(':testCreateManifest')
+        def buildResult = runTasksAndFail(':createManifest')
 
         then:
         buildResult.output.contains('Encountered product dependency declaration that was also ignored')
@@ -126,7 +128,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasks(':testCreateManifest')
+        runTasks(':createManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
@@ -155,7 +157,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'a:a:1.0'
             }
             
-            testCreateManifest {
+            createManifest {
                 productDependencies = [
                     new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
                 ]
@@ -168,7 +170,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasks(':testCreateManifest')
+        def result = runTasks(':createManifest')
 
         then:
         result.output.contains(
@@ -199,7 +201,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'a:a:1.0'
             }
 
-            tasks.testCreateManifest {
+            tasks.createManifest {
                 productDependencies = []
                 ignoredProductIds = [
                     new com.palantir.gradle.dist.ProductId("group:name"), 
@@ -210,7 +212,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         file('product-dependencies.lock').delete()
 
         when:
-        runTasks(':testCreateManifest')
+        runTasks(':createManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
@@ -231,7 +233,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasks(':testCreateManifest')
+        runTasks(':createManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(
@@ -261,7 +263,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        runTasks(':testCreateManifest')
+        runTasks(':createManifest')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
@@ -282,7 +284,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'b:b:1.0'
             }
             // Configure this service to have the same coordinates as the (sole) dependency coming from b:b:1.0
-            tasks.testCreateManifest {
+            tasks.createManifest {
                 serviceGroup = "group"
                 serviceName = "name2"
             }
@@ -290,11 +292,13 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         file('product-dependencies.lock').delete()
 
         when:
-        runTasks(':testCreateManifest')
+        runTasks(':createManifest', '--write-locks')
 
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
         manifest.get("extensions").get("product-dependencies").isEmpty()
+
+        !fileExists('product-dependencies.lock')
     }
 
     def 'filters out recommended product dependency on self'() {
@@ -332,10 +336,110 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent())
 
         when:
-        runTasks(':foo-server:createManifest', '-i')
+        runTasks(':foo-server:createManifest', '-i', '--write-locks')
+
+        then: 'foo-server does not include transitively discovered self dependency'
+        !fileExists('foo-server/product-dependencies.lock')
+    }
+
+    def 'masks minimum version in product dependency that is published by this repo if same as project version'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = rootProject.version
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+        helper.addSubproject("bar-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'bar-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        when:
+        runTasks('--write-locks')
 
         then:
-        true
+        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service ($projectVersion, 1.x.x)'
+    }
+
+    def 'does not mask minimum version in product dependency that is published by this repo if different from project version'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = '0.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+        helper.addSubproject("bar-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'bar-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        when:
+        runTasks('--write-locks')
+
+        then:
+        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
     }
 
     def generateDependencies() {

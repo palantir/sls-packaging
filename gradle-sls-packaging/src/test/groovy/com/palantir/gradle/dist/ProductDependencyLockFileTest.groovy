@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+
 import spock.lang.Specification
 
 class ProductDependencyLockFileTest extends Specification {
@@ -28,7 +29,7 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
-        ProductDependencyLockFile.asString(sample) == """\
+        ProductDependencyLockFile.asString(sample, [] as Set<ProductId>, '0.0.0') == """\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x)
         com.palantir.product:foo (1.20.0, 1.x.x)
