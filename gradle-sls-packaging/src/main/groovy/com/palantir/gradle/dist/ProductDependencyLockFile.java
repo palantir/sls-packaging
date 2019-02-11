@@ -29,7 +29,8 @@ public final class ProductDependencyLockFile {
         return deps.stream().map(dep -> String.format(
                 "%s:%s (%s, %s)",
                 dep.getProductGroup(),
-                dep.getProductName(), renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
+                dep.getProductName(),
+                renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
                 dep.getMaximumVersion())).sorted().collect(Collectors.joining("\n", HEADER, "\n"));
     }
 
