@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -233,7 +234,8 @@ public class CreateManifestTask extends DefaultTask {
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getProject().file("product-dependencies.lock");
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
-        String upToDateContents = ProductDependencyLockFile.asString(productDeps);
+        String upToDateContents = ProductDependencyLockFile.asString(
+                productDeps, collectProductsPublishedInRepo(), getProjectVersion());
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
@@ -350,6 +352,22 @@ public class CreateManifestTask extends DefaultTask {
                     "Version string in project {} is not orderable as per SLS specification: {}",
                     getProject().getName(), stringVersion);
         }
+    }
+
+    private Set<ProductId> collectProductsPublishedInRepo() {
+        // get products we publish via BaseDistributionExtension from all other projects
+        return getProject()
+                .getRootProject()
+                .getAllprojects()
+                .stream()
+                .flatMap(p -> Optional
+                        .ofNullable(p.getExtensions().findByType(BaseDistributionExtension.class))
+                        .map(Stream::of)
+                        .orElseGet(Stream::empty))
+                .map(extension -> new ProductId(
+                        extension.getDistributionServiceGroup().get(),
+                        extension.getDistributionServiceName().get()))
+                .collect(Collectors.toSet());
     }
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {

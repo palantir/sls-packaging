@@ -17,21 +17,30 @@
 package com.palantir.gradle.dist;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ProductDependencyLockFile {
 
     private static final String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
 
-    public static String asString(List<ProductDependency> deps) {
-        return deps.stream()
-                    .map(dep -> String.format("%s:%s (%s, %s)",
-                            dep.getProductGroup(),
-                            dep.getProductName(),
-                            dep.getMinimumVersion(),
-                            dep.getMaximumVersion()))
-                    .sorted()
-                    .collect(Collectors.joining("\n", HEADER, "\n"));
+    public static String asString(
+            List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
+        return deps.stream().map(dep -> String.format(
+                "%s:%s (%s, %s)",
+                dep.getProductGroup(),
+                dep.getProductName(), renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
+                dep.getMaximumVersion())).sorted().collect(Collectors.joining("\n", HEADER, "\n"));
+    }
+
+    private static String renderDepMinimumVersion(
+            Set<ProductId> servicesDeclaredInProject, String projectVersion, ProductDependency dep) {
+        ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
+        if (servicesDeclaredInProject.contains(productId) && dep.getMinimumVersion().equals(projectVersion)) {
+            return "project-version";
+        } else {
+            return dep.getMinimumVersion();
+        }
     }
 
     private ProductDependencyLockFile() {}
