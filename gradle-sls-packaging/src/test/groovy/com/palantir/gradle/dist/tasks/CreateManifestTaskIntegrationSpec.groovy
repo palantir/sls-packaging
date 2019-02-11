@@ -334,7 +334,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent())
 
         when:
-        runTasks(':foo-server:createManifest', '-i')
+        runTasks(':foo-server:createManifest', '-i', '--write-locks')
 
         then: 'foo-server does not include transitively discovered self dependency'
         !fileExists('foo-server/product-dependencies.lock')
