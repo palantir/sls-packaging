@@ -17,7 +17,7 @@ bintray {
     publish = true
     pkg {
         repo = 'releases'
-        name = rootProject.name
+        name = 'sls-packaging'
         userOrg = 'palantir'
         licenses = ['Apache-2.0']
         publications = ['nebula']
