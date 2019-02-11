@@ -289,6 +289,9 @@ public class CreateManifestTask extends DefaultTask {
             if (!artifact.getFile().exists()) {
                 log.debug("Artifact did not exist: {}", artifact.getFile());
                 return Stream.empty();
+            } else if (!artifact.getExtension().equals("jar")) {
+                log.debug("Artifact is not jar: {}", artifact.getFile());
+                return Stream.empty();
             }
 
             Manifest manifest;
