@@ -17,12 +17,11 @@
 package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
-import com.palantir.gradle.dist.service.JavaServiceDistributionExtension
+import com.palantir.gradle.dist.service.gc.GcProfile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import org.awaitility.Awaitility
-import org.junit.Assume
 import spock.lang.Unroll
 
 class GcProfileIntegrationSpec extends GradleIntegrationSpec {
@@ -64,10 +63,6 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
     @Unroll
     def 'successfully create a distribution using gc: #gc'() {
-        Assume.assumeTrue(
-                "response-time-11 only works on Shenandoah-enabled JVMs and CI only has OpenJDK",
-                !gc.equals("response-time-11"))
-
         setup:
         buildFile << """
         distribution {
@@ -88,6 +83,6 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         println file("touch-service-1.0.0/var/log/startup.log").text
 
         where:
-        gc << JavaServiceDistributionExtension.profileNames.keySet().toArray()
+        gc << GcProfile.PROFILE_NAMES.keySet().toArray()
     }
 }

@@ -30,8 +30,7 @@ public interface GcProfile extends Serializable {
     Map<String, Class<? extends GcProfile>> PROFILE_NAMES = ImmutableMap.of(
             "throughput", GcProfile.Throughput.class,
             "response-time", GcProfile.ResponseTime.class,
-            "hybrid", GcProfile.Hybrid.class,
-            "response-time-11", GcProfile.ResponseTime11.class);
+            "hybrid", GcProfile.Hybrid.class);
 
     List<String> gcJvmOpts();
 
