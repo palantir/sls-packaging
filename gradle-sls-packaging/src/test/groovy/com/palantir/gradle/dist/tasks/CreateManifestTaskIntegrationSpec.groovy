@@ -340,6 +340,106 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         !fileExists('foo-server/product-dependencies.lock')
     }
 
+    def 'masks minimum version in product dependency that is published by this repo if same as project version'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = rootProject.version
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+        helper.addSubproject("bar-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'bar-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        when:
+        runTasks('--write-locks')
+
+        then:
+        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (project-version, 1.x.x)'
+    }
+
+    def 'does not mask minimum version in product dependency that is published by this repo if different from project version'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = '0.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+        helper.addSubproject("bar-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'bar-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        when:
+        runTasks('--write-locks')
+
+        then:
+        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
+    }
+
     def generateDependencies() {
         DependencyGraph dependencyGraph = new DependencyGraph(
                 "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",
