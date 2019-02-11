@@ -35,4 +35,29 @@ class ProductDependencyLockFileTest extends Specification {
         com.palantir.product:foo (1.20.0, 1.x.x)
         """.stripIndent()
     }
+
+    def 'deserialize'() {
+        when:
+        List<ProductDependency> result = ProductDependencyLockFile.fromString("""\
+        # Run ./gradlew --write-locks to regenerate this file
+        com.palantir.other:bar (0.2.0, 0.x.x)
+        com.palantir.product:foo (1.20.0, 1.x.x)
+        """.stripIndent(), "0.0.0")
+
+        then:
+        result.size() == 2
+        result[0] == new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null)
+        result[1] == new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null)
+    }
+
+    def 'round-trips without recommended version'() {
+        when:
+        List<ProductDependency> input = [
+                new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null),
+                new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null),
+        ]
+
+        then:
+        input == ProductDependencyLockFile.fromString(ProductDependencyLockFile.asString(input, [] as Set<ProductId>,"0.0.0"), "0.0.0")
+    }
 }
