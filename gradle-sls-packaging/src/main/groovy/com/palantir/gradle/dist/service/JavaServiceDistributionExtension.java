@@ -16,16 +16,10 @@
 
 package com.palantir.gradle.dist.service;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
-import com.palantir.gradle.dist.service.gc.Hybrid;
-import com.palantir.gradle.dist.service.gc.ResponseTime;
-import com.palantir.gradle.dist.service.gc.ResponseTime11;
-import com.palantir.gradle.dist.service.gc.Throughput;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
@@ -41,13 +35,6 @@ import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
 
 public class JavaServiceDistributionExtension extends BaseDistributionExtension {
-
-    @VisibleForTesting
-    static final Map<String, Class<? extends GcProfile>> profileNames = ImmutableMap.of(
-            "throughput", Throughput.class,
-            "response-time", ResponseTime.class,
-            "hybrid", Hybrid.class,
-            "response-time-11", ResponseTime11.class);
 
     private final Property<String> mainClass;
     private final Property<String> javaHome;
@@ -75,7 +62,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         enableManifestClasspath = objectFactory.property(Boolean.class);
         enableManifestClasspath.set(false);
         gc = objectFactory.property(GcProfile.class);
-        gc.set(new Throughput());
+        gc.set(new GcProfile.Throughput());
         args = objectFactory.listProperty(String.class);
         checkArgs = objectFactory.listProperty(String.class);
         defaultJvmOpts = objectFactory.listProperty(String.class);
@@ -203,7 +190,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     }
 
     public final void gc(String type, @Nullable @DelegatesTo(GcProfile.class) Closure configuration) {
-        GcProfile newGc = objectFactory.newInstance(profileNames.get(type));
+        GcProfile newGc = objectFactory.newInstance(GcProfile.PROFILE_NAMES.get(type));
         if (configuration != null) {
             ConfigureUtil.configure(configuration, newGc);
         }

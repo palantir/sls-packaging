@@ -113,7 +113,7 @@ And the complete list of configurable properties:
    defaulting to `['log', 'run']`.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
- * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid`, `response-time` and `response-time-11`.
+ * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
  * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
 ## Product dependencies
