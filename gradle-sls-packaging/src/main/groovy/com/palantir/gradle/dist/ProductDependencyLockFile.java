@@ -38,7 +38,7 @@ public final class ProductDependencyLockFile {
             Set<ProductId> servicesDeclaredInProject, String projectVersion, ProductDependency dep) {
         ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
         if (servicesDeclaredInProject.contains(productId) && dep.getMinimumVersion().equals(projectVersion)) {
-            return "project-version";
+            return "$projectVersion";
         } else {
             return dep.getMinimumVersion();
         }

@@ -389,7 +389,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         runTasks('--write-locks')
 
         then:
-        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (project-version, 1.x.x)'
+        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service ($projectVersion, 1.x.x)'
     }
 
     def 'does not mask minimum version in product dependency that is published by this repo if different from project version'() {
