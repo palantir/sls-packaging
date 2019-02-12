@@ -52,14 +52,23 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
-        group:name (1.0.0, 1.x.x)
-        group:name2 (2.0.0, 2.x.x)
-        """.stripIndent()
     }
 
     def 'fails if lockfile is not up to date'() {
+        buildFile << """
+            dependencies {
+                runtime 'b:b:1.0'
+            }
+        """.stripIndent()
+
+        file('product-dependencies.lock').text = """\
+            # Run ./gradlew --write-locks to regenerate this file
+            group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
+
+        // run it first to ensure cache is warmed up
+        runTasks(':createManifest')
+
         buildFile << """
             createManifest {
                 productDependencies = [
