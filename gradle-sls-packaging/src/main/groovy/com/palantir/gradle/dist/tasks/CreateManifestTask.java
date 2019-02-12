@@ -77,6 +77,7 @@ public class CreateManifestTask extends DefaultTask {
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT);
+    public static final String PRODUCT_DEPENDENCIES_LOCK = "product-dependencies.lock";
 
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
@@ -232,7 +233,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
-        File lockfile = getProject().file("product-dependencies.lock");
+        File lockfile = getProject().file(PRODUCT_DEPENDENCIES_LOCK);
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, collectProductsPublishedInRepo(), getProjectVersion());
