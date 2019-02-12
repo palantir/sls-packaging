@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public final class ProductDependencyLockFile {
 
-    private static final String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
+    private static final String HEADER = "# Run ./gradlew createManifest --write-locks to regenerate this file\n";
 
     public static String asString(
             List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
