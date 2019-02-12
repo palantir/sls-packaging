@@ -232,6 +232,10 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
+    /**
+     * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
+     * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
+     */
     @InputFile
     @org.gradle.api.tasks.Optional
     final File getLockfileIfExists() {
