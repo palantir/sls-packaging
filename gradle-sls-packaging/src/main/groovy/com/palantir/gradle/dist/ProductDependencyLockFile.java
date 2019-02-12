@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 public final class ProductDependencyLockFile {
 
     private static final String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
-    private static final String PROJECT_VERSION = "$projectVersion";
+    public static final String PROJECT_VERSION = "$projectVersion";
     private static final Pattern LOCK_PATTERN = Pattern.compile(
             "^(?<group>[^:]+):(?<name>[^ ]+) \\((?<min>[^,]+), (?<max>[^\\)]+)\\)$");
     public static final String LOCK_FILE = "product-dependencies.lock";

@@ -45,10 +45,11 @@ class GetMinimumVersionTest extends ProjectSpec {
     }
 
     def "resolves project versions"() {
+        def lockFile = project.file(ProductDependencyLockFile.LOCK_FILE)
         project.version = "1.0.0"
-        project.file(ProductDependencyLockFile.LOCK_FILE) << ProductDependencyLockFile.asString(
+        lockFile << ProductDependencyLockFile.asString(
                 [new ProductDependency("com.palantir.product", "test", "1.0.0", "1.x.x", null)],
-                [new ProductId("com.palantir.other", "test")] as Set<ProductId>,
+                [new ProductId("com.palantir.product", "test")] as Set<ProductId>,
                 "1.0.0"
         )
 
@@ -56,7 +57,11 @@ class GetMinimumVersionTest extends ProjectSpec {
         def result = project.ext.getMinimumProductVersion("com.palantir.product:test")
 
         then:
-        result == "1.0.0"
+        lockFile.text == '''\
+        # Run ./gradlew --write-locks to regenerate this file
+        com.palantir.product:test ($projectVersion, 1.x.x)
+        '''.stripIndent()
+        result == project.version
     }
 
     def "fails if lock file does not exist"() {
