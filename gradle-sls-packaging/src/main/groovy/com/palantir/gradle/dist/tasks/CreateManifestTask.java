@@ -62,6 +62,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -214,7 +215,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     private void requireAbsentLockfile() {
-        File lockfile = getProject().file("product-dependencies.lock");
+        File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
         if (!lockfile.exists()) {
@@ -231,8 +232,26 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
+    /**
+     * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
+     * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
+     */
+    @InputFile
+    @org.gradle.api.tasks.Optional
+    final File getLockfileIfExists() {
+        File file = getLockfile();
+        if (file.exists()) {
+            return file;
+        }
+        return null;
+    }
+
+    private File getLockfile() {
+        return getProject().file(ProductDependencyLockFile.LOCK_FILE);
+    }
+
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
-        File lockfile = getProject().file(ProductDependencyLockFile.LOCK_FILE);
+        File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, collectProductsPublishedInRepo(), getProjectVersion());

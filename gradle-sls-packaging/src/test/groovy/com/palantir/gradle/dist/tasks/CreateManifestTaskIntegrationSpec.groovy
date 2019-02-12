@@ -21,6 +21,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
+import org.gradle.testkit.runner.TaskOutcome
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -52,14 +53,23 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
-        file('product-dependencies.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
-        group:name (1.0.0, 1.x.x)
-        group:name2 (2.0.0, 2.x.x)
-        """.stripIndent()
     }
 
     def 'fails if lockfile is not up to date'() {
+        buildFile << """
+            dependencies {
+                runtime 'b:b:1.0'
+            }
+        """.stripIndent()
+
+        file('product-dependencies.lock').text = """\
+            # Run ./gradlew --write-locks to regenerate this file
+            group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
+
+        // run it first to ensure cache is warmed up
+        runTasks(':createManifest')
+
         buildFile << """
             createManifest {
                 productDependencies = [
@@ -74,6 +84,61 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         then:
         buildResult.output.contains(
                 "product-dependencies.lock is out of date, please run `./gradlew createManifest --write-locks` to update it")
+    }
+
+    def 'fails if unexpected lockfile exists'() {
+        runTasks('createManifest') // ensure task is run once
+        runTasks('createManifest').task(':createManifest').outcome == TaskOutcome.UP_TO_DATE
+
+        when:
+        file('product-dependencies.lock') << '\nthis should not be here'
+
+        then:
+        runTasksAndFail('createManifest').task(':createManifest').outcome == TaskOutcome.FAILED
+    }
+
+    def 'fails if lock file disappears'() {
+        buildFile << """
+            dependencies {
+                runtime 'b:b:1.0'
+            }
+        """.stripIndent()
+
+        file('product-dependencies.lock').text = """\
+            # Run ./gradlew --write-locks to regenerate this file
+            group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
+
+        runTasks('createManifest') // ensure task is run once
+        runTasks('createManifest').task(':createManifest').outcome == TaskOutcome.UP_TO_DATE
+
+        when:
+        file('product-dependencies.lock').delete()
+
+        then:
+        runTasksAndFail('createManifest').task(':createManifest').outcome == TaskOutcome.FAILED
+    }
+
+    def 'fails if lockfile has changed contents'() {
+        buildFile << """
+            dependencies {
+                runtime 'b:b:1.0'
+            }
+        """.stripIndent()
+
+        file('product-dependencies.lock').text = """\
+            # Run ./gradlew --write-locks to regenerate this file
+            group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
+
+        runTasks('createManifest') // ensure task is run once
+        runTasks('createManifest').task(':createManifest').outcome == TaskOutcome.UP_TO_DATE
+
+        when:
+        file('product-dependencies.lock') << '\nthis should not be here'
+
+        then:
+        runTasksAndFail('createManifest').task(':createManifest').outcome == TaskOutcome.FAILED
     }
 
     def 'throws if duplicate dependencies are declared'() {
