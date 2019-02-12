@@ -36,6 +36,19 @@ class ProductDependencyLockFileTest extends Specification {
         """.stripIndent()
     }
 
+    def 'serialize project version'() {
+        when:
+        def result = ProductDependencyLockFile.asString(
+                [ new ProductDependency("com.palantir.product", "foo", "1.0.0", "1.x.x", null),],
+                [new ProductId("com.palantir.product", "foo")] as Set<ProductId>,
+                '1.0.0')
+        then:
+        result == '''\
+        # Run ./gradlew --write-locks to regenerate this file
+        com.palantir.product:foo ($projectVersion, 1.x.x)
+        '''.stripIndent()
+    }
+
     def 'deserialize'() {
         when:
         List<ProductDependency> result = ProductDependencyLockFile.fromString("""\
