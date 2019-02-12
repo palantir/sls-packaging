@@ -386,6 +386,9 @@ public class CreateManifestTask extends DefaultTask {
                 });
         project.afterEvaluate(p ->
                 createManifest.configure(task -> task.setManifestExtensions(ext.getManifestExtensions())));
+        project.getPluginManager().withPlugin("base", p -> {
+            project.getTasks().getByName("check").dependsOn(createManifest);
+        });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
         // We can't do this at configuration time because it would mess up gradle-consistent-versions.
