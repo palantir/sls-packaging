@@ -86,7 +86,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 "product-dependencies.lock is out of date, please run `./gradlew createManifest --write-locks` to update it")
     }
 
-    def 'fails if lockfile has suddenly appeared since last invocation'() {
+    def 'fails if unexpected lockfile exists'() {
         runTasks('createManifest') // ensure task is run once
         runTasks('createManifest').task(':createManifest').outcome == TaskOutcome.UP_TO_DATE
 
@@ -97,7 +97,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         runTasksAndFail('createManifest').task(':createManifest').outcome == TaskOutcome.FAILED
     }
 
-    def 'fails if lockfile has suddenly disappeared since last invocation'() {
+    def 'fails if lock file disappears'() {
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
@@ -119,7 +119,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         runTasksAndFail('createManifest').task(':createManifest').outcome == TaskOutcome.FAILED
     }
 
-    def 'fails if lockfile has changed contents since last invocation'() {
+    def 'fails if lockfile has changed contents'() {
         buildFile << """
             dependencies {
                 runtime 'b:b:1.0'
