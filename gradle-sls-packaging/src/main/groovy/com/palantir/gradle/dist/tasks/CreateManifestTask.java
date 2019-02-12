@@ -214,7 +214,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     private void requireAbsentLockfile() {
-        File lockfile = getProject().file("product-dependencies.lock");
+        File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
         if (!lockfile.exists()) {
@@ -231,8 +231,13 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
+    @OutputFile
+    final File getLockfile() {
+        return getProject().file(ProductDependencyLockFile.LOCK_FILE);
+    }
+
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
-        File lockfile = getProject().file(ProductDependencyLockFile.LOCK_FILE);
+        File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, collectProductsPublishedInRepo(), getProjectVersion());
