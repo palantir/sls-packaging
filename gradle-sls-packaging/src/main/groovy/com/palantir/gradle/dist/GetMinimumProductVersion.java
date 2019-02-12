@@ -18,21 +18,20 @@ package com.palantir.gradle.dist;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import groovy.lang.Closure;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import org.gradle.api.GradleException;
-import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.util.GFileUtils;
 
-public final class BaseDistributionPlugin implements Plugin<Project> {
+public final class GetMinimumProductVersion {
 
-    @Override
-    public void apply(Project project) {
+    private GetMinimumProductVersion() {}
+
+    public static void createGetMinimumProductVersion(Project project) {
         project.getExtensions().getExtraProperties()
                 .set("getMinimumProductVersion", new Closure<String>(project, project) {
 
@@ -47,12 +46,11 @@ public final class BaseDistributionPlugin implements Plugin<Project> {
                     }
                 });
     }
-
     private static String getMinimumProductVersion(Project project, String group, String name) {
-        File lockFile = project.file(CreateManifestTask.PRODUCT_DEPENDENCIES_LOCK);
+        File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
         Preconditions.checkState(Files.exists(lockFile.toPath()),
                 "%s does not exist. Run ./gradlew --write-locks to generate it.",
-                CreateManifestTask.PRODUCT_DEPENDENCIES_LOCK);
+                ProductDependencyLockFile.LOCK_FILE);
 
         List<ProductDependency> dependencies = ProductDependencyLockFile.fromString(
                 GFileUtils.readFile(lockFile), project.getVersion().toString());

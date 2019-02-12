@@ -15,7 +15,7 @@
  */
 package com.palantir.gradle.dist.service;
 
-import com.palantir.gradle.dist.BaseDistributionPlugin;
+import com.palantir.gradle.dist.GetMinimumProductVersion;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask;
@@ -60,7 +60,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
         }
         project.getPluginManager().apply("java");
-        project.getPluginManager().apply(BaseDistributionPlugin.class);
+        GetMinimumProductVersion.createGetMinimumProductVersion(project);
         JavaServiceDistributionExtension distributionExtension = project.getExtensions().create(
                 "distribution", JavaServiceDistributionExtension.class, project);
 
