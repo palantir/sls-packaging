@@ -232,7 +232,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
-        File lockfile = getProject().file("product-dependencies.lock");
+        File lockfile = getProject().file(ProductDependencyLockFile.LOCK_FILE);
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, collectProductsPublishedInRepo(), getProjectVersion());
