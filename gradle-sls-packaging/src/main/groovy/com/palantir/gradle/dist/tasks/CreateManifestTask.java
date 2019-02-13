@@ -57,7 +57,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -69,11 +70,9 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.util.GFileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CreateManifestTask extends DefaultTask {
-    private static final Logger log = LoggerFactory.getLogger(CreateManifestTask.class);
+    private static final Logger log = Logging.getLogger(CreateManifestTask.class);
     public static final String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -87,67 +86,63 @@ public class CreateManifestTask extends DefaultTask {
     private final ListProperty<ProductDependency> productDependencies = getProject().getObjects()
             .listProperty(ProductDependency.class);
     private final SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
+    private final Property<Configuration> productDependenciesConfig =
+            getProject().getObjects().property(Configuration.class);
 
     // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
     private Map<String, Object> manifestExtensions = Maps.newHashMap();
     private File manifestFile;
 
-    private Configuration productDependenciesConfig;
-
     @Input
-    public final Property<String> getServiceName() {
+    final Property<String> getServiceName() {
         return serviceName;
     }
 
     @Input
-    public final Property<String> getServiceGroup() {
+    final Property<String> getServiceGroup() {
         return serviceGroup;
     }
 
     @Input
-    public final Property<ProductType> getProductType() {
+    final Property<ProductType> getProductType() {
         return productType;
     }
 
     @Input
-    public final Map<String, Object> getManifestExtensions() {
+    final Map<String, Object> getManifestExtensions() {
         return manifestExtensions;
     }
 
-    public final void setManifestExtensions(Map<String, Object> manifestExtensions) {
+    final void setManifestExtensions(Map<String, Object> manifestExtensions) {
         this.manifestExtensions = manifestExtensions;
     }
 
     @Input
-    public final ListProperty<ProductDependency> getProductDependencies() {
+    final ListProperty<ProductDependency> getProductDependencies() {
         return productDependencies;
     }
 
     @Input
-    public final SetProperty<ProductId> getIgnoredProductIds() {
+    final SetProperty<ProductId> getIgnoredProductIds() {
         return ignoredProductIds;
     }
 
     @InputFiles
-    public final FileCollection getProductDependenciesConfig() {
+    final Property<Configuration> getProductDependenciesConfig() {
         return productDependenciesConfig;
     }
 
-    public final void setProductDependenciesConfig(Configuration productDependenciesConfig) {
-        this.productDependenciesConfig = productDependenciesConfig;
-    }
-
     @Input
-    public final String getProjectVersion() {
+    final String getProjectVersion() {
         return getProject().getVersion().toString();
     }
 
     @OutputFile
-    public final File getManifestFile() {
+    final File getManifestFile() {
         return manifestFile;
     }
 
-    public final void setManifestFile(File manifestFile) {
+    final void setManifestFile(File manifestFile) {
         this.manifestFile = manifestFile;
     }
 
@@ -178,7 +173,7 @@ public class CreateManifestTask extends DefaultTask {
         });
 
         // Merge all discovered and declared product dependencies
-        discoverProductDependencies(productDependenciesConfig).forEach((productId, discoveredDependency) -> {
+        discoverProductDependencies(productDependenciesConfig.get()).forEach((productId, discoveredDependency) -> {
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
@@ -401,13 +396,16 @@ public class CreateManifestTask extends DefaultTask {
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getProductDependencies());
-                    task.setProductDependenciesConfig(ext.getProductDependenciesConfig());
+                    task.getProductDependenciesConfig().set(project.provider(ext::getProductDependenciesConfig));
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                 });
         project.afterEvaluate(p ->
                 createManifest.configure(task -> task.setManifestExtensions(ext.getManifestExtensions())));
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
-            project.getTasks().getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(createManifest);
+            project
+                    .getTasks()
+                    .named(LifecycleBasePlugin.CHECK_TASK_NAME)
+                    .configure(task -> task.dependsOn(createManifest));
         });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file

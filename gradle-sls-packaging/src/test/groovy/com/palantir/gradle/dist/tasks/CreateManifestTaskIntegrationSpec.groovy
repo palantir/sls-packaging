@@ -50,7 +50,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 productType = ProductType.SERVICE_V1
                 manifestExtensions = [:]
                 manifestFile = new File(project.buildDir, "/deployment/manifest.yml")
-                productDependenciesConfig = configurations.runtime
             }
         """.stripIndent()
     }
