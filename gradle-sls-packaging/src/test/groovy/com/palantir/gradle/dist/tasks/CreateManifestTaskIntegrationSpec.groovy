@@ -508,8 +508,6 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     }
 
     def "check depends on createManifest"() {
-        file("product-dependencies.lock").delete()
-
         when:
         def result = runTasks(':check')
 
