@@ -402,7 +402,10 @@ public class CreateManifestTask extends DefaultTask {
         project.afterEvaluate(p ->
                 createManifest.configure(task -> task.setManifestExtensions(ext.getManifestExtensions())));
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
-            project.getTasks().getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(createManifest);
+            project
+                    .getTasks()
+                    .named(LifecycleBasePlugin.CHECK_TASK_NAME)
+                    .configure(task -> task.dependsOn(createManifest));
         });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
