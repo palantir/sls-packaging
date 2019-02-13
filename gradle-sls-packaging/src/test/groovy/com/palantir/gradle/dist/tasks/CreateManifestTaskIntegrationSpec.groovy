@@ -442,6 +442,16 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
     }
 
+    def "check depends on createManifest"() {
+        file("product-dependencies.lock").delete()
+
+        when:
+        def result = runTasks(':check')
+
+        then:
+        result.task(":createManifest") != null
+    }
+
     def generateDependencies() {
         DependencyGraph dependencyGraph = new DependencyGraph(
                 "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",

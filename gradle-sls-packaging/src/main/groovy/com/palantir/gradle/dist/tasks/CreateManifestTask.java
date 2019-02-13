@@ -66,6 +66,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.util.GFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -386,8 +387,8 @@ public class CreateManifestTask extends DefaultTask {
                 });
         project.afterEvaluate(p ->
                 createManifest.configure(task -> task.setManifestExtensions(ext.getManifestExtensions())));
-        project.getPluginManager().withPlugin("base", p -> {
-            project.getTasks().getByName("check").dependsOn(createManifest);
+        project.getPluginManager().withPlugin("lifecycle-base", p -> {
+            project.getTasks().getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(createManifest);
         });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
