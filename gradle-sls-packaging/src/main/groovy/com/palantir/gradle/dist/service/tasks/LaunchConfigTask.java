@@ -58,6 +58,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:+CrashOnOutOfMemoryError",
             "-Djava.io.tmpdir=var/data/tmp",
             "-XX:ErrorFile=var/log/hs_err_pid%p.log",
+            "-XX:HeapDumpPath=var/log",
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
             "-Dsun.net.inetaddr.ttl=20"
