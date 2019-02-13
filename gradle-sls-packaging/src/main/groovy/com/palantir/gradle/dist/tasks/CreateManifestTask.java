@@ -57,12 +57,10 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
@@ -96,59 +94,55 @@ public class CreateManifestTask extends DefaultTask {
     private File manifestFile;
 
     @Input
-    public final Property<String> getServiceName() {
+    final Property<String> getServiceName() {
         return serviceName;
     }
 
     @Input
-    public final Property<String> getServiceGroup() {
+    final Property<String> getServiceGroup() {
         return serviceGroup;
     }
 
     @Input
-    public final Property<ProductType> getProductType() {
+    final Property<ProductType> getProductType() {
         return productType;
     }
 
     @Input
-    public final Map<String, Object> getManifestExtensions() {
+    final Map<String, Object> getManifestExtensions() {
         return manifestExtensions;
     }
 
-    public final void setManifestExtensions(Map<String, Object> manifestExtensions) {
+    private void setManifestExtensions(Map<String, Object> manifestExtensions) {
         this.manifestExtensions = manifestExtensions;
     }
 
     @Input
-    public final ListProperty<ProductDependency> getProductDependencies() {
+    final ListProperty<ProductDependency> getProductDependencies() {
         return productDependencies;
     }
 
     @Input
-    public final SetProperty<ProductId> getIgnoredProductIds() {
+    final SetProperty<ProductId> getIgnoredProductIds() {
         return ignoredProductIds;
     }
 
     @InputFiles
-    public final FileCollection getProductDependenciesConfig() {
-        return productDependenciesConfig.get();
-    }
-
-    public final void setProductDependenciesConfig(Provider<Configuration> productDependenciesConfig) {
-        this.productDependenciesConfig.set(productDependenciesConfig);
+    final Property<Configuration> getProductDependenciesConfig() {
+        return productDependenciesConfig;
     }
 
     @Input
-    public final String getProjectVersion() {
+    final String getProjectVersion() {
         return getProject().getVersion().toString();
     }
 
     @OutputFile
-    public final File getManifestFile() {
+    final File getManifestFile() {
         return manifestFile;
     }
 
-    public final void setManifestFile(File manifestFile) {
+    private void setManifestFile(File manifestFile) {
         this.manifestFile = manifestFile;
     }
 
@@ -402,7 +396,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getProductDependencies());
-                    task.setProductDependenciesConfig(project.provider(ext::getProductDependenciesConfig));
+                    task.getProductDependenciesConfig().set(project.provider(ext::getProductDependenciesConfig));
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                 });
         project.afterEvaluate(p ->
