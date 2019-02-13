@@ -113,7 +113,7 @@ public class CreateManifestTask extends DefaultTask {
         return manifestExtensions;
     }
 
-    private void setManifestExtensions(Map<String, Object> manifestExtensions) {
+    final void setManifestExtensions(Map<String, Object> manifestExtensions) {
         this.manifestExtensions = manifestExtensions;
     }
 
@@ -142,7 +142,7 @@ public class CreateManifestTask extends DefaultTask {
         return manifestFile;
     }
 
-    private void setManifestFile(File manifestFile) {
+    final void setManifestFile(File manifestFile) {
         this.manifestFile = manifestFile;
     }
 
