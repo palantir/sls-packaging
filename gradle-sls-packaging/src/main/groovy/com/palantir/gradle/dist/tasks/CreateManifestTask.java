@@ -58,8 +58,11 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
@@ -69,11 +72,9 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.util.GFileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CreateManifestTask extends DefaultTask {
-    private static final Logger log = LoggerFactory.getLogger(CreateManifestTask.class);
+    private static final Logger log = Logging.getLogger(CreateManifestTask.class);
     public static final String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -87,12 +88,14 @@ public class CreateManifestTask extends DefaultTask {
     private final ListProperty<ProductDependency> productDependencies = getProject().getObjects()
             .listProperty(ProductDependency.class);
     private final SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
+    private final Property<Configuration> productDependenciesConfig =
+            getProject().getObjects().property(Configuration.class);
 
     // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
-    private Map<String, Object> manifestExtensions = Maps.newHashMap();
+    @SuppressWarnings("unchecked")
+    private Property<Map<String, Object>> manifestExtensions =
+            (Property<Map<String, Object>>) (Property) getProject().getObjects().property(Map.class);
     private File manifestFile;
-
-    private Configuration productDependenciesConfig;
 
     @Input
     public final Property<String> getServiceName() {
@@ -130,11 +133,11 @@ public class CreateManifestTask extends DefaultTask {
 
     @InputFiles
     public final FileCollection getProductDependenciesConfig() {
-        return productDependenciesConfig;
+        return productDependenciesConfig.get();
     }
 
-    public final void setProductDependenciesConfig(Configuration productDependenciesConfig) {
-        this.productDependenciesConfig = productDependenciesConfig;
+    public final void setProductDependenciesConfig(Provider<Configuration> productDependenciesConfig) {
+        this.productDependenciesConfig.set(productDependenciesConfig);
     }
 
     @Input
@@ -178,7 +181,7 @@ public class CreateManifestTask extends DefaultTask {
         });
 
         // Merge all discovered and declared product dependencies
-        discoverProductDependencies(productDependenciesConfig).forEach((productId, discoveredDependency) -> {
+        discoverProductDependencies(productDependenciesConfig.get()).forEach((productId, discoveredDependency) -> {
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
@@ -401,7 +404,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getProductDependencies());
-                    task.setProductDependenciesConfig(ext.getProductDependenciesConfig());
+                    task.setProductDependenciesConfig(project.provider(ext::getProductDependenciesConfig));
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                 });
         project.afterEvaluate(p ->
