@@ -92,9 +92,7 @@ public class CreateManifestTask extends DefaultTask {
             getProject().getObjects().property(Configuration.class);
 
     // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
-    @SuppressWarnings("unchecked")
-    private Property<Map<String, Object>> manifestExtensions =
-            (Property<Map<String, Object>>) (Property) getProject().getObjects().property(Map.class);
+    private Map<String, Object> manifestExtensions = Maps.newHashMap();
     private File manifestFile;
 
     @Input
