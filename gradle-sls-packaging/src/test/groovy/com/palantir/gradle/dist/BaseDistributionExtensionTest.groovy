@@ -118,4 +118,15 @@ class BaseDistributionExtensionTest extends Specification {
         productDependencies.get(0).maximumVersion == "1.x.x"
         productDependencies.get(0).recommendedVersion == "1.2.4"
     }
+
+    def "productDependency is lazy, not evaluated at configuration-time"() {
+        when:
+        def ext = new BaseDistributionExtension(project)
+        ext.productDependency {
+            throw new Exception('productDependency was configured at configuration-time')
+        }
+
+        then:
+        noExceptionThrown()
+    }
 }

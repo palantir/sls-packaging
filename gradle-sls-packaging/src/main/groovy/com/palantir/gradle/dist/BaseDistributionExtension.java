@@ -33,6 +33,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
 
@@ -51,6 +52,7 @@ public class BaseDistributionExtension {
     private final Property<ProductType> productType;
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
+    private final ProviderFactory providerFactory;
 
     // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
     private Map<String, Object> manifestExtensions;
@@ -58,6 +60,7 @@ public class BaseDistributionExtension {
 
     @Inject
     public BaseDistributionExtension(Project project) {
+        providerFactory = project.getProviders();
         serviceGroup = project.getObjects().property(String.class);
         serviceName = project.getObjects().property(String.class);
         podName = project.getObjects().property(String.class);
@@ -172,11 +175,16 @@ public class BaseDistributionExtension {
                 recommendedVersion));
     }
 
+    /**
+     * Lazily configures and adds a {@link ProductDependency}.
+     */
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
-        ProductDependency dep = new ProductDependency();
-        ConfigureUtil.configureUsing(closure).execute(dep);
-        dep.isValid();
-        productDependencies.add(dep);
+        productDependencies.add(providerFactory.provider(() -> {
+            ProductDependency dep = new ProductDependency();
+            ConfigureUtil.configureUsing(closure).execute(dep);
+            dep.isValid();
+            return dep;
+        }));
     }
 
     public final Provider<Set<ProductId>> getIgnoredProductDependencies() {
