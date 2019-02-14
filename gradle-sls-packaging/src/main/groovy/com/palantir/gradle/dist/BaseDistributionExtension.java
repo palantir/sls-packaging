@@ -59,8 +59,8 @@ public class BaseDistributionExtension {
     private Configuration productDependenciesConfig;
 
     @Inject
-    public BaseDistributionExtension(Project project, ProviderFactory providerFactory) {
-        this.providerFactory = providerFactory;
+    public BaseDistributionExtension(Project project) {
+        providerFactory = project.getProviders();
         serviceGroup = project.getObjects().property(String.class);
         serviceName = project.getObjects().property(String.class);
         podName = project.getObjects().property(String.class);
