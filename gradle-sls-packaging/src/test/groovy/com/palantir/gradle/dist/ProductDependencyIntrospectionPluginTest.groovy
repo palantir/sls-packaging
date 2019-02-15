@@ -19,9 +19,9 @@ package com.palantir.gradle.dist
 import nebula.test.ProjectSpec
 import org.gradle.api.GradleException
 
-class GetMinimumVersionTest extends ProjectSpec {
+class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
     def setup() {
-        GetMinimumProductVersion.createGetMinimumProductVersion(project)
+        project.pluginManager.apply(ProductDependencyIntrospectionPlugin)
     }
 
     def "get version from lock file"() {
