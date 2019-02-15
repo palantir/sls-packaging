@@ -19,7 +19,7 @@ package com.palantir.gradle.dist;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
-public final class BasePlugin implements Plugin<Project> {
+public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         GetMinimumProductVersion.createGetMinimumProductVersion(project);
