@@ -15,7 +15,7 @@
  */
 package com.palantir.gradle.dist.pod;
 
-import com.palantir.gradle.dist.GetMinimumProductVersion;
+import com.palantir.gradle.dist.BasePlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.tasks.CreatePodYamlTask;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
@@ -41,7 +41,7 @@ public final class PodDistributionPlugin implements Plugin<Project> {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and "
                     + "'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.");
         }
-        GetMinimumProductVersion.createGetMinimumProductVersion(project);
+        project.getPluginManager().apply(BasePlugin.class);
         PodDistributionExtension distributionExtension = project.getExtensions().create(
                 "distribution", PodDistributionExtension.class, project);
 
