@@ -16,12 +16,93 @@
 
 package com.palantir.gradle.dist;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.palantir.sls.versions.SlsVersionMatcher;
+import groovy.lang.Closure;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.DependencyConstraint;
+import org.gradle.util.GFileUtils;
 
 public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
+
     @Override
     public void apply(Project project) {
-        GetMinimumProductVersion.createGetMinimumProductVersion(project);
+        createGetMinimumProductVersion(project);
+    }
+
+    public static void createGetMinimumProductVersion(Project project) {
+        project.getExtensions().getExtraProperties()
+                .set("getMinimumProductVersion", new Closure<String>(project, project) {
+
+                    public String doCall(Object moduleVersion) {
+                        List<String> strings = Splitter.on(':').splitToList(moduleVersion.toString());
+                        Preconditions.checkState(
+                                strings.size() == 2,
+                                "Expected 'group:name', found: %s",
+                                moduleVersion.toString());
+
+                        return getMinimumProductVersion(project, strings.get(0), strings.get(1));
+                    }
+                });
+    }
+
+    private static String getMinimumProductVersion(Project project, String group, String name) {
+        List<ProductDependency> dependencies = getAllProductDependencies(project);
+
+        Optional<ProductDependency> dependency = dependencies.stream()
+                .filter(dep -> dep.getProductGroup().equals(group) && dep.getProductName().equals(name))
+                .findAny();
+
+        return dependency
+                .orElseThrow(() -> new GradleException(
+                        String.format("Unable to find product dependency for '%s:%s'", group, name)))
+                .getMinimumVersion();
+    }
+
+    private static List<ProductDependency> getAllProductDependencies(Project project) {
+        File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
+        Preconditions.checkState(
+                Files.exists(lockFile.toPath()),
+                "%s does not exist. Run ./gradlew --write-locks to generate it.",
+                ProductDependencyLockFile.LOCK_FILE);
+
+        return ProductDependencyLockFile.fromString(
+                GFileUtils.readFile(lockFile), project.getVersion().toString());
+    }
+
+    static List<DependencyConstraint> createAllProductConstraints(Project project) {
+        List<ProductDependency> dependencies = getAllProductDependencies(project);
+        return dependencies.stream().map(dependency -> {
+            String coordinate = dependency.getProductGroup() + ":" + dependency.getProductName();
+            return project.getDependencies().getConstraints().create(coordinate, constraint -> {
+                constraint.version(version -> {
+                    SlsVersionMatcher matcher = SlsVersionMatcher.valueOf(dependency.getMaximumVersion());
+
+                    StringBuilder topRange = new StringBuilder();
+                    if (matcher.getMajorVersionNumber().isPresent()) {
+                        topRange.append(matcher.getMajorVersionNumber().getAsInt() + 1);
+                        if (matcher.getMinorVersionNumber().isPresent()) {
+                            topRange.append(".");
+                            topRange.append(matcher.getMinorVersionNumber().getAsInt() + 1);
+                            if (matcher.getPatchVersionNumber().isPresent()) {
+                                topRange.append(".");
+                                topRange.append(matcher.getPatchVersionNumber().getAsInt() + 1);
+                            }
+                        }
+                    }
+                    String range = "[" + dependency.getMinimumVersion() + "," + topRange + ")";
+
+                    version.require(range);
+                });
+            });
+        }).collect(Collectors.toList());
     }
 }
