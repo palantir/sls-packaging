@@ -33,19 +33,28 @@ import org.gradle.util.GFileUtils;
 
 public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
 
+    private static final String PRODUCT_DEPENDENCIES_CONFIGURATION = "productDependencies";
+
     @Override
     public void apply(Project project) {
         createGetMinimumProductVersion(project);
+
+        project.getConfigurations().register(PRODUCT_DEPENDENCIES_CONFIGURATION, conf -> {
+            conf.setCanBeResolved(false);
+            conf.setDescription("Exposes minimum, maximum versions of product dependencies as constraints");
+            conf.getDependencyConstraints().addAllLater(project.provider(() -> createAllProductConstraints(project)));
+        });
     }
 
-    public static void createGetMinimumProductVersion(Project project) {
-        project.getExtensions().getExtraProperties()
+    private static void createGetMinimumProductVersion(Project project) {
+        project
+                .getExtensions()
+                .getExtraProperties()
                 .set("getMinimumProductVersion", new Closure<String>(project, project) {
 
                     public String doCall(Object moduleVersion) {
                         List<String> strings = Splitter.on(':').splitToList(moduleVersion.toString());
-                        Preconditions.checkState(
-                                strings.size() == 2,
+                        Preconditions.checkState(strings.size() == 2,
                                 "Expected 'group:name', found: %s",
                                 moduleVersion.toString());
 
@@ -57,25 +66,25 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
     private static String getMinimumProductVersion(Project project, String group, String name) {
         List<ProductDependency> dependencies = getAllProductDependencies(project);
 
-        Optional<ProductDependency> dependency = dependencies.stream()
+        Optional<ProductDependency> dependency = dependencies
+                .stream()
                 .filter(dep -> dep.getProductGroup().equals(group) && dep.getProductName().equals(name))
                 .findAny();
 
         return dependency
-                .orElseThrow(() -> new GradleException(
-                        String.format("Unable to find product dependency for '%s:%s'", group, name)))
+                .orElseThrow(() -> new GradleException(String.format("Unable to find product dependency for '%s:%s'",
+                        group,
+                        name)))
                 .getMinimumVersion();
     }
 
     private static List<ProductDependency> getAllProductDependencies(Project project) {
         File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
-        Preconditions.checkState(
-                Files.exists(lockFile.toPath()),
+        Preconditions.checkState(Files.exists(lockFile.toPath()),
                 "%s does not exist. Run ./gradlew --write-locks to generate it.",
                 ProductDependencyLockFile.LOCK_FILE);
 
-        return ProductDependencyLockFile.fromString(
-                GFileUtils.readFile(lockFile), project.getVersion().toString());
+        return ProductDependencyLockFile.fromString(GFileUtils.readFile(lockFile), project.getVersion().toString());
     }
 
     static List<DependencyConstraint> createAllProductConstraints(Project project) {
