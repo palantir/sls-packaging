@@ -42,7 +42,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
         project.getConfigurations().register(PRODUCT_DEPENDENCIES_CONFIGURATION, conf -> {
             conf.setCanBeResolved(false);
             conf.setDescription("Exposes minimum, maximum versions of product dependencies as constraints");
-            conf.getDependencyConstraints().addAllLater(project.provider(() -> createAllProductConstraints(project)));
+            conf.getDependencyConstraints().addAll(createAllProductConstraints(project));
         });
     }
 
