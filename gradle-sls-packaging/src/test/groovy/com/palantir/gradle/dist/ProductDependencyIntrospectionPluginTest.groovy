@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+import com.google.common.collect.Iterables
 import nebula.test.ProjectSpec
 import org.gradle.api.GradleException
 
@@ -25,7 +26,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
     }
 
     def "get version from lock file"() {
-        project.file(ProductDependencyLockFile.LOCK_FILE).text = '''\
+        project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent()
@@ -39,7 +40,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
 
     def "resolves project versions into concrete version"() {
         project.version = "1.1.0"
-        project.file(ProductDependencyLockFile.LOCK_FILE).text = '''\
+        project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:test ($projectVersion, 1.x.x)
         '''.stripIndent()
@@ -61,7 +62,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
     }
 
     def "fails if dependency does not exist in lock file"() {
-        project.file(ProductDependencyLockFile.LOCK_FILE).text = '''\
+        project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent()
@@ -72,5 +73,29 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
         then:
         GradleException exception = thrown()
         exception.message.contains("Unable to find product dependency for 'com.palantir.other:test'")
+    }
+
+    def "adds product dependency constraints to configuration"() {
+        project.file("product-dependencies.lock").text = '''\
+        # Run ./gradlew --write-locks to regenerate this file
+        com.palantir.product:test (1.0.0, 1.x.x)
+        '''.stripIndent()
+        project.with {
+            configurations {
+                foo
+            }
+            dependencies {
+                foo configurations.productDependencies
+                foo 'com.palantir.product:test'
+            }
+        }
+
+        project.evaluate()
+
+        def result = project.configurations.foo.incoming.resolutionResult
+        expect:
+        def component = Iterables.getOnlyElement(result.allComponents - result.root)
+        component.id.toString() == 'com.palantir.product:test'
+        component.moduleVersion.version == '1.0.0'
     }
 }
