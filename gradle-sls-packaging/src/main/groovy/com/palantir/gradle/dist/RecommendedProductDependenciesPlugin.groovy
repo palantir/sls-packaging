@@ -29,7 +29,7 @@ class RecommendedProductDependenciesPlugin implements Plugin<Project> {
     void apply(Project project) {
         project.plugins.apply('java')
         RecommendedProductDependenciesExtension ext = project.extensions.create(
-                'recommendedProductDependencies', RecommendedProductDependenciesExtension)
+                'recommendedProductDependencies', RecommendedProductDependenciesExtension, project)
 
         project.afterEvaluate {
             ext.recommendedProductDependencies.each { recommendedProductDependency ->
