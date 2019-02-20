@@ -193,6 +193,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate(p -> runTask.configure(task -> {
             task.setClasspath(project.files(
                     jarTask.get().getArchivePath(), p.getConfigurations().getByName("runtimeClasspath")));
+            task.setMain(distributionExtension.getMainClass().get());
+            task.setArgs(distributionExtension.getArgs().get());
+            task.setJvmArgs(distributionExtension.getDefaultJvmOpts().get());
         }));
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
