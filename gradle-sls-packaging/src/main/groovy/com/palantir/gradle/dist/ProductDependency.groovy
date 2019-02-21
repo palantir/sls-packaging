@@ -17,7 +17,8 @@
 package com.palantir.gradle.dist
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.common.base.Preconditions
+import com.palantir.logsafe.Preconditions
+import com.palantir.logsafe.SafeArg
 import com.palantir.sls.versions.OrderableSlsVersion
 import com.palantir.sls.versions.SlsVersion
 import com.palantir.sls.versions.SlsVersionMatcher
@@ -79,27 +80,31 @@ class ProductDependency implements Serializable {
 
         Preconditions.checkArgument(
                 minimumVersion != maximumVersion,
-                "minimumVersion and maximumVersion must be different in product dependency on %s. This prevents a "
+                "minimumVersion and maximumVersion must be different. This prevents a "
                         + "known antipattern where services declare themselves to require a lockstep upgrade.",
-                productName)
+                SafeArg.of("productGroup", productGroup),
+                SafeArg.of("productName", productName))
 
         Preconditions.checkArgument(
                 maximum.compare(minimum) >= 0,
-                "Minimum version (%s) is greater than maximum version (%s)",
-                minimumVersion, maximumVersion)
+                "Minimum version is greater than maximum version",
+                SafeArg.of("minimumVersion", minimumVersion),
+                SafeArg.of("maximumVersion", maximumVersion))
 
         if (recommended.isPresent()) {
             Preconditions.checkArgument(
                     VersionComparator.INSTANCE.compare(recommended.get(), minimum) >= 0,
-                    "Recommended version (%s) is not greater than minimum version (%s)",
-                    recommendedVersion, minimumVersion)
+                    "Recommended version is not greater than minimum version",
+                    SafeArg.of("recommendedVersion", recommendedVersion),
+                    SafeArg.of("minimumVersion", minimumVersion))
         }
 
         if (recommended.isPresent()) {
             Preconditions.checkArgument(
                     maximum.compare(recommended.get()) >= 0,
-                    "Recommended version (%s) is greater than maximum version (%s)",
-                    recommendedVersion, maximumVersion)
+                    "Recommended version is greater than maximum version",
+                    SafeArg.of("recommendedVersion", recommendedVersion),
+                    SafeArg.of("maximumVersion", maximumVersion))
         }
     }
 
@@ -110,7 +115,10 @@ class ProductDependency implements Serializable {
 
         Preconditions.checkArgument(
                 SlsVersion.check(recommendedVersion),
-                "recommendedVersion must be a valid SLS version: " + recommendedVersion)
+                "recommendedVersion must be a valid SLS version",
+                SafeArg.of("recommendedVersion", recommendedVersion),
+                SafeArg.of("productGroup", productGroup),
+                SafeArg.of("productName", productName))
 
         return OrderableSlsVersion.safeValueOf(recommendedVersion)
     }
@@ -118,11 +126,15 @@ class ProductDependency implements Serializable {
     OrderableSlsVersion parseMinimum() {
         Preconditions.checkNotNull(minimumVersion, "minimumVersion must be specified")
 
+        def result = OrderableSlsVersion.safeValueOf(minimumVersion)
         Preconditions.checkArgument(
-                OrderableSlsVersion.check(minimumVersion),
-                "minimumVersion must be an orderable SLS version: " + minimumVersion)
+                result.isPresent(),
+                "minimumVersion must be an orderable SLS version",
+                SafeArg.of("minimumVersion", minimumVersion),
+                SafeArg.of("productGroup", productGroup),
+                SafeArg.of("productName", productName))
 
-        return OrderableSlsVersion.valueOf(minimumVersion)
+        return result.get()
     }
 
     SlsVersionMatcher parseMaximum() {
@@ -131,18 +143,21 @@ class ProductDependency implements Serializable {
         def maximumOpt = SlsVersionMatcher.safeValueOf(maximumVersion)
         Preconditions.checkArgument(
                 maximumOpt.isPresent(),
-                "maximumVersion must be a valid version matcher: " + maximumVersion)
+                "maximumVersion must be a valid version matcher",
+                SafeArg.of("maximumVersion", maximumVersion),
+                SafeArg.of("productGroup", productGroup),
+                SafeArg.of("productName", productName))
 
         return maximumOpt.get()
     }
 
     @Override
-    public String toString() {
+    String toString() {
         return String.format("%s:%s(min: %s, recommended: %s, max: %s)",
                 productGroup,
                 productName,
                 minimumVersion,
                 recommendedVersion,
-                maximumVersion);
+                maximumVersion)
     }
 }
