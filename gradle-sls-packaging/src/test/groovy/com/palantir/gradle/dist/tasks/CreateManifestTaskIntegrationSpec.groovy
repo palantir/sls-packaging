@@ -515,6 +515,50 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
     }
 
+    def 'merging two dirty product dependencies is not acceptable'() {
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = '0.0.0.dirty'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+
+        helper.addSubproject("other-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'other-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+                
+                // Incompatible with the 0.0.0.dirty from the classpath
+                productDependency('com.palantir.group', 'foo-service', '1.0.0.dirty', '1.x.x')
+            }
+        """.stripIndent())
+
+        when:
+        def result = runTasksAndFail('--write-locks')
+
+        then:
+        result.output.contains('Could not determine minimum version among two non-orderable minimum versions')
+    }
+
     def "check depends on createManifest"() {
         when:
         def result = runTasks(':check')
