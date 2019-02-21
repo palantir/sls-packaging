@@ -369,7 +369,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         setup:
         buildFile << """
         allprojects {
-            project.version = '1.0.0-rc1.dirty'
+            project.version = '1.0.0-rc1'
         }
         """
         helper.addSubproject("foo-api", """
@@ -410,7 +410,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         setup:
         buildFile << """
         allprojects {
-            project.version = '1.0.0-rc1.dirty'
+            project.version = '1.0.0-rc1'
         }
         """
         helper.addSubproject("foo-api", """
