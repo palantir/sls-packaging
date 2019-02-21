@@ -68,7 +68,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         gc.set(new GcProfile.Throughput());
 
         args = objectFactory.listProperty(String.class);
-        // TODO(dfox): use listPropert(..).empty() when a minimum Gradle of 5.0 is acceptable
+        // TODO(dfox): use listProperty(..).empty() when a minimum Gradle of 5.0 is acceptable
         args.set(Collections.emptyList());
 
         checkArgs = objectFactory.listProperty(String.class);
