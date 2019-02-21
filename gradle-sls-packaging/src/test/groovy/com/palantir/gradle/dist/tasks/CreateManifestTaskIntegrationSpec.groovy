@@ -22,6 +22,7 @@ import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.Unroll
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -365,11 +366,12 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         !fileExists('product-dependencies.lock')
     }
 
-    def 'filters out recommended product dependency on self'() {
+    @Unroll
+    def 'filters out recommended product dependency on self (version: #projectVersion)'() {
         setup:
         buildFile << """
         allprojects {
-            project.version = '1.0.0-rc1.dirty'
+            project.version = '$projectVersion'
         }
         """
         helper.addSubproject("foo-api", """
@@ -404,13 +406,17 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then: 'foo-server does not include transitively discovered self dependency'
         !fileExists('foo-server/product-dependencies.lock')
+
+        where:
+        projectVersion << ['1.0.0-rc1.dirty', '1.0.0']
     }
 
-    def 'masks minimum version in product dependency that is published by this repo if same as project version'() {
+    @Unroll
+    def 'masks minimum version in product dependency that is published by this repo if same as project version (#projectVersion)'() {
         setup:
         buildFile << """
         allprojects {
-            project.version = '1.0.0-rc1.dirty'
+            project.version = '$projectVersion'
         }
         """
         helper.addSubproject("foo-api", """
@@ -454,6 +460,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service ($projectVersion, 1.x.x)'
+
+        where:
+        projectVersion << ['1.0.0-rc1.dirty', '1.0.0']
     }
 
     def 'does not mask minimum version in product dependency that is published by this repo if different from project version'() {
