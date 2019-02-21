@@ -74,7 +74,7 @@ class ProductDependency implements Serializable {
     def isValid() {
         Preconditions.checkNotNull(productGroup, "productGroup must be specified")
         Preconditions.checkNotNull(productName, "productName must be specified")
-        OrderableSlsVersion minimum = parseMinimum()
+        Optional<OrderableSlsVersion> minimum = parseMinimum()
         Optional<OrderableSlsVersion> recommended = parseRecommended()
         SlsVersionMatcher maximum = parseMaximum()
 
@@ -85,15 +85,18 @@ class ProductDependency implements Serializable {
                 SafeArg.of("productGroup", productGroup),
                 SafeArg.of("productName", productName))
 
-        Preconditions.checkArgument(
-                maximum.compare(minimum) >= 0,
-                "Minimum version is greater than maximum version",
-                SafeArg.of("minimumVersion", minimumVersion),
-                SafeArg.of("maximumVersion", maximumVersion))
-
-        if (recommended.isPresent()) {
+        if (minimum.isPresent()) {
             Preconditions.checkArgument(
-                    VersionComparator.INSTANCE.compare(recommended.get(), minimum) >= 0,
+                    maximum.compare(minimum.get()) >= 0,
+                    "Minimum version is greater than maximum version",
+                    SafeArg.of("minimumVersion", minimumVersion),
+                    SafeArg.of("maximumVersion", maximumVersion))
+        }
+
+        // Minimum can be unset here if the minimumVersion is a non-orderable SLS version, e.g. "1.0.0.dirty"
+        if (recommended.isPresent() && minimum.isPresent()) {
+            Preconditions.checkArgument(
+                    VersionComparator.INSTANCE.compare(recommended.get(), minimum.get()) >= 0,
                     "Recommended version is not greater than minimum version",
                     SafeArg.of("recommendedVersion", recommendedVersion),
                     SafeArg.of("minimumVersion", minimumVersion))
@@ -123,18 +126,17 @@ class ProductDependency implements Serializable {
         return OrderableSlsVersion.safeValueOf(recommendedVersion)
     }
 
-    OrderableSlsVersion parseMinimum() {
+    Optional<OrderableSlsVersion> parseMinimum() {
         Preconditions.checkNotNull(minimumVersion, "minimumVersion must be specified")
 
-        def result = OrderableSlsVersion.safeValueOf(minimumVersion)
         Preconditions.checkArgument(
-                result.isPresent(),
-                "minimumVersion must be an orderable SLS version",
+                SlsVersion.check(minimumVersion),
+                "minimumVersion must be an SLS version",
                 SafeArg.of("minimumVersion", minimumVersion),
                 SafeArg.of("productGroup", productGroup),
                 SafeArg.of("productName", productName))
 
-        return result.get()
+        return OrderableSlsVersion.safeValueOf(minimumVersion)
     }
 
     SlsVersionMatcher parseMaximum() {
