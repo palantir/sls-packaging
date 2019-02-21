@@ -55,6 +55,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final ProviderFactory providerFactory;
+    private final String projectName;
 
     // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
     private Map<String, Object> manifestExtensions;
@@ -75,6 +76,8 @@ public class BaseDistributionExtension {
         podName.set(project.provider(project::getName));
 
         manifestExtensions = Maps.newHashMap();
+
+        projectName = project.getName();
     }
 
     public final Provider<String> getDistributionServiceGroup() {
@@ -191,10 +194,9 @@ public class BaseDistributionExtension {
                 dep.isValid();
             } catch (Exception e) {
                 throw new SafeRuntimeException(
-                        "Invalid product dependency declared in project",
+                        "Error validating product dependency declared from project",
                         e,
-                        SafeArg.of("serviceGroup", serviceGroup.get()),
-                        SafeArg.of("serviceName", serviceName.get()));
+                        SafeArg.of("projectName", projectName));
             }
             return dep;
         }));
