@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Streams;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
@@ -43,8 +44,7 @@ public final class ProductDependencyMerger {
                 .orElseThrow(() -> new RuntimeException("Impossible"));
 
         SlsVersionMatcher maximumVersion = Stream
-                .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
-                .map(SlsVersionMatcher::valueOf)
+                .of(dep1.parseMaximum(), dep2.parseMaximum())
                 .min(SlsVersionMatcher.MATCHER_COMPARATOR)
                 .orElseThrow(() -> new RuntimeException("Impossible"));
 
@@ -57,9 +57,8 @@ public final class ProductDependencyMerger {
 
         // Recommended version. Check that it matches the inferred min and max.
         Optional<OrderableSlsVersion> recommendedVersion = Stream
-                .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
-                .filter(Objects::nonNull)
-                .flatMap(version -> OrderableSlsVersion.safeValueOf(version).map(Stream::of).orElse(Stream.empty()))
+                .of(dep1.parseRecommended(), dep2.parseRecommended())
+                .flatMap(Streams::stream)
                 .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
                         && satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
