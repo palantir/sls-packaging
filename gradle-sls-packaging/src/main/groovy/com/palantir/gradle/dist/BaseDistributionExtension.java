@@ -183,8 +183,11 @@ public class BaseDistributionExtension {
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         productDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
-            ConfigureUtil.configureUsing(closure).execute(dep);
             try {
+                ConfigureUtil.configureUsing(closure).execute(dep);
+                if (dep.getMinimumVersion() != null && dep.getMaximumVersion() == null) {
+                    dep.setMaximumVersion(generateMaxVersion(dep.getMinimumVersion()));
+                }
                 dep.isValid();
             } catch (Exception e) {
                 throw new SafeRuntimeException(
