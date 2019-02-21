@@ -103,9 +103,9 @@ class ProductDependency implements Serializable {
         }
     }
 
-    private Optional<OrderableSlsVersion> parseRecommended() {
+    Optional<OrderableSlsVersion> parseRecommended() {
         if (recommendedVersion == null) {
-            return Optional.empty();
+            return Optional.empty()
         }
 
         Preconditions.checkArgument(
@@ -115,7 +115,7 @@ class ProductDependency implements Serializable {
         return OrderableSlsVersion.safeValueOf(recommendedVersion)
     }
 
-    private OrderableSlsVersion parseMinimum() {
+    OrderableSlsVersion parseMinimum() {
         Preconditions.checkNotNull(minimumVersion, "minimumVersion must be specified")
 
         Preconditions.checkArgument(
@@ -125,7 +125,7 @@ class ProductDependency implements Serializable {
         return OrderableSlsVersion.valueOf(minimumVersion)
     }
 
-    private SlsVersionMatcher parseMaximum() {
+    SlsVersionMatcher parseMaximum() {
         Preconditions.checkNotNull(maximumVersion, "maximumVersion must be specified")
 
         def maximumOpt = SlsVersionMatcher.safeValueOf(maximumVersion)

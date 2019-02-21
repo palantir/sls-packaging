@@ -38,10 +38,9 @@ public final class ProductDependencyMerger {
                 dep1.getProductName(), dep2.getProductName()));
         }
 
-        OrderableSlsVersion minimumVersion = Stream.of(dep1.getMinimumVersion(), dep2.getMinimumVersion())
-                .flatMap(version -> OrderableSlsVersion.safeValueOf(version).map(Stream::of).orElse(Stream.empty()))
+        OrderableSlsVersion minimumVersion = Stream.of(dep1.parseMinimum(), dep2.parseMinimum())
                 .max(VersionComparator.INSTANCE)
-                .orElseThrow(() -> new RuntimeException("Unable to determine minimum version"));
+                .orElseThrow(() -> new RuntimeException("Impossible"));
 
         SlsVersionMatcher maximumVersion = Stream
                 .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
