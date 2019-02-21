@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -53,23 +54,33 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     @Inject
     public JavaServiceDistributionExtension(Project project) {
         super(project);
-
         objectFactory = project.getObjects();
         mainClass = objectFactory.property(String.class);
         javaHome = objectFactory.property(String.class);
+
         addJava8GcLogging = objectFactory.property(Boolean.class);
         addJava8GcLogging.set(false);
+
         enableManifestClasspath = objectFactory.property(Boolean.class);
         enableManifestClasspath.set(false);
+
         gc = objectFactory.property(GcProfile.class);
         gc.set(new GcProfile.Throughput());
+
         args = objectFactory.listProperty(String.class);
+        // TODO(dfox): use listPropert(..).empty() when a minimum Gradle of 5.0 is acceptable
+        args.set(Collections.emptyList());
+
         checkArgs = objectFactory.listProperty(String.class);
+        checkArgs.set(Collections.emptyList());
+
         defaultJvmOpts = objectFactory.listProperty(String.class);
+        defaultJvmOpts.set(Collections.emptyList());
+
         excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
-        env = Maps.newHashMap();
 
+        env = Maps.newHashMap();
         setProductType(ProductType.SERVICE_V1);
     }
 

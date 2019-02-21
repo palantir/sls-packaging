@@ -84,4 +84,17 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.excludeFromVar.get() == ['c', 'd']
         ext.env == ['foo': 'bar']
     }
+
+    def 'sensible defaults' () {
+        when:
+        def ext = new JavaServiceDistributionExtension(project)
+
+        then:
+        ext.getAddJava8GcLogging().get() == false
+        ext.getEnableManifestClasspath().get() == false
+        ext.getArgs().get() == []
+        ext.getCheckArgs().get() == []
+        ext.getDefaultJvmOpts().get() == []
+        ext.getExcludeFromVar().get() == ['log', 'run']
+    }
 }
