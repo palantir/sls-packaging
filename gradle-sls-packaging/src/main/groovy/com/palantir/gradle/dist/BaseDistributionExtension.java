@@ -20,6 +20,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.palantir.logsafe.SafeArg;
+import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
@@ -181,8 +183,16 @@ public class BaseDistributionExtension {
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         productDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
-            ConfigureUtil.configureUsing(closure).execute(dep);
-            dep.isValid();
+            try {
+                ConfigureUtil.configureUsing(closure).execute(dep);
+                dep.isValid();
+            } catch (Exception e) {
+                throw new SafeRuntimeException(
+                        "Invalid product dependency declared in project",
+                        e,
+                        SafeArg.of("serviceGroup", serviceGroup),
+                        SafeArg.of("serviceName", serviceName));
+            }
             return dep;
         }));
     }
