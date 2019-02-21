@@ -343,7 +343,7 @@ public class CreateManifestTask extends DefaultTask {
                                 recommendedDep.getMinimumVersion(),
                                 recommendedDep.getMaximumVersion(),
                                 recommendedDep.getRecommendedVersion()))
-                        .peek(productDependency -> log.debug(
+                        .peek(productDependency -> log.info(
                                 "Product dependency recommendation made by artifact '{}', file '{}', dependency "
                                 + "recommendation '{}'",
                                 coord,
