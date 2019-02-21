@@ -193,8 +193,8 @@ public class BaseDistributionExtension {
                 throw new SafeRuntimeException(
                         "Invalid product dependency declared in project",
                         e,
-                        SafeArg.of("serviceGroup", serviceGroup),
-                        SafeArg.of("serviceName", serviceName));
+                        SafeArg.of("serviceGroup", serviceGroup.get()),
+                        SafeArg.of("serviceName", serviceName.get()));
             }
             return dep;
         }));
