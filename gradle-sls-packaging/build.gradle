@@ -42,18 +42,6 @@ pluginBundle {
             displayName = 'Creates SLS pod distributions'
         }
     }
-
-    // Fix for publishPlugins not working with dependency recommenders (nebula, in our case).
-    // Gradle suggests the 'withDependencies' approach in the following workaround:
-    // http://plugins.gradle.org/help/plugin/missing-dependency-version
-    // TODO(dsanduleac): this is bad and we want to remove it
-    withDependencies {
-        it.each { dep ->
-            if (!dep.version) {
-                dep.version = dependencyRecommendations.getRecommendedVersion(dep.groupId, dep.artifactId)
-            }
-        }
-    }
 }
 
 def yourkitVersion = "2017.02-b75"
