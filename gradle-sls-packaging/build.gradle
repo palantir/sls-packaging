@@ -50,7 +50,7 @@ pluginBundle {
     withDependencies {
         it.each { dep ->
             if (!dep.version) {
-                dep.version = dependencyRecommendations.getRecommendedVersion(dep.groupId, dep.artifactId)
+                dep.version = project.getVersion("${dep.groupId}:${dep.artifactId}")
             }
         }
     }
