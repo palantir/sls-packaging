@@ -17,7 +17,11 @@
 package com.palantir.gradle.dist;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Streams;
+import com.palantir.logsafe.SafeArg;
+import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import com.palantir.sls.versions.OrderableSlsVersion;
+import com.palantir.sls.versions.SlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Objects;
@@ -38,31 +42,43 @@ public final class ProductDependencyMerger {
                 dep1.getProductName(), dep2.getProductName()));
         }
 
-        OrderableSlsVersion minimumVersion = Stream.of(dep1.getMinimumVersion(), dep2.getMinimumVersion())
-                .flatMap(version -> OrderableSlsVersion.safeValueOf(version).map(Stream::of).orElse(Stream.empty()))
-                .max(VersionComparator.INSTANCE)
-                .orElseThrow(() -> new RuntimeException("Unable to determine minimum version"));
+        // This could be empty if both of the versions are dirty
+        Optional<OrderableSlsVersion> minimumVersionOrderable = Stream.of(dep1.parseMinimum(), dep2.parseMinimum())
+                .flatMap(Streams::stream)
+                .max(VersionComparator.INSTANCE);
+
+        SlsVersion minimumVersion;
+        // If it's dirty or otherwise non-orderable, try to see if they're the same version and allow that.
+        if (Objects.equals(dep1.getMinimumVersion(), dep2.getMinimumVersion())) {
+            minimumVersion = SlsVersion.valueOf(dep1.getMinimumVersion());
+        } else {
+            minimumVersion = minimumVersionOrderable.orElseThrow(() -> new SafeRuntimeException(
+                    "Could not determine minimum version among two non-orderable minimum versions",
+                    SafeArg.of("dep1", dep1),
+                    SafeArg.of("dep2", dep2)));
+        }
 
         SlsVersionMatcher maximumVersion = Stream
-                .of(dep1.getMaximumVersion(), dep2.getMaximumVersion())
-                .map(SlsVersionMatcher::valueOf)
+                .of(dep1.parseMaximum(), dep2.parseMaximum())
                 .min(SlsVersionMatcher.MATCHER_COMPARATOR)
                 .orElseThrow(() -> new RuntimeException("Impossible"));
 
         // Sanity check: min has to be <= max
         Preconditions.checkArgument(
-                satisfiesMaxVersion(maximumVersion, minimumVersion),
-                "Could not merge recommended product dependencies as their version ranges do not overlap: '%s' "
-                        + "and '%s'. Merged min: %s, merged max: %s",
-                dep1, dep2, minimumVersion, maximumVersion);
+                minimumVersionOrderable.map(mv -> satisfiesMaxVersion(maximumVersion, mv)).orElse(true),
+                "Could not merge recommended product dependencies as their version ranges do not overlap",
+                SafeArg.of("dep1", dep1),
+                SafeArg.of("dep2", dep2),
+                SafeArg.of("mergedMinimum", minimumVersionOrderable),
+                SafeArg.of("mergedMaximum", maximumVersion));
 
         // Recommended version. Check that it matches the inferred min and max.
         Optional<OrderableSlsVersion> recommendedVersion = Stream
-                .of(dep1.getRecommendedVersion(), dep2.getRecommendedVersion())
-                .filter(Objects::nonNull)
-                .flatMap(version -> OrderableSlsVersion.safeValueOf(version).map(Stream::of).orElse(Stream.empty()))
-                .filter(version -> VersionComparator.INSTANCE.compare(version, minimumVersion) >= 0
-                        && satisfiesMaxVersion(maximumVersion, version))
+                .of(dep1.parseRecommended(), dep2.parseRecommended())
+                .flatMap(Streams::stream)
+                .filter(version -> minimumVersionOrderable
+                        .map(mv -> VersionComparator.INSTANCE.compare(version, mv) >= 0).orElse(true))
+                .filter(version -> satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
 
         ProductDependency result = new ProductDependency();
