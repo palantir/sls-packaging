@@ -188,6 +188,9 @@ public class BaseDistributionExtension {
             ProductDependency dep = new ProductDependency();
             try {
                 ConfigureUtil.configureUsing(closure).execute(dep);
+                if (dep.getMinimumVersion() != null && dep.getMaximumVersion() == null) {
+                    dep.setMaximumVersion(generateMaxVersion(dep.getMinimumVersion()));
+                }
                 dep.isValid();
             } catch (Exception e) {
                 throw new SafeRuntimeException(
