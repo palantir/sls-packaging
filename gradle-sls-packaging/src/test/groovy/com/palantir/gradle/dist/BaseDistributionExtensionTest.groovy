@@ -119,6 +119,25 @@ class BaseDistributionExtensionTest extends Specification {
         productDependencies.get(0).recommendedVersion == "1.2.4"
     }
 
+    def "productDependencies from closure infers max version"() {
+        when:
+        def ext = new BaseDistributionExtension(project)
+        ext.productDependency {
+            productGroup = 'group'
+            productName = 'name'
+            minimumVersion = '2.5.1'
+        }
+
+        then:
+        def productDependencies = ext.getProductDependencies().get()
+        productDependencies.size() == 1
+        productDependencies.get(0).productGroup == "group"
+        productDependencies.get(0).productName == "name"
+        productDependencies.get(0).minimumVersion == "2.5.1"
+        productDependencies.get(0).maximumVersion == "2.x.x"
+        productDependencies.get(0).recommendedVersion == null
+    }
+
     def "productDependency is lazy, not evaluated at configuration-time"() {
         when:
         def ext = new BaseDistributionExtension(project)
