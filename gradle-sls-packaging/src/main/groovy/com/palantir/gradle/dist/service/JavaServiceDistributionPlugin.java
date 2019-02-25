@@ -43,8 +43,8 @@ import org.gradle.util.GFileUtils;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER_BINARIES = "goJavaLauncherBinaries";
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.5.1";
-    private static final String GO_INIT = "com.palantir.launching:go-init:1.5.1";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.6.1";
+    private static final String GO_INIT = "com.palantir.launching:go-init:1.6.1";
     public static final String GROUP_NAME = "Distribution";
     private static final String SLS_CONFIGURATION_NAME = "sls";
 
