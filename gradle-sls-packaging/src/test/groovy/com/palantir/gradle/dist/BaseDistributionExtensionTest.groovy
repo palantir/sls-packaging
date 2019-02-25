@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist
 
-
+import com.palantir.logsafe.exceptions.SafeRuntimeException
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
@@ -136,6 +136,22 @@ class BaseDistributionExtensionTest extends Specification {
         productDependencies.get(0).minimumVersion == "2.5.1"
         productDependencies.get(0).maximumVersion == "2.x.x"
         productDependencies.get(0).recommendedVersion == null
+    }
+
+    def "productDependencies from closure fails if no minimum version"() {
+        def ext = new BaseDistributionExtension(project)
+        ext.productDependency {
+            productGroup = 'group'
+            productName = 'name'
+        }
+
+        when:
+        ext.getProductDependencies().get()
+
+        then:
+        def ex = thrown(SafeRuntimeException)
+        ex.cause != null
+        ex.cause.message.contains("minimumVersion must be specified")
     }
 
     def "productDependency is lazy, not evaluated at configuration-time"() {
