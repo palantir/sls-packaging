@@ -22,6 +22,7 @@ import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.Unroll
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
@@ -365,11 +366,12 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         !fileExists('product-dependencies.lock')
     }
 
-    def 'filters out recommended product dependency on self'() {
+    @Unroll
+    def 'filters out recommended product dependency on self (version: #projectVersion)'() {
         setup:
         buildFile << """
         allprojects {
-            project.version = '1.0.0-rc1.dirty'
+            project.version = '$projectVersion'
         }
         """
         helper.addSubproject("foo-api", """
@@ -404,13 +406,17 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then: 'foo-server does not include transitively discovered self dependency'
         !fileExists('foo-server/product-dependencies.lock')
+
+        where:
+        projectVersion << ['1.0.0-rc1.dirty', '1.0.0']
     }
 
-    def 'masks minimum version in product dependency that is published by this repo if same as project version'() {
+    @Unroll
+    def 'masks minimum version in product dependency that is published by this repo if same as project version (#projectVersion)'() {
         setup:
         buildFile << """
         allprojects {
-            project.version = '1.0.0-rc1.dirty'
+            project.version = '$projectVersion'
         }
         """
         helper.addSubproject("foo-api", """
@@ -454,6 +460,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service ($projectVersion, 1.x.x)'
+
+        where:
+        projectVersion << ['1.0.0-rc1.dirty', '1.0.0']
     }
 
     def 'does not mask minimum version in product dependency that is published by this repo if different from project version'() {
@@ -504,6 +513,50 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
+    }
+
+    def 'merging two dirty product dependencies is not acceptable'() {
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0-rc1.dirty'
+        }
+        """
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = '0.0.0.dirty'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+
+        helper.addSubproject("other-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'other-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+                
+                // Incompatible with the 0.0.0.dirty from the classpath
+                productDependency('com.palantir.group', 'foo-service', '1.0.0.dirty', '1.x.x')
+            }
+        """.stripIndent())
+
+        when:
+        def result = runTasksAndFail('--write-locks')
+
+        then:
+        result.output.contains('Could not determine minimum version among two non-orderable minimum versions')
     }
 
     def "check depends on createManifest"() {
