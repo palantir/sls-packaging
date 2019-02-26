@@ -16,6 +16,7 @@ dependencies {
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-guava"
     compile 'com.palantir.sls.versions:sls-versions'
+    compile 'com.palantir.safe-logging:preconditions'
 
     testCompile gradleTestKit()
     testCompile 'com.netflix.nebula:nebula-test'
