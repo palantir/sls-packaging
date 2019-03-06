@@ -602,6 +602,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         then:
         result.task(":foo-server:createManifest").outcome == TaskOutcome.SUCCESS
         result.task(':foo-api:jar') == null
+        result.tasks.size() == 1
     }
 
     def "createManifest discovers in repo product dependencies"() {
