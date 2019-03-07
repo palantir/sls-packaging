@@ -315,7 +315,7 @@ public class CreateManifestTask extends DefaultTask {
                 .flatMap(artifact -> {
                     String artifactName = artifact.getId().getDisplayName();
                     ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-                    Optional<String> pdeps = Optional.empty();
+                    Optional<String> pdeps;
 
                     // Extract product dependencies directly from Jar task for in project dependencies
                     if (id instanceof ProjectComponentIdentifier) {
