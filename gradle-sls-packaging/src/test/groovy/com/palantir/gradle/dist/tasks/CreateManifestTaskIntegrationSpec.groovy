@@ -661,6 +661,68 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         ]
     }
 
+    def "createManifest discovers transitive in repo dependencies"() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0'
+            group "com.palantir.group"
+        }
+        """
+        helper.addSubproject("bar-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'bar-service'
+                    minimumVersion = '0.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("bar-lib", """
+            apply plugin: 'java'
+            dependencies {
+                compile project(':bar-api')
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
+            dependencies {
+                compile project(':bar-lib')
+            }
+
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        when:
+        def result = runTasks('foo-server:createManifest', '--write-locks')
+
+        then:
+        result.task(":foo-server:createManifest").outcome == TaskOutcome.SUCCESS
+        result.task(':bar-api:jar') == null
+
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("foo-server/build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "com.palantir.group",
+                        "product-name"       : "bar-service",
+                        "minimum-version"    : "0.0.0",
+                        "recommended-version": "1.0.0",
+                        "maximum-version"    : "1.x.x",
+                ],
+        ]
+    }
+
     def "check depends on createManifest"() {
         when:
         def result = runTasks(':check')
