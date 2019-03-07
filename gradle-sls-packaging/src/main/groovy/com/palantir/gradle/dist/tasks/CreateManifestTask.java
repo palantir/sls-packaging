@@ -56,7 +56,6 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.artifacts.result.ComponentResult;
@@ -67,7 +66,6 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
-import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
@@ -313,122 +311,85 @@ public class CreateManifestTask extends DefaultTask {
 
     private Map<ProductId, ProductDependency> discoverProductDependencies() {
         Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
-        Stream.concat(
-                discoverProjectProductDependencies(productDependenciesConfig.get()),
-                discoverExternalProductDependencies(productDependenciesConfig.get()))
+        productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
+                .flatMap(artifact -> {
+                    String artifactName = artifact.getId().getDisplayName();
+                    ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+                    Optional<String> pdeps;
+
+                    // Extract product dependencies directly from Jar task for in project dependencies
+                    if (id instanceof ProjectComponentIdentifier) {
+                        Project dependencyProject = getProject().getRootProject()
+                                .project(((ProjectComponentIdentifier) id).getProjectPath());
+                        Jar jar = (Jar) dependencyProject
+                                .getTasks()
+                                .getByName(JavaPlugin.JAR_TASK_NAME);
+
+                        pdeps = Optional.ofNullable(
+                                jar.getManifest().getAttributes().get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
+                                .map(Object::toString);
+                    } else {
+                        if (!artifact.getFile().exists()) {
+                            log.debug("Artifact did not exist: {}", artifact.getFile());
+                            return Stream.empty();
+                        } else if (!com.google.common.io.Files.getFileExtension(
+                                artifact.getFile().getName()).equals("jar")) {
+                            log.debug("Artifact is not jar: {}", artifact.getFile());
+                            return Stream.empty();
+                        }
+
+                        Manifest manifest;
+                        try {
+                            ZipFile zipFile = new ZipFile(artifact.getFile());
+                            ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
+                            if (manifestEntry == null) {
+                                log.debug("Manifest file does not exist in jar for '${coord}'");
+                                return Stream.empty();
+                            }
+                            manifest = new Manifest(zipFile.getInputStream(manifestEntry));
+                        } catch (IOException e) {
+                            log.warn("IOException encountered when processing artifact '{}', file '{}', {}",
+                                    artifactName, artifact.getFile(), e);
+                            return Stream.empty();
+                        }
+
+                        pdeps = Optional.ofNullable(
+                                manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
+                    }
+                    if (!pdeps.isPresent()) {
+                        log.debug("No product dependency found for artifact '{}', file '{}'",
+                                artifactName, artifact.getFile());
+                        return Stream.empty();
+                    }
+
+                    try {
+                        RecommendedProductDependencies recommendedDeps =
+                                jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
+                        return recommendedDeps.recommendedProductDependencies().stream()
+                                .map(recommendedDep -> new ProductDependency(
+                                        recommendedDep.getProductGroup(),
+                                        recommendedDep.getProductName(),
+                                        recommendedDep.getMinimumVersion(),
+                                        recommendedDep.getMaximumVersion(),
+                                        recommendedDep.getRecommendedVersion()))
+                                .peek(productDependency -> log.info(
+                                        "Product dependency recommendation made by artifact '{}', file '{}', "
+                                                + "dependency recommendation '{}'",
+                                        artifactName,
+                                        artifact,
+                                        productDependency));
+                    } catch (IOException | IllegalArgumentException e) {
+                        log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'",
+                                artifactName, artifact, e);
+                        return Stream.empty();
+                    }
+                })
                 .filter(this::isNotSelfProductDependency)
                 .forEach(productDependency -> discoveredProductDependencies.merge(
                         new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
                         productDependency,
                         (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
         return discoveredProductDependencies;
-    }
-
-    private Stream<ProductDependency> discoverProjectProductDependencies(Configuration config) {
-        return config.getAllDependencies().stream()
-                .flatMap(dependency -> {
-                    if (dependency instanceof ProjectDependency) {
-                        Project dependencyProject = ((ProjectDependency) dependency).getDependencyProject();
-                        Jar jar = (Jar) dependencyProject
-                                .getTasks()
-                                .getByName(JavaPlugin.JAR_TASK_NAME);
-
-                        Optional<Object> pdeps = Optional.ofNullable(
-                                jar.getManifest().getAttributes().get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
-                        if (!pdeps.isPresent()) {
-                            log.debug("No product dependency found for project '{}'", dependencyProject.getName());
-                            return Stream.empty();
-                        }
-
-                        try {
-                            RecommendedProductDependencies recommendedDeps =
-                                    jsonMapper.readValue(pdeps.get().toString(), RecommendedProductDependencies.class);
-                            return recommendedDeps.recommendedProductDependencies().stream()
-                                    .map(recommendedDep -> new ProductDependency(
-                                            recommendedDep.getProductGroup(),
-                                            recommendedDep.getProductName(),
-                                            recommendedDep.getMinimumVersion(),
-                                            recommendedDep.getMaximumVersion(),
-                                            recommendedDep.getRecommendedVersion()))
-                                    .peek(productDependency -> log.info(
-                                            "Product dependency recommendation made by project '{}', "
-                                                    + "dependency recommendation '{}'",
-                                            dependencyProject.getName(),
-                                            productDependency));
-                        } catch (IOException | IllegalArgumentException e) {
-                            log.debug("Failed to load product dependency for project '{}', '{}'",
-                                    dependencyProject.getName(), e);
-                            return Stream.empty();
-                        }
-                    }
-                    return Stream.empty();
-                });
-    }
-
-    private Stream<ProductDependency> discoverExternalProductDependencies(Configuration config) {
-        return config.getIncoming().artifactView(view -> {
-            view.componentFilter(new Spec<ComponentIdentifier>() {
-                @Override
-                public boolean isSatisfiedBy(ComponentIdentifier element) {
-                    // Remove all project dependencies to avoid compiling siblings
-                    return !(element instanceof ProjectComponentIdentifier);
-                }
-            });
-        }).getArtifacts().getArtifacts().stream().flatMap(artifact -> {
-            String artifactName = artifact.getId().getDisplayName();
-
-            if (!artifact.getFile().exists()) {
-                log.debug("Artifact did not exist: {}", artifact.getFile());
-                return Stream.empty();
-            } else if (!com.google.common.io.Files.getFileExtension(artifact.getFile().getName()).equals("jar")) {
-                log.debug("Artifact is not jar: {}", artifact.getFile());
-                return Stream.empty();
-            }
-
-            Manifest manifest;
-            try {
-                ZipFile zipFile = new ZipFile(artifact.getFile());
-                ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
-                if (manifestEntry == null) {
-                    log.debug("Manifest file does not exist in jar for '${coord}'");
-                    return Stream.empty();
-                }
-                manifest = new Manifest(zipFile.getInputStream(manifestEntry));
-            } catch (IOException e) {
-                log.warn("IOException encountered when processing artifact '{}', file '{}', {}",
-                        artifactName, artifact.getFile(), e);
-                return Stream.empty();
-            }
-
-            Optional<String> pdeps = Optional.ofNullable(
-                    manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
-            if (!pdeps.isPresent()) {
-                log.debug("No product dependency found for artifact '{}', file '{}'", artifactName, artifact.getFile());
-                return Stream.empty();
-            }
-
-            try {
-                RecommendedProductDependencies recommendedDeps =
-                        jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
-                return recommendedDeps.recommendedProductDependencies().stream()
-                        .map(recommendedDep -> new ProductDependency(
-                                recommendedDep.getProductGroup(),
-                                recommendedDep.getProductName(),
-                                recommendedDep.getMinimumVersion(),
-                                recommendedDep.getMaximumVersion(),
-                                recommendedDep.getRecommendedVersion()))
-                        .peek(productDependency -> log.info(
-                                "Product dependency recommendation made by artifact '{}', file '{}', dependency "
-                                        + "recommendation '{}'",
-                                artifactName,
-                                artifact,
-                                productDependency));
-            } catch (IOException | IllegalArgumentException e) {
-                log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'",
-                        artifactName, artifact, e);
-                return Stream.empty();
-            }
-        });
     }
 
     private boolean isNotSelfProductDependency(ProductDependency dependency) {
