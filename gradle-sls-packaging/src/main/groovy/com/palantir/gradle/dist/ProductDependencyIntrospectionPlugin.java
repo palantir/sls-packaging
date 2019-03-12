@@ -107,7 +107,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                             }
                         }
                     }
-                    String range = "[" + dependency.getMinimumVersion() + "," + topRange + ")";
+                    String range = "[" + dependency.getMinimumVersion() + "," + topRange + "[";
 
                     version.strictly(range);
                     version.require(dependency.getMinimumVersion());
