@@ -18,12 +18,9 @@ package com.palantir.gradle.dist
 
 import nebula.test.IntegrationTestKitSpec
 import nebula.test.multiproject.MultiProjectIntegrationHelper
-import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 
 class GradleIntegrationSpec extends IntegrationTestKitSpec {
     protected MultiProjectIntegrationHelper helper
-    protected String gradleVersion
 
     def setup() {
         keepFiles = true
@@ -35,28 +32,4 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
     protected boolean fileExists(String path) {
         new File(projectDir, path).exists()
     }
-
-    BuildResult runTasks(String... tasks) {
-        BuildResult result = with(tasks).build()
-        return checkForDeprecations(result)
-    }
-
-    BuildResult runTasksAndFail(String... tasks) {
-        BuildResult result = with(tasks).buildAndFail()
-        return checkForDeprecations(result)
-    }
-
-    private GradleRunner with(String... tasks) {
-        def runner = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments(calculateArguments(tasks))
-                .withDebug(debug)
-                .withPluginClasspath()
-                .forwardOutput()
-        if (gradleVersion != null) {
-            runner.withGradleVersion(gradleVersion)
-        }
-        runner
-    }
-
 }
