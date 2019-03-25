@@ -58,7 +58,6 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.artifacts.result.ComponentResult;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPlugin;
@@ -135,7 +134,8 @@ public class CreateManifestTask extends DefaultTask {
     final Set<String> getProductDependenciesConfig() {
         // HACKHACK serializable way of representing all dependencies
         return productDependenciesConfig.get().getIncoming().getResolutionResult().getAllComponents().stream()
-                .map(ComponentResult::getId)
+                // intentionally using a lambda as otherwise we break gradle 4.10 support
+                .map(result -> result.getId())
                 .map(ComponentIdentifier::getDisplayName)
                 .collect(Collectors.toSet());
     }
