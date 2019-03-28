@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.JavaExec;
@@ -85,8 +86,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setAppendix("manifest-classpath");
 
                     task.doFirst(t -> {
-                        String classPath = project.getConfigurations().getByName("runtimeClasspath")
-                                .getFiles()
+
+                        FileCollection runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+
+                        TaskProvider<Jar> jarTask = project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME);
+                        FileCollection jarOutputs = jarTask.get().getOutputs().getFiles();
+
+                        String classPath = runtimeClasspath.plus(jarOutputs).getFiles()
                                 .stream()
                                 .map(File::getName)
                                 .collect(Collectors.joining(" "));
