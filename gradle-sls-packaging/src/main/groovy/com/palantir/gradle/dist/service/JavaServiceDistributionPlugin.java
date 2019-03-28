@@ -89,7 +89,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
                         FileCollection runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
 
-                        TaskProvider<Jar> jarTask = project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME);
+                        TaskProvider<Jar> jarTask = project.getTasks().withType(Jar.class)
+                                .named(JavaPlugin.JAR_TASK_NAME);
                         FileCollection jarOutputs = jarTask.get().getOutputs().getFiles();
 
                         String classPath = runtimeClasspath.plus(jarOutputs).getFiles()
