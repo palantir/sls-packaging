@@ -29,20 +29,30 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.util.GFileUtils;
 
 public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
-
+    private static final Logger log = Logging.getLogger(ProductDependencyIntrospectionPlugin.class);
     private static final String PRODUCT_DEPENDENCIES_CONFIGURATION = "productDependencies";
 
     @Override
     public void apply(Project project) {
         createGetMinimumProductVersion(project);
 
-        project.getConfigurations().register(PRODUCT_DEPENDENCIES_CONFIGURATION, conf -> {
+        project.getConfigurations().create(PRODUCT_DEPENDENCIES_CONFIGURATION, conf -> {
             conf.setCanBeResolved(false);
             conf.setDescription("Exposes minimum, maximum versions of product dependencies as constraints");
-            conf.getDependencies().addAll(createAllProductDependencies(project));
+
+            Optional<List<ProductDependency>> allProductDependencies = getAllProductDependencies(project);
+            allProductDependencies.ifPresent(productDependencies -> conf
+                    .getDependencies()
+                    .addAll(createAllProductDependencies(project, productDependencies)));
+
+            if (!allProductDependencies.isPresent()) {
+                log.info("Lock file not present, not populating product dependencies configuration: {}", conf);
+            }
         });
     }
 
@@ -64,7 +74,11 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
     }
 
     private static String getMinimumProductVersion(Project project, String group, String name) {
-        List<ProductDependency> dependencies = getAllProductDependencies(project);
+        Optional<List<ProductDependency>> dependenciesOpt = getAllProductDependencies(project);
+        Preconditions.checkState(dependenciesOpt.isPresent(),
+                "%s does not exist. Run ./gradlew --write-locks to generate it.",
+                ProductDependencyLockFile.LOCK_FILE);
+        List<ProductDependency> dependencies = dependenciesOpt.get();
 
         Optional<ProductDependency> dependency = dependencies
                 .stream()
@@ -78,17 +92,18 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                 .getMinimumVersion();
     }
 
-    private static List<ProductDependency> getAllProductDependencies(Project project) {
+    private static Optional<List<ProductDependency>> getAllProductDependencies(Project project) {
         File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
-        Preconditions.checkState(Files.exists(lockFile.toPath()),
-                "%s does not exist. Run ./gradlew --write-locks to generate it.",
-                ProductDependencyLockFile.LOCK_FILE);
+        if (!Files.exists(lockFile.toPath())) {
+            return Optional.empty();
+        }
 
-        return ProductDependencyLockFile.fromString(GFileUtils.readFile(lockFile), project.getVersion().toString());
+        return Optional.of(ProductDependencyLockFile.fromString(
+                GFileUtils.readFile(lockFile),
+                project.getVersion().toString()));
     }
 
-    static List<Dependency> createAllProductDependencies(Project project) {
-        List<ProductDependency> dependencies = getAllProductDependencies(project);
+    static List<Dependency> createAllProductDependencies(Project project, List<ProductDependency> dependencies) {
         return dependencies.stream()
                 .map(dependency -> project.getDependencies().create(ImmutableMap.of(
                         "group", dependency.getProductGroup(),
