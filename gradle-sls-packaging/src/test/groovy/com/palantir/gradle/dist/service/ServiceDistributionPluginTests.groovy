@@ -337,7 +337,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def result = runTasksAndFail('distTar')
 
         then:
-        result.output.contains("minimumVersion must be an orderable SLS version: 1.0.x")
+        result.output.contains("minimumVersion must be an SLS version")
     }
 
     def 'produce distribution bundle with files in deployment/'() {
@@ -525,8 +525,12 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def classpathJar = file('dist/service-name-0.0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
         classpathJar.exists()
-        readFromZip(classpathJar, "META-INF/MANIFEST.MF")
-                .contains('Class-Path: guava-19.0.jar root-project-manifest-') // etc
+
+        def zipManifest = readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace('\r\n ','')
+        zipManifest.contains('Class-Path: ')
+        zipManifest.contains('guava-19.0.jar')
+        zipManifest.contains('root-project-manifest-classpath-0.0.1.jar')
+        zipManifest.contains('root-project-0.0.1.jar')
     }
 
     def 'does not produce manifest-classpath jar when disabled in extension'() {

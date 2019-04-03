@@ -1,13 +1,9 @@
 com.fasterxml.jackson.*:* = 2.9.8
 com.google.guava:guava = 23.6.1-jre
+com.palantir.safe-logging:* = 1.8.2
 com.palantir.sls.versions:sls-versions = 0.9.0
 org.immutables:value = 2.7.5
 
-com.netflix.nebula:nebula-test = 7.1.7
+com.netflix.nebula:nebula-test = 7.2.3
 junit:junit = 4.12
 org.awaitility:awaitility = 3.1.6
-
-# conflict resolution
-com.google.errorprone:error_prone_annotations = 2.3.2
-com.google.code.findbugs:jsr305 = 3.0.2
-org.objenesis:objenesis = 3.0.1

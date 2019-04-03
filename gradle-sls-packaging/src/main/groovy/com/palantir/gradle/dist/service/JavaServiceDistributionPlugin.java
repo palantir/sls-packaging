@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.JavaExec;
@@ -44,8 +45,8 @@ import org.gradle.util.GFileUtils;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER_BINARIES = "goJavaLauncherBinaries";
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.6.0";
-    private static final String GO_INIT = "com.palantir.launching:go-init:1.6.0";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.6.1";
+    private static final String GO_INIT = "com.palantir.launching:go-init:1.6.1";
     public static final String GROUP_NAME = "Distribution";
     private static final String SLS_CONFIGURATION_NAME = "sls";
 
@@ -85,8 +86,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setAppendix("manifest-classpath");
 
                     task.doFirst(t -> {
-                        String classPath = project.getConfigurations().getByName("runtimeClasspath")
-                                .getFiles()
+
+                        FileCollection runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+
+                        FileCollection jarOutputs = project.getTasks().withType(Jar.class)
+                                .getByName(JavaPlugin.JAR_TASK_NAME).getOutputs().getFiles();
+
+                        String classPath = runtimeClasspath.plus(jarOutputs).getFiles()
                                 .stream()
                                 .map(File::getName)
                                 .collect(Collectors.joining(" "));
@@ -193,6 +199,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate(p -> runTask.configure(task -> {
             task.setClasspath(project.files(
                     jarTask.get().getArchivePath(), p.getConfigurations().getByName("runtimeClasspath")));
+            task.setMain(distributionExtension.getMainClass().get());
+            task.setArgs(distributionExtension.getArgs().get());
+            task.setJvmArgs(distributionExtension.getDefaultJvmOpts().get());
         }));
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {

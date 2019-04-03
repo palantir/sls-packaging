@@ -20,7 +20,7 @@ import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.Set;
 import javax.inject.Inject;
-import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.Project;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
@@ -30,9 +30,9 @@ public class RecommendedProductDependenciesExtension {
     private final ProviderFactory providerFactory;
 
     @Inject
-    public RecommendedProductDependenciesExtension(ObjectFactory objectFactory, ProviderFactory providerFactory) {
-        this.recommendedProductDependencies = objectFactory.setProperty(ProductDependency.class).empty();
-        this.providerFactory = providerFactory;
+    public RecommendedProductDependenciesExtension(Project project) {
+        this.recommendedProductDependencies = project.getObjects().setProperty(ProductDependency.class).empty();
+        this.providerFactory = project.getProviders();
     }
 
     /**

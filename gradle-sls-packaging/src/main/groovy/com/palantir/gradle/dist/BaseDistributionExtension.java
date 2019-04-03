@@ -20,6 +20,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.palantir.logsafe.SafeArg;
+import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
@@ -53,6 +55,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final ProviderFactory providerFactory;
+    private final String projectName;
 
     // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
     private Map<String, Object> manifestExtensions;
@@ -73,6 +76,8 @@ public class BaseDistributionExtension {
         podName.set(project.provider(project::getName));
 
         manifestExtensions = Maps.newHashMap();
+
+        projectName = project.getName();
     }
 
     public final Provider<String> getDistributionServiceGroup() {
@@ -181,8 +186,18 @@ public class BaseDistributionExtension {
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         productDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
-            ConfigureUtil.configureUsing(closure).execute(dep);
-            dep.isValid();
+            try {
+                ConfigureUtil.configureUsing(closure).execute(dep);
+                if (dep.getMinimumVersion() != null && dep.getMaximumVersion() == null) {
+                    dep.setMaximumVersion(generateMaxVersion(dep.getMinimumVersion()));
+                }
+                dep.isValid();
+            } catch (Exception e) {
+                throw new SafeRuntimeException(
+                        "Error validating product dependency declared from project",
+                        e,
+                        SafeArg.of("projectName", projectName));
+            }
             return dep;
         }));
     }
