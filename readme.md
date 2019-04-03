@@ -154,17 +154,19 @@ distribution {
 }
 ```
 
+#### Accessing product dependencies
+
 You can programmatically access the minimum product dependency version as follows:
 ```gradle
 def myDependency = getMinimumProductVersion('com.palantir.service:my-service')
 ```
 
 More often though, you probably just want to get the minimum product dependencies as a gradle configuration
-that you can depend on from other projects. There is a configuration called `productDependencies` published 
-from each SLS project.
+that you can depend on from other projects. For this purpose, there is a configuration called `productDependencies`
+that is published from each SLS project.
 
 You can then use this together with [gradle-docker](https://github.com/palantir/gradle-docker/#specifying-and-publishing-dependencies-on-docker-images)
-to inject your product dependencies into the docker templating, for instance.
+to inject your product dependencies into the docker-compose templating, for instance.
 
 For example, given a dist project, `:my-service`, you can collect wire up docker :
 
