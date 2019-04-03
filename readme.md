@@ -154,6 +154,11 @@ distribution {
 }
 ```
 
+You can programmatically access the the minimum product dependency version as follows:
+```gradle
+def myDependency = getMinimumProductVersion('com.palantir.service:my-service')
+```
+
 #### JVM Options
 
 The list of JVM options passed to the Java processes launched through a package's start-up scripts is obtained by
