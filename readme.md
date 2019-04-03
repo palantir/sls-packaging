@@ -116,68 +116,6 @@ And the complete list of configurable properties:
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
  * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
 
-## Product dependencies
-
-'Product dependencies' are declarative metadata about the products your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
-
-Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
-
-However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise):
-
-```gradle
-distribution {
-    productDependency {
-        productGroup = "com.palantir.group"
-        productName = "my-service"
-        minimumVersion = "1.0.0"
-        maximumVersion = "1.x.x"
-        recommendedVersion = "1.2.1"
-    }
-}
-```
-
-sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it.
-
-It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
-`productDependency` block - this will be merged with any constraints detected from other jars.
-If all the constraints on a given product don't overlap, then an error will the thrown:
-`Could not merge recommended product dependencies as their version ranges do not overlap`.
-
-It's also possible to explicitly ignore a dependency if it comes as a recommendation from a jar:
-
-```gradle
-distribution {
-    productDependency {
-        // ...
-    }
-    ignoredProductDependency('other-group3', 'other-service3')
-}
-```
-
-#### Accessing product dependencies
-
-You can programmatically access the minimum product dependency version as follows:
-```gradle
-def myDependency = getMinimumProductVersion('com.palantir.service:my-service')
-```
-
-More often though, you probably just want to get the minimum product dependencies as a gradle configuration
-that you can depend on from other projects. For this purpose, there is a configuration called `productDependencies`
-that is published from each SLS project.
-
-You can then use this together with [gradle-docker](https://github.com/palantir/gradle-docker/#specifying-and-publishing-dependencies-on-docker-images)
-to inject your product dependencies into the docker-compose templating, for instance.
-
-For example, given a dist project, `:my-service`, you can collect wire up docker :
-
-```gradle
-// from another project
-apply plugin: 'com.palantir.docker'
-dependencies {
-    docker project(path: ':my-service', configuration: 'productDependencies')
-}
-```  
-
 #### JVM Options
 
 The list of JVM options passed to the Java processes launched through a package's start-up scripts is obtained by
@@ -309,6 +247,68 @@ The example above, when applied to a project rooted at `~/project`, would create
 
 Note that repeated calls to `services` and `volumes` are processed in-order, and as such, it is possible to overwrite resources
 by specifying that a later invocation be relocated to a previously used destination's ancestor directory.
+
+### Product dependencies
+
+'Product dependencies' are declarative metadata about the products your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
+
+Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
+
+However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise):
+
+```gradle
+distribution {
+    productDependency {
+        productGroup = "com.palantir.group"
+        productName = "my-service"
+        minimumVersion = "1.0.0"
+        maximumVersion = "1.x.x"
+        recommendedVersion = "1.2.1"
+    }
+}
+```
+
+sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it.
+
+It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
+`productDependency` block - this will be merged with any constraints detected from other jars.
+If all the constraints on a given product don't overlap, then an error will the thrown:
+`Could not merge recommended product dependencies as their version ranges do not overlap`.
+
+It's also possible to explicitly ignore a dependency if it comes as a recommendation from a jar:
+
+```gradle
+distribution {
+    productDependency {
+        // ...
+    }
+    ignoredProductDependency('other-group3', 'other-service3')
+}
+```
+
+#### Accessing product dependencies
+
+You can programmatically access the minimum product dependency version as follows:
+```gradle
+def myDependency = getMinimumProductVersion('com.palantir.service:my-service')
+```
+
+More often though, you probably just want to get the minimum product dependencies as a gradle configuration
+that you can depend on from other projects. For this purpose, there is a configuration called `productDependencies`
+that is published from each SLS project.
+
+You can then use this together with [gradle-docker](https://github.com/palantir/gradle-docker/#specifying-and-publishing-dependencies-on-docker-images)
+to inject your product dependencies into the docker-compose templating, for instance.
+
+For example, given a dist project, `:my-service`, you can collect wire up docker :
+
+```gradle
+// from another project
+apply plugin: 'com.palantir.docker'
+dependencies {
+    docker project(path: ':my-service', configuration: 'productDependencies')
+}
+```
 
 
 ### Packaging
