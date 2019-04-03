@@ -18,7 +18,7 @@ package com.palantir.gradle.dist;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.palantir.sls.versions.SlsVersionMatcher;
+import com.google.common.collect.ImmutableMap;
 import groovy.lang.Closure;
 import java.io.File;
 import java.nio.file.Files;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.DependencyConstraint;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.util.GFileUtils;
 
 public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
@@ -42,7 +42,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
         project.getConfigurations().register(PRODUCT_DEPENDENCIES_CONFIGURATION, conf -> {
             conf.setCanBeResolved(false);
             conf.setDescription("Exposes minimum, maximum versions of product dependencies as constraints");
-            conf.getDependencyConstraints().addAll(createAllProductConstraints(project));
+            conf.getDependencies().addAll(createAllProductDependencies(project));
         });
     }
 
@@ -87,32 +87,13 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
         return ProductDependencyLockFile.fromString(GFileUtils.readFile(lockFile), project.getVersion().toString());
     }
 
-    static List<DependencyConstraint> createAllProductConstraints(Project project) {
+    static List<Dependency> createAllProductDependencies(Project project) {
         List<ProductDependency> dependencies = getAllProductDependencies(project);
-        return dependencies.stream().map(dependency -> {
-            String coordinate = dependency.getProductGroup() + ":" + dependency.getProductName();
-            return project.getDependencies().getConstraints().create(coordinate, constraint -> {
-                constraint.version(version -> {
-                    SlsVersionMatcher matcher = SlsVersionMatcher.valueOf(dependency.getMaximumVersion());
-
-                    StringBuilder topRange = new StringBuilder();
-                    if (matcher.getMajorVersionNumber().isPresent()) {
-                        topRange.append(matcher.getMajorVersionNumber().getAsInt() + 1);
-                        if (matcher.getMinorVersionNumber().isPresent()) {
-                            topRange.append(".");
-                            topRange.append(matcher.getMinorVersionNumber().getAsInt() + 1);
-                            if (matcher.getPatchVersionNumber().isPresent()) {
-                                topRange.append(".");
-                                topRange.append(matcher.getPatchVersionNumber().getAsInt() + 1);
-                            }
-                        }
-                    }
-                    String range = "[" + dependency.getMinimumVersion() + "," + topRange + "[";
-
-                    version.strictly(range);
-                    version.require(dependency.getMinimumVersion());
-                });
-            });
-        }).collect(Collectors.toList());
+        return dependencies.stream()
+                .map(dependency -> project.getDependencies().create(ImmutableMap.of(
+                        "group", dependency.getProductGroup(),
+                        "name", dependency.getProductName(),
+                        "version", dependency.getMinimumVersion())))
+                .collect(Collectors.toList());
     }
 }

@@ -16,11 +16,9 @@
 
 package com.palantir.gradle.dist
 
-
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
-import org.gradle.api.logging.LogLevel
 
 class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpec {
     void setup() {
@@ -70,6 +68,7 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         def mavenRepo = generateMavenRepo(
                 'com.palantir.product:test:1.0.0',
                 'com.palantir.product:test:1.2.0')
+
         buildFile << """
             repositories {
                 maven { url "file://${mavenRepo.absolutePath}" }
@@ -85,7 +84,6 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         """.stripIndent()
 
         when:
-        logLevel = LogLevel.DEBUG
         def result = runTasksSuccessfully('dependencies', '--configuration', 'foo')
 
         then:
