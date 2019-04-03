@@ -21,11 +21,9 @@ import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 
 class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpec {
-    void setup() {
-        buildFile << 'apply plugin: com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin'
-    }
-
     def "adds product dependency constraints to configuration"() {
+        buildFile << 'apply plugin: com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin'
+
         file("product-dependencies.lock").text = '''\
             # Run ./gradlew --write-locks to regenerate this file
             com.palantir.product:test (1.0.0, 1.x.x)
