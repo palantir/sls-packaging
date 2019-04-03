@@ -59,31 +59,6 @@ See [below](#pod-distribution-plugin) for usage.
 
 ## Usage
 
-### Recommended Product Dependencies Plugin
-[Recommended Product Dependencies Plugin]: #recommended-product-dependencies-plugin
-
-This plugin allows API jars to declare the recommended product dependencies an SLS service distribution should take.
-
-An example application of this plugin might look as follows:
-
-
-```gradle
-apply plugin: 'java'
-apply plugin: 'com.palantir.sls-recommended-dependencies'
-
-recommendedProductDependencies {
-    productDependency {
-        productGroup = 'com.foo.bar.group'
-        productName = 'product'
-        minimumVersion = rootProject.version
-        maximumVersion = "${rootProject.version.tokenize('.')[0].toInteger()}.x.x"
-        recommendedVersion = rootProject.version
-    }
-}
-```
-
-The recommended product dependencies will be serialized into the jar manifest of the jar that the project produces. The SLS distribution and asset plugins will inspect the manifest of all jars in the server or asset and extract the recommended product dependencies.
-
 ### Product dependencies
 
 'Product dependencies' are declarative metadata about the products your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
@@ -393,6 +368,31 @@ Specific to the Java Service plugin:
  * `createStartScripts`: generates standard Java start scripts
  * `createInitScript`: generates daemonizing init.sh script
  * `run`: runs the specified `mainClass` with default `args`
+
+### Recommended Product Dependencies Plugin
+[Recommended Product Dependencies Plugin]: #recommended-product-dependencies-plugin
+
+This plugin allows API jars to declare the recommended product dependencies an SLS service distribution should take.
+
+An example application of this plugin might look as follows:
+
+
+```gradle
+apply plugin: 'java'
+apply plugin: 'com.palantir.sls-recommended-dependencies'
+
+recommendedProductDependencies {
+    productDependency {
+        productGroup = 'com.foo.bar.group'
+        productName = 'product'
+        minimumVersion = rootProject.version
+        maximumVersion = "${rootProject.version.tokenize('.')[0].toInteger()}.x.x"
+        recommendedVersion = rootProject.version
+    }
+}
+```
+
+The recommended product dependencies will be serialized into the jar manifest of the jar that the project produces. The SLS distribution and asset plugins will inspect the manifest of all jars in the server or asset and extract the recommended product dependencies.
 
 ## License
 
