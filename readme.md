@@ -148,7 +148,7 @@ dependencies {
 
 ## Packaging plugins
 
-_These plugins requires at least Gradle 4.10._
+_These plugins require at least Gradle 4.10._
 
 ### Java Service Distribution plugin
 
