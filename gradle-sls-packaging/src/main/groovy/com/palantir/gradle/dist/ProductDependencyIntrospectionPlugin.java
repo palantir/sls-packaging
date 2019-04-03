@@ -92,6 +92,10 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                 .getMinimumVersion();
     }
 
+    /**
+     * Returns all product dependencies as read from the lock file.
+     * @return {@link Optional#empty} if the lock file didn't exist
+     */
     private static Optional<List<ProductDependency>> getAllProductDependencies(Project project) {
         File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
         if (!Files.exists(lockFile.toPath())) {
