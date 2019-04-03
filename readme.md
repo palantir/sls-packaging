@@ -154,7 +154,7 @@ distribution {
 }
 ```
 
-You can programmatically access the the minimum product dependency version as follows:
+You can programmatically access the minimum product dependency version as follows:
 ```gradle
 def myDependency = getMinimumProductVersion('com.palantir.service:my-service')
 ```
