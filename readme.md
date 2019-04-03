@@ -57,7 +57,9 @@ with Palantir's SLS pod specification. Pod distributions contain a deployment di
 requirements about shared resources, such as shared disk.
 See [below](#pod-distribution-plugin) for usage.
 
-## Recommended Product Dependencies Plugin
+## Usage
+
+### Recommended Product Dependencies Plugin
 [Recommended Product Dependencies Plugin]: #recommended-product-dependencies-plugin
 
 This plugin allows API jars to declare the recommended product dependencies an SLS service distribution should take.
@@ -81,8 +83,6 @@ recommendedProductDependencies {
 ```
 
 The recommended product dependencies will be serialized into the jar manifest of the jar that the project produces. The SLS distribution and asset plugins will inspect the manifest of all jars in the server or asset and extract the recommended product dependencies.
-
-## Usage
 
 ### Product dependencies
 
