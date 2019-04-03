@@ -16,16 +16,17 @@
 
 package com.palantir.gradle.dist
 
+
 import nebula.test.ProjectSpec
 import org.gradle.api.GradleException
 
-class GetMinimumVersionTest extends ProjectSpec {
+class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
     def setup() {
-        GetMinimumProductVersion.createGetMinimumProductVersion(project)
+        project.pluginManager.apply(ProductDependencyIntrospectionPlugin)
     }
 
     def "get version from lock file"() {
-        project.file(ProductDependencyLockFile.LOCK_FILE).text = '''\
+        project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent()
@@ -39,7 +40,7 @@ class GetMinimumVersionTest extends ProjectSpec {
 
     def "resolves project versions into concrete version"() {
         project.version = "1.1.0"
-        project.file(ProductDependencyLockFile.LOCK_FILE).text = '''\
+        project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:test ($projectVersion, 1.x.x)
         '''.stripIndent()
@@ -61,7 +62,7 @@ class GetMinimumVersionTest extends ProjectSpec {
     }
 
     def "fails if dependency does not exist in lock file"() {
-        project.file(ProductDependencyLockFile.LOCK_FILE).text = '''\
+        project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent()
