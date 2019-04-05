@@ -19,6 +19,9 @@ package com.palantir.gradle.dist;
 import com.palantir.gradle.dist.tasks.ConfigureProductDependenciesTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.jvm.tasks.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
@@ -28,8 +31,15 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                 .getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        project.getTasks().register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-            cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
+        TaskProvider<?> configureProductDependenciesTask = project
+                .getTasks()
+                .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
+                    cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
+                });
+
+        // Ensure that the jar task depends on this wiring task
+        project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME).configure(jar -> {
+            jar.dependsOn(configureProductDependenciesTask);
         });
     }
 }
