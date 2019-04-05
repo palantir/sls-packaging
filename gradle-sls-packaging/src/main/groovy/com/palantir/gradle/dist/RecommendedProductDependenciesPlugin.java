@@ -29,7 +29,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
         project.getTasks().register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-            cmt.setProductDependencies(ext.getFinalizedRecommendedProductDependencies());
+            cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
         });
     }
 }
