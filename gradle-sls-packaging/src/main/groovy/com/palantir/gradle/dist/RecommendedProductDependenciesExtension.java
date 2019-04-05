@@ -21,6 +21,7 @@ import groovy.lang.DelegatesTo;
 import java.util.Set;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
@@ -48,9 +49,14 @@ public class RecommendedProductDependenciesExtension {
         }));
     }
 
-    final void finalizeRecommendedProductDependencies() {
+    final Provider<Set<ProductDependency>> getFinalizedRecommendedProductDependencies() {
         if (GradleVersion.current().compareTo(GradleVersion.version("5.0")) >= 0) {
-            recommendedProductDependencies.finalizeValue();
+            return recommendedProductDependencies.map(rpd -> {
+                recommendedProductDependencies.finalizeValue();
+                return rpd;
+            });
+        } else {
+            return recommendedProductDependencies;
         }
     }
 

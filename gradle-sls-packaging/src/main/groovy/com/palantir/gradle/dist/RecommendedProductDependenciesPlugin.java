@@ -16,41 +16,20 @@
 
 package com.palantir.gradle.dist;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.tasks.ConfigureProductDependenciesTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.tasks.bundling.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
+
     public final void apply(final Project project) {
         project.getPlugins().apply("java");
         final RecommendedProductDependenciesExtension ext = project
                 .getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        project.afterEvaluate(p -> {
-            String recommendedProductDeps;
-            try {
-                recommendedProductDeps = new ObjectMapper().writeValueAsString(RecommendedProductDependencies
-                        .builder()
-                        .recommendedProductDependencies(ext.getRecommendedProductDependencies())
-                        .build());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
-            }
-            Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
-            jar
-                    .getManifest()
-                    .attributes(ImmutableMap.of(
-                            CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY,
-                            recommendedProductDeps));
-            // To ensure users don't accidentally add values to this in afterEvaluate
-            // Note: this only works in Gradle 5.0+, otherwise it's a no-op
-            ext.finalizeRecommendedProductDependencies();
+        project.getTasks().register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
+            cmt.setProductDependencies(ext.getFinalizedRecommendedProductDependencies());
         });
     }
 }

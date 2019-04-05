@@ -52,12 +52,14 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.gradle.StartParameter;
+import org.gradle.api.Buildable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPlugin;
@@ -95,6 +97,10 @@ public class CreateManifestTask extends DefaultTask {
     // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
     private Map<String, Object> manifestExtensions = Maps.newHashMap();
     private File manifestFile;
+
+    public CreateManifestTask() {
+        dependsOn(otherProjectTasks());
+    }
 
     @Input
     final Property<String> getServiceName() {
@@ -309,6 +315,23 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
+    final Provider<Buildable> otherProjectTasks() {
+        return productDependenciesConfig.map(productDeps -> {
+            ConfigurableFileCollection fakeFiles = getProject().files();
+            productDeps.getIncoming().getArtifacts().getArtifacts().stream().flatMap(artifact -> {
+                ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+
+                // Attempt to depend on configureProductDependencies task for project dependencies
+                if (id instanceof ProjectComponentIdentifier) {
+                    Project dependencyProject = getProject().getRootProject().project(((ProjectComponentIdentifier) id).getProjectPath());
+                    return Stream.of(dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
+                }
+                return Stream.empty();
+            }).forEach(fakeFiles::builtBy);
+            return fakeFiles;
+        });
+    }
+
     private Map<ProductId, ProductDependency> discoverProductDependencies() {
         Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
         productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
@@ -325,8 +348,12 @@ public class CreateManifestTask extends DefaultTask {
                                 .getTasks()
                                 .getByName(JavaPlugin.JAR_TASK_NAME);
 
-                        pdeps = Optional.ofNullable(
-                                jar.getManifest().getAttributes().get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
+                        pdeps = Optional
+                                .ofNullable(jar
+                                        .getManifest()
+                                        .getEffectiveManifest()
+                                        .getAttributes()
+                                        .get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
                                 .map(Object::toString);
                     } else {
                         if (!artifact.getFile().exists()) {
