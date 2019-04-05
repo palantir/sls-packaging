@@ -32,17 +32,22 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                 .getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        String recommendedProductDeps;
-        try {
-            recommendedProductDeps = new ObjectMapper().writeValueAsString(RecommendedProductDependencies
-                    .builder()
-                    .recommendedProductDependencies(ext.getRecommendedProductDependencies())
-                    .build());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
-        }
-        Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
-        jar.getManifest().attributes(
-                ImmutableMap.of(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY, recommendedProductDeps));
+        project.afterEvaluate(p -> {
+            String recommendedProductDeps;
+            try {
+                recommendedProductDeps = new ObjectMapper().writeValueAsString(RecommendedProductDependencies
+                        .builder()
+                        .recommendedProductDependencies(ext.getRecommendedProductDependencies())
+                        .build());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
+            }
+            Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
+            jar
+                    .getManifest()
+                    .attributes(ImmutableMap.of(
+                            CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY,
+                            recommendedProductDeps));
+        });
     }
 }
