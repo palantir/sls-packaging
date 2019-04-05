@@ -24,6 +24,7 @@ import org.gradle.api.Project;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
+import org.gradle.util.GradleVersion;
 
 public class RecommendedProductDependenciesExtension {
     private final SetProperty<ProductDependency> recommendedProductDependencies;
@@ -45,6 +46,12 @@ public class RecommendedProductDependenciesExtension {
             dep.isValid();
             return dep;
         }));
+    }
+
+    final void finalizeRecommendedProductDependencies() {
+        if (GradleVersion.current().compareTo(GradleVersion.version("5.0")) >= 0) {
+            recommendedProductDependencies.finalizeValue();
+        }
     }
 
     public final Set<ProductDependency> getRecommendedProductDependencies() {

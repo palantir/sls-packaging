@@ -48,6 +48,9 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                     .attributes(ImmutableMap.of(
                             CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY,
                             recommendedProductDeps));
+            // To ensure users don't accidentally add values to this in afterEvaluate
+            // Note: this only works in Gradle 5.0+, otherwise it's a no-op
+            ext.finalizeRecommendedProductDependencies();
         });
     }
 }
