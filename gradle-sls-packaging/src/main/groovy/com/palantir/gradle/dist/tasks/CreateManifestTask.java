@@ -32,6 +32,7 @@ import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
+import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
@@ -52,7 +53,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.gradle.StartParameter;
-import org.gradle.api.Buildable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -60,6 +60,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPlugin;
@@ -99,7 +100,33 @@ public class CreateManifestTask extends DefaultTask {
     private File manifestFile;
 
     public CreateManifestTask() {
-        dependsOn(otherProjectTasks());
+        dependsOn(otherProjectProductDependenciesTasks());
+    }
+
+    /**
+     * A lazy collection of tasks that ensure the {@link Jar} task of any project dependencies from
+     * {@link #productDependenciesConfig} is correctly populated with the recommended product dependencies of that
+     * project, if any (specifically, if they apply the {@link RecommendedProductDependenciesPlugin}).
+     */
+    private Provider<FileCollection> otherProjectProductDependenciesTasks() {
+        return productDependenciesConfig.map(productDeps -> {
+            // Using a ConfigurableFileCollection simply because it implements Buildable and provides a convenient API
+            // to wire up task dependencies to it in a lazy way.
+            ConfigurableFileCollection emptyFileCollection = getProject().files();
+            productDeps.getIncoming().getArtifacts().getArtifacts().stream().flatMap(artifact -> {
+                ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+
+                // Depend on the ConfigureProductDependenciesTask, if it exists, which will wire up the jar manifest
+                // with recommended product dependencies.
+                if (id instanceof ProjectComponentIdentifier) {
+                    Project dependencyProject =
+                            getProject().getRootProject().project(((ProjectComponentIdentifier) id).getProjectPath());
+                    return Stream.of(dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
+                }
+                return Stream.empty();
+            }).forEach(emptyFileCollection::builtBy);
+            return emptyFileCollection;
+        });
     }
 
     @Input
@@ -313,23 +340,6 @@ public class CreateManifestTask extends DefaultTask {
             getLogger().debug("Unable to provide diff", e);
             return Optional.empty();
         }
-    }
-
-    final Provider<Buildable> otherProjectTasks() {
-        return productDependenciesConfig.map(productDeps -> {
-            ConfigurableFileCollection fakeFiles = getProject().files();
-            productDeps.getIncoming().getArtifacts().getArtifacts().stream().flatMap(artifact -> {
-                ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-
-                // Attempt to depend on configureProductDependencies task for project dependencies
-                if (id instanceof ProjectComponentIdentifier) {
-                    Project dependencyProject = getProject().getRootProject().project(((ProjectComponentIdentifier) id).getProjectPath());
-                    return Stream.of(dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
-                }
-                return Stream.empty();
-            }).forEach(fakeFiles::builtBy);
-            return fakeFiles;
-        });
     }
 
     private Map<ProductId, ProductDependency> discoverProductDependencies() {
