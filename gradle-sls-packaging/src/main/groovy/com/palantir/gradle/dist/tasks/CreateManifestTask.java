@@ -32,6 +32,7 @@ import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
+import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
@@ -58,6 +59,8 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPlugin;
@@ -95,6 +98,36 @@ public class CreateManifestTask extends DefaultTask {
     // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
     private Map<String, Object> manifestExtensions = Maps.newHashMap();
     private File manifestFile;
+
+    public CreateManifestTask() {
+        dependsOn(otherProjectProductDependenciesTasks());
+    }
+
+    /**
+     * A lazy collection of tasks that ensure the {@link Jar} task of any project dependencies from
+     * {@link #productDependenciesConfig} is correctly populated with the recommended product dependencies of that
+     * project, if any (specifically, if they apply the {@link RecommendedProductDependenciesPlugin}).
+     */
+    private Provider<FileCollection> otherProjectProductDependenciesTasks() {
+        return productDependenciesConfig.map(productDeps -> {
+            // Using a ConfigurableFileCollection simply because it implements Buildable and provides a convenient API
+            // to wire up task dependencies to it in a lazy way.
+            ConfigurableFileCollection emptyFileCollection = getProject().files();
+            productDeps.getIncoming().getArtifacts().getArtifacts().stream().flatMap(artifact -> {
+                ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+
+                // Depend on the ConfigureProductDependenciesTask, if it exists, which will wire up the jar manifest
+                // with recommended product dependencies.
+                if (id instanceof ProjectComponentIdentifier) {
+                    Project dependencyProject =
+                            getProject().getRootProject().project(((ProjectComponentIdentifier) id).getProjectPath());
+                    return Stream.of(dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
+                }
+                return Stream.empty();
+            }).forEach(emptyFileCollection::builtBy);
+            return emptyFileCollection;
+        });
+    }
 
     @Input
     final Property<String> getServiceName() {
@@ -325,8 +358,12 @@ public class CreateManifestTask extends DefaultTask {
                                 .getTasks()
                                 .getByName(JavaPlugin.JAR_TASK_NAME);
 
-                        pdeps = Optional.ofNullable(
-                                jar.getManifest().getAttributes().get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
+                        pdeps = Optional
+                                .ofNullable(jar
+                                        .getManifest()
+                                        .getEffectiveManifest()
+                                        .getAttributes()
+                                        .get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
                                 .map(Object::toString);
                     } else {
                         if (!artifact.getFile().exists()) {

@@ -21,6 +21,7 @@ import groovy.lang.DelegatesTo;
 import java.util.Set;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
@@ -45,6 +46,10 @@ public class RecommendedProductDependenciesExtension {
             dep.isValid();
             return dep;
         }));
+    }
+
+    final Provider<Set<ProductDependency>> getRecommendedProductDependenciesProvider() {
+        return recommendedProductDependencies;
     }
 
     public final Set<ProductDependency> getRecommendedProductDependencies() {
