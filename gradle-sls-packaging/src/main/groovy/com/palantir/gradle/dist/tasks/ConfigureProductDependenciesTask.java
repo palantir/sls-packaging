@@ -33,10 +33,18 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.bundling.Jar;
 
+/**
+ * This task is only necessary because {@link Jar#getManifest()} cannot be configured lazily at configuration-time,
+ * so we have to configure it at execution-time instead.
+ */
 public class ConfigureProductDependenciesTask extends DefaultTask {
 
     private final SetProperty<ProductDependency> productDependencies =
             getProject().getObjects().setProperty(ProductDependency.class);
+
+    public ConfigureProductDependenciesTask() {
+        setDescription("Configures the 'jar' task to write the input product dependencies into its manifest");
+    }
 
     @TaskAction
     final void action() {
@@ -46,10 +54,6 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
                     "Attempted to configure jar task after it was executed");
             jar.getManifest().from(createManifest(getProject(), productDependencies.get()));
         });
-    }
-
-    final SetProperty<ProductDependency> getProductDependencies() {
-        return productDependencies;
     }
 
     public final void setProductDependencies(Provider<Set<ProductDependency>> productDependencies) {
