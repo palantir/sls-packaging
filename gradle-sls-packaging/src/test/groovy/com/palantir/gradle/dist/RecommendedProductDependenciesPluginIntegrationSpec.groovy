@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist
 
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.Iterables
 import com.palantir.gradle.dist.tasks.CreateManifestTask
@@ -59,6 +60,51 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         dep.recommendedVersion == "1.2.3"
     }
 
+    def "Works with consistent-versions"() {
+        def repo = generateMavenRepo('group:name:1.0.0')
+        settingsFile  << """
+        rootProject.name = "root-project"
+        """.stripIndent()
+        buildFile << """
+            plugins {
+                id 'com.palantir.consistent-versions' version '1.4.0'
+                id 'com.palantir.sls-recommended-dependencies'
+                id 'java-library'
+            }
+            
+            repositories {
+                ${repo.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                // just so it becomes available to gradle-consistent-versions' getVersion
+                implementation 'group:name:1.0.0'
+            }
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = getVersion('group:name')
+                    maximumVersion = '1.x.x'
+                }
+            }
+        """.stripIndent()
+
+        when:
+        runTasks('--write-locks', ':jar')
+
+        then:
+        fileExists("build/libs/root-project.jar")
+
+        def dep = Iterables.getOnlyElement(
+                readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
+        dep.productGroup == "group"
+        dep.productName == "name"
+        dep.minimumVersion == "1.0.0"
+        dep.maximumVersion == "1.x.x"
+    }
+
     def readRecommendedProductDeps(File jarFile) {
         def zf = new ZipFile(jarFile)
         def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
@@ -67,5 +113,4 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
                 manifest.getMainAttributes().getValue(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
                 RecommendedProductDependencies)
     }
-
 }
