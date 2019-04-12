@@ -31,7 +31,7 @@ import org.gradle.api.publish.plugins.PublishingPlugin;
 import org.gradle.util.GradleVersion;
 
 /**
- * Sets up a dist publication that includes the product's SLS dependencies as gradle runtime dependencies.
+ * Sets up an {@code slsDist} publication that includes the product's SLS dependencies as gradle runtime dependencies.
  */
 public class SlsDistPublicationPlugin implements Plugin<Project> {
     private static final String PUBLICATION_NAME = "slsDist";
