@@ -35,7 +35,7 @@ import org.gradle.util.GFileUtils;
 
 public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
     private static final Logger log = Logging.getLogger(ProductDependencyIntrospectionPlugin.class);
-    private static final String PRODUCT_DEPENDENCIES_CONFIGURATION = "productDependencies";
+    static final String PRODUCT_DEPENDENCIES_CONFIGURATION = "productDependencies";
 
     @Override
     public void apply(Project project) {

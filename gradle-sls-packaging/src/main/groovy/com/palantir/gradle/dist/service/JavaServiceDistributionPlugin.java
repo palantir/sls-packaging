@@ -15,7 +15,10 @@
  */
 package com.palantir.gradle.dist.service;
 
+import static com.palantir.gradle.dist.SlsBaseDistPlugin.SLS_CONFIGURATION_NAME;
+
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
+import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask;
@@ -48,10 +51,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.6.2";
     private static final String GO_INIT = "com.palantir.launching:go-init:1.6.2";
     public static final String GROUP_NAME = "Distribution";
-    private static final String SLS_CONFIGURATION_NAME = "sls";
 
     @SuppressWarnings("checkstyle:methodlength")
     public void apply(Project project) {
+        project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
@@ -222,8 +225,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 distributionExtension.getExcludeFromVar().get(),
                 distributionExtension.getEnableManifestClasspath().get()));
 
-        // Create configuration and exported artifacts
-        project.getConfigurations().create(SLS_CONFIGURATION_NAME);
         project.getArtifacts().add(SLS_CONFIGURATION_NAME, distTar);
     }
 }
