@@ -27,7 +27,7 @@ import org.gradle.api.component.AdhocComponentWithVariants;
 import org.gradle.api.component.SoftwareComponentFactory;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
-import org.gradle.api.publish.plugins.PublishingPlugin;
+import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.util.GradleVersion;
 
 /**
@@ -46,7 +46,7 @@ public class SlsDistPublicationPlugin implements Plugin<Project> {
     @Override
     public final void apply(Project project) {
         checkPreconditions();
-        project.getPluginManager().apply(PublishingPlugin.class);
+        project.getPluginManager().apply(MavenPublishPlugin.class);
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
         // Created in SlsBaseDistPlugin
