@@ -15,8 +15,6 @@
  */
 package com.palantir.gradle.dist.service;
 
-import static com.palantir.gradle.dist.SlsBaseDistPlugin.SLS_CONFIGURATION_NAME;
-
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
@@ -225,6 +223,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 distributionExtension.getExcludeFromVar().get(),
                 distributionExtension.getEnableManifestClasspath().get()));
 
-        project.getArtifacts().add(SLS_CONFIGURATION_NAME, distTar);
+        project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
     }
 }
