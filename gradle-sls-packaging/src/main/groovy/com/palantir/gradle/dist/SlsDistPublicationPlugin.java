@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist;
 
 import com.palantir.logsafe.Preconditions;
+import com.palantir.logsafe.SafeArg;
 import javax.inject.Inject;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
@@ -43,8 +44,7 @@ public class SlsDistPublicationPlugin implements Plugin<Project> {
 
     @Override
     public final void apply(Project project) {
-        Preconditions.checkState(project.getPlugins().hasPlugin(SlsBaseDistPlugin.class),
-                "This plugin must be applied through SlsBaseDistPlugin");
+        checkPreconditions();
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
         // Created in SlsBaseDistPlugin
@@ -67,6 +67,12 @@ public class SlsDistPublicationPlugin implements Plugin<Project> {
                 dist.from(component);
             });
         });
+    }
+
+    private void checkPreconditions() {
+        Preconditions.checkState(canApply(),
+                "Cannot apply plugin since gradle version is too low",
+                SafeArg.of("minimumGradleVersion", MINIMUM_GRADLE_VERSION));
     }
 
     static boolean canApply() {
