@@ -65,7 +65,7 @@ See [below](#pod-distribution-plugin) for usage.
 
 Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
 
-However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise):
+However, you can also use the `productDependency` block to specify additional constraits manually (although this is no longer considered a best-practise). Please note, these may cause conflicts with the inferred constraints:
 
 ```gradle
 distribution {
