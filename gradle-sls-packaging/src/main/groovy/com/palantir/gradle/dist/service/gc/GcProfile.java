@@ -48,6 +48,12 @@ public interface GcProfile extends Serializable {
         public final List<String> gcJvmOpts() {
             return ImmutableList.of("-XX:+UseParNewGC",
                     "-XX:+UseConcMarkSweepGC",
+                    /*
+                     * When setting UseConcMarkSweepGC the default value of NewRatio (2) is completely ignored.
+                     *
+                     * https://bugs.openjdk.java.net/browse/JDK-8153578
+                     */
+                    "-XX:NewRatio=2",
                     "-XX:+UseCMSInitiatingOccupancyOnly",
                     "-XX:CMSInitiatingOccupancyFraction=" + initiatingOccupancyFraction,
                     "-XX:+CMSClassUnloadingEnabled",
