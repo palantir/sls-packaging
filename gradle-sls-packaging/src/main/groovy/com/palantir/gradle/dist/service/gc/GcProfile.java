@@ -42,7 +42,7 @@ public interface GcProfile extends Serializable {
     }
 
     class ResponseTime implements GcProfile {
-        private int initialNewRatio = 2;
+        private int newRatio = 2;
         private int initiatingOccupancyFraction = 68;
 
         @Override
@@ -54,7 +54,7 @@ public interface GcProfile extends Serializable {
                      *
                      * https://bugs.openjdk.java.net/browse/JDK-8153578
                      */
-                    "-XX:NewRatio=" + initialNewRatio,
+                    "-XX:NewRatio=" + newRatio,
                     "-XX:+UseCMSInitiatingOccupancyOnly",
                     "-XX:CMSInitiatingOccupancyFraction=" + initiatingOccupancyFraction,
                     "-XX:+CMSClassUnloadingEnabled",
@@ -69,8 +69,8 @@ public interface GcProfile extends Serializable {
             this.initiatingOccupancyFraction = occupancyFraction;
         }
 
-        public final void initialNewRatio(int newRatio) {
-            this.initialNewRatio = newRatio;
+        public final void newRatio(int newerRatio) {
+            this.newRatio = newerRatio;
         }
     }
 
