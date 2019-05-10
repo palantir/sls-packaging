@@ -112,8 +112,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                 .map(dependency -> project.getDependencies().create(ImmutableMap.of(
                         "group", dependency.getProductGroup(),
                         "name", dependency.getProductName(),
-                        "version", dependency.getMinimumVersion(),
-                        "ext", "pom")))
+                        "version", dependency.getMinimumVersion())))
                 .collect(Collectors.toList());
     }
 }
