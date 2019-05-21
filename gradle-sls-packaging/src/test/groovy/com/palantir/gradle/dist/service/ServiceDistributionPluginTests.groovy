@@ -411,6 +411,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
+                '-XX:-OmitStackTraceInFastThrow',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
@@ -434,6 +435,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             .classpath(actualStaticConfig.classpath())
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
+                '-XX:-OmitStackTraceInFastThrow',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
@@ -471,6 +473,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
+                '-XX:-OmitStackTraceInFastThrow',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
