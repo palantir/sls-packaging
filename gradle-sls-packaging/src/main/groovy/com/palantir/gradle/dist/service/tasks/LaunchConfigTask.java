@@ -56,6 +56,7 @@ public class LaunchConfigTask extends DefaultTask {
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
+            "-XX:-OmitStackTraceInFastThrow",
             "-Djava.io.tmpdir=var/data/tmp",
             "-XX:ErrorFile=var/log/hs_err_pid%p.log",
             "-XX:HeapDumpPath=var/log",
