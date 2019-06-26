@@ -16,23 +16,54 @@
 
 package com.palantir.gradle.dist;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.attributes.AttributeDisambiguationRule;
+import org.gradle.api.attributes.MultipleCandidatesDetails;
+import org.gradle.api.attributes.Usage;
 
 public class SlsBaseDistPlugin implements Plugin<Project> {
 
     /**
-     * The name of the outgoing configuration. This will include the SLS artifact being published, and if running on
-     * Gradle 5.3+, it will also include the SLS product dependencies.
+     * The name of the outgoing configuration. This will include the SLS artifact being published.
      */
     public static final String SLS_CONFIGURATION_NAME = "sls";
+    public static final String SLS_DIST_USAGE = "sls-dist";
 
     @Override
     public final void apply(Project project) {
-        project.getConfigurations().create(SLS_CONFIGURATION_NAME);
+        Configuration slsConf = project.getConfigurations().create(SLS_CONFIGURATION_NAME);
+        slsConf.setCanBeResolved(false);
+        // Make it export a custom usage, to allow resolving it via variant-aware resolution.
+        slsConf
+                .getAttributes()
+                .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, SLS_DIST_USAGE));
 
-        if (SlsDistPublicationPlugin.canApply()) {
-            project.getPluginManager().apply(SlsDistPublicationPlugin.class);
+        project.getDependencies().getAttributesSchema().attribute(
+                Usage.USAGE_ATTRIBUTE,
+                strategy -> strategy.getDisambiguationRules().add(SlsDisambiguationRule.class));
+    }
+
+    /**
+     * Still support old consumers which don't declare a required usage, such as gradle-docker's docker
+     * configuration.
+     */
+    static final class SlsDisambiguationRule implements AttributeDisambiguationRule<Usage> {
+        @Override
+        public void execute(MultipleCandidatesDetails<Usage> details) {
+            if (details.getConsumerValue() == null) {
+                List<Usage> slsDistMatches = details
+                        .getCandidateValues()
+                        .stream()
+                        .filter(it -> it.getName().equals(SLS_DIST_USAGE))
+                        .collect(Collectors.toList());
+                if (slsDistMatches.size() == 1) {
+                    details.closestMatch(slsDistMatches.get(0));
+                }
+            }
         }
     }
 }
