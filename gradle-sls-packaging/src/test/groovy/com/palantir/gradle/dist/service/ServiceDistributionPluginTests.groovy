@@ -629,7 +629,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'exposes an artifact via dependency with sls-dist usage'() {
         given:
-        helper.addSubproject('parent', '''
+        helper.addSubproject('producer', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -647,7 +647,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         ''')
 
-        def childProject = helper.addSubproject('child', '''
+        def consumer = helper.addSubproject('consumer', '''
             configurations {
                 fromOtherProject {
                     attributes {
@@ -656,7 +656,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 }
             }
             dependencies {
-                fromOtherProject project(':parent')
+                fromOtherProject project(':producer')
             }
             task untar(type: Copy) {
                 // ensures the artifact is built by depending on the configuration
@@ -669,11 +669,11 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         ''')
 
         when:
-        def buildResult = runTasks(':child:untar')
+        def buildResult = runTasks(':consumer:untar')
 
         then:
         buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
-        new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+        new File(consumer,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
     }
 
     /**
