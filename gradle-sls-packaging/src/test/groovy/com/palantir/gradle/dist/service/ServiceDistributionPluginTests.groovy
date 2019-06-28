@@ -18,7 +18,6 @@ package com.palantir.gradle.dist.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
-import com.google.common.base.Stopwatch
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
@@ -1011,9 +1010,8 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     void execWithOutputX(String... tasks) {
-        def stopwatch = Stopwatch.createStarted()
         def output = execWithOutput(tasks)
-        println "execWithOutput took ${stopwatch.elapsed()}: " + tasks
+        println "execWithOutput: " + tasks
         println "-" * 100
         println output
         println "-" * 100
