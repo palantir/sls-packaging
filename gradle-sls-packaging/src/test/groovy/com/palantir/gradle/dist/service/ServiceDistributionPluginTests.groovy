@@ -70,10 +70,10 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         // wait for the Java process to start up and emit output
         sleep 1000
         file('dist/service-name-0.0.1/var/log/startup.log', projectDir).text.contains('Test started\n')
-        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'start') == 0
-        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'status') == 0
-        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'restart') == 0
-        execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'stop') == 0
+        execWithOutputX('dist/service-name-0.0.1/service/bin/init.sh', 'start')
+        execWithOutputX('dist/service-name-0.0.1/service/bin/init.sh', 'status')
+        execWithOutputX('dist/service-name-0.0.1/service/bin/init.sh', 'restart')
+        execWithOutputX('dist/service-name-0.0.1/service/bin/init.sh', 'stop')
         execWithOutput('dist/service-name-0.0.1/service/bin/init.sh', 'check') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
         execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
@@ -996,6 +996,14 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
         int result = proc.waitFor()
         return result
+    }
+
+    void execWithOutputX(String... tasks) {
+        def output = execWithOutput(tasks)
+        println "execWithOutput: " + tasks
+        println "-" * 100
+        println output
+        println "-" * 100
     }
 
     String execWithOutput(String... tasks) {
