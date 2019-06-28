@@ -672,7 +672,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def buildResult = runTasks(':consumer:untar')
 
         then:
-        buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':producer:distTar').outcome == TaskOutcome.SUCCESS
         new File(consumer,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
     }
 
