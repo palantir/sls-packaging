@@ -625,7 +625,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 dependsOn configurations.fromOtherProject
 
                 // copy the contents of the tarball
-                from tarTree(configurations.fromOtherProject.singleFile)
+                from { tarTree(configurations.fromOtherProject.singleFile) }
                 into 'build/exploded'
             }
         ''')
@@ -636,6 +636,103 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
         new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+    }
+
+    def 'exposes an artifact via dependency with sls-dist usage'() {
+        given:
+        helper.addSubproject('producer', '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
+            version '0.0.1'
+            distribution {
+                serviceName "my-service"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+            }
+        ''')
+
+        def consumer = helper.addSubproject('consumer', '''
+            configurations {
+                fromOtherProject {
+                    attributes {
+                        attribute Usage.USAGE_ATTRIBUTE, objects.named(Usage, 'sls-dist')
+                    }
+                }
+            }
+            dependencies {
+                fromOtherProject project(':producer')
+            }
+            task untar(type: Copy) {
+                // ensures the artifact is built by depending on the configuration
+                dependsOn configurations.fromOtherProject
+
+                // copy the contents of the tarball
+                from { tarTree(configurations.fromOtherProject.singleFile) }
+                into 'build/exploded'
+            }
+        ''')
+
+        when:
+        def buildResult = runTasks(':consumer:untar')
+
+        then:
+        buildResult.task(':producer:distTar').outcome == TaskOutcome.SUCCESS
+        new File(consumer,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+    }
+
+    /**
+     * Note: in this test, we are not checking that we can resolve exactly the right artifact,
+     * as that is tricky to get right, when the configuration being resolved doesn't set any required attributes.
+     *
+     * For instance, if java happens to be applied to the project, gradle will ALWAYS prefer the
+     * runtimeElements variant (from configuration runtimeElements) so our {@code sls} variant won't be selected.
+     * However, here we only care about testing that it can resolve to <i>something</i>, for the sole purpose of
+     * extracting the version the resolved component.
+     */
+    def 'dist project can be resolved through plain dependency when GCV is applied'() {
+        buildFile << """
+            plugins {
+                id 'com.palantir.consistent-versions' version '1.9.2'
+            }
+            
+            configurations {
+                fromOtherProject
+            }
+            dependencies {
+                fromOtherProject project(':dist')
+            }
+            
+            task verify {
+                doLast {
+                    configurations.fromOtherProject.resolve()
+                }
+            }
+        """.stripIndent()
+
+        helper.addSubproject('dist', '''
+            plugins {
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            
+            version '0.0.1'
+            distribution {
+                serviceName "my-asset"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+            }
+        ''')
+
+        runTasks('--write-locks')
+
+        expect:
+        runTasks(':verify')
     }
 
     def 'fails when asset and service plugins are both applied'() {

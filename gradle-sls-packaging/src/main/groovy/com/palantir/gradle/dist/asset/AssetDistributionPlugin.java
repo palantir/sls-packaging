@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.asset;
 
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
+import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
@@ -32,10 +33,10 @@ import org.gradle.api.tasks.bundling.Tar;
 public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
     public static final String ASSET_CONFIGURATION = "assetBundle";
-    private static final String SLS_CONFIGURATION_NAME = "sls";
 
     @Override
     public void apply(Project project) {
+        project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
@@ -88,7 +89,6 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project,  distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
 
-        project.getConfigurations().create(SLS_CONFIGURATION_NAME);
-        project.getArtifacts().add(SLS_CONFIGURATION_NAME, distTar);
+        project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
     }
 }

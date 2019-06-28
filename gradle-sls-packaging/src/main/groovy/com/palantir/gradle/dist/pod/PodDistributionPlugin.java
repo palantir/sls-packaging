@@ -16,6 +16,7 @@
 package com.palantir.gradle.dist.pod;
 
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
+import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.tasks.CreatePodYamlTask;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
@@ -29,10 +30,10 @@ import org.gradle.api.tasks.bundling.Tar;
 
 public final class PodDistributionPlugin implements Plugin<Project> {
     private static final String GROUP_NAME = "Distribution";
-    private static final String SLS_CONFIGURATION_NAME = "sls";
 
     @Override
     public void apply(Project project) {
+        project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
@@ -63,7 +64,6 @@ public final class PodDistributionPlugin implements Plugin<Project> {
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest, podYaml));
 
-        project.getConfigurations().create(SLS_CONFIGURATION_NAME);
-        project.getArtifacts().add(SLS_CONFIGURATION_NAME, configTar);
+        project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, configTar);
     }
 }
