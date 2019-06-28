@@ -65,7 +65,7 @@ See [below](#pod-distribution-plugin) for usage.
 
 Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
 
-However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise):
+However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise). Please note: you can add further restrictions to existing constraints, but you can't broaden them:
 
 ```gradle
 distribution {
@@ -181,7 +181,7 @@ And the complete list of configurable properties:
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run.
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
- * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
+ * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
 
 #### JVM Options
 

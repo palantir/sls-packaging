@@ -61,7 +61,6 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                 .getExtensions()
                 .getExtraProperties()
                 .set("getMinimumProductVersion", new Closure<String>(project, project) {
-
                     public String doCall(Object moduleVersion) {
                         List<String> strings = Splitter.on(':').splitToList(moduleVersion.toString());
                         Preconditions.checkState(strings.size() == 2,

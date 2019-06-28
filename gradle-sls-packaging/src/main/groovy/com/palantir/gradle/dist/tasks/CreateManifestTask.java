@@ -348,23 +348,25 @@ public class CreateManifestTask extends DefaultTask {
                 .flatMap(artifact -> {
                     String artifactName = artifact.getId().getDisplayName();
                     ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-                    Optional<String> pdeps;
+                    Optional<String> pdeps = Optional.empty();
 
                     // Extract product dependencies directly from Jar task for in project dependencies
                     if (id instanceof ProjectComponentIdentifier) {
                         Project dependencyProject = getProject().getRootProject()
                                 .project(((ProjectComponentIdentifier) id).getProjectPath());
-                        Jar jar = (Jar) dependencyProject
-                                .getTasks()
-                                .getByName(JavaPlugin.JAR_TASK_NAME);
+                        if (dependencyProject.getPlugins().hasPlugin(JavaPlugin.class)) {
+                            Jar jar = (Jar) dependencyProject
+                                    .getTasks()
+                                    .getByName(JavaPlugin.JAR_TASK_NAME);
 
-                        pdeps = Optional
-                                .ofNullable(jar
-                                        .getManifest()
-                                        .getEffectiveManifest()
-                                        .getAttributes()
-                                        .get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
-                                .map(Object::toString);
+                            pdeps = Optional
+                                    .ofNullable(jar
+                                            .getManifest()
+                                            .getEffectiveManifest()
+                                            .getAttributes()
+                                            .get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
+                                    .map(Object::toString);
+                        }
                     } else {
                         if (!artifact.getFile().exists()) {
                             log.debug("Artifact did not exist: {}", artifact.getFile());
