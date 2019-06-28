@@ -16,7 +16,7 @@ jobs:
       - checkout
       - restore_cache: { key: 'gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}' }
       - restore_cache: { key: 'gradle-cache-{{ checksum "versions.props" }}-{{ checksum "build.gradle" }}' }
-      - run: ./gradlew --no-daemon --parallel --stacktrace  --continue --max-workers=8 --profile build -i
+      - run: ./gradlew --no-daemon --parallel --stacktrace  --continue --max-workers=8 --profile build
       - save_cache:
           key: 'gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}'
           paths: [ ~/.gradle/wrapper ]
@@ -51,7 +51,7 @@ jobs:
       - checkout
       - restore_cache: { key: 'gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}' }
       - restore_cache: { key: 'gradle-cache-{{ checksum "versions.props" }}-{{ checksum "build.gradle" }}' }
-      - run: ./gradlew --no-daemon --parallel --stacktrace  --continue --profile build -i
+      - run: ./gradlew --no-daemon --parallel --stacktrace  --continue --profile build
       - save_cache:
           key: 'gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}'
           paths: [ ~/.gradle/wrapper ]
