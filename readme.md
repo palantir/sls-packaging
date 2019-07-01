@@ -1,3 +1,7 @@
+<p align="right">
+<a href="https://autorelease.general.dmz.palantir.tech/palantir/sls-packaging"><img src="https://img.shields.io/badge/Perform%20an-Autorelease-success.svg" alt="Autorelease"></a>
+</p>
+
 # SLS Distribution Gradle Plugins
 
 [![Build Status](https://circleci.com/gh/palantir/sls-packaging.svg?style=shield)](https://circleci.com/gh/palantir/sls-packaging)
