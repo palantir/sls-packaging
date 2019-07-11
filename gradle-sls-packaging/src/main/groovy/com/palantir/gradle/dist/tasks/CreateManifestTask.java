@@ -427,7 +427,7 @@ public class CreateManifestTask extends DefaultTask {
                 .forEach(productDependency -> discoveredProductDependencies.merge(
                         new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
                         productDependency,
-                        (key, oldValue) -> ProductDependencyMerger.merge(oldValue, productDependency)));
+                        ProductDependencyMerger::merge));
         return discoveredProductDependencies;
     }
 

@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Correctly merge discovered product dependencies
+  links:
+  - https://github.com/palantir/sls-packaging/pull/543
