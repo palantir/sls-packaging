@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -40,27 +41,20 @@ public class CreatePodYamlTask extends DefaultTask {
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, PodServiceDefinition> serviceDefinitions;
-    private Map<String, PodVolumeDefinition> volumeDefinitions;
+    private final MapProperty<String, PodServiceDefinition> serviceDefinitions =
+            getProject().getObjects().mapProperty(String.class, PodServiceDefinition.class);
+    private final MapProperty<String, PodVolumeDefinition> volumeDefinitions =
+            getProject().getObjects().mapProperty(String.class, PodVolumeDefinition.class);
     private File podYamlFile = new File(getProject().getBuildDir(), "deployment/pod.yml");
 
     @Input
-    public final Map<String, PodServiceDefinition> getServiceDefinitions() {
+    public final MapProperty<String, PodServiceDefinition> getServiceDefinitions() {
         return serviceDefinitions;
     }
 
-    public final void setServiceDefinitions(Map<String, PodServiceDefinition> serviceDefinitions) {
-        this.serviceDefinitions = serviceDefinitions;
-    }
-
     @Input
-    public final Map<String, PodVolumeDefinition> getVolumeDefinitions() {
+    public final MapProperty<String, PodVolumeDefinition> getVolumeDefinitions() {
         return volumeDefinitions;
-    }
-
-    public final void setVolumeDefinitions(Map<String, PodVolumeDefinition> volumeDefinitions) {
-        this.volumeDefinitions = volumeDefinitions;
     }
 
     @OutputFile
@@ -85,7 +79,7 @@ public class CreatePodYamlTask extends DefaultTask {
 
     private void validatePodYaml() {
         PropertyNamingStrategy.KebabCaseStrategy kebabCaseStrategy = new PropertyNamingStrategy.KebabCaseStrategy();
-        serviceDefinitions.forEach((key, value) -> {
+        serviceDefinitions.get().forEach((key, value) -> {
             if (!kebabCaseStrategy.translate(key).equals(key)) {
                 throw new GradleException(String.format(
                         SERVICE_VALIDATION_FAIL_FORMAT, key, "service names must be kebab case"));
@@ -98,14 +92,14 @@ public class CreatePodYamlTask extends DefaultTask {
             }
 
             value.getVolumeMap().forEach((volumeKey, volumeValue) -> {
-                if (!volumeDefinitions.containsKey(volumeValue)) {
+                if (!volumeDefinitions.get().containsKey(volumeValue)) {
                     throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, key,
                             "service volume mapping cannot contain undeclared volumes"));
                 }
             });
         });
 
-        volumeDefinitions.forEach((key, value) -> {
+        volumeDefinitions.get().forEach((key, value) -> {
             if (key.length() >= 25) {
                 throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, key,
                         "volume names must be fewer than 25 characters"));

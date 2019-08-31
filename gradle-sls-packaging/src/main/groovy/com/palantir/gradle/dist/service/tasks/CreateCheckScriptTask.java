@@ -20,8 +20,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
-import java.io.File;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -31,9 +31,11 @@ import org.gradle.api.tasks.TaskAction;
 public class CreateCheckScriptTask extends DefaultTask {
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
+    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
-    // TODO(forozco): Use RegularFileProperty once our minimum supported version is 5.0
-    private File outputFile = new File(getProject().getBuildDir(), "monitoring/check.sh");
+    public CreateCheckScriptTask() {
+        outputFile.set(getProject().getLayout().getBuildDirectory().file("monitoring/check.sh"));
+    }
 
     @Input
     public final Property<String> getServiceName() {
@@ -46,12 +48,8 @@ public class CreateCheckScriptTask extends DefaultTask {
     }
 
     @OutputFile
-    public final File getOutputFile() {
+    public final RegularFileProperty getOutputFile() {
         return outputFile;
-    }
-
-    public final void setOutputFile(File outputFile) {
-        this.outputFile = outputFile;
     }
 
     @TaskAction
@@ -59,7 +57,7 @@ public class CreateCheckScriptTask extends DefaultTask {
         if (!checkArgs.get().isEmpty()) {
             EmitFiles.replaceVars(
                     JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
-                    getOutputFile().toPath(),
+                    getOutputFile().get().getAsFile().toPath(),
                     ImmutableMap.of(
                             "@serviceName@", serviceName.get(),
                             "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))

@@ -19,7 +19,6 @@ package com.palantir.gradle.dist;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
@@ -33,6 +32,7 @@ import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
@@ -55,10 +55,8 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final ProviderFactory providerFactory;
+    private final MapProperty<String, Object> manifestExtensions;
     private final String projectName;
-
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, Object> manifestExtensions;
     private Configuration productDependenciesConfig;
 
     @Inject
@@ -75,7 +73,7 @@ public class BaseDistributionExtension {
         serviceName.set(project.provider(project::getName));
         podName.set(project.provider(project::getName));
 
-        manifestExtensions = Maps.newHashMap();
+        manifestExtensions = project.getObjects().mapProperty(String.class, Object.class);
 
         projectName = project.getName();
     }
@@ -221,7 +219,7 @@ public class BaseDistributionExtension {
         this.ignoredProductDependencies.add(id);
     }
 
-    public final Map<String, Object> getManifestExtensions() {
+    public final Provider<Map<String, Object>> getManifestExtensions() {
         return this.manifestExtensions;
     }
 
@@ -234,7 +232,7 @@ public class BaseDistributionExtension {
     }
 
     public final void setManifestExtensions(Map<String, Object> extensions) {
-        manifestExtensions = extensions;
+        manifestExtensions.set(extensions);
     }
 
     public final Configuration getProductDependenciesConfig() {

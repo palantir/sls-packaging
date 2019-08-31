@@ -15,25 +15,25 @@
  */
 package com.palantir.gradle.dist.asset;
 
-import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import java.util.Map;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Provider;
 
 public class AssetDistributionExtension extends BaseDistributionExtension {
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, String> assets;
+    private MapProperty<String, String> assets;
 
     @Inject
     public AssetDistributionExtension(Project project) {
         super(project);
-        assets = Maps.newHashMap();
+        assets = project.getObjects().mapProperty(String.class, String.class);
         setProductType(ProductType.ASSET_V1);
     }
 
-    public final Map<String, String> getAssets() {
+    public final Provider<Map<String, String>> getAssets() {
         return assets;
     }
 
@@ -46,6 +46,6 @@ public class AssetDistributionExtension extends BaseDistributionExtension {
     }
 
     public final void setAssets(Map<String, String> assets) {
-        this.assets = assets;
+        this.assets.set(assets);
     }
 }

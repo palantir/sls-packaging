@@ -83,8 +83,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setDescription("Creates a jar containing a Class-Path manifest entry specifying the classpath "
                             + "using pathing jar rather than command line argument on Windows, since Windows path "
                             + "sizes are limited.");
-                    // TODO(forozco): Use provider based API when minimum version is 5.1
-                    task.setAppendix("manifest-classpath");
+                    task.getArchiveAppendix().set("manifest-classpath");
 
                     task.doFirst(t -> {
 
@@ -97,7 +96,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                 .stream()
                                 .map(File::getName)
                                 .collect(Collectors.joining(" "));
-                        task.getManifest().getAttributes().put("Class-Path", classPath + " " + task.getArchiveName());
+                        task.getManifest().getAttributes().put(
+                                "Class-Path", classPath + " " + task.getArchiveBaseName().get());
                     });
                     task.onlyIf(t -> distributionExtension.getEnableManifestClasspath().get());
                 });
@@ -121,7 +121,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                     .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
                                     .replaceAll(
                                             "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
-                                            "$1%APP_HOME%\\\\lib\\\\" + manifestClassPathTask.get().getArchiveName()
+                                            "$1%APP_HOME%\\\\lib\\\\"
+                                                    + manifestClassPathTask.get().getArchiveBaseName().get()
                                                     + "$2");
 
                             GFileUtils.writeFile(cleanedText, task.getWindowsScript());
@@ -199,7 +200,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         // been correctly configured
         project.afterEvaluate(p -> runTask.configure(task -> {
             task.setClasspath(project.files(
-                    jarTask.get().getArchivePath(), p.getConfigurations().getByName("runtimeClasspath")));
+                    jarTask.get().getArchiveFile().get(),
+                    p.getConfigurations().getByName("runtimeClasspath")));
             task.setMain(distributionExtension.getMainClass().get());
             task.setArgs(distributionExtension.getArgs().get());
             task.setJvmArgs(distributionExtension.getDefaultJvmOpts().get());
@@ -210,7 +212,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDescription("Creates a compressed, gzipped tar file that contains required runtime resources.");
             // Set compression in constructor so that task output has the right name from the start.
             task.setCompression(Compression.GZIP);
-            task.setExtension("sls.tgz");
+            task.getArchiveExtension().set("sls.tgz");
 
             task.dependsOn(startScripts, initScript, checkScript, yourkitAgent, yourkitLicense);
             task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);

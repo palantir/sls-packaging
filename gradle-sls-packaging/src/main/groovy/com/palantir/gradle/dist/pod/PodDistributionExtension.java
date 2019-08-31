@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist.pod;
 
-import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import groovy.lang.Closure;
@@ -24,24 +23,25 @@ import groovy.lang.DelegatesTo;
 import java.util.Map;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
 
 public class PodDistributionExtension extends BaseDistributionExtension {
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, PodServiceDefinition> services;
-    private Map<String, PodVolumeDefinition> volumes;
+    private MapProperty<String, PodServiceDefinition> services;
+    private MapProperty<String, PodVolumeDefinition> volumes;
 
     @Inject
     public PodDistributionExtension(Project project) {
         super(project);
 
-        services = Maps.newHashMap();
-        volumes = Maps.newHashMap();
+        services = project.getObjects().mapProperty(String.class, PodServiceDefinition.class);
+        volumes = project.getObjects().mapProperty(String.class, PodVolumeDefinition.class);
 
         setProductType(ProductType.POD_V1);
     }
 
-    public final Map<String, PodServiceDefinition> getServices() {
+    public final Provider<Map<String, PodServiceDefinition>> getServices() {
         return services;
     }
 
@@ -50,7 +50,7 @@ public class PodDistributionExtension extends BaseDistributionExtension {
     }
 
     public final void setServices(Map<String, PodServiceDefinition> services) {
-        this.services = services;
+        this.services.set(services);
     }
 
     public final void service(String name, @DelegatesTo(PodServiceDefinition.class) Closure closure) {
@@ -60,7 +60,7 @@ public class PodDistributionExtension extends BaseDistributionExtension {
     }
 
 
-    public final Map<String, PodVolumeDefinition> getVolumes() {
+    public final Provider<Map<String, PodVolumeDefinition>> getVolumes() {
         return volumes;
     }
 
@@ -69,7 +69,7 @@ public class PodDistributionExtension extends BaseDistributionExtension {
     }
 
     public final void setVolumes(Map<String, PodVolumeDefinition> volumes) {
-        this.volumes = volumes;
+        this.volumes.set(volumes);
     }
 
     public final void volume(String name, @DelegatesTo(PodVolumeDefinition.class) Closure closure) {

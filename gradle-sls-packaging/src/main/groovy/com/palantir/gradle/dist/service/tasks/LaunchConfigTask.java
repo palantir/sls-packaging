@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -79,14 +80,15 @@ public class LaunchConfigTask extends DefaultTask {
     private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class);
 
     private final MapProperty<String, String> env = getProject().getObjects().mapProperty(String.class, String.class);
-
-    // TODO(forozco): Use RegularFileProperty once our minimum supported version is 5.0
-    private File staticLauncher = new File(getProject().getBuildDir(), "scripts/launcher-static.yml");
-    private File checkLauncher = new File(getProject().getBuildDir(), "scripts/launcher-check.yml");
+    private RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
+    private RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
 
     private FileCollection classpath;
 
-    public LaunchConfigTask() { }
+    public LaunchConfigTask() {
+        staticLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
+        checkLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-check.yml"));
+    }
 
     @Input
     public final Property<String> getMainClass() {
@@ -149,21 +151,13 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     @OutputFile
-    public final File getStaticLauncher() {
+    public final RegularFileProperty getStaticLauncher() {
         return staticLauncher;
     }
 
-    public final void setStaticLauncher(File staticLauncher) {
-        this.staticLauncher = staticLauncher;
-    }
-
     @OutputFile
-    public final File getCheckLauncher() {
+    public final RegularFileProperty getCheckLauncher() {
         return checkLauncher;
-    }
-
-    public final void setCheckLauncher(File checkLauncher) {
-        this.checkLauncher = checkLauncher;
     }
 
     @TaskAction
@@ -180,7 +174,7 @@ public class LaunchConfigTask extends DefaultTask {
                 .addAllJvmOpts(defaultJvmOpts.get())
                 .putAllEnv(defaultEnvironment)
                 .putAllEnv(env.get())
-                .build(), getStaticLauncher());
+                .build(), getStaticLauncher().get().getAsFile());
 
         writeConfig(LaunchConfig.builder()
                 .mainClass(mainClass.get())
@@ -191,7 +185,7 @@ public class LaunchConfigTask extends DefaultTask {
                 .addAllJvmOpts(alwaysOnJvmOptions)
                 .addAllJvmOpts(defaultJvmOpts.get())
                 .env(defaultEnvironment)
-                .build(), getCheckLauncher());
+                .build(), getCheckLauncher().get().getAsFile());
     }
 
     private static void writeConfig(LaunchConfig config, File scriptFile) throws IOException {

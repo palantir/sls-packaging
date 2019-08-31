@@ -16,13 +16,11 @@
 
 package com.palantir.gradle.dist.service;
 
-import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -31,6 +29,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
@@ -46,8 +45,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> checkArgs;
     private final ListProperty<String> defaultJvmOpts;
     private final ListProperty<String> excludeFromVar;
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, String> env;
+    private MapProperty<String, String> env;
 
     private final ObjectFactory objectFactory;
 
@@ -67,20 +65,13 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         gc = objectFactory.property(GcProfile.class);
         gc.set(new GcProfile.Throughput());
 
-        args = objectFactory.listProperty(String.class);
-        // TODO(dfox): use listProperty(..).empty() when a minimum Gradle of 5.0 is acceptable
-        args.set(Collections.emptyList());
-
-        checkArgs = objectFactory.listProperty(String.class);
-        checkArgs.set(Collections.emptyList());
-
-        defaultJvmOpts = objectFactory.listProperty(String.class);
-        defaultJvmOpts.set(Collections.emptyList());
-
+        args = objectFactory.listProperty(String.class).empty();
+        checkArgs = objectFactory.listProperty(String.class).empty();
+        defaultJvmOpts = objectFactory.listProperty(String.class).empty();
         excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
 
-        env = Maps.newHashMap();
+        env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
     }
 
@@ -184,7 +175,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.excludeFromVar.set(excludeFromVar);
     }
 
-    public final Map<String, String> getEnv() {
+    public final Provider<Map<String, String>> getEnv() {
         return env;
     }
 
@@ -193,7 +184,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     }
 
     public final void setEnv(Map<String, String> env) {
-        this.env = env;
+        this.env.set(env);
     }
 
     public final Provider<GcProfile> getGc() {
