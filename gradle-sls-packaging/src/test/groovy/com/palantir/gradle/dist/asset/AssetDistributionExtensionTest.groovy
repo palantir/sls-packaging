@@ -31,7 +31,7 @@ class AssetDistributionExtensionTest extends ProjectSpec {
         }
 
         then:
-        ext.getAssets() == [
+        ext.getAssets().get() == [
                 "path/to/src" : "relocated/dest",
                 "path/to/src2": "relocated/dest2",
                 "path/to/foo" : "path/to/foo"
@@ -49,6 +49,6 @@ class AssetDistributionExtensionTest extends ProjectSpec {
         }
 
         then:
-        ext.getAssets() == ["path/to/src2": "relocated/dest2"]
+        ext.getAssets().get() == ["path/to/src2": "relocated/dest2"]
     }
 }

@@ -61,7 +61,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.getArchiveBaseName().set(distributionExtension.getDistributionServiceName());
             task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
             task.getArchiveExtension().set("sls.tgz");
-            task.getDestinationDirectory().set(new File(project.getBuildDir(), "distributions"));
+            task.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("distributions"));
 
             task.dependsOn(manifest);
         });

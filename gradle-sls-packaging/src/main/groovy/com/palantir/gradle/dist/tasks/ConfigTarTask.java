@@ -37,8 +37,8 @@ public final class ConfigTarTask {
 
             task.from(new File(project.getProjectDir(), "deployment"));
             task.from(new File(project.getBuildDir(), "deployment"));
-            task.getDestinationDirectory().set(new File(project.getBuildDir(), "distributions"));
-            task.getArchiveBaseName().set(ext.getDistributionServiceName().get());
+            task.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("distributions"));
+            task.getArchiveBaseName().set(ext.getDistributionServiceName());
             task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
             task.getArchiveExtension().set(ext.getProductType().map(productType -> {
                 try {
