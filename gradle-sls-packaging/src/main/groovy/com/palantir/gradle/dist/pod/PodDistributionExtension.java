@@ -28,8 +28,8 @@ import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
 
 public class PodDistributionExtension extends BaseDistributionExtension {
-    private MapProperty<String, PodServiceDefinition> services;
-    private MapProperty<String, PodVolumeDefinition> volumes;
+    private final MapProperty<String, PodServiceDefinition> services;
+    private final MapProperty<String, PodVolumeDefinition> volumes;
 
     @Inject
     public PodDistributionExtension(Project project) {

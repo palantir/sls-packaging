@@ -122,7 +122,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                     .replaceAll(
                                             "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
                                             "$1%APP_HOME%\\\\lib\\\\"
-                                                    + manifestClassPathTask.get().getArchiveBaseName().get()
+                                                    + manifestClassPathTask.get().getArchiveFileName().get()
                                                     + "$2");
 
                             GFileUtils.writeFile(cleanedText, task.getWindowsScript());

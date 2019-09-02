@@ -23,11 +23,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.dist.pod.PodServiceDefinition;
 import com.palantir.gradle.dist.pod.PodVolumeDefinition;
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
@@ -45,7 +45,11 @@ public class CreatePodYamlTask extends DefaultTask {
             getProject().getObjects().mapProperty(String.class, PodServiceDefinition.class);
     private final MapProperty<String, PodVolumeDefinition> volumeDefinitions =
             getProject().getObjects().mapProperty(String.class, PodVolumeDefinition.class);
-    private File podYamlFile = new File(getProject().getBuildDir(), "deployment/pod.yml");
+    private final RegularFileProperty podYamlFile = getProject().getObjects().fileProperty();
+
+    public CreatePodYamlTask() {
+        podYamlFile.set(getProject().getLayout().getBuildDirectory().file("deployment/pod.yml"));
+    }
 
     @Input
     public final MapProperty<String, PodServiceDefinition> getServiceDefinitions() {
@@ -58,23 +62,18 @@ public class CreatePodYamlTask extends DefaultTask {
     }
 
     @OutputFile
-    public final File getPodYamlFile() {
+    public final RegularFileProperty getPodYamlFile() {
         return podYamlFile;
-    }
-
-    public final void setPodYamlFile(File podYamlFile) {
-        this.podYamlFile = podYamlFile;
     }
 
     @TaskAction
     final void createPodYaml() throws IOException {
         validatePodYaml();
-        OBJECT_MAPPER.writeValue(getPodYamlFile(), ImmutableMap.of(
+        OBJECT_MAPPER.writeValue(getPodYamlFile().getAsFile().get(), ImmutableMap.of(
                 "services",
-                OBJECT_MAPPER.convertValue(this.serviceDefinitions, new TypeReference<Map<String, Object>>() {}),
+                OBJECT_MAPPER.convertValue(this.serviceDefinitions.get(), new TypeReference<Map<String, Object>>() {}),
                 "volumes",
-                OBJECT_MAPPER.convertValue(this.volumeDefinitions, new TypeReference<Map<String, Object>>() {})));
-
+                OBJECT_MAPPER.convertValue(this.volumeDefinitions.get(), new TypeReference<Map<String, Object>>() {})));
     }
 
     private void validatePodYaml() {
