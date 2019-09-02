@@ -24,12 +24,12 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 
 public class AssetDistributionExtension extends BaseDistributionExtension {
-    private MapProperty<String, String> assets;
+    private final MapProperty<String, String> assets;
 
     @Inject
     public AssetDistributionExtension(Project project) {
         super(project);
-        assets = project.getObjects().mapProperty(String.class, String.class);
+        assets = project.getObjects().mapProperty(String.class, String.class).empty();
         setProductType(ProductType.ASSET_V1);
     }
 

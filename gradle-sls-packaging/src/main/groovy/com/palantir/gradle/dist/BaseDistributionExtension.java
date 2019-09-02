@@ -73,7 +73,7 @@ public class BaseDistributionExtension {
         serviceName.set(project.provider(project::getName));
         podName.set(project.provider(project::getName));
 
-        manifestExtensions = project.getObjects().mapProperty(String.class, Object.class);
+        manifestExtensions = project.getObjects().mapProperty(String.class, Object.class).empty();
 
         projectName = project.getName();
     }

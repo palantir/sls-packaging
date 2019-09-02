@@ -45,7 +45,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> checkArgs;
     private final ListProperty<String> defaultJvmOpts;
     private final ListProperty<String> excludeFromVar;
-    private MapProperty<String, String> env;
+    private final MapProperty<String, String> env;
 
     private final ObjectFactory objectFactory;
 
@@ -71,7 +71,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
 
-        env = objectFactory.mapProperty(String.class, String.class);
+        env = objectFactory.mapProperty(String.class, String.class).empty();
         setProductType(ProductType.SERVICE_V1);
     }
 

@@ -97,7 +97,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                 .map(File::getName)
                                 .collect(Collectors.joining(" "));
                         task.getManifest().getAttributes().put(
-                                "Class-Path", classPath + " " + task.getArchiveBaseName().get());
+                                "Class-Path", classPath + " " + task.getArchiveFileName().get());
                     });
                     task.onlyIf(t -> distributionExtension.getEnableManifestClasspath().get());
                 });
