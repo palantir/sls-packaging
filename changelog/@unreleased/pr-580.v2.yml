@@ -1,0 +1,6 @@
+type: break
+break:
+  description: sls-packaging should now be compatible with Gradle 6.0, but means sls-packaging
+    requires at least Gradle 5.1 and is no longer compatible with 4.X.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/580
