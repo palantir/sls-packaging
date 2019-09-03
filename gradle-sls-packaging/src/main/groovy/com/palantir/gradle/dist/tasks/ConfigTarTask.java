@@ -37,23 +37,21 @@ public final class ConfigTarTask {
 
             task.from(new File(project.getProjectDir(), "deployment"));
             task.from(new File(project.getBuildDir(), "deployment"));
-        });
-
-        project.afterEvaluate(p -> configTar.configure(task -> {
-            // TODO(forozco): Use provider based API when minimum version is 5.1
-            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
-            task.setBaseName(ext.getDistributionServiceName().get());
-            task.setVersion(project.getVersion().toString());
-            task.setExtension(ext.getProductType().map(productType -> {
+            task.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("distributions"));
+            task.getArchiveBaseName().set(ext.getDistributionServiceName());
+            task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
+            task.getArchiveExtension().set(ext.getProductType().map(productType -> {
                 try {
                     String productTypeString = CreateManifestTask.jsonMapper.writeValueAsString(productType);
                     return productTypeString.substring(1, productTypeString.lastIndexOf('.')).concat(".config.tgz");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }).get());
+            }));
+        });
 
-            // TODO(forozco): make this lazy since into does not support providers, but does support callable
+        // TODO(forozco): make this lazy since into does not support providers, but does support callable
+        project.afterEvaluate(p -> configTar.configure(task -> {
             task.into(String.format("%s-%s/deployment", ext.getDistributionServiceName().get(), project.getVersion()));
         }));
 

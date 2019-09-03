@@ -58,8 +58,10 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);
-            task.setExtension("sls.tgz");
-            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
+            task.getArchiveBaseName().set(distributionExtension.getDistributionServiceName());
+            task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
+            task.getArchiveExtension().set("sls.tgz");
+            task.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("distributions"));
 
             task.dependsOn(manifest);
         });
@@ -67,10 +69,6 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
-            // TODO(forozco): Use provider based API when minimum version is 5.1
-            task.setBaseName(distributionExtension.getDistributionServiceName().get());
-            task.setVersion(project.getVersion().toString());
-
             String archiveRootDir = String.format("%s-%s",
                     distributionExtension.getDistributionServiceName().get(), p.getVersion());
 
@@ -80,7 +78,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.from(new File(project.getBuildDir(), "deployment"), t ->
                     t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
-            distributionExtension.getAssets().forEach((key, value) ->
+            distributionExtension.getAssets().get().forEach((key, value) ->
                     task.from(p.file(key), t ->
                             t.into(String.format("%s/asset/%s", archiveRootDir, value))));
         }));

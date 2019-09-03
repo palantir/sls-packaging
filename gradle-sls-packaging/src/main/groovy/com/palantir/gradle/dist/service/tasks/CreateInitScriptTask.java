@@ -19,8 +19,8 @@ package com.palantir.gradle.dist.service.tasks;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
-import java.io.File;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
@@ -28,9 +28,11 @@ import org.gradle.api.tasks.TaskAction;
 
 public class CreateInitScriptTask extends DefaultTask {
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
+    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
-    // TODO(forozco): Use RegularFileProperty once our minimum supported version is 5.0
-    private File outputFile = new File(getProject().getBuildDir(), "scripts/init.sh");
+    public CreateInitScriptTask() {
+        outputFile.set(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));
+    }
 
     @Input
     public final Property<String> getServiceName() {
@@ -38,19 +40,15 @@ public class CreateInitScriptTask extends DefaultTask {
     }
 
     @OutputFile
-    public final File getOutputFile() {
+    public final RegularFileProperty getOutputFile() {
         return outputFile;
-    }
-
-    public final void setOutputFile(File outputFile) {
-        this.outputFile = outputFile;
     }
 
     @TaskAction
     final void createInitScript() {
         EmitFiles.replaceVars(
                 JavaServiceDistributionPlugin.class.getResourceAsStream("/init.sh"),
-                getOutputFile().toPath(),
+                getOutputFile().get().getAsFile().toPath(),
                 ImmutableMap.of("@serviceName@", serviceName.get()))
                 .toFile()
                 .setExecutable(true);

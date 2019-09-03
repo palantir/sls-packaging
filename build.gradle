@@ -22,7 +22,7 @@ apply plugin: 'com.palantir.git-version'
 apply plugin: 'com.palantir.consistent-versions'
 
 allprojects {
-    version gitVersion()
+    version System.env.CIRCLE_TAG ?: gitVersion()
     group 'com.palantir.sls-packaging'
 
     repositories {
@@ -35,5 +35,9 @@ subprojects {
     apply plugin: 'java-library'
     java {
         sourceCompatibility JavaVersion.VERSION_1_8
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs += ['-Werror', '-Xlint:deprecation']
     }
 }

@@ -65,6 +65,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
@@ -95,8 +96,8 @@ public class CreateManifestTask extends DefaultTask {
     private final Property<Configuration> productDependenciesConfig =
             getProject().getObjects().property(Configuration.class);
 
-    // TODO(forozco): Use MapProperty, RegularFileProperty once our minimum supported version is 5.1
-    private Map<String, Object> manifestExtensions = Maps.newHashMap();
+    private final MapProperty<String, Object> manifestExtensions = getProject().getObjects()
+            .mapProperty(String.class, Object.class);
     private File manifestFile;
 
     public CreateManifestTask() {
@@ -145,12 +146,8 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    final Map<String, Object> getManifestExtensions() {
+    final MapProperty<String, Object> getManifestExtensions() {
         return manifestExtensions;
-    }
-
-    final void setManifestExtensions(Map<String, Object> manifestExtensions) {
-        this.manifestExtensions = manifestExtensions;
     }
 
     @Input
@@ -194,7 +191,7 @@ public class CreateManifestTask extends DefaultTask {
     @TaskAction
     final void createManifest() throws Exception {
         validateProjectVersion();
-        if (manifestExtensions.containsKey("product-dependencies")) {
+        if (manifestExtensions.get().containsKey("product-dependencies")) {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
                     + "'product-dependencies' key in manifestExtensions");
         }
@@ -249,7 +246,7 @@ public class CreateManifestTask extends DefaultTask {
                 .productGroup(serviceGroup.get())
                 .productName(serviceName.get())
                 .productVersion(getProjectVersion())
-                .putAllExtensions(manifestExtensions)
+                .putAllExtensions(manifestExtensions.get())
                 .putExtensions("product-dependencies", productDeps)
                 .build()
         );
@@ -473,9 +470,8 @@ public class CreateManifestTask extends DefaultTask {
                     task.getProductDependencies().set(ext.getProductDependencies());
                     task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
+                    task.getManifestExtensions().set(ext.getManifestExtensions());
                 });
-        project.afterEvaluate(p ->
-                createManifest.configure(task -> task.setManifestExtensions(ext.getManifestExtensions())));
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
             project
                     .getTasks()
