@@ -19,7 +19,7 @@ org.yaml:snakeyaml:1.23 (1 constraints: 6e17f627)
 
 [Test dependencies]
 cglib:cglib-nodep:3.2.2 (1 constraints: 490ded24)
-com.netflix.nebula:nebula-test:7.2.5 (1 constraints: 10051936)
+com.netflix.nebula:nebula-test:7.3.0 (1 constraints: 0c051736)
 commons-io:commons-io:2.5 (1 constraints: eb0c8d0a)
 junit:junit:4.12 (2 constraints: df1167f6)
 org.awaitility:awaitility:4.0.0 (1 constraints: 0605ff35)
