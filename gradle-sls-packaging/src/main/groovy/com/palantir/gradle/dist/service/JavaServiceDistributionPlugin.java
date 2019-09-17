@@ -148,6 +148,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 "createLaunchConfig", LaunchConfigTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates launcher-static.yml and launcher-check.yml configurations.");
+                    task.dependsOn(manifestClassPathTask);
 
                     task.getMainClass().set(distributionExtension.getMainClass());
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
@@ -158,9 +159,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getEnv().set(distributionExtension.getEnv());
-                    task.setClasspath(
-                            jarTask.get().getOutputs().getFiles().plus(
-                                    distributionExtension.getProductDependenciesConfig()));
+                    if (distributionExtension.getEnableManifestClasspath().get()) {
+                        task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
+                    } else {
+                        task.setClasspath(
+                                jarTask.get().getOutputs().getFiles().plus(
+                                        distributionExtension.getProductDependenciesConfig()));
+                    }
                 });
 
         TaskProvider<CreateInitScriptTask> initScript = project.getTasks().register(
