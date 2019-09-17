@@ -138,10 +138,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setMainClassName(distributionExtension.getMainClass().get());
             task.setApplicationName(distributionExtension.getDistributionServiceName().get());
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
+            task.dependsOn(manifestClassPathTask);
 
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
-            task.setClasspath(jarTask.get().getOutputs().getFiles().plus(
-                    javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
+            if (distributionExtension.getEnableManifestClasspath().get()) {
+                task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
+            } else {
+                task.setClasspath(
+                        jarTask.get().getOutputs().getFiles().plus(
+                                distributionExtension.getProductDependenciesConfig()));
+            }
         }));
 
         TaskProvider<LaunchConfigTask> launchConfigTask = project.getTasks().register(
