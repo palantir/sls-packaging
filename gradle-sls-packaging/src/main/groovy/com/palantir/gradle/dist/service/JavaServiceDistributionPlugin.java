@@ -146,7 +146,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             } else {
                 task.setClasspath(
                         jarTask.get().getOutputs().getFiles().plus(
-                                distributionExtension.getProductDependenciesConfig()));
+                                javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
+
             }
         }));
 
@@ -165,13 +166,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getEnv().set(distributionExtension.getEnv());
-                    if (distributionExtension.getEnableManifestClasspath().get()) {
-                        task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
-                    } else {
-                        task.setClasspath(
-                                jarTask.get().getOutputs().getFiles().plus(
-                                        distributionExtension.getProductDependenciesConfig()));
-                    }
                 });
 
         TaskProvider<CreateInitScriptTask> initScript = project.getTasks().register(
@@ -228,6 +222,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.dependsOn(startScripts, initScript, checkScript, yourkitAgent, yourkitLicense);
             task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);
         });
+
+        project.afterEvaluate(p -> launchConfigTask.configure(task -> {
+            if (distributionExtension.getEnableManifestClasspath().get()) {
+                task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
+            } else {
+                task.setClasspath(
+                        jarTask.get().getOutputs().getFiles().plus(
+                                distributionExtension.getProductDependenciesConfig()));
+            }
+        }));
 
         project.afterEvaluate(p -> DistTarTask.configure(
                 distTar.get(),
