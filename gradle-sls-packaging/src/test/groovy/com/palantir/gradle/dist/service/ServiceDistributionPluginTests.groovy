@@ -780,6 +780,88 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 serviceName "service-name"
                 mainClass "dummy.service.MainClass"
                 args "hello"
+            }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
+            dependencies {
+                implementation project(':child')
+                compile 'org.mockito:mockito-core:2.7.22'
+            }
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        ''')
+
+        helper.addSubproject('child', '''
+            plugins {
+                id 'java-library'
+            }
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
+            dependencies {
+                api "com.google.guava:guava:19.0"
+                implementation "com.google.code.findbugs:annotations:3.0.1"
+            }
+        ''')
+
+        when:
+        runTasks(':parent:build', ':parent:distTar', ':parent:untar')
+
+        then:
+        def libFiles = new File(projectDir, 'parent/dist/service-name-0.0.1/service/lib/').listFiles()
+        libFiles.any { it.toString().endsWith('annotations-3.0.1.jar') }
+        libFiles.any { it.toString().endsWith('guava-19.0.jar') }
+        libFiles.any { it.toString().endsWith('mockito-core-2.7.22.jar') }
+        !libFiles.any { it.toString().equals('main') }
+
+        // verify start scripts
+        List<String> startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name')
+                .text
+                .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
+                .split(':')
+
+        startScript.any { it.contains('/lib/annotations-3.0.1.jar') }
+        startScript.any { it.contains('/lib/guava-19.0.jar') }
+        startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+
+        // verify launcher YAML files
+        LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
+                LaunchConfigTask.LaunchConfig.class)
+
+        launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
+        launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
+        launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+
+        LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
+                LaunchConfigTask.LaunchConfig.class)
+
+        launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
+        launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
+        launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+    }
+
+    def 'uses the runtimeClasspath in manifest jar'() {
+        given:
+        helper.addSubproject('parent', '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            
+            version '0.0.1'
+            distribution {
+                serviceName "service-name"
+                mainClass "dummy.service.MainClass"
+                args "hello"
                 enableManifestClasspath true
             }
             repositories {
@@ -842,26 +924,20 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
                 .split(':')
 
-        startScript.any { it.contains('/lib/annotations-3.0.1.jar') }
-        startScript.any { it.contains('/lib/guava-19.0.jar') }
-        startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+        startScript.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
         // verify launcher YAML files
         LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
-        launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
-        launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
-        launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+        launcherCheck.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
         LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
-        launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
-        launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
-        launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+        launcherStatic.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
     }
 
     def 'project class files do not appear in output lib directory'() {

@@ -138,16 +138,24 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setMainClassName(distributionExtension.getMainClass().get());
             task.setApplicationName(distributionExtension.getDistributionServiceName().get());
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
+            task.dependsOn(manifestClassPathTask);
 
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
-            task.setClasspath(jarTask.get().getOutputs().getFiles().plus(
-                    javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
+            if (distributionExtension.getEnableManifestClasspath().get()) {
+                task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
+            } else {
+                task.setClasspath(
+                        jarTask.get().getOutputs().getFiles().plus(
+                                javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
+
+            }
         }));
 
         TaskProvider<LaunchConfigTask> launchConfigTask = project.getTasks().register(
                 "createLaunchConfig", LaunchConfigTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates launcher-static.yml and launcher-check.yml configurations.");
+                    task.dependsOn(manifestClassPathTask);
 
                     task.getMainClass().set(distributionExtension.getMainClass());
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
@@ -158,9 +166,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getEnv().set(distributionExtension.getEnv());
-                    task.setClasspath(
-                            jarTask.get().getOutputs().getFiles().plus(
-                                    distributionExtension.getProductDependenciesConfig()));
                 });
 
         TaskProvider<CreateInitScriptTask> initScript = project.getTasks().register(
@@ -217,6 +222,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.dependsOn(startScripts, initScript, checkScript, yourkitAgent, yourkitLicense);
             task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);
         });
+
+        project.afterEvaluate(p -> launchConfigTask.configure(task -> {
+            if (distributionExtension.getEnableManifestClasspath().get()) {
+                task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
+            } else {
+                task.setClasspath(
+                        jarTask.get().getOutputs().getFiles().plus(
+                                distributionExtension.getProductDependenciesConfig()));
+            }
+        }));
 
         project.afterEvaluate(p -> DistTarTask.configure(
                 distTar.get(),

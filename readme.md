@@ -178,8 +178,8 @@ And the complete list of configurable properties:
    for details on the custom environment block.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
-   classpath is omitted from the generated Windows start script and instead inferred
-   from a JAR file whose MANIFEST contains the classpath entries.
+   classpath is omitted from the generated start scripts and static launcher config and instead
+   inferred from a JAR file whose MANIFEST contains the classpath entries.
  * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
