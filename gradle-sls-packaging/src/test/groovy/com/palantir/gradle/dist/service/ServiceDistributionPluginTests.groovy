@@ -1037,6 +1037,52 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication'])
     }
 
+    def 'infers main class correctly'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                gc 'hybrid'
+            }
+
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
+                into "${projectDir}/dist"
+                dependsOn distTar
+            }
+        '''.stripIndent()
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+
+        when:
+        runTasks(':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+        actualStaticConfig.mainClass() == "test.Test"
+    }
+
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {

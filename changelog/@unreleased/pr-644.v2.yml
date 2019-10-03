@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Services no longer need to specify the mainClassName, instead it will be inferred from the main source set
+  links:
+    - https://github.com/palantir/sls-packaging/pull/644

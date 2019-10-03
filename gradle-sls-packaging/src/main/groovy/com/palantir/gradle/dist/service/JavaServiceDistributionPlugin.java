@@ -26,6 +26,8 @@ import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
 import com.palantir.gradle.dist.service.tasks.DistTarTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
+import com.palantir.gradle.dist.service.tasks.LazyCreateStartScriptTask;
+import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
@@ -36,9 +38,9 @@ import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.api.tasks.application.CreateStartScripts;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
@@ -73,6 +75,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getConfigurations().maybeCreate(GO_JAVA_LAUNCHER_BINARIES);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_JAVA_LAUNCHER);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_INIT);
+        Provider<String> mainClassName = distributionExtension.getMainClass()
+                .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
         TaskProvider<CopyLauncherBinariesTask> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", CopyLauncherBinariesTask.class);
@@ -102,14 +106,14 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.onlyIf(t -> distributionExtension.getEnableManifestClasspath().get());
                 });
 
-        TaskProvider<CreateStartScripts> startScripts = project.getTasks().register("createStartScripts",
-                CreateStartScripts.class, task -> {
+        TaskProvider<LazyCreateStartScriptTask> startScripts = project.getTasks().register("createStartScripts",
+                LazyCreateStartScriptTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates standard Java start scripts.");
                     task.setOutputDir(new File(project.getBuildDir(), "scripts"));
                     // Since we write out the name of this task's output (when it's enabled), we should depend on it
                     task.dependsOn(manifestClassPathTask);
-
+                    task.getLazyMainClassName().set(mainClassName);
                     task.doLast(t -> {
                         if (distributionExtension.getEnableManifestClasspath().get()) {
                             // Replace standard classpath with pathing jar in order to circumnavigate length limits:
@@ -135,7 +139,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         // HACKHACK all fields of CreateStartScript are eager so we configure the task after evaluation to
         // ensure everything has been correctly configured
         project.afterEvaluate(p -> startScripts.configure(task -> {
-            task.setMainClassName(distributionExtension.getMainClass().get());
             task.setApplicationName(distributionExtension.getDistributionServiceName().get());
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
             task.dependsOn(manifestClassPathTask);
@@ -157,7 +160,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setDescription("Generates launcher-static.yml and launcher-check.yml configurations.");
                     task.dependsOn(manifestClassPathTask);
 
-                    task.getMainClass().set(distributionExtension.getMainClass());
+                    task.getMainClass().set(mainClassName);
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
                     task.getArgs().set(distributionExtension.getArgs());
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
