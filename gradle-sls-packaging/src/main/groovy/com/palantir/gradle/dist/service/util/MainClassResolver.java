@@ -16,42 +16,66 @@
 
 package com.palantir.gradle.dist.service.util;
 
-import com.google.common.io.Files;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.common.collect.Iterables;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.util.GFileUtils;
 
 public final class MainClassResolver {
-    private static final Pattern PACKAGE_PATTERN = Pattern.compile("^package ([^\n;]+)");
-
     public static String resolveMainClass(Project project) {
         SourceSet main = project.getConvention().getPlugin(JavaPluginConvention.class)
                 .getSourceSets()
                 .getByName("main");
-        return findMainClass(main).orElseThrow(() -> new GradleException(
-                "Failed to infer main class, please ensure a main class exists"));
+        Set<Path> javaFilesWithMainMethods = main.getAllSource().getSrcDirs().stream()
+                .filter(File::exists)
+                .map(File::toPath)
+                .flatMap(sourceDir -> allJavaFilesIn(sourceDir)
+                        .filter(javaFile -> anyLinesInFileContain(javaFile, "public static void main("))
+                        .map(sourceDir::relativize))
+                .collect(Collectors.toSet());
+
+        if (javaFilesWithMainMethods.size() != 1) {
+            throw new RuntimeException(String.format(
+                    "Expecting to find exactly one main method, however we found %s of them in:\n%s\n",
+                    javaFilesWithMainMethods.size(),
+                    javaFilesWithMainMethods.stream()
+                            .map(Object::toString)
+                            .sorted()
+                            .collect(Collectors.joining("\n"))));
+        }
+
+        return Iterables.getOnlyElement(javaFilesWithMainMethods).toString()
+                .replace(".java", "")
+                .replace(File.separatorChar, '.');
     }
 
-    private static Optional<String> findMainClass(SourceSet sourceSet) {
-        return sourceSet.getAllJava().getFiles().stream()
-                .flatMap(file -> {
-                    String contents = GFileUtils.readFile(file);
-                    if (contents.contains("public static void main(")) {
-                        Matcher matcher = PACKAGE_PATTERN.matcher(contents);
-                        if (matcher.find()) {
-                            return Stream.of(matcher.group(1) + "." + Files.getNameWithoutExtension(file.getName()));
-                        }
-                    }
-                    return Stream.empty();
-                })
-                .findFirst();
+    private static boolean anyLinesInFileContain(Path path, String text) {
+        try (Stream<String> lines = java.nio.file.Files.lines(path, StandardCharsets.UTF_8)) {
+            return lines.anyMatch(line -> line.contains(text));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private MainClassResolver() { }
+    private static Stream<Path> allJavaFilesIn(Path rootPath) {
+        try (Stream<Path> paths = java.nio.file.Files.walk(rootPath, Integer.MAX_VALUE)) {
+            return paths
+                    .filter(path -> Files.isRegularFile(path))
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .collect(Collectors.toSet())
+                    .stream();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private MainClassResolver() {}
 }
