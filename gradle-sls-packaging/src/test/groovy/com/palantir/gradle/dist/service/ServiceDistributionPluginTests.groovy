@@ -1056,6 +1056,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 serviceName 'service-name'
                 gc 'hybrid'
             }
+            
+            task Foo {} 
+            tasks.run.dependsOn Foo
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
