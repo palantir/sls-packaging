@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Correctly configure `run` task lazily
+  links:
+  - https://github.com/palantir/sls-packaging/pull/647

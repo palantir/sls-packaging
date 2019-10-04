@@ -32,9 +32,11 @@ import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
 import java.util.stream.Collectors;
+import org.gradle.api.Action;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -202,6 +204,12 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
             task.dependsOn("jar");
+            task.doFirst(new Action<Task>() {
+                @Override
+                public void execute(Task _task) {
+                    task.setMain(distributionExtension.getMainClass().get());
+                }
+            });
         });
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
@@ -210,7 +218,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setClasspath(project.files(
                     jarTask.get().getArchiveFile().get(),
                     p.getConfigurations().getByName("runtimeClasspath")));
-            task.setMain(distributionExtension.getMainClass().get());
             task.setArgs(distributionExtension.getArgs().get());
             task.setJvmArgs(distributionExtension.getDefaultJvmOpts().get());
         }));
