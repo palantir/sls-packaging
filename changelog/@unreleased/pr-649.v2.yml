@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Run task correctly uses the discovered mainClass
+  links:
+  - https://github.com/palantir/sls-packaging/pull/649

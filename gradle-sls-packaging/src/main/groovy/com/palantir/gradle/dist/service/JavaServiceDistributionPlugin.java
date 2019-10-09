@@ -207,7 +207,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.doFirst(new Action<Task>() {
                 @Override
                 public void execute(Task _task) {
-                    task.setMain(distributionExtension.getMainClass().get());
+                    task.setMain(mainClassName.get());
                 }
             });
         });
