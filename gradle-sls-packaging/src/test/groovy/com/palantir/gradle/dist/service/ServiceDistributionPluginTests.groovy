@@ -23,6 +23,7 @@ import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Assert
 import spock.lang.Ignore
 
@@ -1084,6 +1085,53 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         actualStaticConfig.mainClass() == "test.Test"
+    }
+
+
+    def 'fails to infer main class if there are many'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            
+            repositories {
+                jcenter()
+                maven { url "http://palantir.bintray.com/releases" }
+            }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                gc 'hybrid'
+            }
+        '''.stripIndent()
+
+        file('src/main/java/test/Test.java') << '''
+        package test;
+        public class Test {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+        file('src/main/java/test/Test2.java') << '''
+        package test;
+        public class Test2 {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        '''.stripIndent()
+
+        when:
+        runTasks(':distTar')
+
+        then:
+        def error = thrown(UnexpectedBuildFailure)
+        error.message.contains('Expecting to find exactly one main method, however we found 2')
     }
 
     private static createUntarBuildFile(buildFile) {
