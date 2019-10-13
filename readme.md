@@ -169,7 +169,7 @@ And the complete list of configurable properties:
    * `minVersion` the minimal compatible version of the dependency.
    * `maxVersion` the maximal compatible version of the dependency.
    * `recommended` the version developers think you should use; most commonly the version of the implementation that was tested during CI (`minVersion` typically matches the version of the api you use to negotiate).
- * `mainClass` class containing the entry point to start the program.
+ * (optional) `mainClass` class containing the entry point to start the program. Defaults to this sole class containing a main method in the main source set if one exists.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
    no monitoring script will be generated.
