@@ -30,6 +30,7 @@ public interface GcProfile extends Serializable {
     Map<String, Class<? extends GcProfile>> PROFILE_NAMES = ImmutableMap.of(
             "throughput", GcProfile.Throughput.class,
             "response-time", GcProfile.ResponseTime.class,
+            "response-time-11", GcProfile.ResponseTime11.class,
             "hybrid", GcProfile.Hybrid.class);
 
     List<String> gcJvmOpts();
@@ -87,8 +88,9 @@ public interface GcProfile extends Serializable {
         @Override
         public final List<String> gcJvmOpts() {
             return ImmutableList.of(
-                    // https://wiki.openjdk.java.net/display/shenandoah/Main
-                    "-XX:+UseShenandoahGC",
+                    // https://wiki.openjdk.java.net/display/zgc/Main
+                    "-XX:+UnlockExperimentalVMOptions",
+                    "-XX:+UseZGC",
                     // "forces concurrent cycle instead of Full GC on System.gc()"
                     "-XX:+ExplicitGCInvokesConcurrent",
                     "-XX:+ClassUnloadingWithConcurrentMark");
