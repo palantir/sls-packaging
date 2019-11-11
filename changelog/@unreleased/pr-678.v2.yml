@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Service Distributions "run" task correctly respects the GC profile
+  links:
+  - https://github.com/palantir/sls-packaging/pull/678
