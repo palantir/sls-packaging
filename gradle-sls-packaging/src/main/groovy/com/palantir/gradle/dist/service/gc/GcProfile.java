@@ -48,7 +48,7 @@ public interface GcProfile extends Serializable {
 
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
-            // HACKHACK constant for Java13 only exists in Gradle 6.0
+            // TODO(forozco): Update to use proper constant once we can support gradle 6.0
             if (javaVersion == JavaVersion.VERSION_HIGHER) {
                 return ImmutableList.of(
                         "-XX:+UnlockExperimentalVMOptions",
