@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Expose `response-time-13` GC profile
+  links:
+  - https://github.com/palantir/sls-packaging/pull/679
