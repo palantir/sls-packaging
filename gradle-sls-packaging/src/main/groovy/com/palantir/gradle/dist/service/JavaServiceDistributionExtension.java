@@ -26,8 +26,10 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -36,6 +38,7 @@ import org.gradle.util.ConfigureUtil;
 
 public class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
+    private final Property<JavaVersion> javaVersion;
     private final Property<String> mainClass;
     private final Property<String> javaHome;
     private final Property<Boolean> addJava8GcLogging;
@@ -53,17 +56,15 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     public JavaServiceDistributionExtension(Project project) {
         super(project);
         objectFactory = project.getObjects();
+        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() ->
+                project.getConvention().getPlugin(JavaPluginConvention.class).getSourceCompatibility()));
         mainClass = objectFactory.property(String.class);
         javaHome = objectFactory.property(String.class);
 
-        addJava8GcLogging = objectFactory.property(Boolean.class);
-        addJava8GcLogging.set(false);
+        addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
+        enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
 
-        enableManifestClasspath = objectFactory.property(Boolean.class);
-        enableManifestClasspath.set(false);
-
-        gc = objectFactory.property(GcProfile.class);
-        gc.set(new GcProfile.Throughput());
+        gc = objectFactory.property(GcProfile.class).value(new GcProfile.Throughput());
 
         args = objectFactory.listProperty(String.class).empty();
         checkArgs = objectFactory.listProperty(String.class).empty();
@@ -73,6 +74,18 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
         env = objectFactory.mapProperty(String.class, String.class).empty();
         setProductType(ProductType.SERVICE_V1);
+    }
+
+    public final Provider<JavaVersion> getJavaVersion() {
+        return javaVersion;
+    }
+
+    public final Provider<List<String>> getGcJvmOptions() {
+        return javaVersion.flatMap(version -> getGc().map(gcProfile -> gcProfile.gcJvmOpts(version)));
+    }
+
+    public final void javaVersion(Object version) {
+        javaVersion.set(JavaVersion.toVersion(version));
     }
 
     public final Provider<String> getMainClass() {
