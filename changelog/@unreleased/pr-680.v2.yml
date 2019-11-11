@@ -1,7 +1,8 @@
 type: feature
 feature:
   description: Add `javaVersion` property to JavaServiceDistributionExtension which
-    specifies the version of Java the service intends to run with. javaVersion defaults
-    to the source compatibility of the project
+    specifies the version of Java the service intends to run with. `javaVersion` defaults
+    to the source compatibility of the project. When `javaVersion` is greater than Java 13
+    "response-time" GC profile will use Shenandoah instead of CMS
   links:
   - https://github.com/palantir/sls-packaging/pull/680
