@@ -21,6 +21,7 @@ import com.palantir.gradle.dist.service.gc.GcProfile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.stream.Collectors
 import org.awaitility.Awaitility
 import spock.lang.Unroll
 
@@ -83,6 +84,9 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         println file("touch-service-1.0.0/var/log/startup.log").text
 
         where:
-        gc << GcProfile.PROFILE_NAMES.keySet().toArray()
+        // TODO(forozco): Test response-time-13 once we test using Java 13
+        gc << GcProfile.PROFILE_NAMES.keySet().stream()
+                .filter({ it != "response-time-13"})
+                .collect(Collectors.toList())
     }
 }
