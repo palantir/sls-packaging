@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service;
 
+import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
@@ -219,7 +220,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     jarTask.get().getArchiveFile().get(),
                     p.getConfigurations().getByName("runtimeClasspath")));
             task.setArgs(distributionExtension.getArgs().get());
-            task.setJvmArgs(distributionExtension.getDefaultJvmOpts().get());
+            task.setJvmArgs(ImmutableList.builder()
+                    .addAll(distributionExtension.getDefaultJvmOpts().get())
+                    .addAll(distributionExtension.getGc().get().gcJvmOpts())
+                    .build());
         }));
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
