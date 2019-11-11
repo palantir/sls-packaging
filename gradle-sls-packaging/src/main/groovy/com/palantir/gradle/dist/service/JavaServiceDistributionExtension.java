@@ -29,6 +29,7 @@ import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -55,7 +56,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     public JavaServiceDistributionExtension(Project project) {
         super(project);
         objectFactory = project.getObjects();
-        javaVersion = objectFactory.property(JavaVersion.class).value(JavaVersion.VERSION_1_8);
+        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() ->
+                project.getConvention().getPlugin(JavaPluginConvention.class).getSourceCompatibility()));
         mainClass = objectFactory.property(String.class);
         javaHome = objectFactory.property(String.class);
 
