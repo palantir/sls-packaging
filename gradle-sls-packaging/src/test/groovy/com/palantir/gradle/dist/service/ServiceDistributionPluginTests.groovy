@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
+import org.gradle.api.JavaVersion
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
 import spock.lang.Ignore
@@ -493,6 +494,32 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         expectedStaticConfig == actualStaticConfig
     }
+
+    def 'respects java version'() {
+        createUntarBuildFile(buildFile)
+        buildFile << '''
+            dependencies { compile files("external.jar") }
+            tasks.jar.baseName = "internal"
+            distribution {
+                javaVersion 13
+                gc 'response-time'
+            }'''.stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+        actualStaticConfig.jvmOpts().containsAll([
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:+UseShenandoahGC",
+                "-XX:+ExplicitGCInvokesConcurrent",
+                "-XX:+ClassUnloadingWithConcurrentMark"
+        ])
+    }
+
 
     def 'produce distribution bundle that populates check.sh'() {
         given:

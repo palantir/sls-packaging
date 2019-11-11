@@ -167,7 +167,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
                     task.getArgs().set(distributionExtension.getArgs());
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
-                    task.getGc().set(distributionExtension.getGc());
+                    task.getGcJvmOptions().set(distributionExtension.getGcJvmOptions());
                     task.getDefaultJvmOpts().set(distributionExtension.getDefaultJvmOpts());
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
@@ -222,7 +222,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setArgs(distributionExtension.getArgs().get());
             task.setJvmArgs(ImmutableList.builder()
                     .addAll(distributionExtension.getDefaultJvmOpts().get())
-                    .addAll(distributionExtension.getGc().get().gcJvmOpts())
+                    .addAll(distributionExtension.getGcJvmOptions().get())
                     .build());
         }));
 

@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import org.gradle.api.JavaVersion;
 
 public interface GcProfile extends Serializable {
     long serialVersionUID = 1L;
@@ -32,11 +33,11 @@ public interface GcProfile extends Serializable {
             "response-time", GcProfile.ResponseTime.class,
             "hybrid", GcProfile.Hybrid.class);
 
-    List<String> gcJvmOpts();
+    List<String> gcJvmOpts(JavaVersion javaVersion);
 
     class Throughput implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts() {
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
             return ImmutableList.of("-XX:+UseParallelOldGC");
         }
     }
@@ -46,7 +47,17 @@ public interface GcProfile extends Serializable {
         private int initiatingOccupancyFraction = 68;
 
         @Override
-        public final List<String> gcJvmOpts() {
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            // HACKHACK constant for Java13 only exists in Gradle 6.0
+            if (javaVersion == JavaVersion.VERSION_HIGHER) {
+                return ImmutableList.of(
+                        "-XX:+UnlockExperimentalVMOptions",
+                        // https://wiki.openjdk.java.net/display/shenandoah/Main
+                        "-XX:+UseShenandoahGC",
+                        // "forces concurrent cycle instead of Full GC on System.gc()"
+                        "-XX:+ExplicitGCInvokesConcurrent",
+                        "-XX:+ClassUnloadingWithConcurrentMark");
+            }
             return ImmutableList.of("-XX:+UseParNewGC",
                     "-XX:+UseConcMarkSweepGC",
                     /*
@@ -76,22 +87,10 @@ public interface GcProfile extends Serializable {
 
     class Hybrid implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts() {
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
             return ImmutableList.of(
                     "-XX:+UseG1GC",
                     "-XX:+UseStringDeduplication");
-        }
-    }
-
-    class ResponseTime11 implements GcProfile {
-        @Override
-        public final List<String> gcJvmOpts() {
-            return ImmutableList.of(
-                    // https://wiki.openjdk.java.net/display/shenandoah/Main
-                    "-XX:+UseShenandoahGC",
-                    // "forces concurrent cycle instead of Full GC on System.gc()"
-                    "-XX:+ExplicitGCInvokesConcurrent",
-                    "-XX:+ClassUnloadingWithConcurrentMark");
         }
     }
 }

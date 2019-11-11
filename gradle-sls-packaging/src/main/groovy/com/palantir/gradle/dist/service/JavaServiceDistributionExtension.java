@@ -74,8 +74,12 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         setProductType(ProductType.SERVICE_V1);
     }
 
-    public final Property<JavaVersion> getJavaVersion() {
+    public final Provider<JavaVersion> getJavaVersion() {
         return javaVersion;
+    }
+
+    public final Provider<List<String>> getGcJvmOptions() {
+        return javaVersion.flatMap(version -> getGc().map(gcProfile -> gcProfile.gcJvmOpts(version)));
     }
 
     public final void javaVersion(Object version) {

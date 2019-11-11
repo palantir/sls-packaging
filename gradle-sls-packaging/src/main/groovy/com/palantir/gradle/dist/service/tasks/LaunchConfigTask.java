@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.dist.service.gc.GcProfile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -72,7 +71,7 @@ public class LaunchConfigTask extends DefaultTask {
 
     private final Property<String> mainClass = getProject().getObjects().property(String.class);
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
-    private final Property<GcProfile> gc = getProject().getObjects().property(GcProfile.class);
+    private final ListProperty<String> gcJvmOptions = getProject().getObjects().listProperty(String.class);
     private final Property<Boolean> addJava8GcLogging = getProject().getObjects().property(Boolean.class);
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
@@ -100,14 +99,9 @@ public class LaunchConfigTask extends DefaultTask {
         return serviceName;
     }
 
-    public final Property<GcProfile> getGc() {
-        return gc;
-    }
-
-    // HACKHACK Property<GcProfile> failed to serialise
     @Input
-    public final GcProfile gc() {
-        return gc.get();
+    public final ListProperty<String> getGcJvmOptions() {
+        return gcJvmOptions;
     }
 
     @Input
@@ -170,7 +164,7 @@ public class LaunchConfigTask extends DefaultTask {
                 .classpath(relativizeToServiceLibDirectory(classpath))
                 .addAllJvmOpts(alwaysOnJvmOptions)
                 .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
-                .addAllJvmOpts(gc.get().gcJvmOpts())
+                .addAllJvmOpts(gcJvmOptions.get())
                 .addAllJvmOpts(defaultJvmOpts.get())
                 .putAllEnv(defaultEnvironment)
                 .putAllEnv(env.get())
