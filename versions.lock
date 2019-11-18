@@ -13,7 +13,7 @@ com.palantir.safe-logging:safe-logging:1.12.0 (2 constraints: 1b22bdcd)
 com.palantir.sls.versions:sls-versions:0.11.0 (1 constraints: 3405263b)
 org.checkerframework:checker-compat-qual:2.0.0 (1 constraints: 140ae5b4)
 org.codehaus.mojo:animal-sniffer-annotations:1.14 (1 constraints: ea09d5aa)
-org.immutables:value:2.8.1 (1 constraints: 0d050e36)
+org.immutables:value:2.8.2 (1 constraints: 0e050f36)
 org.slf4j:slf4j-api:1.7.25 (1 constraints: f8107cc3)
 org.yaml:snakeyaml:1.24 (1 constraints: 6f17f727)
 
