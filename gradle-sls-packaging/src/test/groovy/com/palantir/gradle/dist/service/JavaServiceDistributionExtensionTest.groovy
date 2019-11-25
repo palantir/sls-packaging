@@ -112,6 +112,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         }
 
         then:
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_6,  ''
         assertJavaHomeAtVersionIs JavaVersion.VERSION_1_7,  ''
         assertJavaHomeAtVersionIs JavaVersion.VERSION_1_8,  ''
         assertJavaHomeAtVersionIs JavaVersion.VERSION_1_9,  '$JAVA_9_HOME'
