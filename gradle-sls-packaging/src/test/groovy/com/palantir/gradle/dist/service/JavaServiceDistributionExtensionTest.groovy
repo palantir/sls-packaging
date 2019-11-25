@@ -111,13 +111,13 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.getJavaHome().get() == ''
     }
 
-    def 'JAVA_MAJORVERSION_HOME when java >= 11' () {
+    def '$JAVA_MAJORVERSION_HOME when java >= 11' () {
         when:
         def ext = new JavaServiceDistributionExtension(project)
         project.pluginManager.apply(JavaPlugin)
         project.getConvention().getPlugin(JavaPluginConvention).setSourceCompatibility(JavaVersion.VERSION_11)
 
         then:
-        ext.getJavaHome().get() == 'JAVA_11_HOME'
+        ext.getJavaHome().get() == '$JAVA_11_HOME'
     }
 }
