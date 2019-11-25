@@ -183,7 +183,8 @@ And the complete list of configurable properties:
  * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
-   be applied when `init.sh` is run.
+   be applied when `init.sh` is run. When your `targetCompatibility` is Java 8 or less, this value will be blank. For
+   Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
 
