@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: For Java 11 and above, the `javaHome` property on the `distribution`
+    extension will be set to `$JAVA_11_HOME` etc by default.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/696
