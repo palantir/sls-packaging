@@ -59,7 +59,14 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() ->
                 project.getConvention().getPlugin(JavaPluginConvention.class).getSourceCompatibility()));
         mainClass = objectFactory.property(String.class);
-        javaHome = objectFactory.property(String.class);
+
+        javaHome = objectFactory.property(String.class).value(javaVersion.map(javaVersionValue -> {
+            if (javaVersionValue.compareTo(JavaVersion.VERSION_11) < 0) {
+                return "";
+            }
+
+            return "JAVA_" + javaVersionValue.getMajorVersion() + "_HOME";
+        }));
 
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
         enableManifestClasspath = objectFactory.property(Boolean.class).value(false);

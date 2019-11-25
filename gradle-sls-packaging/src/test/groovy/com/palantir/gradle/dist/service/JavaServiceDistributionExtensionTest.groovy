@@ -16,7 +16,10 @@
 
 package com.palantir.gradle.dist.service
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
@@ -96,5 +99,25 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.getCheckArgs().get() == []
         ext.getDefaultJvmOpts().get() == []
         ext.getExcludeFromVar().get() == ['log', 'run']
+    }
+
+    def 'empty java home when java 8' () {
+        when:
+        def ext = new JavaServiceDistributionExtension(project)
+        project.pluginManager.apply(JavaPlugin)
+        project.getConvention().getPlugin(JavaPluginConvention).setSourceCompatibility(JavaVersion.VERSION_1_8)
+
+        then:
+        ext.getJavaHome().get() == ''
+    }
+
+    def 'JAVA_MAJORVERSION_HOME when java >= 11' () {
+        when:
+        def ext = new JavaServiceDistributionExtension(project)
+        project.pluginManager.apply(JavaPlugin)
+        project.getConvention().getPlugin(JavaPluginConvention).setSourceCompatibility(JavaVersion.VERSION_11)
+
+        then:
+        ext.getJavaHome().get() == 'JAVA_11_HOME'
     }
 }
