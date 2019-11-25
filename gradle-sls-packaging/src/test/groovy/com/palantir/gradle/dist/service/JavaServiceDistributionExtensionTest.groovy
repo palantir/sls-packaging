@@ -105,7 +105,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         when:
         def ext = new JavaServiceDistributionExtension(project)
         project.pluginManager.apply(JavaPlugin)
-        project.getConvention().getPlugin(JavaPluginConvention).setSourceCompatibility(JavaVersion.VERSION_1_8)
+        project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility(JavaVersion.VERSION_1_8)
 
         then:
         ext.getJavaHome().get() == ''
@@ -115,7 +115,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         when:
         def ext = new JavaServiceDistributionExtension(project)
         project.pluginManager.apply(JavaPlugin)
-        project.getConvention().getPlugin(JavaPluginConvention).setSourceCompatibility(JavaVersion.VERSION_11)
+        project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility(JavaVersion.VERSION_11)
 
         then:
         ext.getJavaHome().get() == '$JAVA_11_HOME'
