@@ -101,33 +101,23 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.getExcludeFromVar().get() == ['log', 'run']
     }
 
-    def 'empty java home when java 8' () {
+    def 'correct java homes depending on java version' () {
         when:
         def ext = new JavaServiceDistributionExtension(project)
         project.pluginManager.apply(JavaPlugin)
-        project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility(JavaVersion.VERSION_1_8)
+
+        def assertJavaHomeAtVersionIs = { Object javaVersion, String javaHome ->
+            project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility(javaVersion)
+            ext.getJavaHome().get() == javaHome
+        }
 
         then:
-        ext.getJavaHome().get() == ''
-    }
-
-    def '$JAVA_MAJORVERSION_HOME when java >= 11' () {
-        when:
-        def ext = new JavaServiceDistributionExtension(project)
-        project.pluginManager.apply(JavaPlugin)
-        project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility(JavaVersion.VERSION_11)
-
-        then:
-        ext.getJavaHome().get() == '$JAVA_11_HOME'
-    }
-
-    def '$JAVA_13_HOME when java == 13' () {
-        when:
-        def ext = new JavaServiceDistributionExtension(project)
-        project.pluginManager.apply(JavaPlugin)
-        project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility("13")
-
-        then:
-        ext.getJavaHome().get() == '$JAVA_13_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_7,  ''
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_8,  ''
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_9,  '$JAVA_9_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_10, '$JAVA_10_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_11,   '$JAVA_11_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_12,   '$JAVA_12_HOME'
+        assertJavaHomeAtVersionIs '13', '$JAVA_13_HOME'
     }
 }

@@ -61,8 +61,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         mainClass = objectFactory.property(String.class);
 
         javaHome = objectFactory.property(String.class).value(javaVersion.map(javaVersionValue -> {
-            boolean javaVersionLessThan11 = javaVersionValue.compareTo(JavaVersion.VERSION_11) < 0;
-            if (javaVersionLessThan11) {
+            boolean javaVersionLessThanOrEqualTo8 = javaVersionValue.compareTo(JavaVersion.VERSION_1_8) <= 0;
+            if (javaVersionLessThanOrEqualTo8) {
                 return "";
             }
 
