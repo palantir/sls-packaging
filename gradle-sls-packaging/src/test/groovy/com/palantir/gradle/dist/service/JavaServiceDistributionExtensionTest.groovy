@@ -120,4 +120,14 @@ class JavaServiceDistributionExtensionTest extends Specification {
         then:
         ext.getJavaHome().get() == '$JAVA_11_HOME'
     }
+
+    def '$JAVA_13_HOME when java == 13' () {
+        when:
+        def ext = new JavaServiceDistributionExtension(project)
+        project.pluginManager.apply(JavaPlugin)
+        project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility("13")
+
+        then:
+        ext.getJavaHome().get() == '$JAVA_13_HOME'
+    }
 }
