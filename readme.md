@@ -83,7 +83,17 @@ distribution {
 }
 ```
 
-sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it.
+sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it. e.g.
+
+```
+# Run ./gradlew --write-locks to regenerate this file
+com.palantir.auth:auth-service (1.2.0, 1.6.x)
+com.palantir.storage:storage-service (3.56.0, 3.x.x)
+com.palantir.email:email-service (1.200.3, 2.x.x)
+com.palantir.foo:foo-service ($projectVersion, 1.x.x)
+```
+
+_The `$projectVersion` string is a placeholder that will appear if your repo publishes multiple services, and one of them depends on another.  The actual manifest will contain a concrete version._
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
 `productDependency` block - this will be merged with any constraints detected from other jars.
