@@ -48,8 +48,7 @@ public interface GcProfile extends Serializable {
 
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
-            // TODO(forozco): Update to use proper constant once we can support gradle 6.0
-            if (javaVersion == JavaVersion.VERSION_HIGHER) {
+            if (javaVersion.compareTo(JavaVersion.toVersion("13")) >= 0) {
                 return ImmutableList.of(
                         "-XX:+UnlockExperimentalVMOptions",
                         // https://wiki.openjdk.java.net/display/shenandoah/Main
