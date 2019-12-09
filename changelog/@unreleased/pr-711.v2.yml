@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: Shenandoah GC selection logic will remain the same when using Gradle
+    6, and not require a higher level of Java that when running with Gradle 5.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/711
