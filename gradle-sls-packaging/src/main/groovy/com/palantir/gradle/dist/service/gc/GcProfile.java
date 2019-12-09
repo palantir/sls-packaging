@@ -57,7 +57,7 @@ public interface GcProfile extends Serializable {
                         // "forces concurrent cycle instead of Full GC on System.gc()"
                         "-XX:+ExplicitGCInvokesConcurrent",
                         "-XX:+ClassUnloadingWithConcurrentMark",
-                        "-XX+UseNUMA");
+                        "-XX:+UseNUMA");
             }
             return ImmutableList.of("-XX:+UseParNewGC",
                     "-XX:+UseConcMarkSweepGC",
