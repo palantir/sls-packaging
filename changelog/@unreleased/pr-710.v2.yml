@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Fix typo when specifying `-XX:+UseNUMA`
+  links:
+  - https://github.com/palantir/sls-packaging/pull/710
