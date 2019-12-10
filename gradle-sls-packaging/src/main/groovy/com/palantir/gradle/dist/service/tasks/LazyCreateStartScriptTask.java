@@ -18,11 +18,13 @@ package com.palantir.gradle.dist.service.tasks;
 
 import javax.annotation.Nullable;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.application.CreateStartScripts;
 
 public class LazyCreateStartScriptTask extends CreateStartScripts {
     private final Property<String> mainClassName = getProject().getObjects().property(String.class);
 
+    @Input
     public final Property<String> getLazyMainClassName() {
         return mainClassName;
     }
