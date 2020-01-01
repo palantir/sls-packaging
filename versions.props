@@ -5,5 +5,5 @@ com.palantir.sls.versions:sls-versions = 0.11.0
 org.immutables:value = 2.8.3
 
 com.netflix.nebula:nebula-test = 7.6.0
-junit:junit = 4.12
+junit:junit = 4.13
 org.awaitility:awaitility = 4.0.1
