@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.asset
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.Versions
 
 class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
@@ -163,7 +164,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
     def 'dist project can be resolved through plain dependency when GCV is applied'() {
         buildFile << """
             plugins {
-                id 'com.palantir.consistent-versions' version '1.9.2'
+                id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
             }
             
             configurations {
