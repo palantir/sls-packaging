@@ -67,7 +67,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         """.stripIndent()
         buildFile << """
             plugins {
-                id 'com.palantir.consistent-versions' version '1.4.0'
+                id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
                 id 'com.palantir.sls-recommended-dependencies'
                 id 'java-library'
             }

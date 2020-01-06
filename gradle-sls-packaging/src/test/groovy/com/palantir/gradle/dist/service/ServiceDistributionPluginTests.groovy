@@ -20,6 +20,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
+import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
 import org.gradle.api.JavaVersion
@@ -726,7 +727,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'dist project can be resolved through plain dependency when GCV is applied'() {
         buildFile << """
             plugins {
-                id 'com.palantir.consistent-versions' version '1.9.2'
+                id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
             }
             
             configurations {
