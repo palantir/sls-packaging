@@ -238,7 +238,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         def result = runTasks(':createManifest')
 
         then:
-        result.output.contains(
+        !result.output.contains(
                 "Please remove your declared product dependency on 'group:name' because it is already provided by a jar dependency")
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
         manifest.get("extensions").get("product-dependencies") == [
