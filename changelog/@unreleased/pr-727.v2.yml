@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: Only warn users about unnecessary product dependencies when they are
+    actually unnecessary
+  links:
+  - https://github.com/palantir/sls-packaging/pull/727
