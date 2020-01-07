@@ -224,12 +224,16 @@ public class CreateManifestTask extends DefaultTask {
                     productId,
                     discoveredDependency,
                     (declaredDependency, newDependency) -> {
-                        getLogger().error("Please remove your declared product dependency on '{}' because it is"
-                                + " already provided by a jar dependency:\n\n"
-                                        + "\tProvided:     {}\n"
-                                        + "\tYou declared: {}",
-                                productId, discoveredDependency, declaredDependency);
-                        return ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
+                        ProductDependency mergedDependency =
+                                ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
+                        if (mergedDependency.equals(discoveredDependency)) {
+                            getLogger().error("Please remove your declared product dependency on '{}' because it is"
+                                            + " already provided by a jar dependency:\n\n"
+                                            + "\tProvided:     {}\n"
+                                            + "\tYou declared: {}",
+                                    productId, discoveredDependency, declaredDependency);
+                        }
+                        return mergedDependency;
                     });
         });
         List<ProductDependency> productDeps = new ArrayList<>(allProductDependencies.values());
