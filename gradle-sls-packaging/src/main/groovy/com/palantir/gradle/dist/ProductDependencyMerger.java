@@ -29,17 +29,17 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class ProductDependencyMerger {
-    private ProductDependencyMerger() { }
+    private ProductDependencyMerger() {}
 
     public static ProductDependency merge(ProductDependency dep1, ProductDependency dep2) {
         // Ensure they are valid
         if (!dep1.getProductGroup().equals(dep2.getProductGroup())) {
-            throw new IllegalArgumentException(String.format("Product groups differ: '%s' and '%s'",
-                dep1.getProductGroup(), dep2.getProductGroup()));
+            throw new IllegalArgumentException(String.format(
+                    "Product groups differ: '%s' and '%s'", dep1.getProductGroup(), dep2.getProductGroup()));
         }
         if (!dep1.getProductName().equals(dep2.getProductName())) {
-            throw new IllegalArgumentException(String.format("Product names differ: '%s' and '%s'",
-                dep1.getProductName(), dep2.getProductName()));
+            throw new IllegalArgumentException(
+                    String.format("Product names differ: '%s' and '%s'", dep1.getProductName(), dep2.getProductName()));
         }
 
         // This could be empty if both of the versions are dirty
@@ -58,14 +58,15 @@ public final class ProductDependencyMerger {
                     SafeArg.of("dep2", dep2)));
         }
 
-        SlsVersionMatcher maximumVersion = Stream
-                .of(dep1.parseMaximum(), dep2.parseMaximum())
+        SlsVersionMatcher maximumVersion = Stream.of(dep1.parseMaximum(), dep2.parseMaximum())
                 .min(SlsVersionMatcher.MATCHER_COMPARATOR)
                 .orElseThrow(() -> new RuntimeException("Impossible"));
 
         // Sanity check: min has to be <= max
         Preconditions.checkArgument(
-                minimumVersionOrderable.map(mv -> satisfiesMaxVersion(maximumVersion, mv)).orElse(true),
+                minimumVersionOrderable
+                        .map(mv -> satisfiesMaxVersion(maximumVersion, mv))
+                        .orElse(true),
                 "Could not merge recommended product dependencies as their version ranges do not overlap",
                 SafeArg.of("dep1", dep1),
                 SafeArg.of("dep2", dep2),
@@ -73,11 +74,11 @@ public final class ProductDependencyMerger {
                 SafeArg.of("mergedMaximum", maximumVersion));
 
         // Recommended version. Check that it matches the inferred min and max.
-        Optional<OrderableSlsVersion> recommendedVersion = Stream
-                .of(dep1.parseRecommended(), dep2.parseRecommended())
+        Optional<OrderableSlsVersion> recommendedVersion = Stream.of(dep1.parseRecommended(), dep2.parseRecommended())
                 .flatMap(Streams::stream)
                 .filter(version -> minimumVersionOrderable
-                        .map(mv -> VersionComparator.INSTANCE.compare(version, mv) >= 0).orElse(true))
+                        .map(mv -> VersionComparator.INSTANCE.compare(version, mv) >= 0)
+                        .orElse(true))
                 .filter(version -> satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
 
@@ -96,5 +97,4 @@ public final class ProductDependencyMerger {
         // (comparison result is from the point of view of the matcher)
         return maximumVersion.compare(version) >= 0;
     }
-
 }

@@ -45,5 +45,4 @@ public class CopyYourkitLicenseTask extends DefaultTask {
         dest.getParent().toFile().mkdirs();
         Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
     }
-
 }

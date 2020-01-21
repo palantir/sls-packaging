@@ -90,14 +90,15 @@ public class CreateManifestTask extends DefaultTask {
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
     private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
 
-    private final ListProperty<ProductDependency> productDependencies = getProject().getObjects()
-            .listProperty(ProductDependency.class);
-    private final SetProperty<ProductId> ignoredProductIds = getProject().getObjects().setProperty(ProductId.class);
+    private final ListProperty<ProductDependency> productDependencies =
+            getProject().getObjects().listProperty(ProductDependency.class);
+    private final SetProperty<ProductId> ignoredProductIds =
+            getProject().getObjects().setProperty(ProductId.class);
     private final Property<Configuration> productDependenciesConfig =
             getProject().getObjects().property(Configuration.class);
 
-    private final MapProperty<String, Object> manifestExtensions = getProject().getObjects()
-            .mapProperty(String.class, Object.class);
+    private final MapProperty<String, Object> manifestExtensions =
+            getProject().getObjects().mapProperty(String.class, Object.class);
     private File manifestFile;
 
     public CreateManifestTask() {
@@ -114,18 +115,23 @@ public class CreateManifestTask extends DefaultTask {
             // Using a ConfigurableFileCollection simply because it implements Buildable and provides a convenient API
             // to wire up task dependencies to it in a lazy way.
             ConfigurableFileCollection emptyFileCollection = getProject().files();
-            productDeps.getIncoming().getArtifacts().getArtifacts().stream().flatMap(artifact -> {
-                ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+            productDeps.getIncoming().getArtifacts().getArtifacts().stream()
+                    .flatMap(artifact -> {
+                        ComponentIdentifier id = artifact.getId().getComponentIdentifier();
 
-                // Depend on the ConfigureProductDependenciesTask, if it exists, which will wire up the jar manifest
-                // with recommended product dependencies.
-                if (id instanceof ProjectComponentIdentifier) {
-                    Project dependencyProject =
-                            getProject().getRootProject().project(((ProjectComponentIdentifier) id).getProjectPath());
-                    return Stream.of(dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
-                }
-                return Stream.empty();
-            }).forEach(emptyFileCollection::builtBy);
+                        // Depend on the ConfigureProductDependenciesTask, if it exists, which will wire up the jar
+                        // manifest
+                        // with recommended product dependencies.
+                        if (id instanceof ProjectComponentIdentifier) {
+                            Project dependencyProject = getProject()
+                                    .getRootProject()
+                                    .project(((ProjectComponentIdentifier) id).getProjectPath());
+                            return Stream.of(
+                                    dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
+                        }
+                        return Stream.empty();
+                    })
+                    .forEach(emptyFileCollection::builtBy);
             return emptyFileCollection;
         });
     }
@@ -199,14 +205,16 @@ public class CreateManifestTask extends DefaultTask {
         Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
         getProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
-            Preconditions.checkArgument(!serviceGroup.get().equals(productId.getProductGroup())
-                    || !serviceName.get().equals(productId.getProductName()),
+            Preconditions.checkArgument(
+                    !serviceGroup.get().equals(productId.getProductGroup())
+                            || !serviceName.get().equals(productId.getProductName()),
                     "Invalid for product to declare an explicit dependency on itself, please remove: %s",
                     declaredDep);
             if (getIgnoredProductIds().get().contains(productId)) {
                 throw new IllegalArgumentException(String.format(
                         "Encountered product dependency declaration that was also ignored for '%s', either remove the "
-                                + "dependency or ignore", productId));
+                                + "dependency or ignore",
+                        productId));
             } else if (allProductDependencies.containsKey(productId)) {
                 throw new IllegalArgumentException(
                         String.format("Encountered duplicate declared product dependencies for '%s'", productId));
@@ -220,21 +228,22 @@ public class CreateManifestTask extends DefaultTask {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
             }
-            allProductDependencies.merge(
-                    productId,
-                    discoveredDependency,
-                    (declaredDependency, newDependency) -> {
-                        ProductDependency mergedDependency =
-                                ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
-                        if (mergedDependency.equals(discoveredDependency)) {
-                            getLogger().error("Please remove your declared product dependency on '{}' because it is"
+            allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, newDependency) -> {
+                ProductDependency mergedDependency =
+                        ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
+                if (mergedDependency.equals(discoveredDependency)) {
+                    getLogger()
+                            .error(
+                                    "Please remove your declared product dependency on '{}' because it is"
                                             + " already provided by a jar dependency:\n\n"
                                             + "\tProvided:     {}\n"
                                             + "\tYou declared: {}",
-                                    productId, discoveredDependency, declaredDependency);
-                        }
-                        return mergedDependency;
-                    });
+                                    productId,
+                                    discoveredDependency,
+                                    declaredDependency);
+                }
+                return mergedDependency;
+            });
         });
         List<ProductDependency> productDeps = new ArrayList<>(allProductDependencies.values());
 
@@ -244,16 +253,17 @@ public class CreateManifestTask extends DefaultTask {
             ensureLockfileIsUpToDate(productDeps);
         }
 
-        jsonMapper.writeValue(getManifestFile(), SlsManifest.builder()
-                .manifestVersion("1.0")
-                .productType(productType.get())
-                .productGroup(serviceGroup.get())
-                .productName(serviceName.get())
-                .productVersion(getProjectVersion())
-                .putAllExtensions(manifestExtensions.get())
-                .putExtensions("product-dependencies", productDeps)
-                .build()
-        );
+        jsonMapper.writeValue(
+                getManifestFile(),
+                SlsManifest.builder()
+                        .manifestVersion("1.0")
+                        .productType(productType.get())
+                        .productGroup(serviceGroup.get())
+                        .productName(serviceName.get())
+                        .productVersion(getProjectVersion())
+                        .putAllExtensions(manifestExtensions.get())
+                        .putExtensions("product-dependencies", productDeps)
+                        .build());
     }
 
     private void requireAbsentLockfile() {
@@ -295,8 +305,8 @@ public class CreateManifestTask extends DefaultTask {
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
-        String upToDateContents = ProductDependencyLockFile.asString(
-                productDeps, collectProductsPublishedInRepo(), getProjectVersion());
+        String upToDateContents =
+                ProductDependencyLockFile.asString(productDeps, collectProductsPublishedInRepo(), getProjectVersion());
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
@@ -316,7 +326,9 @@ public class CreateManifestTask extends DefaultTask {
                 Preconditions.checkState(
                         fromDisk.equals(upToDateContents),
                         "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
-                        relativePath, getName(), diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
+                        relativePath,
+                        getName(),
+                        diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
             }
         }
     }
@@ -353,16 +365,13 @@ public class CreateManifestTask extends DefaultTask {
 
                     // Extract product dependencies directly from Jar task for in project dependencies
                     if (id instanceof ProjectComponentIdentifier) {
-                        Project dependencyProject = getProject().getRootProject()
+                        Project dependencyProject = getProject()
+                                .getRootProject()
                                 .project(((ProjectComponentIdentifier) id).getProjectPath());
                         if (dependencyProject.getPlugins().hasPlugin(JavaPlugin.class)) {
-                            Jar jar = (Jar) dependencyProject
-                                    .getTasks()
-                                    .getByName(JavaPlugin.JAR_TASK_NAME);
+                            Jar jar = (Jar) dependencyProject.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
 
-                            pdeps = Optional
-                                    .ofNullable(jar
-                                            .getManifest()
+                            pdeps = Optional.ofNullable(jar.getManifest()
                                             .getEffectiveManifest()
                                             .getAttributes()
                                             .get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
@@ -373,7 +382,8 @@ public class CreateManifestTask extends DefaultTask {
                             log.debug("Artifact did not exist: {}", artifact.getFile());
                             return Stream.empty();
                         } else if (!com.google.common.io.Files.getFileExtension(
-                                artifact.getFile().getName()).equals("jar")) {
+                                        artifact.getFile().getName())
+                                .equals("jar")) {
                             log.debug("Artifact is not jar: {}", artifact.getFile());
                             return Stream.empty();
                         }
@@ -388,8 +398,11 @@ public class CreateManifestTask extends DefaultTask {
                             }
                             manifest = new Manifest(zipFile.getInputStream(manifestEntry));
                         } catch (IOException e) {
-                            log.warn("IOException encountered when processing artifact '{}', file '{}', {}",
-                                    artifactName, artifact.getFile(), e);
+                            log.warn(
+                                    "IOException encountered when processing artifact '{}', file '{}', {}",
+                                    artifactName,
+                                    artifact.getFile(),
+                                    e);
                             return Stream.empty();
                         }
 
@@ -397,8 +410,10 @@ public class CreateManifestTask extends DefaultTask {
                                 manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
                     }
                     if (!pdeps.isPresent()) {
-                        log.debug("No product dependency found for artifact '{}', file '{}'",
-                                artifactName, artifact.getFile());
+                        log.debug(
+                                "No product dependency found for artifact '{}', file '{}'",
+                                artifactName,
+                                artifact.getFile());
                         return Stream.empty();
                     }
 
@@ -419,8 +434,11 @@ public class CreateManifestTask extends DefaultTask {
                                         artifact,
                                         productDependency));
                     } catch (IOException | IllegalArgumentException e) {
-                        log.debug("Failed to load product dependency for artifact '{}', file '{}', '{}'",
-                                artifactName, artifact, e);
+                        log.debug(
+                                "Failed to load product dependency for artifact '{}', file '{}', '{}'",
+                                artifactName,
+                                artifact,
+                                e);
                         return Stream.empty();
                     }
                 })
@@ -439,23 +457,22 @@ public class CreateManifestTask extends DefaultTask {
 
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
-        Preconditions.checkArgument(SlsVersion.check(stringVersion),
-                "Project version must be a valid SLS version: %s", stringVersion);
+        Preconditions.checkArgument(
+                SlsVersion.check(stringVersion), "Project version must be a valid SLS version: %s", stringVersion);
         if (!OrderableSlsVersion.check(stringVersion)) {
-            getProject().getLogger().warn(
-                    "Version string in project {} is not orderable as per SLS specification: {}",
-                    getProject().getName(), stringVersion);
+            getProject()
+                    .getLogger()
+                    .warn(
+                            "Version string in project {} is not orderable as per SLS specification: {}",
+                            getProject().getName(),
+                            stringVersion);
         }
     }
 
     private Set<ProductId> collectProductsPublishedInRepo() {
         // get products we publish via BaseDistributionExtension from all other projects
-        return getProject()
-                .getRootProject()
-                .getAllprojects()
-                .stream()
-                .flatMap(p -> Optional
-                        .ofNullable(p.getExtensions().findByType(BaseDistributionExtension.class))
+        return getProject().getRootProject().getAllprojects().stream()
+                .flatMap(p -> Optional.ofNullable(p.getExtensions().findByType(BaseDistributionExtension.class))
                         .map(Stream::of)
                         .orElseGet(Stream::empty))
                 .map(extension -> new ProductId(
@@ -465,8 +482,8 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
-        TaskProvider<CreateManifestTask> createManifest = project.getTasks().register(
-                "createManifest", CreateManifestTask.class, task -> {
+        TaskProvider<CreateManifestTask> createManifest = project.getTasks()
+                .register("createManifest", CreateManifestTask.class, task -> {
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
@@ -477,10 +494,8 @@ public class CreateManifestTask extends DefaultTask {
                     task.getManifestExtensions().set(ext.getManifestExtensions());
                 });
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
-            project
-                    .getTasks()
-                    .named(LifecycleBasePlugin.CHECK_TASK_NAME)
-                    .configure(task -> task.dependsOn(createManifest));
+            project.getTasks().named(LifecycleBasePlugin.CHECK_TASK_NAME).configure(task ->
+                    task.dependsOn(createManifest));
         });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file

@@ -59,7 +59,6 @@ public class PodDistributionExtension extends BaseDistributionExtension {
         this.services.put(name, service);
     }
 
-
     public final Provider<Map<String, PodVolumeDefinition>> getVolumes() {
         return volumes;
     }

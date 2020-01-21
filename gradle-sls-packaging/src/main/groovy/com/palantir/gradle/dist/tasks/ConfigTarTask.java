@@ -37,13 +37,17 @@ public final class ConfigTarTask {
 
             task.from(new File(project.getProjectDir(), "deployment"));
             task.from(new File(project.getBuildDir(), "deployment"));
-            task.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("distributions"));
+            task.getDestinationDirectory()
+                    .set(project.getLayout().getBuildDirectory().dir("distributions"));
             task.getArchiveBaseName().set(ext.getDistributionServiceName());
-            task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
+            task.getArchiveVersion()
+                    .set(project.provider(() -> project.getVersion().toString()));
             task.getArchiveExtension().set(ext.getProductType().map(productType -> {
                 try {
                     String productTypeString = CreateManifestTask.jsonMapper.writeValueAsString(productType);
-                    return productTypeString.substring(1, productTypeString.lastIndexOf('.')).concat(".config.tgz");
+                    return productTypeString
+                            .substring(1, productTypeString.lastIndexOf('.'))
+                            .concat(".config.tgz");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -52,7 +56,8 @@ public final class ConfigTarTask {
 
         // TODO(forozco): make this lazy since into does not support providers, but does support callable
         project.afterEvaluate(p -> configTar.configure(task -> {
-            task.into(String.format("%s-%s/deployment", ext.getDistributionServiceName().get(), project.getVersion()));
+            task.into(String.format(
+                    "%s-%s/deployment", ext.getDistributionServiceName().get(), project.getVersion()));
         }));
 
         return configTar;

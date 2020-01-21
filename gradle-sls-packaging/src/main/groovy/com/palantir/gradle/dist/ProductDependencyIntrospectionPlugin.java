@@ -46,9 +46,8 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
             conf.setDescription("Exposes minimum, maximum versions of product dependencies as constraints");
 
             Optional<List<ProductDependency>> allProductDependencies = getAllProductDependencies(project);
-            allProductDependencies.ifPresent(productDependencies -> conf
-                    .getDependencies()
-                    .addAll(createAllProductDependencies(project, productDependencies)));
+            allProductDependencies.ifPresent(productDependencies ->
+                    conf.getDependencies().addAll(createAllProductDependencies(project, productDependencies)));
 
             if (!allProductDependencies.isPresent()) {
                 log.info("Lock file not present, not populating product dependencies configuration: {}", conf);
@@ -57,15 +56,13 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
     }
 
     private static void createGetMinimumProductVersion(Project project) {
-        project
-                .getExtensions()
+        project.getExtensions()
                 .getExtraProperties()
                 .set("getMinimumProductVersion", new Closure<String>(project, project) {
                     public String doCall(Object moduleVersion) {
                         List<String> strings = Splitter.on(':').splitToList(moduleVersion.toString());
-                        Preconditions.checkState(strings.size() == 2,
-                                "Expected 'group:name', found: %s",
-                                moduleVersion.toString());
+                        Preconditions.checkState(
+                                strings.size() == 2, "Expected 'group:name', found: %s", moduleVersion.toString());
 
                         return getMinimumProductVersion(project, strings.get(0), strings.get(1));
                     }
@@ -74,25 +71,26 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
 
     private static String getMinimumProductVersion(Project project, String group, String name) {
         Optional<List<ProductDependency>> dependenciesOpt = getAllProductDependencies(project);
-        Preconditions.checkState(dependenciesOpt.isPresent(),
+        Preconditions.checkState(
+                dependenciesOpt.isPresent(),
                 "%s does not exist. Run ./gradlew --write-locks to generate it.",
                 ProductDependencyLockFile.LOCK_FILE);
         List<ProductDependency> dependencies = dependenciesOpt.get();
 
-        Optional<ProductDependency> dependency = dependencies
-                .stream()
-                .filter(dep -> dep.getProductGroup().equals(group) && dep.getProductName().equals(name))
+        Optional<ProductDependency> dependency = dependencies.stream()
+                .filter(dep -> dep.getProductGroup().equals(group)
+                        && dep.getProductName().equals(name))
                 .findAny();
 
         return dependency
-                .orElseThrow(() -> new GradleException(String.format("Unable to find product dependency for '%s:%s'",
-                        group,
-                        name)))
+                .orElseThrow(() -> new GradleException(
+                        String.format("Unable to find product dependency for '%s:%s'", group, name)))
                 .getMinimumVersion();
     }
 
     /**
      * Returns all product dependencies as read from the lock file.
+     *
      * @return {@link Optional#empty} if the lock file didn't exist
      */
     private static Optional<List<ProductDependency>> getAllProductDependencies(Project project) {
@@ -102,16 +100,16 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
         }
 
         return Optional.of(ProductDependencyLockFile.fromString(
-                GFileUtils.readFile(lockFile),
-                project.getVersion().toString()));
+                GFileUtils.readFile(lockFile), project.getVersion().toString()));
     }
 
     static List<Dependency> createAllProductDependencies(Project project, List<ProductDependency> dependencies) {
         return dependencies.stream()
-                .map(dependency -> project.getDependencies().create(ImmutableMap.of(
-                        "group", dependency.getProductGroup(),
-                        "name", dependency.getProductName(),
-                        "version", dependency.getMinimumVersion())))
+                .map(dependency -> project.getDependencies()
+                        .create(ImmutableMap.of(
+                                "group", dependency.getProductGroup(),
+                                "name", dependency.getProductName(),
+                                "version", dependency.getMinimumVersion())))
                 .collect(Collectors.toList());
     }
 }

@@ -58,7 +58,8 @@ public interface GcProfile extends Serializable {
                         "-XX:+ClassUnloadingWithConcurrentMark",
                         "-XX:+UseNUMA");
             }
-            return ImmutableList.of("-XX:+UseParNewGC",
+            return ImmutableList.of(
+                    "-XX:+UseParNewGC",
                     "-XX:+UseConcMarkSweepGC",
                     /*
                      * When setting UseConcMarkSweepGC the default value of NewRatio (2) is completely ignored.
@@ -88,9 +89,7 @@ public interface GcProfile extends Serializable {
     class Hybrid implements GcProfile {
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
-            return ImmutableList.of(
-                    "-XX:+UseG1GC",
-                    "-XX:+UseStringDeduplication");
+            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseStringDeduplication");
         }
     }
 }
