@@ -47,21 +47,24 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
-        AssetDistributionExtension distributionExtension = project.getExtensions().create(
-                "distribution", AssetDistributionExtension.class, project);
-        distributionExtension.setProductDependenciesConfig(project.getConfigurations().create(ASSET_CONFIGURATION));
+        AssetDistributionExtension distributionExtension =
+                project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
+        distributionExtension.setProductDependenciesConfig(
+                project.getConfigurations().create(ASSET_CONFIGURATION));
 
-        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
-                project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest =
+                CreateManifestTask.createManifestTask(project, distributionExtension);
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);
             task.getArchiveBaseName().set(distributionExtension.getDistributionServiceName());
-            task.getArchiveVersion().set(project.provider(() -> project.getVersion().toString()));
+            task.getArchiveVersion()
+                    .set(project.provider(() -> project.getVersion().toString()));
             task.getArchiveExtension().set("sls.tgz");
-            task.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("distributions"));
+            task.getDestinationDirectory()
+                    .set(project.getLayout().getBuildDirectory().dir("distributions"));
 
             task.dependsOn(manifest);
         });
@@ -69,8 +72,8 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
-            String archiveRootDir = String.format("%s-%s",
-                    distributionExtension.getDistributionServiceName().get(), p.getVersion());
+            String archiveRootDir = String.format(
+                    "%s-%s", distributionExtension.getDistributionServiceName().get(), p.getVersion());
 
             task.from(new File(project.getProjectDir(), "deployment"), t ->
                     t.into(new File(String.format("%s/deployment", archiveRootDir))));
@@ -79,12 +82,10 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
                     t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
             distributionExtension.getAssets().get().forEach((key, value) ->
-                    task.from(p.file(key), t ->
-                            t.into(String.format("%s/asset/%s", archiveRootDir, value))));
+                    task.from(p.file(key), t -> t.into(String.format("%s/asset/%s", archiveRootDir, value))));
         }));
 
-
-        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project,  distributionExtension);
+        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);

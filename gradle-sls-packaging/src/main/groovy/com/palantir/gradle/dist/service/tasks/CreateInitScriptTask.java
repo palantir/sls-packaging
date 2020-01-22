@@ -47,9 +47,9 @@ public class CreateInitScriptTask extends DefaultTask {
     @TaskAction
     final void createInitScript() {
         EmitFiles.replaceVars(
-                JavaServiceDistributionPlugin.class.getResourceAsStream("/init.sh"),
-                getOutputFile().get().getAsFile().toPath(),
-                ImmutableMap.of("@serviceName@", serviceName.get()))
+                        JavaServiceDistributionPlugin.class.getResourceAsStream("/init.sh"),
+                        getOutputFile().get().getAsFile().toPath(),
+                        ImmutableMap.of("@serviceName@", serviceName.get()))
                 .toFile()
                 .setExecutable(true);
     }

@@ -51,8 +51,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:GCLogFileSize=10M",
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
-            "-verbose:gc"
-    );
+            "-verbose:gc");
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -61,8 +60,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:HeapDumpPath=var/log",
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
-            "-Dsun.net.inetaddr.ttl=20"
-    );
+            "-Dsun.net.inetaddr.ttl=20");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
@@ -72,11 +70,13 @@ public class LaunchConfigTask extends DefaultTask {
     private final Property<String> mainClass = getProject().getObjects().property(String.class);
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final ListProperty<String> gcJvmOptions = getProject().getObjects().listProperty(String.class);
-    private final Property<Boolean> addJava8GcLogging = getProject().getObjects().property(Boolean.class);
+    private final Property<Boolean> addJava8GcLogging =
+            getProject().getObjects().property(Boolean.class);
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
-    private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class);
+    private final ListProperty<String> defaultJvmOpts =
+            getProject().getObjects().listProperty(String.class);
 
     private final MapProperty<String, String> env = getProject().getObjects().mapProperty(String.class, String.class);
     private RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
@@ -156,30 +156,34 @@ public class LaunchConfigTask extends DefaultTask {
 
     @TaskAction
     public final void createConfig() throws IOException {
-        writeConfig(LaunchConfig.builder()
-                .mainClass(mainClass.get())
-                .serviceName(serviceName.get())
-                .javaHome(javaHome.getOrElse(""))
-                .args(args.get())
-                .classpath(relativizeToServiceLibDirectory(classpath))
-                .addAllJvmOpts(alwaysOnJvmOptions)
-                .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
-                .addAllJvmOpts(gcJvmOptions.get())
-                .addAllJvmOpts(defaultJvmOpts.get())
-                .putAllEnv(defaultEnvironment)
-                .putAllEnv(env.get())
-                .build(), getStaticLauncher().get().getAsFile());
+        writeConfig(
+                LaunchConfig.builder()
+                        .mainClass(mainClass.get())
+                        .serviceName(serviceName.get())
+                        .javaHome(javaHome.getOrElse(""))
+                        .args(args.get())
+                        .classpath(relativizeToServiceLibDirectory(classpath))
+                        .addAllJvmOpts(alwaysOnJvmOptions)
+                        .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
+                        .addAllJvmOpts(gcJvmOptions.get())
+                        .addAllJvmOpts(defaultJvmOpts.get())
+                        .putAllEnv(defaultEnvironment)
+                        .putAllEnv(env.get())
+                        .build(),
+                getStaticLauncher().get().getAsFile());
 
-        writeConfig(LaunchConfig.builder()
-                .mainClass(mainClass.get())
-                .serviceName(serviceName.get())
-                .javaHome(javaHome.getOrElse(""))
-                .args(checkArgs.get())
-                .classpath(relativizeToServiceLibDirectory(classpath))
-                .addAllJvmOpts(alwaysOnJvmOptions)
-                .addAllJvmOpts(defaultJvmOpts.get())
-                .env(defaultEnvironment)
-                .build(), getCheckLauncher().get().getAsFile());
+        writeConfig(
+                LaunchConfig.builder()
+                        .mainClass(mainClass.get())
+                        .serviceName(serviceName.get())
+                        .javaHome(javaHome.getOrElse(""))
+                        .args(checkArgs.get())
+                        .classpath(relativizeToServiceLibDirectory(classpath))
+                        .addAllJvmOpts(alwaysOnJvmOptions)
+                        .addAllJvmOpts(defaultJvmOpts.get())
+                        .env(defaultEnvironment)
+                        .build(),
+                getCheckLauncher().get().getAsFile());
     }
 
     private static void writeConfig(LaunchConfig config, File scriptFile) throws IOException {
@@ -200,7 +204,7 @@ public class LaunchConfigTask extends DefaultTask {
         // keep in sync with StaticLaunchConfig struct in go-java-launcher
         @Value.Default
         default String configType() {
-            return  "java";
+            return "java";
         }
 
         @Value.Default
@@ -214,11 +218,17 @@ public class LaunchConfigTask extends DefaultTask {
         }
 
         String mainClass();
+
         String serviceName();
+
         String javaHome();
+
         List<String> classpath();
+
         List<String> jvmOpts();
+
         List<String> args();
+
         Map<String, String> env();
 
         static Builder builder() {

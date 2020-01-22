@@ -69,19 +69,23 @@ public class CreatePodYamlTask extends DefaultTask {
     @TaskAction
     final void createPodYaml() throws IOException {
         validatePodYaml();
-        OBJECT_MAPPER.writeValue(getPodYamlFile().getAsFile().get(), ImmutableMap.of(
-                "services",
-                OBJECT_MAPPER.convertValue(this.serviceDefinitions.get(), new TypeReference<Map<String, Object>>() {}),
-                "volumes",
-                OBJECT_MAPPER.convertValue(this.volumeDefinitions.get(), new TypeReference<Map<String, Object>>() {})));
+        OBJECT_MAPPER.writeValue(
+                getPodYamlFile().getAsFile().get(),
+                ImmutableMap.of(
+                        "services",
+                        OBJECT_MAPPER.convertValue(
+                                this.serviceDefinitions.get(), new TypeReference<Map<String, Object>>() {}),
+                        "volumes",
+                        OBJECT_MAPPER.convertValue(
+                                this.volumeDefinitions.get(), new TypeReference<Map<String, Object>>() {})));
     }
 
     private void validatePodYaml() {
         PropertyNamingStrategy.KebabCaseStrategy kebabCaseStrategy = new PropertyNamingStrategy.KebabCaseStrategy();
         serviceDefinitions.get().forEach((key, value) -> {
             if (!kebabCaseStrategy.translate(key).equals(key)) {
-                throw new GradleException(String.format(
-                        SERVICE_VALIDATION_FAIL_FORMAT, key, "service names must be kebab case"));
+                throw new GradleException(
+                        String.format(SERVICE_VALIDATION_FAIL_FORMAT, key, "service names must be kebab case"));
             }
 
             try {
@@ -92,7 +96,9 @@ public class CreatePodYamlTask extends DefaultTask {
 
             value.getVolumeMap().forEach((volumeKey, volumeValue) -> {
                 if (!volumeDefinitions.get().containsKey(volumeValue)) {
-                    throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, key,
+                    throw new GradleException(String.format(
+                            SERVICE_VALIDATION_FAIL_FORMAT,
+                            key,
                             "service volume mapping cannot contain undeclared volumes"));
                 }
             });
@@ -100,18 +106,23 @@ public class CreatePodYamlTask extends DefaultTask {
 
         volumeDefinitions.get().forEach((key, value) -> {
             if (key.length() >= 25) {
-                throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, key,
-                        "volume names must be fewer than 25 characters"));
+                throw new GradleException(String.format(
+                        VOLUME_VALIDATION_FAIL_FORMAT, key, "volume names must be fewer than 25 characters"));
             }
 
             if (!key.matches(VOLUME_NAME_REGEX)) {
-                throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, key,
+                throw new GradleException(String.format(
+                        VOLUME_VALIDATION_FAIL_FORMAT,
+                        key,
                         String.format("volume name does not conform to the required regex %s", VOLUME_NAME_REGEX)));
             }
 
             if (!value.isValidPodVolumeDefinition()) {
-                throw new GradleException(String.format(VOLUME_VALIDATION_FAIL_FORMAT, key,
-                        String.format("volume desired size of %s does not conform to the required regex %s",
+                throw new GradleException(String.format(
+                        VOLUME_VALIDATION_FAIL_FORMAT,
+                        key,
+                        String.format(
+                                "volume desired size of %s does not conform to the required regex %s",
                                 value.getDesiredSize(), PodVolumeDefinition.VOLUME_SIZE_REGEX)));
             }
         });

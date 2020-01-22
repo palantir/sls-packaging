@@ -68,24 +68,25 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply("java");
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
-        JavaServiceDistributionExtension distributionExtension = project.getExtensions().create(
-                "distribution", JavaServiceDistributionExtension.class, project);
+        JavaServiceDistributionExtension distributionExtension =
+                project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
 
         // Set default configuration to look for product dependencies to be runtimeClasspath
-        distributionExtension.setProductDependenciesConfig(project.getConfigurations().getByName("runtimeClasspath"));
+        distributionExtension.setProductDependenciesConfig(
+                project.getConfigurations().getByName("runtimeClasspath"));
 
         // Create configuration to load executable dependencies
         project.getConfigurations().maybeCreate(GO_JAVA_LAUNCHER_BINARIES);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_JAVA_LAUNCHER);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_INIT);
-        Provider<String> mainClassName = distributionExtension.getMainClass()
-                .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
+        Provider<String> mainClassName = distributionExtension.getMainClass().orElse(project.provider(() ->
+                MainClassResolver.resolveMainClass(project)));
 
-        TaskProvider<CopyLauncherBinariesTask> copyLauncherBinaries = project.getTasks()
-                .register("copyLauncherBinaries", CopyLauncherBinariesTask.class);
+        TaskProvider<CopyLauncherBinariesTask> copyLauncherBinaries =
+                project.getTasks().register("copyLauncherBinaries", CopyLauncherBinariesTask.class);
 
-        TaskProvider<Jar> manifestClassPathTask = project.getTasks().register(
-                "manifestClasspathJar", Jar.class, task -> {
+        TaskProvider<Jar> manifestClassPathTask = project.getTasks()
+                .register("manifestClasspathJar", Jar.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Creates a jar containing a Class-Path manifest entry specifying the classpath "
                             + "using pathing jar rather than command line argument on Windows, since Windows path "
@@ -93,24 +94,32 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getArchiveAppendix().set("manifest-classpath");
 
                     task.doFirst(t -> {
+                        FileCollection runtimeClasspath =
+                                project.getConfigurations().getByName("runtimeClasspath");
 
-                        FileCollection runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+                        FileCollection jarOutputs = project.getTasks()
+                                .withType(Jar.class)
+                                .getByName(JavaPlugin.JAR_TASK_NAME)
+                                .getOutputs()
+                                .getFiles();
 
-                        FileCollection jarOutputs = project.getTasks().withType(Jar.class)
-                                .getByName(JavaPlugin.JAR_TASK_NAME).getOutputs().getFiles();
-
-                        String classPath = runtimeClasspath.plus(jarOutputs).getFiles()
-                                .stream()
+                        String classPath = runtimeClasspath.plus(jarOutputs).getFiles().stream()
                                 .map(File::getName)
                                 .collect(Collectors.joining(" "));
-                        task.getManifest().getAttributes().put(
-                                "Class-Path", classPath + " " + task.getArchiveFileName().get());
+                        task.getManifest()
+                                .getAttributes()
+                                .put(
+                                        "Class-Path",
+                                        classPath
+                                                + " "
+                                                + task.getArchiveFileName().get());
                     });
-                    task.onlyIf(t -> distributionExtension.getEnableManifestClasspath().get());
+                    task.onlyIf(t ->
+                            distributionExtension.getEnableManifestClasspath().get());
                 });
 
-        TaskProvider<LazyCreateStartScriptTask> startScripts = project.getTasks().register("createStartScripts",
-                LazyCreateStartScriptTask.class, task -> {
+        TaskProvider<LazyCreateStartScriptTask> startScripts = project.getTasks()
+                .register("createStartScripts", LazyCreateStartScriptTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates standard Java start scripts.");
                     task.setOutputDir(new File(project.getBuildDir(), "scripts"));
@@ -129,7 +138,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                     .replaceAll(
                                             "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
                                             "$1%APP_HOME%\\\\lib\\\\"
-                                                    + manifestClassPathTask.get().getArchiveFileName().get()
+                                                    + manifestClassPathTask
+                                                            .get()
+                                                            .getArchiveFileName()
+                                                            .get()
                                                     + "$2");
 
                             GFileUtils.writeFile(cleanedText, task.getWindowsScript());
@@ -142,7 +154,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         // HACKHACK all fields of CreateStartScript are eager so we configure the task after evaluation to
         // ensure everything has been correctly configured
         project.afterEvaluate(p -> startScripts.configure(task -> {
-            task.setApplicationName(distributionExtension.getDistributionServiceName().get());
+            task.setApplicationName(
+                    distributionExtension.getDistributionServiceName().get());
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
             task.dependsOn(manifestClassPathTask);
 
@@ -150,15 +163,15 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
-                task.setClasspath(
-                        jarTask.get().getOutputs().getFiles().plus(
-                                javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
-
+                task.setClasspath(jarTask.get()
+                        .getOutputs()
+                        .getFiles()
+                        .plus(javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
             }
         }));
 
-        TaskProvider<LaunchConfigTask> launchConfigTask = project.getTasks().register(
-                "createLaunchConfig", LaunchConfigTask.class, task -> {
+        TaskProvider<LaunchConfigTask> launchConfigTask = project.getTasks()
+                .register("createLaunchConfig", LaunchConfigTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates launcher-static.yml and launcher-check.yml configurations.");
                     task.dependsOn(manifestClassPathTask);
@@ -174,32 +187,31 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getEnv().set(distributionExtension.getEnv());
                 });
 
-        TaskProvider<CreateInitScriptTask> initScript = project.getTasks().register(
-                "createInitScript", CreateInitScriptTask.class, task -> {
+        TaskProvider<CreateInitScriptTask> initScript = project.getTasks()
+                .register("createInitScript", CreateInitScriptTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
                 });
 
-        TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks().register(
-                "createCheckScript", CreateCheckScriptTask.class, task -> {
+        TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()
+                .register("createCheckScript", CreateCheckScriptTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates healthcheck (service/monitoring/bin/check.sh) script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
                 });
 
-        TaskProvider<CopyYourkitAgentTask> yourkitAgent = project.getTasks().register(
-                "copyYourkitAgent", CopyYourkitAgentTask.class);
-        TaskProvider<CopyYourkitLicenseTask> yourkitLicense = project.getTasks().register(
-                "copyYourkitLicense", CopyYourkitLicenseTask.class);
+        TaskProvider<CopyYourkitAgentTask> yourkitAgent =
+                project.getTasks().register("copyYourkitAgent", CopyYourkitAgentTask.class);
+        TaskProvider<CopyYourkitLicenseTask> yourkitLicense =
+                project.getTasks().register("copyYourkitLicense", CopyYourkitLicenseTask.class);
 
-        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
-                project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest =
+                CreateManifestTask.createManifestTask(project, distributionExtension);
 
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
-
 
         TaskProvider<JavaExec> runTask = project.getTasks().register("run", JavaExec.class, task -> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
@@ -217,8 +229,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         // been correctly configured
         project.afterEvaluate(p -> runTask.configure(task -> {
             task.setClasspath(project.files(
-                    jarTask.get().getArchiveFile().get(),
-                    p.getConfigurations().getByName("runtimeClasspath")));
+                    jarTask.get().getArchiveFile().get(), p.getConfigurations().getByName("runtimeClasspath")));
             task.setArgs(distributionExtension.getArgs().get());
             task.setJvmArgs(ImmutableList.builder()
                     .addAll(distributionExtension.getDefaultJvmOpts().get())
@@ -241,9 +252,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
-                task.setClasspath(
-                        jarTask.get().getOutputs().getFiles().plus(
-                                distributionExtension.getProductDependenciesConfig()));
+                task.setClasspath(jarTask.get()
+                        .getOutputs()
+                        .getFiles()
+                        .plus(distributionExtension.getProductDependenciesConfig()));
             }
         }));
 

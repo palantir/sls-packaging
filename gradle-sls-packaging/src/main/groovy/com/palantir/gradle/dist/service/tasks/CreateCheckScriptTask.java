@@ -56,11 +56,11 @@ public class CreateCheckScriptTask extends DefaultTask {
     final void createInitScript() {
         if (!checkArgs.get().isEmpty()) {
             EmitFiles.replaceVars(
-                    JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
-                    getOutputFile().get().getAsFile().toPath(),
-                    ImmutableMap.of(
-                            "@serviceName@", serviceName.get(),
-                            "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))
+                            JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
+                            getOutputFile().get().getAsFile().toPath(),
+                            ImmutableMap.of(
+                                    "@serviceName@", serviceName.get(),
+                                    "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))
                     .toFile()
                     .setExecutable(true);
         }

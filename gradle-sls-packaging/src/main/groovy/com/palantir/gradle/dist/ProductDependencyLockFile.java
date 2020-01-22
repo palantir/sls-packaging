@@ -30,8 +30,8 @@ public final class ProductDependencyLockFile {
 
     private static final String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
     public static final String PROJECT_VERSION = "$projectVersion";
-    private static final Pattern LOCK_PATTERN = Pattern.compile(
-            "^(?<group>[^:]+):(?<name>[^ ]+) \\((?<min>[^,]+), (?<max>[^\\)]+)\\)$");
+    private static final Pattern LOCK_PATTERN =
+            Pattern.compile("^(?<group>[^:]+):(?<name>[^ ]+) \\((?<min>[^,]+), (?<max>[^\\)]+)\\)$");
     public static final String LOCK_FILE = "product-dependencies.lock";
 
     public static List<ProductDependency> fromString(String contents, String projectVersion) {
@@ -53,24 +53,28 @@ public final class ProductDependencyLockFile {
 
     public static String asString(
             List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
-        return deps.stream().map(dep -> String.format(
-                "%s:%s (%s, %s)",
-                dep.getProductGroup(),
-                dep.getProductName(),
-                renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
-                dep.getMaximumVersion())).sorted().collect(Collectors.joining("\n", HEADER, "\n"));
+        return deps.stream()
+                .map(dep -> String.format(
+                        "%s:%s (%s, %s)",
+                        dep.getProductGroup(),
+                        dep.getProductName(),
+                        renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
+                        dep.getMaximumVersion()))
+                .sorted()
+                .collect(Collectors.joining("\n", HEADER, "\n"));
     }
 
     /**
-     * If a product ends up taking a product dependency on another product that's published in the same repo,
-     * and the minimum version in that dependency tracks the project's version, then the lock file would have to be
-     * regenerated every commit, such that all PRs will end up conflicting with each other.
-     * To avoid this, we replace the minimum version of such dependencies with a placeholder, {@code $projectVersion}.
+     * If a product ends up taking a product dependency on another product that's published in the same repo, and the
+     * minimum version in that dependency tracks the project's version, then the lock file would have to be regenerated
+     * every commit, such that all PRs will end up conflicting with each other. To avoid this, we replace the minimum
+     * version of such dependencies with a placeholder, {@code $projectVersion}.
      */
     private static String renderDepMinimumVersion(
             Set<ProductId> servicesDeclaredInProject, String projectVersion, ProductDependency dep) {
         ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
-        if (servicesDeclaredInProject.contains(productId) && dep.getMinimumVersion().equals(projectVersion)) {
+        if (servicesDeclaredInProject.contains(productId)
+                && dep.getMinimumVersion().equals(projectVersion)) {
             return PROJECT_VERSION;
         } else {
             return dep.getMinimumVersion();

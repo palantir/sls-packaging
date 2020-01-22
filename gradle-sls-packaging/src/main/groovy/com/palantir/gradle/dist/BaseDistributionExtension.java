@@ -73,7 +73,8 @@ public class BaseDistributionExtension {
         serviceName.set(project.provider(project::getName));
         podName.set(project.provider(project::getName));
 
-        manifestExtensions = project.getObjects().mapProperty(String.class, Object.class).empty();
+        manifestExtensions =
+                project.getObjects().mapProperty(String.class, Object.class).empty();
 
         projectName = project.getName();
     }
@@ -140,10 +141,11 @@ public class BaseDistributionExtension {
 
     public final void productDependency(String mavenCoordVersionRange, String recommendedVersion) {
         Matcher matcher = MAVEN_COORDINATE_PATTERN.matcher(mavenCoordVersionRange);
-        Preconditions.checkArgument(matcher.matches(),
-                "String '%s' is not a valid maven coordinate. "
-                    + "Must be in the format 'group:name:version:classifier@type', where ':classifier' and '@type' are "
-                    + "optional.", mavenCoordVersionRange);
+        Preconditions.checkArgument(
+                matcher.matches(),
+                "String '%s' is not a valid maven coordinate. Must be in the format"
+                        + " 'group:name:version:classifier@type', where ':classifier' and '@type' are optional.",
+                mavenCoordVersionRange);
         String minVersion = matcher.group("version");
         productDependencies.add(new ProductDependency(
                 matcher.group("group"),
@@ -159,7 +161,7 @@ public class BaseDistributionExtension {
 
     public final void productDependency(
             String dependencyGroup, String dependencyName, String minVersion, String maxVersion) {
-        productDependency(dependencyGroup, dependencyName, minVersion, maxVersion,  null);
+        productDependency(dependencyGroup, dependencyName, minVersion, maxVersion, null);
     }
 
     public final void productDependency(
@@ -172,15 +174,11 @@ public class BaseDistributionExtension {
                 dependencyGroup,
                 dependencyName,
                 minVersion,
-                maxVersion == null
-                        ? generateMaxVersion(minVersion)
-                        : maxVersion,
+                maxVersion == null ? generateMaxVersion(minVersion) : maxVersion,
                 recommendedVersion));
     }
 
-    /**
-     * Lazily configures and adds a {@link ProductDependency}.
-     */
+    /** Lazily configures and adds a {@link ProductDependency}. */
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
         productDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
@@ -246,5 +244,4 @@ public class BaseDistributionExtension {
     static String generateMaxVersion(String minimumVersion) {
         return String.format("%s.x.x", Iterables.getFirst(Splitter.on(".").split(minimumVersion), null));
     }
-
 }

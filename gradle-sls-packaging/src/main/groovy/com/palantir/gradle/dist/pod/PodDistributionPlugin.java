@@ -43,16 +43,17 @@ public final class PodDistributionPlugin implements Plugin<Project> {
                     + "'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.");
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
-        PodDistributionExtension distributionExtension = project.getExtensions().create(
-                "distribution", PodDistributionExtension.class, project);
+        PodDistributionExtension distributionExtension =
+                project.getExtensions().create("distribution", PodDistributionExtension.class, project);
 
-        distributionExtension.setProductDependenciesConfig(project.getConfigurations().create("podBundle"));
+        distributionExtension.setProductDependenciesConfig(
+                project.getConfigurations().create("podBundle"));
 
-        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
-                project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest =
+                CreateManifestTask.createManifestTask(project, distributionExtension);
 
-        TaskProvider<CreatePodYamlTask> podYaml = project.getTasks().register(
-                "createPodYaml", CreatePodYamlTask.class, task -> {
+        TaskProvider<CreatePodYamlTask> podYaml = project.getTasks()
+                .register("createPodYaml", CreatePodYamlTask.class, task -> {
                     task.setGroup(PodDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates a simple yaml file describing a pods constituent services.");
                     task.getServiceDefinitions().set(distributionExtension.getServices());

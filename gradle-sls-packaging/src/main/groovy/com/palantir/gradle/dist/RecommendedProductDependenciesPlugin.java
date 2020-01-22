@@ -27,12 +27,10 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
     public final void apply(final Project project) {
         project.getPlugins().apply("java");
-        final RecommendedProductDependenciesExtension ext = project
-                .getExtensions()
+        final RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        TaskProvider<?> configureProductDependenciesTask = project
-                .getTasks()
+        TaskProvider<?> configureProductDependenciesTask = project.getTasks()
                 .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
                     cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
                 });

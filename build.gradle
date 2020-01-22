@@ -6,6 +6,7 @@ buildscript {
     }
 
     dependencies {
+        classpath 'com.palantir.javaformat:gradle-palantir-java-format:0.3.15'
         classpath 'com.netflix.nebula:gradle-info-plugin:5.2.0'
         classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:1.15.0'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.10.1'
@@ -23,6 +24,7 @@ apply plugin: 'com.palantir.git-version'
 apply plugin: 'com.palantir.consistent-versions'
 
 allprojects {
+    apply plugin: 'com.palantir.java-format'
     version System.env.CIRCLE_TAG ?: gitVersion()
     group 'com.palantir.sls-packaging'
 

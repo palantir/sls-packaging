@@ -35,7 +35,5 @@ public interface RecommendedProductDependencies {
         return new Builder();
     }
 
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {
-    }
-
+    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
 }
