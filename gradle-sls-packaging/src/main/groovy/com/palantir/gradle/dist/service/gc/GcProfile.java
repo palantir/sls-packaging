@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.service.gc;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
@@ -98,6 +99,8 @@ public interface GcProfile extends Serializable {
             ImmutableList.Builder<String> builder = ImmutableList.builder();
 
             if (graal) {
+                Preconditions.checkState(
+                        javaVersion.isJava11Compatible(), "'graal true' is only usable on Java11+:", javaVersion);
                 builder.addAll(GRAAL);
             }
 
