@@ -35,6 +35,9 @@ public interface GcProfile extends Serializable {
 
     List<String> gcJvmOpts(JavaVersion javaVersion);
 
+    ImmutableList<String> GRAAL = ImmutableList.of(
+            "-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI", "-XX:+UseJVMCICompiler", "-XX:+EagerJVMCI");
+
     class Throughput implements GcProfile {
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
@@ -45,6 +48,7 @@ public interface GcProfile extends Serializable {
     class ResponseTime implements GcProfile {
         private int newRatio = 2;
         private int initiatingOccupancyFraction = 68;
+        private boolean graal = false;
 
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
@@ -87,9 +91,21 @@ public interface GcProfile extends Serializable {
     }
 
     class Hybrid implements GcProfile {
+        private boolean graal = false;
+
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
-            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseStringDeduplication");
+            ImmutableList.Builder<String> builder = ImmutableList.builder();
+
+            if (graal) {
+                builder.addAll(GRAAL);
+            }
+
+            return builder.add("-XX:+UseG1GC", "-XX:+UseStringDeduplication").build();
+        }
+
+        public final void graal(boolean value) {
+            graal = value;
         }
     }
 }
