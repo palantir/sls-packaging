@@ -85,4 +85,25 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         where:
         gc << GcProfile.PROFILE_NAMES.keySet().toArray()
     }
+
+    def 'graal can be enabled'() {
+        setup:
+        buildFile << """
+        distribution {
+            gc 'hybrid', {
+              graal true
+            }
+        }
+        """.stripIndent()
+
+        when:
+        runTasks(':extractDistTarForTest')
+
+        then:
+        assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
+        Awaitility.await("file created").until({
+            signalFile.exists()
+        })
+        file("touch-service-1.0.0/var/log/startup.log").text.contains ' -XX:+CrashOnOutOfMemoryError -Djava.io.tmpdir=var/data/tmp -XX:ErrorFile=var/log/hs_err_pid%p.log -XX:HeapDumpPath=var/log -Dsun.net.inetaddr.ttl=20 -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -XX:+UseJVMCICompiler -XX:+EagerJVMCI -XX:+UseG1GC -XX:+UseStringDeduplication -classpath'
+    }
 }
