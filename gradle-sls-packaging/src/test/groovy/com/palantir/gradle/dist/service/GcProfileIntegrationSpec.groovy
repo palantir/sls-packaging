@@ -22,6 +22,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import org.awaitility.Awaitility
+import org.gradle.api.JavaVersion
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 class GcProfileIntegrationSpec extends GradleIntegrationSpec {
@@ -86,9 +88,11 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         gc << GcProfile.PROFILE_NAMES.keySet().toArray()
     }
 
+    @IgnoreIf({ !JavaVersion.current().isJava11Compatible() })
     def 'graal can be enabled'() {
         setup:
         buildFile << """
+        sourceCompatibility = '11'
         distribution {
             gc 'hybrid', {
               graal true

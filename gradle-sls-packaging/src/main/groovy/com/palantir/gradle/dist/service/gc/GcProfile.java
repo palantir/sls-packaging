@@ -49,7 +49,6 @@ public interface GcProfile extends Serializable {
     class ResponseTime implements GcProfile {
         private int newRatio = 2;
         private int initiatingOccupancyFraction = 68;
-        private boolean graal = false;
 
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
