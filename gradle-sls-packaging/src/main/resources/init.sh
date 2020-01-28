@@ -20,10 +20,10 @@ pushd "`dirname \"$0\"`/../.." > /dev/null
 
 # Select launcher binary for this OS
 case "`uname -sm`" in
-  Linux x86_64)
+  "Linux x86_64")
     NATIVE_ARCH="linux-amd64"
     ;;
-  Linux aarch64)
+  "Linux aarch64")
     NATIVE_ARCH="linux-arm64"
     ;;
   Darwin*)
