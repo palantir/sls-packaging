@@ -32,7 +32,8 @@ content of the package. The package will follow this structure:
                 [service-name].bat            # Windows start script
                 init.sh                       # daemonizing script
                 darwin-amd64/go-java-launcher # Native Java launcher binary (MacOS)
-                linux-amd64/go-java-launcher  # Native Java launcher binary (Linux)
+                linux-amd64/go-java-launcher  # Native Java launcher binary (Linux x86_64)
+                linux-arm64/go-java-launcher  # Native Java launcher binary (Linux arm64)
                 launcher-static.yml           # generated configuration for go-java-launcher
                 launcher-check.yml            # generated configuration for check.sh go-java-launcher
             lib/
