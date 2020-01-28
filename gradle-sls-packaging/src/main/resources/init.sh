@@ -19,18 +19,22 @@
 pushd "`dirname \"$0\"`/../.." > /dev/null
 
 # Select launcher binary for this OS
-case "`uname`" in
-  Linux*)
-    LAUNCHER_CMD=service/bin/linux-amd64/go-java-launcher
-    GO_INIT_CMD=service/bin/linux-amd64/go-init
+case "`uname -sm`" in
+  "Linux x86_64")
+    NATIVE_ARCH="linux-amd64"
+    ;;
+  "Linux aarch64")
+    NATIVE_ARCH="linux-arm64"
     ;;
   Darwin*)
-    LAUNCHER_CMD=service/bin/darwin-amd64/go-java-launcher
-    GO_INIT_CMD=service/bin/darwin-amd64/go-init
+    NATIVE_ARCH="darwin-amd64"
     ;;
   *)
     echo "Unsupported operating system: $(uname)"; exit 1
 esac
+
+LAUNCHER_CMD="service/bin/${NATIVE_ARCH}/go-java-launcher"
+GO_INIT_CMD="service/bin/${NATIVE_ARCH}/go-init"
 
 ACTION=$1
 SCRIPT_DIR="service/bin"
