@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.tasks;
+package com.palantir.gradle.dist;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.dist.ProductDependency;
-import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.logsafe.Preconditions;
 import java.util.Set;
 import org.gradle.api.DefaultTask;
@@ -75,8 +73,8 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
             }
-            manifest.attributes(
-                    ImmutableMap.of(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY, recommendedProductDeps));
+            manifest.attributes(ImmutableMap.of(
+                    RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY, recommendedProductDeps));
         });
     }
 }

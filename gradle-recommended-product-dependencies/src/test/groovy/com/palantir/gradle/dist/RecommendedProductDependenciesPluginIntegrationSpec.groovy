@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2018 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2020 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@ package com.palantir.gradle.dist
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.Iterables
-import com.palantir.gradle.dist.tasks.CreateManifestTask
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
+import nebula.test.IntegrationSpec
+import nebula.test.dependencies.DependencyGraph
+import nebula.test.dependencies.GradleDependencyGenerator
 
-class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrationSpec {
+class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpec {
 
     def "Adds recommended product dependencies to manifest"() {
         settingsFile  << """
         rootProject.name = "root-project"
         """.stripIndent()
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-recommended-dependencies'
-            }
+            apply plugin: 'com.palantir.recommended-product-dependencies'
 
             recommendedProductDependencies {
                 productDependency {
@@ -46,7 +46,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         """.stripIndent()
 
         when:
-        runTasks(':jar')
+        runTasksSuccessfully(':jar')
 
         then:
         fileExists("build/libs/root-project.jar")
@@ -61,16 +61,17 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
     }
 
     def "Works with consistent-versions"() {
+        System.setProperty("ignoreDeprecations", "true")
         def repo = generateMavenRepo('group:name:1.0.0')
         settingsFile  << """
         rootProject.name = "root-project"
         """.stripIndent()
         buildFile << """
             plugins {
-                id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
-                id 'com.palantir.sls-recommended-dependencies'
+                id 'com.palantir.consistent-versions' version '1.13.1'
                 id 'java-library'
             }
+            apply plugin: 'com.palantir.recommended-product-dependencies'
             
             repositories {
                 ${repo.mavenRepositoryBlock}
@@ -92,7 +93,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         """.stripIndent()
 
         when:
-        runTasks('--write-locks', ':jar')
+        runTasksSuccessfully('--write-locks', ':jar')
 
         then:
         fileExists("build/libs/root-project.jar")
@@ -110,7 +111,14 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends GradleIntegrat
         def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
         def manifest = new Manifest(zf.getInputStream(manifestEntry))
         return new ObjectMapper().readValue(
-                manifest.getMainAttributes().getValue(CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
+                manifest.getMainAttributes().getValue(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
                 RecommendedProductDependencies)
+    }
+
+    private static GradleDependencyGenerator generateMavenRepo(String... graph) {
+        DependencyGraph dependencyGraph = new DependencyGraph(graph)
+        GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
+        generator.generateTestMavenRepo()
+        return generator
     }
 }

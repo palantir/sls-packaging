@@ -1,0 +1,17 @@
+apply plugin: 'groovy'
+apply plugin: 'java-gradle-plugin'
+apply plugin: 'org.inferred.processors'
+
+dependencies {
+    compile gradleApi()
+    compile 'com.google.guava:guava'
+    compile 'com.fasterxml.jackson.core:jackson-databind'
+    compile 'com.palantir.sls.versions:sls-versions'
+    compile 'com.palantir.safe-logging:preconditions'
+
+    testCompile gradleTestKit()
+    testCompile 'com.netflix.nebula:nebula-test'
+
+    compileOnly 'org.immutables:value::annotations'
+    annotationProcessor 'org.immutables:value'
+}
