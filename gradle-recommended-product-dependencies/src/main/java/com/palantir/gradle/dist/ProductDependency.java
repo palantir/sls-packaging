@@ -24,6 +24,7 @@ import com.palantir.sls.versions.SlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -191,5 +192,26 @@ public final class ProductDependency implements Serializable {
 
     public void setMaximumVersion(String maximumVersion) {
         this.maximumVersion = maximumVersion;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        ProductDependency that = (ProductDependency) other;
+        return productGroup.equals(that.productGroup)
+                && productName.equals(that.productName)
+                && minimumVersion.equals(that.minimumVersion)
+                && Objects.equals(recommendedVersion, that.recommendedVersion)
+                && maximumVersion.equals(that.maximumVersion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(productGroup, productName, minimumVersion, recommendedVersion, maximumVersion);
     }
 }
