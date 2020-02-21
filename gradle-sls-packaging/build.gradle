@@ -7,16 +7,16 @@ apply plugin: 'org.inferred.processors'
 apply plugin: 'de.undercouch.download'
 
 dependencies {
-    compileOnly 'org.immutables:value::annotations'
-    annotationProcessor 'org.immutables:value'
-
-    compile 'com.google.guava:guava'
     compile gradleApi()
+    compile project(':gradle-recommended-product-dependencies')
+    compile 'com.google.guava:guava'
     compile 'com.fasterxml.jackson.core:jackson-databind'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-guava"
-    compile 'com.palantir.sls.versions:sls-versions'
     compile 'com.palantir.safe-logging:preconditions'
+
+    compileOnly 'org.immutables:value::annotations'
+    annotationProcessor 'org.immutables:value'
 
     testCompile gradleTestKit()
     testCompile 'com.netflix.nebula:nebula-test'

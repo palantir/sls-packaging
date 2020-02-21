@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
+import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductDependencyMerger;
@@ -80,7 +81,6 @@ import org.gradle.util.GFileUtils;
 
 public class CreateManifestTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(CreateManifestTask.class);
-    public static final String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
@@ -374,7 +374,7 @@ public class CreateManifestTask extends DefaultTask {
                             pdeps = Optional.ofNullable(jar.getManifest()
                                             .getEffectiveManifest()
                                             .getAttributes()
-                                            .get(SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
+                                            .get(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
                                     .map(Object::toString);
                         }
                     } else {
@@ -406,8 +406,8 @@ public class CreateManifestTask extends DefaultTask {
                             return Stream.empty();
                         }
 
-                        pdeps = Optional.ofNullable(
-                                manifest.getMainAttributes().getValue(SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
+                        pdeps = Optional.ofNullable(manifest.getMainAttributes()
+                                .getValue(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
                     }
                     if (!pdeps.isPresent()) {
                         log.debug(
