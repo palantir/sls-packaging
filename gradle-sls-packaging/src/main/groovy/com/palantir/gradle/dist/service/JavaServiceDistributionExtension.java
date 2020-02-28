@@ -56,8 +56,9 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     public JavaServiceDistributionExtension(Project project) {
         super(project);
         objectFactory = project.getObjects();
-        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() ->
-                project.getConvention().getPlugin(JavaPluginConvention.class).getTargetCompatibility()));
+        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() -> project.getConvention()
+                .getPlugin(JavaPluginConvention.class)
+                .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
 
         javaHome = objectFactory.property(String.class).value(javaVersion.map(javaVersionValue -> {

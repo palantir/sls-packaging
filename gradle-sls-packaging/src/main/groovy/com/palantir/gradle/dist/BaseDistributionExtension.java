@@ -147,13 +147,12 @@ public class BaseDistributionExtension {
                         + " 'group:name:version:classifier@type', where ':classifier' and '@type' are optional.",
                 mavenCoordVersionRange);
         String minVersion = matcher.group("version");
-        productDependencies.add(
-                new ProductDependency(
-                        matcher.group("group"),
-                        matcher.group("name"),
-                        minVersion,
-                        generateMaxVersion(minVersion),
-                        recommendedVersion));
+        productDependencies.add(new ProductDependency(
+                matcher.group("group"),
+                matcher.group("name"),
+                minVersion,
+                generateMaxVersion(minVersion),
+                recommendedVersion));
     }
 
     public final void productDependency(String dependencyGroup, String dependencyName, String minVersion) {
@@ -171,13 +170,12 @@ public class BaseDistributionExtension {
             String minVersion,
             String maxVersion,
             String recommendedVersion) {
-        productDependencies.add(
-                new ProductDependency(
-                        dependencyGroup,
-                        dependencyName,
-                        minVersion,
-                        maxVersion == null ? generateMaxVersion(minVersion) : maxVersion,
-                        recommendedVersion));
+        productDependencies.add(new ProductDependency(
+                dependencyGroup,
+                dependencyName,
+                minVersion,
+                maxVersion == null ? generateMaxVersion(minVersion) : maxVersion,
+                recommendedVersion));
     }
 
     /** Lazily configures and adds a {@link ProductDependency}. */

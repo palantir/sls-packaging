@@ -421,13 +421,12 @@ public class CreateManifestTask extends DefaultTask {
                         RecommendedProductDependencies recommendedDeps =
                                 jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
                         return recommendedDeps.recommendedProductDependencies().stream()
-                                .map(recommendedDep ->
-                                        new ProductDependency(
-                                                recommendedDep.getProductGroup(),
-                                                recommendedDep.getProductName(),
-                                                recommendedDep.getMinimumVersion(),
-                                                recommendedDep.getMaximumVersion(),
-                                                recommendedDep.getRecommendedVersion()))
+                                .map(recommendedDep -> new ProductDependency(
+                                        recommendedDep.getProductGroup(),
+                                        recommendedDep.getProductName(),
+                                        recommendedDep.getMinimumVersion(),
+                                        recommendedDep.getMaximumVersion(),
+                                        recommendedDep.getRecommendedVersion()))
                                 .peek(productDependency -> log.info(
                                         "Product dependency recommendation made by artifact '{}', file '{}', "
                                                 + "dependency recommendation '{}'",
@@ -476,10 +475,9 @@ public class CreateManifestTask extends DefaultTask {
                 .flatMap(p -> Optional.ofNullable(p.getExtensions().findByType(BaseDistributionExtension.class))
                         .map(Stream::of)
                         .orElseGet(Stream::empty))
-                .map(extension ->
-                        new ProductId(
-                                extension.getDistributionServiceGroup().get(),
-                                extension.getDistributionServiceName().get()))
+                .map(extension -> new ProductId(
+                        extension.getDistributionServiceGroup().get(),
+                        extension.getDistributionServiceName().get()))
                 .collect(Collectors.toSet());
     }
 
@@ -496,8 +494,9 @@ public class CreateManifestTask extends DefaultTask {
                     task.getManifestExtensions().set(ext.getManifestExtensions());
                 });
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
-            project.getTasks().named(LifecycleBasePlugin.CHECK_TASK_NAME).configure(task ->
-                    task.dependsOn(createManifest));
+            project.getTasks()
+                    .named(LifecycleBasePlugin.CHECK_TASK_NAME)
+                    .configure(task -> task.dependsOn(createManifest));
         });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file

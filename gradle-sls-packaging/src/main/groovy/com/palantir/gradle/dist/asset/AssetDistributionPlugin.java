@@ -75,14 +75,19 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             String archiveRootDir = String.format(
                     "%s-%s", distributionExtension.getDistributionServiceName().get(), p.getVersion());
 
-            task.from(new File(project.getProjectDir(), "deployment"), t ->
-                    t.into(new File(String.format("%s/deployment", archiveRootDir))));
+            task.from(
+                    new File(project.getProjectDir(), "deployment"),
+                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
-            task.from(new File(project.getBuildDir(), "deployment"), t ->
-                    t.into(new File(String.format("%s/deployment", archiveRootDir))));
+            task.from(
+                    new File(project.getBuildDir(), "deployment"),
+                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
-            distributionExtension.getAssets().get().forEach((key, value) ->
-                    task.from(p.file(key), t -> t.into(String.format("%s/asset/%s", archiveRootDir, value))));
+            distributionExtension
+                    .getAssets()
+                    .get()
+                    .forEach((key, value) ->
+                            task.from(p.file(key), t -> t.into(String.format("%s/asset/%s", archiveRootDir, value))));
         }));
 
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
