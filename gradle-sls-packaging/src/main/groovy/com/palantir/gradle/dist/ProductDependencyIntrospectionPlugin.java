@@ -83,8 +83,8 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                 .findAny();
 
         return dependency
-                .orElseThrow(() -> new GradleException(String.format(
-                        "Unable to find product dependency for '%s:%s'", group, name)))
+                .orElseThrow(() -> new GradleException(
+                        String.format("Unable to find product dependency for '%s:%s'", group, name)))
                 .getMinimumVersion();
     }
 

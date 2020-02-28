@@ -40,8 +40,10 @@ public class SlsBaseDistPlugin implements Plugin<Project> {
         slsConf.getAttributes()
                 .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, SLS_DIST_USAGE));
 
-        project.getDependencies().getAttributesSchema().attribute(Usage.USAGE_ATTRIBUTE, strategy ->
-                strategy.getDisambiguationRules().add(SlsDisambiguationRule.class));
+        project.getDependencies()
+                .getAttributesSchema()
+                .attribute(Usage.USAGE_ATTRIBUTE, strategy -> strategy.getDisambiguationRules()
+                        .add(SlsDisambiguationRule.class));
     }
 
     /**

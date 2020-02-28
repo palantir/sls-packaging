@@ -79,8 +79,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getConfigurations().maybeCreate(GO_JAVA_LAUNCHER_BINARIES);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_JAVA_LAUNCHER);
         project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_INIT);
-        Provider<String> mainClassName = distributionExtension.getMainClass().orElse(project.provider(() ->
-                MainClassResolver.resolveMainClass(project)));
+        Provider<String> mainClassName = distributionExtension
+                .getMainClass()
+                .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
         TaskProvider<CopyLauncherBinariesTask> copyLauncherBinaries =
                 project.getTasks().register("copyLauncherBinaries", CopyLauncherBinariesTask.class);

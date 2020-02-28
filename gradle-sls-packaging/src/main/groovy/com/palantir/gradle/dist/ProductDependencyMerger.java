@@ -52,11 +52,10 @@ public final class ProductDependencyMerger {
         if (Objects.equals(dep1.getMinimumVersion(), dep2.getMinimumVersion())) {
             minimumVersion = SlsVersion.valueOf(dep1.getMinimumVersion());
         } else {
-            minimumVersion = minimumVersionOrderable.orElseThrow(() ->
-                    new SafeRuntimeException(
-                            "Could not determine minimum version among two non-orderable minimum versions",
-                            SafeArg.of("dep1", dep1),
-                            SafeArg.of("dep2", dep2)));
+            minimumVersion = minimumVersionOrderable.orElseThrow(() -> new SafeRuntimeException(
+                    "Could not determine minimum version among two non-orderable minimum versions",
+                    SafeArg.of("dep1", dep1),
+                    SafeArg.of("dep2", dep2)));
         }
 
         SlsVersionMatcher maximumVersion = Stream.of(dep1.parseMaximum(), dep2.parseMaximum())

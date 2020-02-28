@@ -67,9 +67,10 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
         return javaConvention.manifest(manifest -> {
             String recommendedProductDeps;
             try {
-                recommendedProductDeps = new ObjectMapper().writeValueAsString(RecommendedProductDependencies.builder()
-                        .recommendedProductDependencies(recommendedProductDependencies)
-                        .build());
+                recommendedProductDeps = new ObjectMapper()
+                        .writeValueAsString(RecommendedProductDependencies.builder()
+                                .recommendedProductDependencies(recommendedProductDependencies)
+                                .build());
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
             }
