@@ -21,7 +21,6 @@ import com.google.common.collect.Streams;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import com.palantir.sls.versions.OrderableSlsVersion;
-import com.palantir.sls.versions.SlsVersion;
 import com.palantir.sls.versions.SlsVersionMatcher;
 import com.palantir.sls.versions.VersionComparator;
 import java.util.Objects;
@@ -32,46 +31,36 @@ public final class ProductDependencyMerger {
     private ProductDependencyMerger() {}
 
     public static ProductDependency merge(ProductDependency dep1, ProductDependency dep2) {
-        // Ensure they are valid
-        if (!dep1.getProductGroup().equals(dep2.getProductGroup())) {
-            throw new IllegalArgumentException(String.format(
-                    "Product groups differ: '%s' and '%s'", dep1.getProductGroup(), dep2.getProductGroup()));
-        }
-        if (!dep1.getProductName().equals(dep2.getProductName())) {
-            throw new IllegalArgumentException(
-                    String.format("Product names differ: '%s' and '%s'", dep1.getProductName(), dep2.getProductName()));
-        }
+        return merge(dep1, dep2, Optional.empty());
+    }
 
-        // This could be empty if both of the versions are dirty
-        Optional<OrderableSlsVersion> minimumVersionOrderable = Stream.of(dep1.parseMinimum(), dep2.parseMinimum())
-                .flatMap(Streams::stream)
-                .max(VersionComparator.INSTANCE);
+    public static ProductDependency merge(
+            ProductDependency dep1, ProductDependency dep2, Optional<String> defaultMinimumVersion) {
+        Preconditions.checkArgument(
+                dep1.getProductGroup().equals(dep2.getProductGroup()),
+                "Product groups differ: '%s' and '%s'",
+                dep1.getProductGroup(),
+                dep2.getProductGroup());
+        Preconditions.checkArgument(
+                dep1.getProductName().equals(dep2.getProductName()),
+                String.format("Product names differ: '%s' and '%s'", dep1.getProductName(), dep2.getProductName()));
 
-        SlsVersion minimumVersion;
-        // If it's dirty or otherwise non-orderable, try to see if they're the same version and allow that.
-        if (Objects.equals(dep1.getMinimumVersion(), dep2.getMinimumVersion())) {
-            minimumVersion = SlsVersion.valueOf(dep1.getMinimumVersion());
-        } else {
-            minimumVersion = minimumVersionOrderable.orElseThrow(() -> new SafeRuntimeException(
-                    "Could not determine minimum version among two non-orderable minimum versions",
-                    SafeArg.of("dep1", dep1),
-                    SafeArg.of("dep2", dep2)));
-        }
+        String minimumVersion = getMinimumVersion(dep1, dep2, defaultMinimumVersion);
 
         SlsVersionMatcher maximumVersion = Stream.of(dep1.parseMaximum(), dep2.parseMaximum())
                 .min(SlsVersionMatcher.MATCHER_COMPARATOR)
                 .orElseThrow(() -> new RuntimeException("Impossible"));
 
         // Sanity check: min has to be <= max
+        Optional<OrderableSlsVersion> minimumVersionOrderable = OrderableSlsVersion.safeValueOf(minimumVersion);
         Preconditions.checkArgument(
                 minimumVersionOrderable
                         .map(mv -> satisfiesMaxVersion(maximumVersion, mv))
                         .orElse(true),
-                "Could not merge recommended product dependencies as their version ranges do not overlap",
-                SafeArg.of("dep1", dep1),
-                SafeArg.of("dep2", dep2),
-                SafeArg.of("mergedMinimum", minimumVersionOrderable),
-                SafeArg.of("mergedMaximum", maximumVersion));
+                "Could not merge recommended product dependencies as their version ranges do not "
+                        + "overlap. minimumVersion: %s, maximumVersion: %s",
+                minimumVersion,
+                maximumVersion);
 
         // Recommended version. Check that it matches the inferred min and max.
         Optional<OrderableSlsVersion> recommendedVersion = Stream.of(dep1.parseRecommended(), dep2.parseRecommended())
@@ -83,13 +72,39 @@ public final class ProductDependencyMerger {
                 .max(VersionComparator.INSTANCE);
 
         ProductDependency result = new ProductDependency();
-        result.setMinimumVersion(minimumVersion.toString());
+        result.setMinimumVersion(minimumVersion);
         result.setMaximumVersion(maximumVersion.toString());
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
         result.isValid();
         return result;
+    }
+
+    private static String getMinimumVersion(
+            ProductDependency dep1, ProductDependency dep2, Optional<String> defaultMinimumVersion) {
+        if (defaultMinimumVersion.isPresent()
+                && (!OrderableSlsVersion.check(dep1.getMinimumVersion())
+                        || !OrderableSlsVersion.check(dep2.getMinimumVersion()))) {
+            return defaultMinimumVersion.get();
+        }
+
+        // This could be empty if both of the versions are dirty
+        Optional<OrderableSlsVersion> minimumVersionOrderable = Stream.of(dep1.parseMinimum(), dep2.parseMinimum())
+                .flatMap(Streams::stream)
+                .max(VersionComparator.INSTANCE);
+
+        // If it's dirty or otherwise non-orderable, try to see if they're the same version and allow that.
+        if (Objects.equals(dep1.getMinimumVersion(), dep2.getMinimumVersion())) {
+            return dep1.getMinimumVersion();
+        } else {
+            return minimumVersionOrderable
+                    .map(OrderableSlsVersion::toString)
+                    .orElseThrow(() -> new SafeRuntimeException(
+                            "Could not determine minimum version among two non-orderable minimum versions",
+                            SafeArg.of("dep1", dep1),
+                            SafeArg.of("dep2", dep2)));
+        }
     }
 
     private static boolean satisfiesMaxVersion(SlsVersionMatcher maximumVersion, OrderableSlsVersion version) {
