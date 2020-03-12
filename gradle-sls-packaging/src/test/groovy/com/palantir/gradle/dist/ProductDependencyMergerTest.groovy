@@ -70,8 +70,7 @@ class ProductDependencyMergerTest extends Specification {
 
         then:
         merged.minimumVersion == "2.2.0.dirty"
-        merged.maximumVersion == "2.6.x"
-        merged.recommendedVersion == "2.2.0"
+        merged.maximumVersion == "2.5.0"
     }
 
     private ProductDependency newRecommendation(String min, String max, String recommended = null) {
