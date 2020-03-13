@@ -358,6 +358,7 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
+    @SuppressWarnings("checkstyle:CyclomaticComplexity")
     private Map<ProductId, ProductDependency> discoverProductDependencies() {
         Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
         productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
@@ -449,15 +450,15 @@ public class CreateManifestTask extends DefaultTask {
                 .forEach(productDependency -> {
                     ProductId productId =
                             new ProductId(productDependency.getProductGroup(), productDependency.getProductName());
-                    discoveredProductDependencies.merge(
-                            productId,
-                            productDependency,
-                            (dep1, dep2) -> ProductDependencyMerger.merge(
-                                    dep1,
-                                    dep2,
-                                    inRepoProductIds.get().contains(productId)
-                                            ? Optional.of(getProjectVersion())
-                                            : Optional.empty()));
+                    discoveredProductDependencies.merge(productId, productDependency, (dep1, dep2) -> {
+                        ProductDependency mergedDep = ProductDependencyMerger.merge(dep1, dep2);
+                        if (inRepoProductIds.get().contains(productId)
+                                && (dep1.getMinimumVersion().equals(getProjectVersion())
+                                        || dep2.getMinimumVersion().equals(getProjectVersion()))) {
+                            mergedDep.setMinimumVersion(getProjectVersion());
+                        }
+                        return mergedDep;
+                    });
                 });
         return discoveredProductDependencies;
     }
