@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,6 +88,7 @@ public class CreateManifestTask extends DefaultTask {
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT);
 
+    private final Supplier<Set<ProductId>> inRepoProductIds = Suppliers.memoize(this::getInRepoProductIds);
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
     private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
@@ -306,7 +309,7 @@ public class CreateManifestTask extends DefaultTask {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents =
-                ProductDependencyLockFile.asString(productDeps, collectProductsPublishedInRepo(), getProjectVersion());
+                ProductDependencyLockFile.asString(productDeps, inRepoProductIds.get(), getProjectVersion());
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
@@ -355,6 +358,7 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
+    @SuppressWarnings("checkstyle:CyclomaticComplexity")
     private Map<ProductId, ProductDependency> discoverProductDependencies() {
         Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
         productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
@@ -443,10 +447,19 @@ public class CreateManifestTask extends DefaultTask {
                     }
                 })
                 .filter(this::isNotSelfProductDependency)
-                .forEach(productDependency -> discoveredProductDependencies.merge(
-                        new ProductId(productDependency.getProductGroup(), productDependency.getProductName()),
-                        productDependency,
-                        ProductDependencyMerger::merge));
+                .forEach(productDependency -> {
+                    ProductId productId =
+                            new ProductId(productDependency.getProductGroup(), productDependency.getProductName());
+                    discoveredProductDependencies.merge(productId, productDependency, (dep1, dep2) -> {
+                        ProductDependency mergedDep = ProductDependencyMerger.merge(dep1, dep2);
+                        if (inRepoProductIds.get().contains(productId)
+                                && (dep1.getMinimumVersion().equals(getProjectVersion())
+                                        || dep2.getMinimumVersion().equals(getProjectVersion()))) {
+                            mergedDep.setMinimumVersion(getProjectVersion());
+                        }
+                        return mergedDep;
+                    });
+                });
         return discoveredProductDependencies;
     }
 
@@ -469,7 +482,7 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    private Set<ProductId> collectProductsPublishedInRepo() {
+    private Set<ProductId> getInRepoProductIds() {
         // get products we publish via BaseDistributionExtension from all other projects
         return getProject().getRootProject().getAllprojects().stream()
                 .flatMap(p -> Optional.ofNullable(p.getExtensions().findByType(BaseDistributionExtension.class))
