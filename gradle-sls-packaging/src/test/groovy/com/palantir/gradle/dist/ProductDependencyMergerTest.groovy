@@ -60,19 +60,6 @@ class ProductDependencyMergerTest extends Specification {
         e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
-    def 'falls back to default if minimum version is not ordereable'() {
-        given:
-        def dep1 = newRecommendation("2.2.0.dirty", "2.x.x")
-        def dep2 = newRecommendation("2.1.0", "2.5.0")
-
-        when:
-        def merged = ProductDependencyMerger.merge(dep1, dep2, Optional.of("2.2.0.dirty"))
-
-        then:
-        merged.minimumVersion == "2.2.0.dirty"
-        merged.maximumVersion == "2.5.0"
-    }
-
     private ProductDependency newRecommendation(String min, String max, String recommended = null) {
         return new ProductDependency("group", "name", min, max, recommended)
     }
