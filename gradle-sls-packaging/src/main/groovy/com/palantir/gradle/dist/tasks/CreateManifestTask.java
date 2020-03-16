@@ -425,18 +425,18 @@ public class CreateManifestTask extends DefaultTask {
                         RecommendedProductDependencies recommendedDeps =
                                 jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
                         return recommendedDeps.recommendedProductDependencies().stream()
-                                .map(recommendedDep -> new ProductDependency(
-                                        recommendedDep.getProductGroup(),
-                                        recommendedDep.getProductName(),
-                                        recommendedDep.getMinimumVersion(),
-                                        recommendedDep.getMaximumVersion(),
-                                        recommendedDep.getRecommendedVersion()))
                                 .peek(productDependency -> log.info(
                                         "Product dependency recommendation made by artifact '{}', file '{}', "
                                                 + "dependency recommendation '{}'",
                                         artifactName,
                                         artifact,
-                                        productDependency));
+                                        productDependency))
+                                .map(recommendedDep -> new ProductDependency(
+                                        recommendedDep.getProductGroup(),
+                                        recommendedDep.getProductName(),
+                                        recommendedDep.getMinimumVersion(),
+                                        recommendedDep.getMaximumVersion(),
+                                        recommendedDep.getRecommendedVersion()));
                     } catch (IOException | IllegalArgumentException e) {
                         log.debug(
                                 "Failed to load product dependency for artifact '{}', file '{}', '{}'",
