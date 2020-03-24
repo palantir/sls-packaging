@@ -37,7 +37,6 @@ import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -264,9 +263,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             Provider<String> serviceName = distributionExtension.getDistributionServiceName();
             task.getArchiveBaseName().set(serviceName);
 
-            Provider<Directory> archiveRootDir = project.getLayout()
-                    .getProjectDirectory()
-                    .dir(project.provider(() -> serviceName.get() + "-" + project.getVersion()));
+            Provider<String> archiveRootDir = project.provider(() -> serviceName.get() + "-" + project.getVersion());
 
             task.into(archiveRootDir, root -> {
                 root.from("var", t -> {
