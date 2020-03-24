@@ -25,17 +25,11 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
-import spock.lang.IgnoreIf
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
             .registerModule(new GuavaModule())
 
-    /*
-     * Disabled until we resolve an issue where zombie processes are not being correctly cleaned up in CI.
-     * https://discuss.circleci.com/t/pid-1-in-circleci-rust-1-34-1-browsers-not-reaping-zombies/30214/3
-     */
-    @IgnoreIf({ env['CI'] })
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
         createUntarBuildFile(buildFile)
@@ -85,11 +79,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
 
-    /*
-     * Disabled until we resolve an issue where zombie processes are not being correctly cleaned up in CI.
-     * https://discuss.circleci.com/t/pid-1-in-circleci-rust-1-34-1-browsers-not-reaping-zombies/30214/3
-     */
-    @IgnoreIf({ env['CI'] })
     def 'packaging tasks re-run after version change'() {
         given:
         createUntarBuildFile(buildFile)
