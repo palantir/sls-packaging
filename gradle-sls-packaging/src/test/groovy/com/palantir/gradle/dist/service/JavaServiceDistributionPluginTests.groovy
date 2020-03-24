@@ -25,7 +25,7 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
-import spock.lang.Ignore
+import spock.lang.IgnoreIf
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
@@ -35,7 +35,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
      * Disabled until we resolve an issue where zombie processes are not being correctly cleaned up in CI.
      * https://discuss.circleci.com/t/pid-1-in-circleci-rust-1-34-1-browsers-not-reaping-zombies/30214/3
      */
-    @Ignore
+    @IgnoreIf({ env['CI'] })
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
         createUntarBuildFile(buildFile)
@@ -89,7 +89,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
      * Disabled until we resolve an issue where zombie processes are not being correctly cleaned up in CI.
      * https://discuss.circleci.com/t/pid-1-in-circleci-rust-1-34-1-browsers-not-reaping-zombies/30214/3
      */
-    @Ignore
+    @IgnoreIf({ env['CI'] })
     def 'packaging tasks re-run after version change'() {
         given:
         createUntarBuildFile(buildFile)
