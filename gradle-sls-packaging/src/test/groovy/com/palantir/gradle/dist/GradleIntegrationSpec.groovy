@@ -16,10 +16,12 @@
 
 package com.palantir.gradle.dist
 
+import com.google.common.collect.ImmutableList
 import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.multiproject.MultiProjectIntegrationHelper
+import org.gradle.testkit.runner.GradleRunner
 
 class GradleIntegrationSpec extends IntegrationTestKitSpec {
     protected MultiProjectIntegrationHelper helper
@@ -39,5 +41,16 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
         GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
         generator.generateTestMavenRepo()
         return generator
+    }
+
+    /** Just here to ensure we display the gradle warnings, if any. */
+    @Override
+    GradleRunner createRunner(String... tasks) {
+        def runner = super.createRunner(tasks)
+        def newArguments = ImmutableList.<String> builder()
+                .add("--warning-mode=all")
+                .addAll(runner.getArguments())
+                .build()
+        return runner.withArguments(newArguments)
     }
 }
