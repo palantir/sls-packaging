@@ -97,11 +97,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 enableManifestClasspath true
             }
-            task untar02 (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.2.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
          '''.stripIndent()
         file('src/main/java/test/Test.java') << '''
         package test;
@@ -119,7 +114,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         then:
-        def result = runTasks(':build', ':distTar', ':untar02')
+        def result = runTasks(':build', ':distTar', ':untar')
         result.task(':createCheckScript').outcome == TaskOutcome.UP_TO_DATE
         result.task(':createInitScript').outcome == TaskOutcome.UP_TO_DATE
         result.task(':createLaunchConfig').outcome == TaskOutcome.SUCCESS
