@@ -27,7 +27,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
 import spock.lang.Ignore
 
-class ServiceDistributionPluginTests extends GradleIntegrationSpec {
+class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
             .registerModule(new GuavaModule())
 
