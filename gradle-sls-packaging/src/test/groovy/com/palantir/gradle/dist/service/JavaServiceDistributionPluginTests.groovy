@@ -390,7 +390,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             dependencies { compile files("external.jar") }
-            tasks.jar.baseName = "internal"
+            tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
                 args 'myArg1', 'myArg2'
@@ -454,7 +454,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             dependencies { compile files("external.jar") }
-            tasks.jar.baseName = "internal"
+            tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
                 addJava8GcLogging true
@@ -499,7 +499,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             dependencies { compile files("external.jar") }
-            tasks.jar.baseName = "internal"
+            tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 13
                 gc 'response-time'
