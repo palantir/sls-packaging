@@ -285,7 +285,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     t.setFileMode(0755);
                 });
 
-                root.into("/service/lib", t -> {
+                root.into("service/lib", t -> {
                     t.from(jarTask);
                     t.from(project.getConfigurations().named("runtimeClasspath"));
                 });
