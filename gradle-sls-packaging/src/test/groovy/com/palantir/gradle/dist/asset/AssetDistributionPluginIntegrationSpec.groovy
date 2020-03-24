@@ -213,9 +213,10 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/asset-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
+                from { tarTree(distTar.outputs.files.singleFile) }
+                into "dist"
                 dependsOn distTar
+                duplicatesStrategy = 'WARN'
             }
         '''.stripIndent()
     }

@@ -24,7 +24,7 @@ class DistTarTask {
 
     static void configure(Tar distTar, Project project, String serviceName, List<String> excludeFromVar, boolean isEnableManifestClasspath) {
         distTar.configure {
-            setBaseName(serviceName)
+            archiveBaseName.set(serviceName)
             String archiveRootDir = serviceName + '-' + String.valueOf(project.version)
 
             from("${project.projectDir}/var") {
