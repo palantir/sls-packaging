@@ -196,14 +196,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         createFile('var/log/service-name.log')
         createFile('var/data/database')
@@ -251,14 +246,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -796,7 +786,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
-        helper.addSubproject('parent', '''
+        def parent = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -816,13 +806,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 implementation project(':child')
                 compile 'org.mockito:mockito-core:2.7.22'
             }
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         ''')
+
+        createUntarTask(new File(parent, "build.gradle"))
 
         helper.addSubproject('child', '''
             plugins {
@@ -878,7 +864,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'uses the runtimeClasspath in manifest jar'() {
         given:
-        helper.addSubproject('parent', '''
+        def parent = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -899,13 +885,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 implementation project(':child')
                 compile 'org.mockito:mockito-core:2.7.22'
             }
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         ''')
+
+        createUntarTask(new File(parent, "build.gradle"))
 
         helper.addSubproject('child', '''
             plugins {
@@ -1008,14 +990,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     initiatingOccupancyFraction 75
                 }
             }
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         when:
         runTasks(':untar')
@@ -1046,14 +1023,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 mainClass 'test.Test'
                 gc 'hybrid'
             }
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         when:
         runTasks(':untar')
@@ -1064,7 +1036,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication'])
     }
 
-    private static createUntarBuildFile(buildFile) {
+    private static createUntarBuildFile(File buildFile) {
         buildFile << '''
             plugins {
                 id 'java'
@@ -1090,14 +1062,21 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
+        '''.stripIndent()
 
+        createUntarTask(buildFile)
+    }
+
+    static void createUntarTask(File file) {
+        file << """
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
+                from { tarTree(tasks.distTar.outputs.files.singleFile) }
+                into "dist"
                 dependsOn distTar
+                duplicatesStrategy = 'INCLUDE'
             }
-        '''.stripIndent()
+        """.stripIndent()
     }
 
     def readFromZip(File zipFile, String pathInZipFile) {
