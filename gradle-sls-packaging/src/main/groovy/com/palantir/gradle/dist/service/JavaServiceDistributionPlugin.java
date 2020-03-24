@@ -37,6 +37,7 @@ import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -271,10 +272,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     distributionExtension.getExcludeFromVar().get().forEach(t::exclude);
                 });
 
-                root.from("deployment", t -> {
-                    t.into("deployment");
-                });
-
                 root.from("service", t -> {
                     t.into("service");
                     t.exclude("bin/*");
@@ -312,7 +309,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 });
 
                 root.into("deployment", t -> {
+                    t.from("deployment");
                     t.from(project.getLayout().getBuildDirectory().dir("deployment"));
+                    t.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE);
                 });
             });
         }));
