@@ -26,6 +26,7 @@ import java.io.File;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
@@ -65,6 +66,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.getArchiveExtension().set("sls.tgz");
             task.getDestinationDirectory()
                     .set(project.getLayout().getBuildDirectory().dir("distributions"));
+            task.setDuplicatesStrategy(DuplicatesStrategy.FAIL);
 
             task.dependsOn(manifest);
         });
@@ -86,8 +88,11 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             distributionExtension
                     .getAssets()
                     .get()
-                    .forEach((key, value) ->
-                            task.from(p.file(key), t -> t.into(String.format("%s/asset/%s", archiveRootDir, value))));
+                    .forEach((key, value) -> task.from(p.file(key), t -> {
+                        t.into(String.format("%s/asset/%s", archiveRootDir, value));
+                        // We have tests that ascertain you get the overridden file, make this explicit.
+                        t.setDuplicatesStrategy(DuplicatesStrategy.WARN);
+                    }));
         }));
 
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);

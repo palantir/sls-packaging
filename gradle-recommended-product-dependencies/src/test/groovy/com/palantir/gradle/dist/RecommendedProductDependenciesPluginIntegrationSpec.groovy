@@ -61,7 +61,6 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
     }
 
     def "Works with consistent-versions"() {
-        System.setProperty("ignoreDeprecations", "true")
         def repo = generateMavenRepo('group:name:1.0.0')
         settingsFile  << """
         rootProject.name = "root-project"

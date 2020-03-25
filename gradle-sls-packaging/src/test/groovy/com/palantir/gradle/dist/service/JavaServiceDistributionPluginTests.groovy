@@ -23,20 +23,13 @@ import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import java.util.zip.ZipFile
-import org.gradle.api.JavaVersion
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
-import spock.lang.Ignore
 
-class ServiceDistributionPluginTests extends GradleIntegrationSpec {
+class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
             .registerModule(new GuavaModule())
 
-    /*
-     * Disabled until we resolve an issue where zombie processes are not being correctly cleaned up in CI.
-     * https://discuss.circleci.com/t/pid-1-in-circleci-rust-1-34-1-browsers-not-reaping-zombies/30214/3
-     */
-    @Ignore
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
         createUntarBuildFile(buildFile)
@@ -86,22 +79,12 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
     }
 
-    /*
-     * Disabled until we resolve an issue where zombie processes are not being correctly cleaned up in CI.
-     * https://discuss.circleci.com/t/pid-1-in-circleci-rust-1-34-1-browsers-not-reaping-zombies/30214/3
-     */
-    @Ignore
     def 'packaging tasks re-run after version change'() {
         given:
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
                 enableManifestClasspath true
-            }
-            task untar02 (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.2.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
             }
          '''.stripIndent()
         file('src/main/java/test/Test.java') << '''
@@ -120,7 +103,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         '''.stripIndent()
 
         then:
-        def result = runTasks(':build', ':distTar', ':untar02')
+        def result = runTasks(':build', ':distTar', ':untar')
         result.task(':createCheckScript').outcome == TaskOutcome.UP_TO_DATE
         result.task(':createInitScript').outcome == TaskOutcome.UP_TO_DATE
         result.task(':createLaunchConfig').outcome == TaskOutcome.SUCCESS
@@ -184,7 +167,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
 
             version '0.0.1'
@@ -197,14 +180,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         createFile('var/log/service-name.log')
         createFile('var/data/database')
@@ -229,7 +207,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
 
             class MyVersion {
@@ -252,14 +230,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -391,7 +364,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             dependencies { compile files("external.jar") }
-            tasks.jar.baseName = "internal"
+            tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
                 args 'myArg1', 'myArg2'
@@ -455,7 +428,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             dependencies { compile files("external.jar") }
-            tasks.jar.baseName = "internal"
+            tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
                 addJava8GcLogging true
@@ -500,7 +473,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << '''
             dependencies { compile files("external.jar") }
-            tasks.jar.baseName = "internal"
+            tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 13
                 gc 'response-time'
@@ -597,7 +570,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             distribution {
                 serviceName "my-service"
@@ -631,7 +604,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             version '0.0.1'
             distribution {
@@ -676,7 +649,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             version '0.0.1'
             distribution {
@@ -797,7 +770,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
-        helper.addSubproject('parent', '''
+        def parent = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -811,19 +784,15 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             dependencies {
                 implementation project(':child')
                 compile 'org.mockito:mockito-core:2.7.22'
             }
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         ''')
+
+        createUntarTask(new File(parent, "build.gradle"))
 
         helper.addSubproject('child', '''
             plugins {
@@ -831,7 +800,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             dependencies {
                 api "com.google.guava:guava:19.0"
@@ -879,7 +848,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'uses the runtimeClasspath in manifest jar'() {
         given:
-        helper.addSubproject('parent', '''
+        def parent = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -894,19 +863,15 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             dependencies {
                 implementation project(':child')
                 compile 'org.mockito:mockito-core:2.7.22'
             }
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         ''')
+
+        createUntarTask(new File(parent, "build.gradle"))
 
         helper.addSubproject('child', '''
             plugins {
@@ -914,7 +879,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
             dependencies {
                 api "com.google.guava:guava:19.0"
@@ -997,7 +962,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
 
             version '0.0.1'
@@ -1009,14 +974,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                     initiatingOccupancyFraction 75
                 }
             }
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         when:
         runTasks(':untar')
@@ -1037,7 +997,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
 
             version '0.0.1'
@@ -1047,14 +1007,9 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
                 mainClass 'test.Test'
                 gc 'hybrid'
             }
-
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
-                dependsOn distTar
-            }
         '''.stripIndent()
+
+        createUntarTask(buildFile)
 
         when:
         runTasks(':untar')
@@ -1065,7 +1020,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication'])
     }
 
-    private static createUntarBuildFile(buildFile) {
+    private static createUntarBuildFile(File buildFile) {
         buildFile << '''
             plugins {
                 id 'java'
@@ -1076,7 +1031,7 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "http://palantir.bintray.com/releases" }
+                maven { url "https://palantir.bintray.com/releases" }
             }
 
             version '0.0.1'
@@ -1091,14 +1046,21 @@ class ServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
+        '''.stripIndent()
 
+        createUntarTask(buildFile)
+    }
+
+    static void createUntarTask(File file) {
+        file << """
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/service-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
+                from { tarTree(tasks.distTar.outputs.files.singleFile) }
+                into "dist"
                 dependsOn distTar
+                duplicatesStrategy = 'INCLUDE'
             }
-        '''.stripIndent()
+        """.stripIndent()
     }
 
     def readFromZip(File zipFile, String pathInZipFile) {

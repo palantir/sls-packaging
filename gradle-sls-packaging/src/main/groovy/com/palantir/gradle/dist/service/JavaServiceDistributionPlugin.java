@@ -25,7 +25,6 @@ import com.palantir.gradle.dist.service.tasks.CopyYourkitAgentTask;
 import com.palantir.gradle.dist.service.tasks.CopyYourkitLicenseTask;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
-import com.palantir.gradle.dist.service.tasks.DistTarTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
 import com.palantir.gradle.dist.service.tasks.LazyCreateStartScriptTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
@@ -260,12 +259,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             }
         }));
 
-        project.afterEvaluate(p -> DistTarTask.configure(
-                distTar.get(),
-                project,
-                distributionExtension.getDistributionServiceName().get(),
-                distributionExtension.getExcludeFromVar().get(),
-                distributionExtension.getEnableManifestClasspath().get()));
+        project.afterEvaluate(proj -> distTar.configure(task -> {
+            DistTarTask.configure(project, task, distributionExtension, jarTask);
+        }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
     }
