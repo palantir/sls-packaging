@@ -37,7 +37,6 @@ import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -261,59 +260,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.afterEvaluate(proj -> distTar.configure(task -> {
-            Provider<String> serviceName = distributionExtension.getDistributionServiceName();
-            task.getArchiveBaseName().set(serviceName);
-
-            Provider<String> archiveRootDir = project.provider(() -> serviceName.get() + "-" + project.getVersion());
-
-            task.into(archiveRootDir, root -> {
-                root.from("var", t -> {
-                    t.into("var");
-                    distributionExtension.getExcludeFromVar().get().forEach(t::exclude);
-                });
-
-                root.from("service", t -> {
-                    t.into("service");
-                    t.exclude("bin/*");
-                });
-
-                root.from("service/bin", t -> {
-                    t.into("service/bin");
-                    t.setFileMode(0755);
-                });
-
-                root.into("service/lib", t -> {
-                    t.from(jarTask);
-                    t.from(project.getConfigurations().named("runtimeClasspath"));
-                });
-
-                if (distributionExtension.getEnableManifestClasspath().get()) {
-                    root.into("service/lib", t -> {
-                        t.from(project.getTasks().named("manifestClasspathJar"));
-                    });
-                }
-
-                root.into("service/bin", t -> {
-                    t.from(project.getLayout().getBuildDirectory().dir("scripts"));
-                    t.setFileMode(0755);
-                });
-
-                root.into("service/monitoring/bin", t -> {
-                    t.from(project.getLayout().getBuildDirectory().dir("monitoring"));
-                    t.setFileMode(0755);
-                });
-
-                root.into("service/lib/linux-x86-64", t -> {
-                    t.from(project.getLayout().getBuildDirectory().dir("libs/linux-x86-64"));
-                    t.setFileMode(0755);
-                });
-
-                root.into("deployment", t -> {
-                    t.from("deployment");
-                    t.from(project.getLayout().getBuildDirectory().dir("deployment"));
-                    t.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE);
-                });
-            });
+            DistTarTask.configure(project, task, distributionExtension, jarTask);
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
