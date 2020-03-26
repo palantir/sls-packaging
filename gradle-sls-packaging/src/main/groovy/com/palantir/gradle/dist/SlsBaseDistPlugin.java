@@ -16,6 +16,8 @@
 
 package com.palantir.gradle.dist;
 
+import com.palantir.logsafe.Preconditions;
+import com.palantir.logsafe.SafeArg;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
@@ -24,6 +26,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.AttributeDisambiguationRule;
 import org.gradle.api.attributes.MultipleCandidatesDetails;
 import org.gradle.api.attributes.Usage;
+import org.gradle.util.GradleVersion;
 
 public class SlsBaseDistPlugin implements Plugin<Project> {
 
@@ -32,8 +35,16 @@ public class SlsBaseDistPlugin implements Plugin<Project> {
 
     public static final String SLS_DIST_USAGE = "sls-dist";
 
+    public static final GradleVersion MINIMUM_GRADLE = GradleVersion.version("5.6");
+
     @Override
     public final void apply(Project project) {
+        Preconditions.checkState(
+                GradleVersion.current().compareTo(MINIMUM_GRADLE) >= 0,
+                "This gradle version is too old",
+                SafeArg.of("currentVersion", GradleVersion.current()),
+                SafeArg.of("minimumVersion", MINIMUM_GRADLE));
+
         Configuration slsConf = project.getConfigurations().create(SLS_CONFIGURATION_NAME);
         slsConf.setCanBeResolved(false);
         // Make it export a custom usage, to allow resolving it via variant-aware resolution.

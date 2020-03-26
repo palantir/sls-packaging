@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import java.util.concurrent.Callable;
 import org.gradle.api.Project;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.provider.Provider;
@@ -32,7 +33,7 @@ final class DistTarTask {
         Provider<String> serviceName = distributionExtension.getDistributionServiceName();
         distTarTask.getArchiveBaseName().set(serviceName);
 
-        Provider<String> archiveRootDir = project.provider(() -> serviceName.get() + "-" + project.getVersion());
+        Callable<String> archiveRootDir = () -> serviceName.get() + "-" + project.getVersion();
 
         distTarTask.into(archiveRootDir, root -> {
             root.from("var", t -> {
