@@ -32,7 +32,7 @@ final class DistTarTask {
         Provider<String> serviceName = distributionExtension.getDistributionServiceName();
         distTarTask.getArchiveBaseName().set(serviceName);
 
-        Provider<String> archiveRootDir = project.provider(() -> serviceName.get() + "-" + project.getVersion());
+        Callable<String> archiveRootDir = () -> serviceName.get() + "-" + project.getVersion();
 
         distTarTask.into(archiveRootDir, root -> {
             root.from("var", t -> {
