@@ -1,0 +1,7 @@
+type: fix
+fix:
+  description: Fix regression that required gradle 6, bringing minimum gradle down
+    to 5.6, which is checked in the base plugin, and integration tests run against
+    it.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/852
