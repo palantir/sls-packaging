@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import java.util.concurrent.Callable;
 import org.gradle.api.Project;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.provider.Provider;
