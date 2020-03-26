@@ -75,8 +75,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'status') == 0
         execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'restart') == 0
         execWithExitCode('dist/service-name-0.0.1/service/bin/init.sh', 'stop') == 0
-        execWithOutput('dist/service-name-0.0.1/service/bin/init.sh', 'check') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
-        execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh') ==~ /.*\n*Checking health of 'service-name'\.\.\.\s+Healthy.*\n/
+        execWithOutput('dist/service-name-0.0.1/service/bin/init.sh', 'check').readLines().any {
+            it ==~ /Checking health of 'service-name'\.\.\.\s+Healthy/
+        }
+        execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh').readLines().any {
+            it ==~ /Checking health of 'service-name'\.\.\.\s+Healthy/
+        }
     }
 
     def 'packaging tasks re-run after version change'() {
