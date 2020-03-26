@@ -30,6 +30,8 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
         keepFiles = true
         settingsFile.createNewFile()
         helper = new MultiProjectIntegrationHelper(getProjectDir(), settingsFile)
+        // Run with minimum supported version
+        gradleVersion = SlsBaseDistPlugin.MINIMUM_GRADLE.version
     }
 
     protected boolean fileExists(String path) {
