@@ -92,8 +92,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
 
             task.from(
                     new File(project.getProjectDir(), "deployment"),
-                    t -> t.into(new File( String.format(
-                    "%s/deployment", archiveRootDir))));
+                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
             task.from(
                     new File(project.getBuildDir(), "deployment"),
@@ -102,9 +101,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             distributionExtension
                     .getAssets()
                     .get()
-
-                    .forEach((key, value) ->
-                            task.from(p.file(key), t ->{
+                    .forEach((key, value) -> task.from(p.file(key), t -> {
                         t.into(String.format("%s/asset/%s", archiveRootDir, value));
                         // We have tests that ascertain you get the overridden file, make this explicit.
                         t.setDuplicatesStrategy(DuplicatesStrategy.WARN);
