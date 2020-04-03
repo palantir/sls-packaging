@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.asset;
 
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
+import com.palantir.gradle.dist.SlsDistPublicationPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
@@ -47,12 +48,15 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
-        AssetDistributionExtension distributionExtension = project.getExtensions().create(
-                "distribution", AssetDistributionExtension.class, project);
-        distributionExtension.setProductDependenciesConfig(project.getConfigurations().create(ASSET_CONFIGURATION));
+        AssetDistributionExtension distributionExtension =
+                project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
+        distributionExtension.setProductDependenciesConfig(
+                project.getConfigurations().create(ASSET_CONFIGURATION));
 
-        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
-                project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest =
+                CreateManifestTask.createManifestTask(project, distributionExtension);
+
+        project.getPluginManager().apply(SlsDistPublicationPlugin.class);
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
@@ -64,6 +68,16 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.dependsOn(manifest);
         });
 
+        // afterEvaluate because groupId / artifactId cannot be set lazily.
+        // Maybe one day they'll make MavenPublicationInternal#getMavenProjectIdentity() available for us.
+        project.afterEvaluate(p -> SlsDistPublicationPlugin.configurePublication(project, publication -> {
+            publication.artifact(distTar);
+            publication.setGroupId(
+                    distributionExtension.getDistributionServiceGroup().get());
+            publication.setArtifactId(
+                    distributionExtension.getDistributionServiceName().get());
+        }));
+
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
@@ -71,22 +85,24 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.setBaseName(distributionExtension.getDistributionServiceName().get());
             task.setVersion(project.getVersion().toString());
 
-            String archiveRootDir = String.format("%s-%s",
-                    distributionExtension.getDistributionServiceName().get(), p.getVersion());
+            String archiveRootDir = String.format(
+                    "%s-%s", distributionExtension.getDistributionServiceName().get(), p.getVersion());
 
-            task.from(new File(project.getProjectDir(), "deployment"), t ->
-                    t.into(new File(String.format("%s/deployment", archiveRootDir))));
+            task.from(
+                    new File(project.getProjectDir(), "deployment"),
+                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
-            task.from(new File(project.getBuildDir(), "deployment"), t ->
-                    t.into(new File(String.format("%s/deployment", archiveRootDir))));
+            task.from(
+                    new File(project.getBuildDir(), "deployment"),
+                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
 
-            distributionExtension.getAssets().forEach((key, value) ->
-                    task.from(p.file(key), t ->
-                            t.into(String.format("%s/asset/%s", archiveRootDir, value))));
+            distributionExtension
+                    .getAssets()
+                    .forEach((key, value) ->
+                            task.from(p.file(key), t -> t.into(String.format("%s/asset/%s", archiveRootDir, value))));
         }));
 
-
-        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project,  distributionExtension);
+        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);

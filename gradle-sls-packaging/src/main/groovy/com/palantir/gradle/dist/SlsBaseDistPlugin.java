@@ -22,17 +22,12 @@ import org.gradle.api.Project;
 public class SlsBaseDistPlugin implements Plugin<Project> {
 
     /**
-     * The name of the outgoing configuration. This will include the SLS artifact being published, and if running on
-     * Gradle 5.3+, it will also include the SLS product dependencies.
+     * The name of the outgoing configuration. This will include the SLS artifact being published.
      */
     public static final String SLS_CONFIGURATION_NAME = "sls";
 
     @Override
     public final void apply(Project project) {
         project.getConfigurations().create(SLS_CONFIGURATION_NAME);
-
-        if (SlsDistPublicationPlugin.canApply()) {
-            project.getPluginManager().apply(SlsDistPublicationPlugin.class);
-        }
     }
 }

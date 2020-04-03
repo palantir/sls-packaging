@@ -18,66 +18,47 @@ package com.palantir.gradle.dist;
 
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
-import javax.inject.Inject;
-import org.gradle.api.NamedDomainObjectProvider;
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.component.AdhocComponentWithVariants;
-import org.gradle.api.component.SoftwareComponentFactory;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.util.GradleVersion;
 
 /**
- * Sets up an {@code slsDist} publication that includes the product's SLS dependencies as gradle runtime dependencies.
+ * Sets up an {@code slsDist} publication that is supposed to be configured later on with the right artifact/component.
  */
 public class SlsDistPublicationPlugin implements Plugin<Project> {
-    private static final String PUBLICATION_NAME = "slsDist";
-    private static final GradleVersion MINIMUM_GRADLE_VERSION = GradleVersion.version("5.3");
-    private final SoftwareComponentFactory componentFactory;
-
-    @Inject
-    public SlsDistPublicationPlugin(SoftwareComponentFactory componentFactory) {
-        this.componentFactory = componentFactory;
-    }
+    private static final GradleVersion MINIMUM_GRADLE_VERSION = GradleVersion.version("5.0");
+    public static final String PUBLICATION_NAME = "dist";
 
     @Override
     public final void apply(Project project) {
-        checkPreconditions();
+        checkPreconditions(project);
         project.getPluginManager().apply(MavenPublishPlugin.class);
-        project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
-        // Created in SlsBaseDistPlugin
-        NamedDomainObjectProvider<Configuration> outgoingConfiguration =
-                project.getConfigurations().named(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME);
-        // Pick up product dependencies from the lock file, in order to publish them
-        outgoingConfiguration.configure(conf -> {
-            conf.extendsFrom(project
-                    .getConfigurations()
-                    .getByName(ProductDependencyIntrospectionPlugin.PRODUCT_DEPENDENCIES_CONFIGURATION));
-        });
-
-        project.getExtensions().configure(PublishingExtension.class, publishing -> {
-            publishing.getPublications().create(PUBLICATION_NAME, MavenPublication.class, dist -> {
-                AdhocComponentWithVariants component = componentFactory.adhoc("dist");
-                // Note: both dependencies and outgoing artifacts are wired up from this configuration
-                component.addVariantsFromConfiguration(
-                        outgoingConfiguration.get(),
-                        cvd -> cvd.mapToMavenScope("runtime"));
-                dist.from(component);
-            });
-        });
+        project.getExtensions()
+                .getByType(PublishingExtension.class)
+                .getPublications()
+                .create(PUBLICATION_NAME, MavenPublication.class);
     }
 
-    private void checkPreconditions() {
-        Preconditions.checkState(canApply(),
+    public static void configurePublication(Project project, Action<MavenPublication> action) {
+        project.getExtensions()
+                .getByType(PublishingExtension.class)
+                .getPublications()
+                .named(PUBLICATION_NAME, MavenPublication.class, action);
+    }
+
+    private void checkPreconditions(Project project) {
+        Preconditions.checkState(
+                GradleVersion.current().compareTo(MINIMUM_GRADLE_VERSION) >= 0,
                 "Cannot apply plugin since gradle version is too low",
                 SafeArg.of("minimumGradleVersion", MINIMUM_GRADLE_VERSION));
-    }
 
-    static boolean canApply() {
-        return GradleVersion.current().compareTo(MINIMUM_GRADLE_VERSION) >= 0;
+        Preconditions.checkState(
+                !project.getTasks().getNames().contains("distTar"),
+                "Must apply com.palantir.sls-distribution-publication before creating distTar task");
     }
 }

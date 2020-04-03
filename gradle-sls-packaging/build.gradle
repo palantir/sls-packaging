@@ -42,6 +42,10 @@ pluginBundle {
             id = 'com.palantir.sls-pod-distribution'
             displayName = 'Creates SLS pod distributions'
         }
+        distPublicationPlugin {
+            id = 'com.palantir.sls-distribution-publication'
+            displayName = 'Creates a maven publication that represents the dist'
+        }
     }
 }
 
