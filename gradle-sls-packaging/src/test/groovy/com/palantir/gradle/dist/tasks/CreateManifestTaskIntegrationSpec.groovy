@@ -238,7 +238,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         def result = runTasks(':createManifest')
 
         then:
-        result.output.contains(
+        !result.output.contains(
                 "Please remove your declared product dependency on 'group:name' because it is already provided by a jar dependency")
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
         manifest.get("extensions").get("product-dependencies") == [
@@ -730,6 +730,76 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         result.task(":createManifest") != null
+    }
+
+    def 'handles multiple product dependencies when project version is dirty'() {
+        setup:
+        // Set project version to be non orderable sls version
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0.dirty'
+            group "com.palantir.group"
+        }
+        """
+        helper.addSubproject('bar-service', '''
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
+            dependencies {
+                compile project(':bar-api')
+            }
+
+            distribution {
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+            }
+        '''.stripIndent())
+        helper.addSubproject('bar-lib', '''
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'bar-service'
+                    minimumVersion = project.version
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        '''.stripIndent())
+        helper.addSubproject("bar-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'bar-service'
+                    minimumVersion = '0.5.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
+            dependencies {
+                compile project(':bar-api')
+                compile project(':bar-lib')
+            }
+
+            distribution {
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+            }
+        """.stripIndent())
+
+        when:
+        def result = runTasks('foo-server:createManifest', '--write-locks')
+
+        then:
+        result.task(":foo-server:createManifest").outcome == TaskOutcome.SUCCESS
+
+        file('foo-server/product-dependencies.lock').text.contains 'com.palantir.group:bar-service ($projectVersion, 1.x.x)'
     }
 
     def generateDependencies() {

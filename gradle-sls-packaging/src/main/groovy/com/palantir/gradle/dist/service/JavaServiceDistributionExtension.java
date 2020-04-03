@@ -16,27 +16,29 @@
 
 package com.palantir.gradle.dist.service;
 
-import com.google.common.collect.Maps;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.util.ConfigureUtil;
 
 public class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
+    private final Property<JavaVersion> javaVersion;
     private final Property<String> mainClass;
     private final Property<String> javaHome;
     private final Property<Boolean> addJava8GcLogging;
@@ -46,8 +48,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> checkArgs;
     private final ListProperty<String> defaultJvmOpts;
     private final ListProperty<String> excludeFromVar;
-    // TODO(forozco): Use MapProperty once our minimum supported version is 5.1
-    private Map<String, String> env;
+    private final MapProperty<String, String> env;
 
     private final ObjectFactory objectFactory;
 
@@ -55,33 +56,45 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     public JavaServiceDistributionExtension(Project project) {
         super(project);
         objectFactory = project.getObjects();
+        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() -> project.getConvention()
+                .getPlugin(JavaPluginConvention.class)
+                .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
-        javaHome = objectFactory.property(String.class);
 
-        addJava8GcLogging = objectFactory.property(Boolean.class);
-        addJava8GcLogging.set(false);
+        javaHome = objectFactory.property(String.class).value(javaVersion.map(javaVersionValue -> {
+            boolean javaVersionLessThanOrEqualTo8 = javaVersionValue.compareTo(JavaVersion.VERSION_1_8) <= 0;
+            if (javaVersionLessThanOrEqualTo8) {
+                return "";
+            }
 
-        enableManifestClasspath = objectFactory.property(Boolean.class);
-        enableManifestClasspath.set(false);
+            return "$JAVA_" + javaVersionValue.getMajorVersion() + "_HOME";
+        }));
 
-        gc = objectFactory.property(GcProfile.class);
-        gc.set(new GcProfile.Throughput());
+        addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
+        enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
 
-        args = objectFactory.listProperty(String.class);
-        // TODO(dfox): use listProperty(..).empty() when a minimum Gradle of 5.0 is acceptable
-        args.set(Collections.emptyList());
+        gc = objectFactory.property(GcProfile.class).value(new GcProfile.Throughput());
 
-        checkArgs = objectFactory.listProperty(String.class);
-        checkArgs.set(Collections.emptyList());
-
-        defaultJvmOpts = objectFactory.listProperty(String.class);
-        defaultJvmOpts.set(Collections.emptyList());
-
+        args = objectFactory.listProperty(String.class).empty();
+        checkArgs = objectFactory.listProperty(String.class).empty();
+        defaultJvmOpts = objectFactory.listProperty(String.class).empty();
         excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
 
-        env = Maps.newHashMap();
+        env = objectFactory.mapProperty(String.class, String.class).empty();
         setProductType(ProductType.SERVICE_V1);
+    }
+
+    public final Provider<JavaVersion> getJavaVersion() {
+        return javaVersion;
+    }
+
+    public final Provider<List<String>> getGcJvmOptions() {
+        return javaVersion.flatMap(version -> getGc().map(gcProfile -> gcProfile.gcJvmOpts(version)));
+    }
+
+    public final void javaVersion(Object version) {
+        javaVersion.set(JavaVersion.toVersion(version));
     }
 
     public final Provider<String> getMainClass() {
@@ -184,7 +197,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.excludeFromVar.set(excludeFromVar);
     }
 
-    public final Map<String, String> getEnv() {
+    public final Provider<Map<String, String>> getEnv() {
         return env;
     }
 
@@ -193,7 +206,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     }
 
     public final void setEnv(Map<String, String> env) {
-        this.env = env;
+        this.env.set(env);
     }
 
     public final Provider<GcProfile> getGc() {

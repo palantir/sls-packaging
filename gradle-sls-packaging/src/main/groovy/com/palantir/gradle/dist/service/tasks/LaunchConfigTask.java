@@ -22,8 +22,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.palantir.gradle.dist.service.gc.GcProfile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,7 +30,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -51,8 +51,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:GCLogFileSize=10M",
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
-            "-verbose:gc"
-    );
+            "-verbose:gc");
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -61,8 +60,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:HeapDumpPath=var/log",
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
-            "-Dsun.net.inetaddr.ttl=20"
-    );
+            "-Dsun.net.inetaddr.ttl=20");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
@@ -71,23 +69,24 @@ public class LaunchConfigTask extends DefaultTask {
 
     private final Property<String> mainClass = getProject().getObjects().property(String.class);
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
-    private final Property<GcProfile> gc = getProject().getObjects().property(GcProfile.class);
-    private final Property<Boolean> addJava8GcLogging = getProject().getObjects().property(Boolean.class);
+    private final ListProperty<String> gcJvmOptions = getProject().getObjects().listProperty(String.class);
+    private final Property<Boolean> addJava8GcLogging =
+            getProject().getObjects().property(Boolean.class);
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
-    private final ListProperty<String> defaultJvmOpts = getProject().getObjects().listProperty(String.class);
+    private final ListProperty<String> defaultJvmOpts =
+            getProject().getObjects().listProperty(String.class);
 
-    private final Property<Map> env = getProject().getObjects().property(Map.class);
-
-    // TODO(forozco): Use RegularFileProperty once our minimum supported version is 5.0
-    private File staticLauncher = new File(getProject().getBuildDir(), "scripts/launcher-static.yml");
-    private File checkLauncher = new File(getProject().getBuildDir(), "scripts/launcher-check.yml");
+    private final MapProperty<String, String> env = getProject().getObjects().mapProperty(String.class, String.class);
+    private RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
+    private RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
 
     private FileCollection classpath;
 
     public LaunchConfigTask() {
-        env.set(Maps.newHashMap());
+        staticLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
+        checkLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-check.yml"));
     }
 
     @Input
@@ -100,14 +99,9 @@ public class LaunchConfigTask extends DefaultTask {
         return serviceName;
     }
 
-    public final Property<GcProfile> getGc() {
-        return gc;
-    }
-
-    // HACKHACK Property<GcProfile> failed to serialise
     @Input
-    public final GcProfile gc() {
-        return gc.get();
+    public final ListProperty<String> getGcJvmOptions() {
+        return gcJvmOptions;
     }
 
     @Input
@@ -137,7 +131,7 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     @Input
-    public final Property<Map> getEnv() {
+    public final MapProperty<String, String> getEnv() {
         return env;
     }
 
@@ -151,49 +145,45 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     @OutputFile
-    public final File getStaticLauncher() {
+    public final RegularFileProperty getStaticLauncher() {
         return staticLauncher;
     }
 
-    public final void setStaticLauncher(File staticLauncher) {
-        this.staticLauncher = staticLauncher;
-    }
-
     @OutputFile
-    public final File getCheckLauncher() {
+    public final RegularFileProperty getCheckLauncher() {
         return checkLauncher;
-    }
-
-    public final void setCheckLauncher(File checkLauncher) {
-        this.checkLauncher = checkLauncher;
     }
 
     @TaskAction
     public final void createConfig() throws IOException {
-        writeConfig(LaunchConfig.builder()
-                .mainClass(mainClass.get())
-                .serviceName(serviceName.get())
-                .javaHome(javaHome.getOrElse(""))
-                .args(args.get())
-                .classpath(relativizeToServiceLibDirectory(classpath))
-                .addAllJvmOpts(alwaysOnJvmOptions)
-                .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
-                .addAllJvmOpts(gc.get().gcJvmOpts())
-                .addAllJvmOpts(defaultJvmOpts.get())
-                .putAllEnv(defaultEnvironment)
-                .putAllEnv(env.get())
-                .build(), getStaticLauncher());
+        writeConfig(
+                LaunchConfig.builder()
+                        .mainClass(mainClass.get())
+                        .serviceName(serviceName.get())
+                        .javaHome(javaHome.getOrElse(""))
+                        .args(args.get())
+                        .classpath(relativizeToServiceLibDirectory(classpath))
+                        .addAllJvmOpts(alwaysOnJvmOptions)
+                        .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
+                        .addAllJvmOpts(gcJvmOptions.get())
+                        .addAllJvmOpts(defaultJvmOpts.get())
+                        .putAllEnv(defaultEnvironment)
+                        .putAllEnv(env.get())
+                        .build(),
+                getStaticLauncher().get().getAsFile());
 
-        writeConfig(LaunchConfig.builder()
-                .mainClass(mainClass.get())
-                .serviceName(serviceName.get())
-                .javaHome(javaHome.getOrElse(""))
-                .args(checkArgs.get())
-                .classpath(relativizeToServiceLibDirectory(classpath))
-                .addAllJvmOpts(alwaysOnJvmOptions)
-                .addAllJvmOpts(defaultJvmOpts.get())
-                .env(defaultEnvironment)
-                .build(), getCheckLauncher());
+        writeConfig(
+                LaunchConfig.builder()
+                        .mainClass(mainClass.get())
+                        .serviceName(serviceName.get())
+                        .javaHome(javaHome.getOrElse(""))
+                        .args(checkArgs.get())
+                        .classpath(relativizeToServiceLibDirectory(classpath))
+                        .addAllJvmOpts(alwaysOnJvmOptions)
+                        .addAllJvmOpts(defaultJvmOpts.get())
+                        .env(defaultEnvironment)
+                        .build(),
+                getCheckLauncher().get().getAsFile());
     }
 
     private static void writeConfig(LaunchConfig config, File scriptFile) throws IOException {
@@ -214,7 +204,7 @@ public class LaunchConfigTask extends DefaultTask {
         // keep in sync with StaticLaunchConfig struct in go-java-launcher
         @Value.Default
         default String configType() {
-            return  "java";
+            return "java";
         }
 
         @Value.Default
@@ -228,11 +218,17 @@ public class LaunchConfigTask extends DefaultTask {
         }
 
         String mainClass();
+
         String serviceName();
+
         String javaHome();
+
         List<String> classpath();
+
         List<String> jvmOpts();
+
         List<String> args();
+
         Map<String, String> env();
 
         static Builder builder() {

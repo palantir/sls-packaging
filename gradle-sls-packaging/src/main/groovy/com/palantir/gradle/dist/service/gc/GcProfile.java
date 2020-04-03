@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import org.gradle.api.JavaVersion;
 
 public interface GcProfile extends Serializable {
     long serialVersionUID = 1L;
@@ -32,22 +33,40 @@ public interface GcProfile extends Serializable {
             "response-time", GcProfile.ResponseTime.class,
             "hybrid", GcProfile.Hybrid.class);
 
-    List<String> gcJvmOpts();
+    List<String> gcJvmOpts(JavaVersion javaVersion);
 
     class Throughput implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts() {
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
             return ImmutableList.of("-XX:+UseParallelOldGC");
         }
     }
 
     class ResponseTime implements GcProfile {
+        private int newRatio = 2;
         private int initiatingOccupancyFraction = 68;
 
         @Override
-        public final List<String> gcJvmOpts() {
-            return ImmutableList.of("-XX:+UseParNewGC",
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            if (javaVersion.compareTo(JavaVersion.toVersion("13")) >= 0) {
+                return ImmutableList.of(
+                        "-XX:+UnlockExperimentalVMOptions",
+                        // https://wiki.openjdk.java.net/display/shenandoah/Main
+                        "-XX:+UseShenandoahGC",
+                        // "forces concurrent cycle instead of Full GC on System.gc()"
+                        "-XX:+ExplicitGCInvokesConcurrent",
+                        "-XX:+ClassUnloadingWithConcurrentMark",
+                        "-XX:+UseNUMA");
+            }
+            return ImmutableList.of(
+                    "-XX:+UseParNewGC",
                     "-XX:+UseConcMarkSweepGC",
+                    /*
+                     * When setting UseConcMarkSweepGC the default value of NewRatio (2) is completely ignored.
+                     *
+                     * https://bugs.openjdk.java.net/browse/JDK-8153578
+                     */
+                    "-XX:NewRatio=" + newRatio,
                     "-XX:+UseCMSInitiatingOccupancyOnly",
                     "-XX:CMSInitiatingOccupancyFraction=" + initiatingOccupancyFraction,
                     "-XX:+CMSClassUnloadingEnabled",
@@ -61,26 +80,16 @@ public interface GcProfile extends Serializable {
         public final void initiatingOccupancyFraction(int occupancyFraction) {
             this.initiatingOccupancyFraction = occupancyFraction;
         }
+
+        public final void newRatio(int newerRatio) {
+            this.newRatio = newerRatio;
+        }
     }
 
     class Hybrid implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts() {
-            return ImmutableList.of(
-                    "-XX:+UseG1GC",
-                    "-XX:+UseStringDeduplication");
-        }
-    }
-
-    class ResponseTime11 implements GcProfile {
-        @Override
-        public final List<String> gcJvmOpts() {
-            return ImmutableList.of(
-                    // https://wiki.openjdk.java.net/display/shenandoah/Main
-                    "-XX:+UseShenandoahGC",
-                    // "forces concurrent cycle instead of Full GC on System.gc()"
-                    "-XX:+ExplicitGCInvokesConcurrent",
-                    "-XX:+ClassUnloadingWithConcurrentMark");
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseStringDeduplication");
         }
     }
 }

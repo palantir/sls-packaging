@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.tasks;
+package com.palantir.gradle.dist;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.dist.ProductDependency;
-import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.logsafe.Preconditions;
 import java.util.Set;
 import org.gradle.api.DefaultTask;
@@ -34,8 +32,8 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.bundling.Jar;
 
 /**
- * This task is only necessary because {@link Jar#getManifest()} cannot be configured lazily at configuration-time,
- * so we have to configure it at execution-time instead.
+ * This task is only necessary because {@link Jar#getManifest()} cannot be configured lazily at configuration-time, so
+ * we have to configure it at execution-time instead.
  */
 public class ConfigureProductDependenciesTask extends DefaultTask {
 
@@ -48,38 +46,36 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
 
     @TaskAction
     final void action() {
-        getProject().getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME).configure(jar -> {
-            Preconditions.checkState(
-                    !jar.getState().getExecuted(),
-                    "Attempted to configure jar task after it was executed");
-            jar.getManifest().from(createManifest(getProject(), productDependencies.get()));
-        });
+        getProject()
+                .getTasks()
+                .withType(Jar.class)
+                .named(JavaPlugin.JAR_TASK_NAME)
+                .configure(jar -> {
+                    Preconditions.checkState(
+                            !jar.getState().getExecuted(), "Attempted to configure jar task after it was executed");
+                    jar.getManifest().from(createManifest(getProject(), productDependencies.get()));
+                });
     }
 
     public final void setProductDependencies(Provider<Set<ProductDependency>> productDependencies) {
         this.productDependencies.set(productDependencies);
     }
 
-    /**
-     * Eagerly creates a manifest containing <b>only</b> the recommended product dependencies.
-     */
-    private static Manifest createManifest(
-            Project project, Set<ProductDependency> recommendedProductDependencies) {
+    /** Eagerly creates a manifest containing <b>only</b> the recommended product dependencies. */
+    private static Manifest createManifest(Project project, Set<ProductDependency> recommendedProductDependencies) {
         JavaPluginConvention javaConvention = project.getConvention().getPlugin(JavaPluginConvention.class);
         return javaConvention.manifest(manifest -> {
             String recommendedProductDeps;
             try {
-                recommendedProductDeps = new ObjectMapper().writeValueAsString(RecommendedProductDependencies
-                        .builder()
-                        .recommendedProductDependencies(recommendedProductDependencies)
-                        .build());
+                recommendedProductDeps = new ObjectMapper()
+                        .writeValueAsString(RecommendedProductDependencies.builder()
+                                .recommendedProductDependencies(recommendedProductDependencies)
+                                .build());
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
             }
-            manifest
-                    .attributes(ImmutableMap.of(
-                            CreateManifestTask.SLS_RECOMMENDED_PRODUCT_DEPS_KEY,
-                            recommendedProductDeps));
+            manifest.attributes(ImmutableMap.of(
+                    RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY, recommendedProductDeps));
         });
     }
 }

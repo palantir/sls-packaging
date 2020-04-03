@@ -1,3 +1,7 @@
+<p align="right">
+<a href="https://autorelease.general.dmz.palantir.tech/palantir/sls-packaging"><img src="https://img.shields.io/badge/Perform%20an-Autorelease-success.svg" alt="Autorelease"></a>
+</p>
+
 # SLS Distribution Gradle Plugins
 
 [![Build Status](https://circleci.com/gh/palantir/sls-packaging.svg?style=shield)](https://circleci.com/gh/palantir/sls-packaging)
@@ -28,7 +32,8 @@ content of the package. The package will follow this structure:
                 [service-name].bat            # Windows start script
                 init.sh                       # daemonizing script
                 darwin-amd64/go-java-launcher # Native Java launcher binary (MacOS)
-                linux-amd64/go-java-launcher  # Native Java launcher binary (Linux)
+                linux-amd64/go-java-launcher  # Native Java launcher binary (Linux x86_64)
+                linux-arm64/go-java-launcher  # Native Java launcher binary (Linux arm64)
                 launcher-static.yml           # generated configuration for go-java-launcher
                 launcher-check.yml            # generated configuration for check.sh go-java-launcher
             lib/
@@ -65,7 +70,7 @@ See [below](#pod-distribution-plugin) for usage.
 
 Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
 
-However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise):
+However, you can also use the `productDependency` block to specify these manually (although this is no longer considered a best-practise). Please note: you can add further restrictions to existing constraints, but you can't broaden them:
 
 ```gradle
 distribution {
@@ -79,7 +84,17 @@ distribution {
 }
 ```
 
-sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it.
+sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it. e.g.
+
+```
+# Run ./gradlew --write-locks to regenerate this file
+com.palantir.auth:auth-service (1.2.0, 1.6.x)
+com.palantir.storage:storage-service (3.56.0, 3.x.x)
+com.palantir.email:email-service (1.200.3, 2.x.x)
+com.palantir.foo:foo-service ($projectVersion, 1.x.x)
+```
+
+_The `$projectVersion` string is a placeholder that will appear if your repo publishes multiple services, and one of them depends on another.  The actual manifest will contain a concrete version._
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
 `productDependency` block - this will be merged with any constraints detected from other jars.
@@ -165,7 +180,7 @@ And the complete list of configurable properties:
    * `minVersion` the minimal compatible version of the dependency.
    * `maxVersion` the maximal compatible version of the dependency.
    * `recommended` the version developers think you should use; most commonly the version of the implementation that was tested during CI (`minVersion` typically matches the version of the api you use to negotiate).
- * `mainClass` class containing the entry point to start the program.
+ * (optional) `mainClass` class containing the entry point to start the program. Defaults to this sole class containing a main method in the main source set if one exists.
  * (optional) `args` a list of arguments to supply when running `start`.
  * (optional) `checkArgs` a list of arguments to supply to the monitoring script, if omitted,
    no monitoring script will be generated.
@@ -174,14 +189,15 @@ And the complete list of configurable properties:
    for details on the custom environment block.
  * (optional) `defaultJvmOpts` a list of default JVM options to set on the program.
  * (optional) `enableManifestClasspath` a boolean flag; if set to true, then the explicit Java
-   classpath is omitted from the generated Windows start script and instead inferred
-   from a JAR file whose MANIFEST contains the classpath entries.
+   classpath is omitted from the generated start scripts and static launcher config and instead
+   inferred from a JAR file whose MANIFEST contains the classpath entries.
  * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
-   be applied when `init.sh` is run.
+   be applied when `init.sh` is run. When your `targetCompatibility` is Java 8 or less, this value will be blank. For
+   Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
- * (optional) `addJava8GCLogging` add java 8 specific gc logging options.
+ * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
 
 #### JVM Options
 

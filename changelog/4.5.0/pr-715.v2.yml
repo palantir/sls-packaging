@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Upgrade yourkit to 2019.8-b127. Learn about the new features [here](https://www.yourkit.com/changes/yjp_2019_8.jsp)
+  links:
+  - https://github.com/palantir/sls-packaging/pull/715

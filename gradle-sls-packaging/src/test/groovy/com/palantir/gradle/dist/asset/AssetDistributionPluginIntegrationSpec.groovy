@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.asset
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.Versions
 
 class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
@@ -151,6 +152,52 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         dep2['maximum-version'] == '2.x.x'
     }
 
+    /**
+     * Note: in this test, we are not checking that we can resolve exactly the right artifact,
+     * as that is tricky to get right, when the configuration being resolved doesn't set any required attributes.
+     *
+     * For instance, if java happens to be applied to the project, gradle will ALWAYS prefer the
+     * runtimeElements variant (from configuration runtimeElements) so our {@code sls} variant won't be selected.
+     * However, here we only care about testing that it can resolve to <i>something</i>, for the sole purpose of
+     * extracting the version the resolved component.
+     */
+    def 'dist project can be resolved through plain dependency when GCV is applied'() {
+        buildFile << """
+            plugins {
+                id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
+            }
+            
+            configurations {
+                fromOtherProject
+            }
+            dependencies {
+                fromOtherProject project(':dist')
+            }
+            
+            task verify {
+                doLast {
+                    configurations.fromOtherProject.resolve()
+                }
+            }
+        """.stripIndent()
+
+        helper.addSubproject('dist', '''
+            plugins {
+                id 'com.palantir.sls-asset-distribution'
+            }
+            
+            version '0.0.1'
+            distribution {
+                serviceName "my-asset"
+            }
+        ''')
+
+        runTasks('--write-locks')
+
+        expect:
+        runTasks(':verify')
+    }
+
     private static createUntarBuildFile(buildFile) {
         buildFile << '''
             plugins {
@@ -166,9 +213,10 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("${buildDir}/distributions/asset-name-0.0.1.sls.tgz"))
-                into "${projectDir}/dist"
+                from { tarTree(distTar.outputs.files.singleFile) }
+                into "dist"
                 dependsOn distTar
+                duplicatesStrategy = 'WARN'
             }
         '''.stripIndent()
     }

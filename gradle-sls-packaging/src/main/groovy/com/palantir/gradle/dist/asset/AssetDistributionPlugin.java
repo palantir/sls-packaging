@@ -27,6 +27,7 @@ import java.io.File;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
@@ -62,8 +63,13 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);
-            task.setExtension("sls.tgz");
-            task.setDestinationDir(new File(project.getBuildDir(), "distributions"));
+            task.getArchiveBaseName().set(distributionExtension.getDistributionServiceName());
+            task.getArchiveVersion()
+                    .set(project.provider(() -> project.getVersion().toString()));
+            task.getArchiveExtension().set("sls.tgz");
+            task.getDestinationDirectory()
+                    .set(project.getLayout().getBuildDirectory().dir("distributions"));
+            task.setDuplicatesStrategy(DuplicatesStrategy.FAIL);
 
             task.dependsOn(manifest);
         });
@@ -81,16 +87,13 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers
         project.afterEvaluate(p -> distTar.configure(task -> {
-            // TODO(forozco): Use provider based API when minimum version is 5.1
-            task.setBaseName(distributionExtension.getDistributionServiceName().get());
-            task.setVersion(project.getVersion().toString());
-
             String archiveRootDir = String.format(
                     "%s-%s", distributionExtension.getDistributionServiceName().get(), p.getVersion());
 
             task.from(
                     new File(project.getProjectDir(), "deployment"),
-                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
+                    t -> t.into(new File( String.format(
+                    "%s/deployment", archiveRootDir))));
 
             task.from(
                     new File(project.getBuildDir(), "deployment"),
@@ -98,8 +101,14 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
 
             distributionExtension
                     .getAssets()
+                    .get()
+
                     .forEach((key, value) ->
-                            task.from(p.file(key), t -> t.into(String.format("%s/asset/%s", archiveRootDir, value))));
+                            task.from(p.file(key), t ->{
+                        t.into(String.format("%s/asset/%s", archiveRootDir, value));
+                        // We have tests that ascertain you get the overridden file, make this explicit.
+                        t.setDuplicatesStrategy(DuplicatesStrategy.WARN);
+                    }));
         }));
 
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);

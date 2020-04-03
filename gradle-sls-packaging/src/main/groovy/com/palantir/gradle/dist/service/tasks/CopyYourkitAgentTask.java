@@ -45,5 +45,4 @@ public class CopyYourkitAgentTask extends DefaultTask {
         dest.getParent().toFile().mkdirs();
         Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
     }
-
 }

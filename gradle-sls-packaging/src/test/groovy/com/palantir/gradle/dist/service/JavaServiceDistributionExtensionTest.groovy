@@ -16,7 +16,10 @@
 
 package com.palantir.gradle.dist.service
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
@@ -54,7 +57,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.checkArgs.get() == ['a', 'b', 'c', 'd']
         ext.defaultJvmOpts.get() == ['a', 'b', 'c', 'd']
         ext.excludeFromVar.get() == ['log', 'run', 'a', 'b', 'c', 'd']
-        ext.env == ['a': 'b', 'c': 'd']
+        ext.env.get() == ['a': 'b', 'c': 'd']
     }
 
     def 'collection setters replace existing data'() {
@@ -82,7 +85,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.checkArgs.get() == ['c', 'd']
         ext.defaultJvmOpts.get() == ['c', 'd']
         ext.excludeFromVar.get() == ['c', 'd']
-        ext.env == ['foo': 'bar']
+        ext.env.get() == ['foo': 'bar']
     }
 
     def 'sensible defaults' () {
@@ -96,5 +99,26 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.getCheckArgs().get() == []
         ext.getDefaultJvmOpts().get() == []
         ext.getExcludeFromVar().get() == ['log', 'run']
+    }
+
+    def 'correct java homes depending on java version' () {
+        when:
+        def ext = new JavaServiceDistributionExtension(project)
+        project.pluginManager.apply(JavaPlugin)
+
+        def assertJavaHomeAtVersionIs = { Object javaVersion, String javaHome ->
+            project.getConvention().getPlugin(JavaPluginConvention).setTargetCompatibility(javaVersion)
+            ext.getJavaHome().get() == javaHome
+        }
+
+        then:
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_6,  ''
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_7,  ''
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_8,  ''
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_9,  '$JAVA_9_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_1_10, '$JAVA_10_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_11,   '$JAVA_11_HOME'
+        assertJavaHomeAtVersionIs JavaVersion.VERSION_12,   '$JAVA_12_HOME'
+        assertJavaHomeAtVersionIs '13', '$JAVA_13_HOME'
     }
 }

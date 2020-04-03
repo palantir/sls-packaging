@@ -48,7 +48,5 @@ public interface SlsManifest {
         return new Builder();
     }
 
-    final class Builder extends ImmutableSlsManifest.Builder {
-    }
-
+    final class Builder extends ImmutableSlsManifest.Builder {}
 }

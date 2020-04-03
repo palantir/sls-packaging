@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Use manifest classpath in launcher YAML files and startScript when it is configured.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/580

@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Add support for Linux arm64
+  links:
+  - https://github.com/palantir/sls-packaging/pull/753

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2018 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2020 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.immutables.value.Value;
 @JsonSerialize(as = ImmutableRecommendedProductDependencies.class)
 @JsonDeserialize(as = ImmutableRecommendedProductDependencies.class)
 public interface RecommendedProductDependencies {
+    String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
 
     @JsonProperty("recommended-product-dependencies")
     Set<ProductDependency> recommendedProductDependencies();
@@ -35,7 +36,5 @@ public interface RecommendedProductDependencies {
         return new Builder();
     }
 
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {
-    }
-
+    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
 }

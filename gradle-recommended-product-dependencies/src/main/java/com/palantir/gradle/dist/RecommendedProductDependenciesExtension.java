@@ -32,13 +32,12 @@ public class RecommendedProductDependenciesExtension {
 
     @Inject
     public RecommendedProductDependenciesExtension(Project project) {
-        this.recommendedProductDependencies = project.getObjects().setProperty(ProductDependency.class).empty();
+        this.recommendedProductDependencies =
+                project.getObjects().setProperty(ProductDependency.class).empty();
         this.providerFactory = project.getProviders();
     }
 
-    /**
-     * Lazily configures and adds a {@link ProductDependency}.
-     */
+    /** Lazily configures and adds a {@link ProductDependency}. */
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure<?> closure) {
         recommendedProductDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();

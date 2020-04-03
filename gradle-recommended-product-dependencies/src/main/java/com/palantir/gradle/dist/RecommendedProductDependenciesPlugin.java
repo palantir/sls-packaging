@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2018 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2020 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist;
 
-import com.palantir.gradle.dist.tasks.ConfigureProductDependenciesTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
@@ -25,14 +24,13 @@ import org.gradle.jvm.tasks.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
-    public final void apply(final Project project) {
+    @Override
+    public final void apply(Project project) {
         project.getPlugins().apply("java");
-        final RecommendedProductDependenciesExtension ext = project
-                .getExtensions()
+        final RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        TaskProvider<?> configureProductDependenciesTask = project
-                .getTasks()
+        TaskProvider<?> configureProductDependenciesTask = project.getTasks()
                 .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
                     cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
                 });
