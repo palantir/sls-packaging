@@ -1,0 +1,7 @@
+type: improvement
+improvement:
+  description: Creating the `dist` maven publication ourselves, which will get picked
+    up by our internal publish plugin. This allows us to control the publish coordinates
+    to match the serviceGroup and serviceName defined in the `distribution` extension.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/862
