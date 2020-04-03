@@ -26,7 +26,6 @@ import com.palantir.gradle.dist.service.tasks.CopyYourkitAgentTask;
 import com.palantir.gradle.dist.service.tasks.CopyYourkitLicenseTask;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
-import com.palantir.gradle.dist.service.tasks.DistTarTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
 import com.palantir.gradle.dist.service.tasks.LazyCreateStartScriptTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
@@ -164,9 +163,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
-            } else {task.setClasspath(jarTask.get()
-                    .getOutputs()
-                    .getFiles()
+            } else {
+                task.setClasspath(jarTask.get()
+                        .getOutputs()
+                        .getFiles()
                         .plus(javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
             }
         }));
