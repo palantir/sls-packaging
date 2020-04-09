@@ -24,8 +24,8 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 
-final class DistTarTask {
-    static void configure(
+public final class DistTarTask {
+    public static void configure(
             Project project,
             Tar distTarTask,
             JavaServiceDistributionExtension distributionExtension,
