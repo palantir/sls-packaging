@@ -877,7 +877,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 mainClass "dummy.service.MainClass"
                 productDependency {
                     productGroup = 'group'
-                    productName = 'second'
+                    productName = 'second-product'
                     minimumVersion = project.version
                 }
             }
@@ -888,6 +888,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'com.palantir.sls-java-service-distribution'
             }
             distribution {
+                serviceName = 'second-product'
                 mainClass "dummy.service.MainClass"
             }
         """.stripIndent())
