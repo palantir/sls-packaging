@@ -850,6 +850,58 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
     }
 
+    def 'docker can resolve inter-project product dependencies'() {
+        buildFile << """
+            buildscript {
+                repositories {
+                    maven { url 'https://dl.bintray.com/palantir/releases' }
+                    jcenter()
+                }
+                dependencies {
+                    classpath 'com.palantir.gradle.docker:gradle-docker:0.25.0'
+                }
+            }
+            apply plugin: 'com.palantir.docker-compose'
+            allprojects {
+                group = 'group'
+                version = '1.0.0'
+            }
+            
+        """.stripIndent()
+        helper.addSubproject("first", """
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            distribution {
+                mainClass "dummy.service.MainClass"
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'second'
+                    minimumVersion = project.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("second", """
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+            distribution {
+                mainClass "dummy.service.MainClass"
+            }
+        """.stripIndent())
+
+        runTasks("--write-locks")
+
+        // We're just using generateDockerCompose as it conveniently resolves the 'docker' configuration for us
+        // Which in turn, conveniently depends on all subprojects' `productDependencies` configurations
+        file("docker-compose.yml.template").text = ''
+
+        expect:
+        runTasks("generateDockerCompose")
+    }
+
     def 'uses the runtimeClasspath in manifest jar'() {
         given:
         def parent = helper.addSubproject('parent', '''
