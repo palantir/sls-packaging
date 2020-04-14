@@ -53,7 +53,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
 
             // Lazily wire up product dependencies
             Provider<List<ProductDependency>> allProductDependencies =
-                    project.provider(() -> getAllProductDependencies(project));
+                    project.provider(() -> getAllProductDependencies(project).orElseGet(ImmutableList::of));
             ListProperty<Dependency> dependencies = project.getObjects().listProperty(Dependency.class);
             dependencies.set(allProductDependencies.map(pdeps ->
                     createAllProductDependencies(project, pdeps, getInRepoProductIds(project.getRootProject()))));
@@ -76,7 +76,12 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
     }
 
     private static String getMinimumProductVersion(Project project, String group, String name) {
-        List<ProductDependency> dependencies = getAllProductDependencies(project);
+        Optional<List<ProductDependency>> dependenciesOpt = getAllProductDependencies(project);
+        Preconditions.checkState(
+                dependenciesOpt.isPresent(),
+                "%s does not exist. Run ./gradlew --write-locks to generate it.",
+                ProductDependencyLockFile.LOCK_FILE);
+        List<ProductDependency> dependencies = dependenciesOpt.get();
 
         Optional<ProductDependency> dependency = dependencies.stream()
                 .filter(dep -> dep.getProductGroup().equals(group)
@@ -90,16 +95,16 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
     }
 
     /**
-     * Returns all product dependencies from the lock file.
+     * Returns all product dependencies from the lock file, or empty if the lock file doesn't exist.
      */
-    private static List<ProductDependency> getAllProductDependencies(Project project) {
+    private static Optional<List<ProductDependency>> getAllProductDependencies(Project project) {
         File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
         if (!Files.exists(lockFile.toPath())) {
-            return ImmutableList.of();
+            return Optional.empty();
         }
 
-        return ProductDependencyLockFile.fromString(
-                GFileUtils.readFile(lockFile), project.getVersion().toString());
+        return Optional.of(ProductDependencyLockFile.fromString(
+                GFileUtils.readFile(lockFile), project.getVersion().toString()));
     }
 
     static List<Dependency> createAllProductDependencies(
