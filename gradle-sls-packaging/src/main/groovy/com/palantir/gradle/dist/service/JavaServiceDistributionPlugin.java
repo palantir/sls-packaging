@@ -50,8 +50,8 @@ import org.gradle.util.GFileUtils;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER_BINARIES = "goJavaLauncherBinaries";
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.8.0";
-    private static final String GO_INIT = "com.palantir.launching:go-init:1.8.0";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.9.0";
+    private static final String GO_INIT = "com.palantir.launching:go-init:1.9.0";
     public static final String GROUP_NAME = "Distribution";
 
     @SuppressWarnings("checkstyle:methodlength")
