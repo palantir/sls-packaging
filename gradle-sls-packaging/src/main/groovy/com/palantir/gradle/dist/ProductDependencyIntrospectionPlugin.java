@@ -58,10 +58,6 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
             dependencies.set(allProductDependencies.map(pdeps ->
                     createAllProductDependencies(project, pdeps, getInRepoProductIds(project.getRootProject()))));
             conf.getDependencies().addAllLater(GradleWorkarounds.fixListProperty(dependencies));
-
-            if (!allProductDependencies.isPresent()) {
-                log.info("Lock file not present, not populating product dependencies configuration: {}", conf);
-            }
         });
     }
 
