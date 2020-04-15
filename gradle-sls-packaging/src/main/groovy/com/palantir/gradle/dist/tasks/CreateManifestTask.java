@@ -22,13 +22,13 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
 import com.palantir.gradle.dist.ProductDependency;
+import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,7 +87,8 @@ public class CreateManifestTask extends DefaultTask {
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-    private final Supplier<Set<ProductId>> inRepoProductIds = Suppliers.memoize(this::getInRepoProductIds);
+    private final SetProperty<ProductId> inRepoProductIds =
+            getProject().getObjects().setProperty(ProductId.class);
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
     private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
@@ -167,6 +167,11 @@ public class CreateManifestTask extends DefaultTask {
     @Input
     final SetProperty<ProductId> getIgnoredProductIds() {
         return ignoredProductIds;
+    }
+
+    @Input
+    final SetProperty<ProductId> getInRepoProductIds() {
+        return inRepoProductIds;
     }
 
     @Input
@@ -482,18 +487,6 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    private Set<ProductId> getInRepoProductIds() {
-        // get products we publish via BaseDistributionExtension from all other projects
-        return getProject().getRootProject().getAllprojects().stream()
-                .flatMap(p -> Optional.ofNullable(p.getExtensions().findByType(BaseDistributionExtension.class))
-                        .map(Stream::of)
-                        .orElseGet(Stream::empty))
-                .map(extension -> new ProductId(
-                        extension.getDistributionServiceGroup().get(),
-                        extension.getDistributionServiceName().get()))
-                .collect(Collectors.toSet());
-    }
-
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
@@ -505,6 +498,10 @@ public class CreateManifestTask extends DefaultTask {
                     task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getManifestExtensions().set(ext.getManifestExtensions());
+                    task.getInRepoProductIds()
+                            .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
+                                            project.getRootProject())
+                                    .keySet()));
                 });
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
             project.getTasks()
