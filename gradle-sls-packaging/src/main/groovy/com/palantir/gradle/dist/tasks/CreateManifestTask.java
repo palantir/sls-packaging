@@ -169,6 +169,7 @@ public class CreateManifestTask extends DefaultTask {
         return ignoredProductIds;
     }
 
+    @Input
     final SetProperty<ProductId> getInRepoProductIds() {
         return inRepoProductIds;
     }
