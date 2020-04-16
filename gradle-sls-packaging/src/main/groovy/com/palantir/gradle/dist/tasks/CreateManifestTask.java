@@ -58,6 +58,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
@@ -71,6 +72,7 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
+import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
@@ -502,6 +504,13 @@ public class CreateManifestTask extends DefaultTask {
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())
                                     .keySet()));
+                    // Ensure we re-run task to write locks
+                    task.getOutputs().upToDateWhen(new Spec<Task>() {
+                        @Override
+                        public boolean isSatisfiedBy(Task task) {
+                            return !project.getGradle().getStartParameter().isWriteDependencyLocks();
+                        }
+                    });
                 });
         project.getPluginManager().withPlugin("lifecycle-base", p -> {
             project.getTasks()
