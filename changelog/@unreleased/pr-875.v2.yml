@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Ensure `createManifest` is re-run when gradle is invoked with `--write-locks`
+  links:
+  - https://github.com/palantir/sls-packaging/pull/875
