@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: '`run` works with gradle 6.4 and up'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/886
