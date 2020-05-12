@@ -47,6 +47,7 @@ import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.util.GFileUtils;
+import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER_BINARIES = "goJavaLauncherBinaries";
@@ -217,12 +218,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
             task.dependsOn("jar");
-            task.doFirst(new Action<Task>() {
-                @Override
-                public void execute(Task _task) {
-                    task.setMain(mainClassName.get());
-                }
-            });
+            if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
+                task.doFirst(new Action<Task>() {
+                    @Override
+                    public void execute(Task _task) {
+                        task.setMain(mainClassName.get());
+                    }
+                });
+            } else {
+                task.getMainClass().set(mainClassName);
+            }
         });
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
