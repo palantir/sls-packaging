@@ -48,7 +48,9 @@ public interface GcProfile extends Serializable {
 
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
-            if (javaVersion.compareTo(JavaVersion.toVersion("13")) >= 0) {
+            // The CMS garbage collector was removed in Java 14: https://openjdk.java.net/jeps/363. Users are free to
+            // use it up until this release.
+            if (javaVersion.compareTo(JavaVersion.toVersion("14")) >= 0) {
                 return ImmutableList.of(
                         "-XX:+UnlockExperimentalVMOptions",
                         // https://wiki.openjdk.java.net/display/shenandoah/Main
