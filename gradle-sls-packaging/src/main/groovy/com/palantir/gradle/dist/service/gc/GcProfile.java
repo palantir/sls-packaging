@@ -52,7 +52,6 @@ public interface GcProfile extends Serializable {
             // use it up until this release.
             if (javaVersion.compareTo(JavaVersion.toVersion("14")) >= 0) {
                 return ImmutableList.of(
-                        "-XX:+UnlockExperimentalVMOptions",
                         // https://wiki.openjdk.java.net/display/shenandoah/Main
                         "-XX:+UseShenandoahGC",
                         // "forces concurrent cycle instead of Full GC on System.gc()"
