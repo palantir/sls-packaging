@@ -491,7 +491,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         actualStaticConfig.jvmOpts().containsAll([
-                "-XX:+UnlockExperimentalVMOptions",
                 "-XX:+UseShenandoahGC",
                 "-XX:+ExplicitGCInvokesConcurrent",
                 "-XX:+ClassUnloadingWithConcurrentMark"
