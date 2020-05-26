@@ -1,8 +1,7 @@
 type: improvement
 improvement:
-  description: For users of the `response-time` GC Profile, options to enable the
-    CMS garbage will still be set on Java 13, as the GC is just deprecated but not
-    full removed. From Java 14 onwards, CMS does not exist anymore so we auto-switch
-    to Shenandoah.
+  description: For users of the `response-time` GC Profile, the CMS garbage will still
+    be enabled on Java 13, as the GC is just _deprecated_ but not fully removed. From
+    Java 14 onwards, CMS does not exist anymore so we auto-switch to Shenandoah.
   links:
   - https://github.com/palantir/sls-packaging/pull/899

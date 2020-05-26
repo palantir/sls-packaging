@@ -479,7 +479,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             dependencies { compile files("external.jar") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
-                javaVersion 13
+                javaVersion 14
                 gc 'response-time'
             }'''.stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
