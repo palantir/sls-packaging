@@ -185,6 +185,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getDefaultJvmOpts().set(distributionExtension.getDefaultJvmOpts());
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
+                    task.getJavaVersion().set(distributionExtension.getJavaVersion());
                     task.getEnv().set(distributionExtension.getEnv());
                 });
 

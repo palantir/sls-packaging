@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Enable Improved NullPointerException messages on modern JDKs
+  links:
+  - https://github.com/palantir/sls-packaging/pull/907

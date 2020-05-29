@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -52,6 +53,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
+    private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessage");
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -73,6 +75,7 @@ public class LaunchConfigTask extends DefaultTask {
     private final Property<Boolean> addJava8GcLogging =
             getProject().getObjects().property(Boolean.class);
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
+    private final Property<JavaVersion> javaVersion = getProject().getObjects().property(JavaVersion.class);
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> defaultJvmOpts =
@@ -113,6 +116,11 @@ public class LaunchConfigTask extends DefaultTask {
     @Optional
     public final Property<String> getJavaHome() {
         return javaHome;
+    }
+
+    @Input
+    public final Property<JavaVersion> getJavaVersion() {
+        return javaVersion;
     }
 
     @Input
@@ -165,6 +173,10 @@ public class LaunchConfigTask extends DefaultTask {
                         .classpath(relativizeToServiceLibDirectory(classpath))
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
+                                        ? java14Options
+                                        : ImmutableList.of())
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
                         .putAllEnv(defaultEnvironment)
