@@ -119,7 +119,7 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     @Input
-    public Property<JavaVersion> getJavaVersion() {
+    public final Property<JavaVersion> getJavaVersion() {
         return javaVersion;
     }
 
