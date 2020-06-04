@@ -92,7 +92,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         """.stripIndent()
 
         when:
-        runTasksSuccessfully('--write-locks', ':jar')
+        runTasksSuccessfully('-DignoreDeprecations=true', '--write-locks', ':jar')
 
         then:
         fileExists("build/libs/root-project.jar")
