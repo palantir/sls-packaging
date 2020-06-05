@@ -53,7 +53,7 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
-    private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessage");
+    private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",

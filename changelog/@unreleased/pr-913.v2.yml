@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fix typo in Java flags
+  links:
+  - https://github.com/palantir/sls-packaging/pull/913
