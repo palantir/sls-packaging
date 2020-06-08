@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: Expose ListProperty `getAllProductDependencies` for accessing and configuring
+    a distribution's product dependencies
+  links:
+  - https://github.com/palantir/sls-packaging/pull/916

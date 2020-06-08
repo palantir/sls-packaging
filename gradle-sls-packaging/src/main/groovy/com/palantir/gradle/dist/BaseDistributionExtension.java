@@ -131,7 +131,17 @@ public class BaseDistributionExtension {
         this.productType.set(productType);
     }
 
+    /**
+     * The product dependencies of this distribution.
+     *
+     * @deprecated use {@link #getAllProductDependencies()} instead
+     */
+    @Deprecated
     public final Provider<List<ProductDependency>> getProductDependencies() {
+        return productDependencies;
+    }
+
+    public final ListProperty<ProductDependency> getAllProductDependencies() {
         return productDependencies;
     }
 

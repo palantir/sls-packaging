@@ -496,7 +496,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
-                    task.getProductDependencies().set(ext.getProductDependencies());
+                    task.getProductDependencies().set(ext.getAllProductDependencies());
                     task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getManifestExtensions().set(ext.getManifestExtensions());
