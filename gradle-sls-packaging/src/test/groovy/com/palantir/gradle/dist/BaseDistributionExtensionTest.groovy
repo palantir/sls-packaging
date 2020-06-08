@@ -80,7 +80,7 @@ class BaseDistributionExtensionTest extends Specification {
         ext.productDependency("group:name:1.2.3")
 
         then:
-        def productDependencies = ext.getProductDependencies().get()
+        def productDependencies = ext.getAllProductDependencies().get()
         productDependencies.size() == 1
         productDependencies.get(0).productGroup == "group"
         productDependencies.get(0).productName == "name"
@@ -95,7 +95,7 @@ class BaseDistributionExtensionTest extends Specification {
         ext.productDependency("group:name:1.2.3:classifier@tgz")
 
         then:
-        def productDependencies = ext.getProductDependencies().get()
+        def productDependencies = ext.getAllProductDependencies().get()
         productDependencies.size() == 1
         productDependencies.get(0).productGroup == "group"
         productDependencies.get(0).productName == "name"
@@ -110,7 +110,7 @@ class BaseDistributionExtensionTest extends Specification {
         ext.productDependency("group:name:1.2.3:classifier@tgz", "1.2.4")
 
         then:
-        def productDependencies = ext.getProductDependencies().get()
+        def productDependencies = ext.getAllProductDependencies().get()
         productDependencies.size() == 1
         productDependencies.get(0).productGroup == "group"
         productDependencies.get(0).productName == "name"
@@ -129,7 +129,7 @@ class BaseDistributionExtensionTest extends Specification {
         }
 
         then:
-        def productDependencies = ext.getProductDependencies().get()
+        def productDependencies = ext.getAllProductDependencies().get()
         productDependencies.size() == 1
         productDependencies.get(0).productGroup == "group"
         productDependencies.get(0).productName == "name"
@@ -146,7 +146,7 @@ class BaseDistributionExtensionTest extends Specification {
         }
 
         when:
-        ext.getProductDependencies().get()
+        ext.getAllProductDependencies().get()
 
         then:
         def ex = thrown(SafeRuntimeException)
