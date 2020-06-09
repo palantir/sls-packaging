@@ -141,7 +141,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         runTasksAndFail('createManifest').task(':createManifest').outcome == TaskOutcome.FAILED
     }
 
-    def 'throws if duplicate dependencies are declared'() {
+    def 'merges declared product dependencies'() {
         setup:
         buildFile << """
             createManifest {
@@ -153,10 +153,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasksAndFail(':createManifest')
+        def buildResult = runTasks(':createManifest', '--write-locks')
 
         then:
-        buildResult.output.contains('Encountered duplicate declared product')
+        buildResult.task(':createManifest').outcome == TaskOutcome.SUCCESS
     }
 
     def 'throws if declared dependency is also ignored'() {

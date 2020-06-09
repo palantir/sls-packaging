@@ -225,11 +225,8 @@ public class CreateManifestTask extends DefaultTask {
                         "Encountered product dependency declaration that was also ignored for '%s', either remove the "
                                 + "dependency or ignore",
                         productId));
-            } else if (allProductDependencies.containsKey(productId)) {
-                throw new IllegalArgumentException(
-                        String.format("Encountered duplicate declared product dependencies for '%s'", productId));
             }
-            allProductDependencies.put(productId, declaredDep);
+            allProductDependencies.merge(productId, declaredDep, ProductDependencyMerger::merge);
         });
 
         // Merge all discovered and declared product dependencies
