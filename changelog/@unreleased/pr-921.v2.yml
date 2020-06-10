@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Correctly configure start scripts in Gradle 6.4+
+  links:
+  - https://github.com/palantir/sls-packaging/pull/921

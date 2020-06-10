@@ -20,9 +20,17 @@ import javax.annotation.Nullable;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.application.CreateStartScripts;
+import org.gradle.util.GradleVersion;
 
+// TODO(forozco): Remove once we raise our minimum supported gradle version to 6.4
 public class LazyCreateStartScriptTask extends CreateStartScripts {
     private final Property<String> mainClassName = getProject().getObjects().property(String.class);
+
+    public LazyCreateStartScriptTask() {
+        if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) >= 0) {
+            getMainClass().set(mainClassName);
+        }
+    }
 
     @Input
     public final Property<String> getLazyMainClassName() {
