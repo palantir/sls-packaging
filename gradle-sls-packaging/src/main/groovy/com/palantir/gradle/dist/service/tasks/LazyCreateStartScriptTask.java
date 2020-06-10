@@ -22,12 +22,12 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.application.CreateStartScripts;
 import org.gradle.util.GradleVersion;
 
-// TODO(forozco): Remove once we raise our minimum supported gradle version to 6.6.
+// TODO(forozco): Remove once we raise our minimum supported gradle version to 6.4
 public class LazyCreateStartScriptTask extends CreateStartScripts {
     private final Property<String> mainClassName = getProject().getObjects().property(String.class);
 
     public LazyCreateStartScriptTask() {
-        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.6")) >= 0) {
+        if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) >= 0) {
             getMainClass().set(mainClassName);
         }
     }
