@@ -127,6 +127,11 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     // Since we write out the name of this task's output (when it's enabled), we should depend on it
                     task.dependsOn(manifestClassPathTask);
                     task.getLazyMainClassName().set(mainClassName);
+
+                    if (GradleVersion.current().compareTo(GradleVersion.version("6.6")) >= 0) {
+                        task.getMainClass().set(mainClassName);
+                    }
+
                     task.doLast(t -> {
                         if (distributionExtension.getEnableManifestClasspath().get()) {
                             // Replace standard classpath with pathing jar in order to circumnavigate length limits:

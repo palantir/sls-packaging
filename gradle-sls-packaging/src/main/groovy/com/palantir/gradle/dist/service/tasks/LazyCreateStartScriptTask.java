@@ -21,6 +21,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.application.CreateStartScripts;
 
+// TODO(forozco): Remove once we raise our minimum supported gradle version to 6.6.
 public class LazyCreateStartScriptTask extends CreateStartScripts {
     private final Property<String> mainClassName = getProject().getObjects().property(String.class);
 
