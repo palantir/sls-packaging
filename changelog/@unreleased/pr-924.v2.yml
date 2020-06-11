@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Set G1GC as default on java 11+ in throughput mode
+  links:
+  - https://github.com/palantir/sls-packaging/pull/924
