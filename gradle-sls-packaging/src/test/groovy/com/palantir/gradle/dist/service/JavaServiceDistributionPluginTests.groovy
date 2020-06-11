@@ -371,6 +371,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
+                javaVersion 11
                 args 'myArg1', 'myArg2'
                 checkArgs 'myCheckArg1', 'myCheckArg2'
                 env "key1": "val1",
@@ -394,7 +395,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
-                '-XX:+UseParallelOldGC',
+                '-XX:+UseG1GC',
+                '-XX:+UseStringDeduplication',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .env(LaunchConfigTask.defaultEnvironment + [
