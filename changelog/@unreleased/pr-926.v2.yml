@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: Correctly set `-XX:+UnlockExperimentalVMOptions` when using `response-time`
+    gc profile with JDK 14+
+  links:
+  - https://github.com/palantir/sls-packaging/pull/926
