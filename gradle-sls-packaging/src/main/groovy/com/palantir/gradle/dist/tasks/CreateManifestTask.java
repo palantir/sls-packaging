@@ -226,7 +226,8 @@ public class CreateManifestTask extends DefaultTask {
                                 + "dependency or ignore",
                         productId));
             }
-            allProductDependencies.merge(productId, declaredDep, ProductDependencyMerger::merge);
+            allProductDependencies.merge(
+                    productId, declaredDep, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
         });
 
         // Merge all discovered and declared product dependencies
@@ -237,7 +238,7 @@ public class CreateManifestTask extends DefaultTask {
             }
             allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, newDependency) -> {
                 ProductDependency mergedDependency =
-                        ProductDependencyMerger.merge(declaredDependency, discoveredDependency);
+                        mergeDependencies(productId, declaredDependency, discoveredDependency);
                 if (mergedDependency.equals(discoveredDependency)) {
                     getLogger()
                             .error(
@@ -454,15 +455,8 @@ public class CreateManifestTask extends DefaultTask {
                 .forEach(productDependency -> {
                     ProductId productId =
                             new ProductId(productDependency.getProductGroup(), productDependency.getProductName());
-                    discoveredProductDependencies.merge(productId, productDependency, (dep1, dep2) -> {
-                        ProductDependency mergedDep = ProductDependencyMerger.merge(dep1, dep2);
-                        if (inRepoProductIds.get().contains(productId)
-                                && (dep1.getMinimumVersion().equals(getProjectVersion())
-                                        || dep2.getMinimumVersion().equals(getProjectVersion()))) {
-                            mergedDep.setMinimumVersion(getProjectVersion());
-                        }
-                        return mergedDep;
-                    });
+                    discoveredProductDependencies.merge(
+                            productId, productDependency, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
                 });
         return discoveredProductDependencies;
     }
@@ -527,5 +521,15 @@ public class CreateManifestTask extends DefaultTask {
         }
 
         return createManifest;
+    }
+
+    private ProductDependency mergeDependencies(ProductId productId, ProductDependency dep1, ProductDependency dep2) {
+        ProductDependency mergedDep = ProductDependencyMerger.merge(dep1, dep2);
+        if (inRepoProductIds.get().contains(productId)
+                && (dep1.getMinimumVersion().equals(getProjectVersion())
+                        || dep2.getMinimumVersion().equals(getProjectVersion()))) {
+            mergedDep.setMinimumVersion(getProjectVersion());
+        }
+        return mergedDep;
     }
 }
