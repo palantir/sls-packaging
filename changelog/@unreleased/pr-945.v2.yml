@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Prefer in declared dependency when merging in repo pdeps
+  links:
+  - https://github.com/palantir/sls-packaging/pull/945
