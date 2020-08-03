@@ -45,7 +45,7 @@ pluginBundle {
     }
 }
 
-def yourkitVersion = "2019.8-b141"
+def yourkitVersion = "2019.8-b142"
 def yourkitFilename = "YourKit-JavaProfiler-${yourkitVersion}"
 
 task downloadYourkitDist(type: Download) {
