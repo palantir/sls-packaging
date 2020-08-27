@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: |
+    Upgrade go-java-launcher to 1.10.0 which is built against Go 1.15
+  links:
+  - https://github.com/palantir/sls-packaging/pull/992
