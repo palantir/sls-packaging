@@ -4,6 +4,6 @@ com.palantir.safe-logging:* = 1.13.1
 com.palantir.sls.versions:sls-versions = 0.12.2
 org.immutables:value = 2.8.8
 
-com.netflix.nebula:nebula-test = 7.9.2
+com.netflix.nebula:nebula-test = 7.9.3
 junit:junit = 4.13
 org.awaitility:awaitility = 4.0.3
