@@ -1073,7 +1073,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
-        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseStringDeduplication'])
+        actualStaticConfig.jvmOpts.contains('-XX:+UseG1GC')
     }
 
     private static createUntarBuildFile(File buildFile) {
