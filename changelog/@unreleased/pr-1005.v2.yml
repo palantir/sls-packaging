@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Disable string deduplication for the G1 collector
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1005
