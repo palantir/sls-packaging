@@ -1,5 +1,5 @@
-com.fasterxml.jackson.*:* = 2.11.2
-com.google.guava:guava = 23.6.1-jre
+com.fasterxml.jackson.*:* = 2.11.3
+com.google.guava:guava = 29.0-jre
 com.palantir.safe-logging:* = 1.13.1
 com.palantir.sls.versions:sls-versions = 0.12.2
 org.immutables:value = 2.8.8
