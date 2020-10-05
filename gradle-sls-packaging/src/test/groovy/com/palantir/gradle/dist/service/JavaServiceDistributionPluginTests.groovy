@@ -168,7 +168,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -208,7 +208,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -570,7 +570,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -584,7 +584,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             afterEvaluate {
                 String actualTarballPath = distTar.outputs.files.singleFile.absolutePath
                 String expectedTarballPath = project.file('build/distributions/my-service.sls.tgz').absolutePath
-                
+
                 if (!actualTarballPath.equals(expectedTarballPath)) {
                     throw new GradleException("tarball path didn't match.\\n" +
                             "actual: ${actualTarballPath}\\n" +
@@ -604,7 +604,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -649,7 +649,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -705,14 +705,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             plugins {
                 id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
             }
-            
+
             configurations {
                 fromOtherProject
             }
             dependencies {
                 fromOtherProject project(':dist')
             }
-            
+
             task verify {
                 doLast {
                     configurations.fromOtherProject.resolve()
@@ -724,7 +724,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             version '0.0.1'
             distribution {
                 serviceName "my-asset"
@@ -778,7 +778,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             version '0.0.1'
             distribution {
                 serviceName "service-name"
@@ -865,7 +865,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 group = 'group'
                 version = '1.0.0'
             }
-            
+
         """.stripIndent()
         helper.addSubproject("first", """
             plugins {
@@ -909,7 +909,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             version '0.0.1'
             distribution {
                 serviceName "service-name"
@@ -1015,7 +1015,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -1050,7 +1050,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
             }
-            
+
             repositories {
                 jcenter()
                 maven { url "https://palantir.bintray.com/releases" }
@@ -1073,7 +1073,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
-        actualStaticConfig.jvmOpts.contains('-XX:+UseG1GC')
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', '-XX:+PrintFlagsFinal'])
     }
 
     private static createUntarBuildFile(File buildFile) {
