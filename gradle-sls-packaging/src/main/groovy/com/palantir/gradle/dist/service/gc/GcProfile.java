@@ -91,7 +91,7 @@ public interface GcProfile extends Serializable {
     class Hybrid implements GcProfile {
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
-            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA", "-XX:+PrintFlagsFinal");
+            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA");
         }
     }
 }
