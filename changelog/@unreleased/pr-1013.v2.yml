@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Downgrade jackson to 2.11.1 to avoid jackson bugs
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1013
