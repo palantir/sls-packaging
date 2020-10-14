@@ -49,7 +49,9 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
-        GcvUtils.maybeLockConfigurationInGcv(project);
+        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
+            GcvUtils.lockConfigurationInGcv(project);
+        });
 
         Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
             conf.setCanBeConsumed(false);

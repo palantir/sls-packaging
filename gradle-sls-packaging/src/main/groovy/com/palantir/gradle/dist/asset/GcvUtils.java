@@ -30,11 +30,9 @@ final class GcvUtils {
      * exposed to consumers (as constraints) and so non-locked configurations get different versions than when
      * running without {@code --write-locks}.
      */
-    public static void maybeLockConfigurationInGcv(Project project) {
-        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
-            project.getExtensions().configure(VersionsLockExtension.class, lockExt -> {
-                lockExt.production(prod -> prod.from(AssetDistributionPlugin.ASSET_CONFIGURATION));
-            });
+    public static void lockConfigurationInGcv(Project project) {
+        project.getExtensions().configure(VersionsLockExtension.class, lockExt -> {
+            lockExt.production(prod -> prod.from(AssetDistributionPlugin.ASSET_CONFIGURATION));
         });
     }
 
