@@ -22,7 +22,6 @@ import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
-import com.palantir.gradle.versions.VersionsLockExtension;
 import java.io.File;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
@@ -50,15 +49,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
-        // If GCV is applied, we want to lock the asset configuration.
-        // This is to wrong around a bug where, during --write-locks, the locks from locked configurations don't get
-        // exposed to consumers (as constraints) and so non-locked configurations get different versions than when
-        // running without `--write-locks`.
-        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
-            project.getExtensions().configure(VersionsLockExtension.class, lockExt -> {
-                lockExt.production(prod -> prod.from(ASSET_CONFIGURATION));
-            });
-        });
+        GcvUtils.maybeLockConfigurationInGcv(project);
 
         Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
             conf.setCanBeConsumed(false);
