@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: |
+    If gradle-consistent-versions is detected, lock the assetBundle configuration, to ensure that it always gets the locked dependency versions.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1012
