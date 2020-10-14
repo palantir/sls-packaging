@@ -22,10 +22,12 @@ import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.versions.VersionsLockExtension;
 import java.io.File;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
@@ -48,10 +50,23 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
+        // If GCV is applied, we want to lock the asset configuration.
+        // This is to wrong around a bug where, during --write-locks, the locks from locked configurations don't get
+        // exposed to consumers (as constraints) and so non-locked configurations get different versions than when
+        // running without `--write-locks`.
+        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
+            project.getExtensions().configure(VersionsLockExtension.class, lockExt -> {
+                lockExt.production(prod -> prod.from(ASSET_CONFIGURATION));
+            });
+        });
+
+        Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
+            conf.setCanBeConsumed(false);
+        });
+
         AssetDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
-        distributionExtension.setProductDependenciesConfig(
-                project.getConfigurations().create(ASSET_CONFIGURATION));
+        distributionExtension.setProductDependenciesConfig(assetConfiguration);
 
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);

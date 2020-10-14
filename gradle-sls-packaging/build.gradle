@@ -7,6 +7,8 @@ apply plugin: 'org.inferred.processors'
 apply plugin: 'de.undercouch.download'
 
 dependencies {
+    compileOnly 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
+
     compile gradleApi()
     compile project(':gradle-recommended-product-dependencies')
     compile 'com.google.guava:guava'
