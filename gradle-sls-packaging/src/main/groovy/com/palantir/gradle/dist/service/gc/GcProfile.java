@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.gradle.api.JavaVersion;
@@ -31,7 +32,8 @@ public interface GcProfile extends Serializable {
     Map<String, Class<? extends GcProfile>> PROFILE_NAMES = ImmutableMap.of(
             "throughput", GcProfile.Throughput.class,
             "response-time", GcProfile.ResponseTime.class,
-            "hybrid", GcProfile.Hybrid.class);
+            "hybrid", GcProfile.Hybrid.class,
+            "no-profile", GcProfile.NoProfile.class);
 
     List<String> gcJvmOpts(JavaVersion javaVersion);
 
@@ -92,6 +94,17 @@ public interface GcProfile extends Serializable {
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
             return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA");
+        }
+    }
+
+    /**
+     * This GC profile does not apply any JVM flags which allows services to override GC settings without needing to
+     * unset preconfigured flags.
+     */
+    class NoProfile implements GcProfile {
+        @Override
+        public List<String> gcJvmOpts(JavaVersion javaVersion) {
+            return Collections.emptyList();
         }
     }
 }
