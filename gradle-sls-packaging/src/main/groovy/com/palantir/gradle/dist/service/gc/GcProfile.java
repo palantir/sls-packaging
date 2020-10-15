@@ -38,6 +38,10 @@ public interface GcProfile extends Serializable {
     class Throughput implements GcProfile {
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            // For Java 15 and above, use G1 as the default garbage collector
+            if (javaVersion.compareTo(JavaVersion.toVersion("14")) > 0) {
+                return ImmutableList.of("-XX:+UseG1GC");
+            }
             return ImmutableList.of("-XX:+UseParallelOldGC");
         }
     }
