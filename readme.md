@@ -196,7 +196,7 @@ And the complete list of configurable properties:
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run. When your `targetCompatibility` is Java 8 or less, this value will be blank. For
    Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
- * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`.
+ * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default for Java 14 and lower), `hybrid` (default for Java 15 and higher) and `response-time`.
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
 
 #### JVM Options
