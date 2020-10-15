@@ -33,7 +33,7 @@ public interface GcProfile extends Serializable {
             "throughput", GcProfile.Throughput.class,
             "response-time", GcProfile.ResponseTime.class,
             "hybrid", GcProfile.Hybrid.class,
-            "no-profile", GcProfile.NoProfile.class);
+            "dangerous-no-profile", GcProfile.NoProfile.class);
 
     List<String> gcJvmOpts(JavaVersion javaVersion);
 

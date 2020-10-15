@@ -196,7 +196,7 @@ And the complete list of configurable properties:
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run. When your `targetCompatibility` is Java 8 or less, this value will be blank. For
    Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
- * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`. Additionally, there is also `no-profile` which does not apply any additional JVM flags and allows you to fully configure any GC settings through JVM options (not recommended for normal usage!). 
+ * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default), `hybrid` and `response-time`. Additionally, there is also `dangerous-no-profile` which does not apply any additional JVM flags and allows you to fully configure any GC settings through JVM options (not recommended for normal usage!). 
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
 
 #### JVM Options
