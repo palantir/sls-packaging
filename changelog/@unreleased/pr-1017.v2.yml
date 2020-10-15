@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Upgrade the embedded yourkit libyjpagent.so to 2020.9-b411
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1017
