@@ -22,6 +22,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import org.awaitility.Awaitility
+import org.gradle.api.JavaVersion
 import spock.lang.Unroll
 
 class GcProfileIntegrationSpec extends GradleIntegrationSpec {
@@ -84,5 +85,29 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
         where:
         gc << GcProfile.PROFILE_NAMES.keySet().toArray()
+    }
+
+    @Unroll
+    def 'throughput profile uses G1 GC for Java 15 and above: Java #javaVersion'() {
+        when:
+        def gcOpts = new GcProfile.Throughput().gcJvmOpts(JavaVersion.toVersion(javaVersion))
+
+        then:
+        assert gcOpts == ["-XX:+UseG1GC"]
+
+        where:
+        javaVersion << ["15", "16"]
+    }
+
+    @Unroll
+    def 'throughput profile uses ParallelOldGc for Java 14 and below: Java #javaVersion'() {
+        when:
+        def gcOpts = new GcProfile.Throughput().gcJvmOpts(JavaVersion.toVersion(javaVersion))
+
+        then:
+        assert gcOpts == ["-XX:+UseParallelOldGC"]
+
+        where:
+        javaVersion << ["11", "14"]
     }
 }
