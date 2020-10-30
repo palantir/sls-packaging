@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: Java services record heap dumps to `var/log/heapdump.hprof` on OOM.
+    If the file already exists from a previous failure, no new heap dump is recorded.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1026
