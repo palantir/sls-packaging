@@ -44,7 +44,7 @@ import org.immutables.value.Value;
 
 public class LaunchConfigTask extends DefaultTask {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final List<String> java8gcLoggingOptions = ImmutableList.of(
+    private static final ImmutableList<String> java8gcLoggingOptions = ImmutableList.of(
             "-XX:+PrintGCDateStamps",
             "-XX:+PrintGCDetails",
             "-XX:-TraceClassUnloading",
@@ -53,13 +53,18 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
-    private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+    private static final ImmutableList<String> java14Options =
+            ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
 
-    private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
+    private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
+            "-XX:+HeapDumpOnOutOfMemoryError",
             "-Djava.io.tmpdir=var/data/tmp",
             "-XX:ErrorFile=var/log/hs_err_pid%p.log",
-            "-XX:HeapDumpPath=var/log",
+            // Provide a full filename to avoid filling disks with heap dumps.
+            // If a heap dump already exists in this location, subsequent OOMs
+            // will not dump heap.
+            "-XX:HeapDumpPath=var/log/heapdump.hprof",
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
             "-Dsun.net.inetaddr.ttl=20");

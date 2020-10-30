@@ -390,9 +390,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
+                '-XX:+HeapDumpOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
+                '-XX:HeapDumpPath=var/log/heapdump.hprof',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:+UseParallelOldGC',
                 '-Xmx4M',
@@ -413,9 +414,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             .classpath(actualStaticConfig.classpath())
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
+                '-XX:+HeapDumpOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
+                '-XX:HeapDumpPath=var/log/heapdump.hprof',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -450,9 +452,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
+                '-XX:+HeapDumpOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
+                '-XX:HeapDumpPath=var/log/heapdump.hprof',
                 '-Dsun.net.inetaddr.ttl=20',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
