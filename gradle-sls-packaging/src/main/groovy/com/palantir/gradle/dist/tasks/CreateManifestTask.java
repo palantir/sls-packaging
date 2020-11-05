@@ -327,13 +327,13 @@ public class CreateManifestTask extends DefaultTask {
         } else {
             if (!lockfileExists) {
                 throw new GradleException(String.format(
-                        "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
+                        "%s does not exist, please run `./gradlew %s --write-locks -PgcvSkipWriteLocks` and commit the resultant file",
                         relativePath, getName()));
             } else {
                 String fromDisk = GFileUtils.readFile(lockfile);
                 Preconditions.checkState(
                         fromDisk.equals(upToDateContents),
-                        "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
+                        "%s is out of date, please run `./gradlew %s --write-locks -PgcvSkipWriteLocks` to update it%s",
                         relativePath,
                         getName(),
                         diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
