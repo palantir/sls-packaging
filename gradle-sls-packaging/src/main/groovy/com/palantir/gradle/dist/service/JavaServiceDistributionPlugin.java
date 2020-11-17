@@ -72,17 +72,18 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         JavaServiceDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
 
-        // In baseline 3.52.0 we added this 'com.palantir.baseline-enable-preview-flag' plugin as a one-liner to add
-        // the --enable-preview flag wherever necessary (https://github.com/palantir/gradle-baseline/pull/1549). We're
-        // using the extraProperties thing to avoid taking a compile dependency on baseline.
-        distributionExtension.defaultJvmOpts(project.provider(() -> {
-            Object maybeProvider = project.getExtensions().getExtraProperties().get("enablePreview");
-            if (maybeProvider instanceof Provider && ((Provider<Boolean>) maybeProvider).get()) {
-                return Collections.singletonList("--enable-preview");
-            } else {
-                return Collections.emptyList();
-            }
-        }));
+        // In baseline 3.52.0 we added this new plugin as a one-liner to add the --enable-preview flag wherever
+        // necessary (https://github.com/palantir/gradle-baseline/pull/1549). We're using the extraProperties thing to
+        // avoid taking a compile dependency on baseline.
+        project.getPlugins().withId("com.palantir.baseline-enable-preview-flag", _withId -> {
+            distributionExtension.defaultJvmOpts(project.provider(() -> {
+                Provider<Boolean> enablePreview = (Provider<Boolean>) project.getExtensions()
+                        .getExtraProperties()
+                        .getProperties()
+                        .get("enablePreview");
+                return enablePreview.get() ? Collections.singletonList("--enable-preview") : Collections.emptyList();
+            }));
+        });
 
         // Set default configuration to look for product dependencies to be runtimeClasspath
         distributionExtension.setProductDependenciesConfig(
