@@ -78,7 +78,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         distributionExtension.defaultJvmOpts(project.provider(() -> {
             Object maybeProvider = project.getExtensions().getExtraProperties().get("enablePreview");
             if (maybeProvider instanceof Provider && ((Provider<Boolean>) maybeProvider).get()) {
-                return Collections.singletonList("--enablePreview");
+                return Collections.singletonList("--enable-preview");
             } else {
                 return Collections.emptyList();
             }
