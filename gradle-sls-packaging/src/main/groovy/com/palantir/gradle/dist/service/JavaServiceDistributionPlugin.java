@@ -31,6 +31,7 @@ import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
 import org.gradle.api.InvalidUserCodeException;
@@ -70,6 +71,18 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
         JavaServiceDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
+
+        // In baseline 3.52.0 we added this 'com.palantir.baseline-enable-preview-flag' plugin as a one-liner to add
+        // the --enable-preview flag wherever necessary (https://github.com/palantir/gradle-baseline/pull/1549). We're
+        // using the extraProperties thing to avoid taking a compile dependency on baseline.
+        distributionExtension.defaultJvmOpts(project.provider(() -> {
+            Object maybeProvider = project.getExtensions().getExtraProperties().get("enablePreview");
+            if (maybeProvider instanceof Provider && ((Provider<Boolean>) maybeProvider).get()) {
+                return Collections.singletonList("--enablePreview");
+            } else {
+                return Collections.emptyList();
+            }
+        }));
 
         // Set default configuration to look for product dependencies to be runtimeClasspath
         distributionExtension.setProductDependenciesConfig(
