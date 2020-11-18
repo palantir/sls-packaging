@@ -217,7 +217,15 @@ public class CreateManifestTask extends DefaultTask {
                         .productVersion(getProjectVersion())
                         .putAllExtensions(manifestExtensions.get())
                         .putExtensions("product-dependencies", computeProductDependencies())
+                        .putExtensions("diagnostics", findSupportedDiagnosticTypesFromClasspath())
                         .build());
+    }
+
+    // See the internal sls-spec's debug.md document
+    private List<Diagnostics.SupportedDiagnostic> findSupportedDiagnosticTypesFromClasspath() {
+        List<Diagnostics.DiagnosticType> fromRuntimeClasspath = Diagnostics.loadFromConfiguration(
+                getProject(), getProject().getConfigurations().getByName("runtimeClasspath"));
+        return Diagnostics.asManifestExtension(fromRuntimeClasspath);
     }
 
     private List<ProductDependency> computeProductDependencies() {
