@@ -18,8 +18,10 @@ package com.palantir.gradle.dist.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -32,35 +34,52 @@ import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     public static final Attribute<Boolean> DIAGNOSTIC_JSON_EXTRACTED =
             Attribute.of("diagnosticJsonExtracted1", Boolean.class);
 
     @CacheableTransform
-    public abstract static class ExtractFileAction implements TransformAction<TransformParameters.None> {
+    public abstract static class ExtractFileAction implements TransformAction<ExtractFileAction.Parameters> {
+        private static final Logger log = LoggerFactory.getLogger(ExtractFileAction.class);
+
+        interface Parameters extends TransformParameters {
+            @Input
+            Property<String> getPathToExtract();
+        }
+
         @PathSensitive(PathSensitivity.NAME_ONLY)
         @InputArtifact
         public abstract Provider<FileSystemLocation> getInputArtifact();
 
         @Override
         public void transform(TransformOutputs outputs) {
-            File inputJar = getInputArtifact().get().getAsFile();
+            File jarFile = getInputArtifact().get().getAsFile();
+            String pathToExtract = getParameters().getPathToExtract().get();
 
-            if (inputJar.toString().contains("jackson-core")) {
-
-                File outFile = outputs.file(inputJar.getName() + ".json1");
-                final String contents = "HELLO " + inputJar.length();
-                try {
-                    Files.write(outFile.toPath(), contents.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed", e);
+            try (ZipFile zipFile = new ZipFile(jarFile)) {
+                ZipEntry zipEntry = zipFile.getEntry(pathToExtract);
+                if (zipEntry == null) {
+                    log.debug("Unable to find '{}' in JAR: {}", pathToExtract, jarFile);
+                    return;
                 }
+
+                try (InputStream is = zipFile.getInputStream(zipEntry)) {
+                    String newFileName = com.google.common.io.Files.getNameWithoutExtension(jarFile.getName()) + "-"
+                            + pathToExtract.replaceAll("/", "-");
+                    File outputFile = outputs.file(newFileName);
+                    Files.copy(is, outputFile.toPath());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
             }
-            // outputs.file(getInputArtifact());
         }
     }
 
@@ -77,6 +96,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         project.getDependencies().registerTransform(ExtractFileAction.class, details -> {
             details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
             details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
+            details.getParameters().getPathToExtract().set("META-INF/MANIFEST.MF");
         });
 
         // project.getConfigurations().create("runtimeClasspathExtracted", )
