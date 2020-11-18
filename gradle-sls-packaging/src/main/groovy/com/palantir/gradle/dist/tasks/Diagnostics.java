@@ -127,7 +127,7 @@ final class Diagnostics {
         String string = null;
         try {
             string = new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
-            SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(file, SupportedDiagnostics.class);
+            SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(string, SupportedDiagnostics.class);
             log.info("Found diagnostics in local project '{}': '{}'", relativePath, value);
             return Optional.of(value);
         } catch (IOException e) {
