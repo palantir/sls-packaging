@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
 
 final class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
-    static final String PATH_IN_JAR = "sls-manifest/diagnostics.json";
+    private static final String PATH_IN_JAR = "sls-manifest/diagnostics.json";
 
     static SupportedDiagnostics loadFromConfiguration(Project current, Configuration configuration) {
         List<SupportedDiagnostic> list = Stream.concat(
@@ -76,14 +77,19 @@ final class Diagnostics {
     }
 
     @Value.Immutable
-    interface SupportedDiagnostics {
+    abstract static class SupportedDiagnostics {
         @Value.Parameter
         @JsonValue
-        List<SupportedDiagnostic> get();
+        abstract List<SupportedDiagnostic> get();
 
         @JsonCreator
         static SupportedDiagnostics of(List<SupportedDiagnostic> items) {
             return ImmutableSupportedDiagnostics.of(items);
+        }
+
+        @Override
+        public String toString() {
+            return get().stream().map(entry -> entry.type().toString()).collect(Collectors.joining(", ", "[", "]"));
         }
     }
 
@@ -117,18 +123,20 @@ final class Diagnostics {
             throw new GradleException("Expecting to find 0 or 1 files, found: " + sourceFiles);
         }
         File file = Iterables.getOnlyElement(sourceFiles);
+        Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
         String string = null;
         try {
             string = new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
             SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(file, SupportedDiagnostics.class);
-            log.info("Found diagnostics in local project '{}': '{}'", proj.getPath(), value);
+            log.info("Found diagnostics in local project '{}': '{}'", relativePath, value);
             return Optional.of(value);
         } catch (IOException e) {
             throw new GradleException(
-                    "Failed to deserialize '" + proj.getRootDir().toPath().relativize(file.toPath())
-                            + "', expecting something like " + "'[{\"type\":\"foo.v1\"}, {\"type\":\"bar.v1\"}]' but "
-                            + "was '"
-                            + string + "'",
+                    String.format(
+                            "Failed to deserialize '%s', "
+                                    + "expecting something like '[{\"type\":\"foo.v1\"}, {\"type\":\"bar.v1\"}]' "
+                                    + "but was '%s'",
+                            relativePath, string),
                     e);
         }
     }
@@ -166,7 +174,7 @@ final class Diagnostics {
      * {@code ([a-z0-9]+\.)+v[0-9]+}, i.e. be lower-case, dot-delimited, and end with a version suffix. For example, the
      * {@code threaddump.v1} diagnosticType  might indicate a value of ThreadDumpV1 from the DiagnosticLogV1 definition.
      */
-    public static final class DiagnosticType {
+    static final class DiagnosticType {
         private static final Pattern TYPE_PATTERN = Pattern.compile("([a-z0-9]+\\.)+v[0-9]+");
 
         private final String diagnosticTypeString;
