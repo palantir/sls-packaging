@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: sls-packaging will automatically include the `--enable-preview` jvm
+    arg in launcher-static.yml if `com.palantir.baseline-enable-preview-flag` is applied.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1033
