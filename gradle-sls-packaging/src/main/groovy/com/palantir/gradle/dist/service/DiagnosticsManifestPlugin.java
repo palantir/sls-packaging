@@ -25,7 +25,7 @@ import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.ArtifactCollection;
+import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     public static final Attribute<Boolean> DIAGNOSTIC_JSON_EXTRACTED =
-            Attribute.of("diagnosticJsonExtracted1", Boolean.class);
+            Attribute.of("diagnosticJsonExtracted", Boolean.class);
 
     @CacheableTransform
     public abstract static class ExtractFileAction implements TransformAction<ExtractFileAction.Parameters> {
@@ -85,7 +85,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getDependencies().getAttributesSchema().attribute(DIAGNOSTIC_JSON_EXTRACTED);
+        // project.getDependencies().getAttributesSchema().attribute(DIAGNOSTIC_JSON_EXTRACTED);
         project.getDependencies().getArtifactTypes().getByName("jar", it -> {
             it.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
         });
@@ -95,30 +95,31 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
         project.getDependencies().registerTransform(ExtractFileAction.class, details -> {
             details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
+            // details.getFrom()
+            //         .attribute(
+            //                 LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+            //                 project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
+            details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
             details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
+            // details.getParameters().getPathToExtract().set("sls-manifest/diagnostics.json");
             details.getParameters().getPathToExtract().set("META-INF/MANIFEST.MF");
         });
 
-        // project.getConfigurations().create("runtimeClasspathExtracted", )
+        ArtifactView view = project.getConfigurations()
+                .getByName("runtimeClasspath")
+                .getIncoming()
+                .artifactView(v -> {
+                    v.attributes(it -> {
+                        it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
+                    });
+                });
 
         project.getTasks().register("foo", DefaultTask.class, foo -> {
+            foo.dependsOn(view.getArtifacts().getArtifactFiles());
             foo.doLast(t -> {
-                final ArtifactCollection ac = runtimeClasspath
-                        .getIncoming()
-                        .artifactView(view -> {
-                            view.attributes(it -> {
-                                it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
-                            });
-                            view.lenient(false);
-                        })
-                        .getArtifacts();
-                System.out.println("DO THE TRANSFORM" + ac.getArtifactFiles().getFiles());
+                System.out.println("DO THE TRANSFORM"
+                        + view.getArtifacts().getArtifactFiles().getFiles());
             });
         });
-
-        //
-        // project.afterEvaluate(p -> {
-        //     System.out.println("POOP" + av.getArtifacts().getArtifactFiles().getFiles());
-        // });
     }
 }

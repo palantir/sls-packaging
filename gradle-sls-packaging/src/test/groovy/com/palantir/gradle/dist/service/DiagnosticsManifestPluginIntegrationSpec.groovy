@@ -23,7 +23,7 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
     def 'do something'() {
         when:
         buildFile << '''
-        apply plugin: 'java'
+        apply plugin: 'java-library'
         apply plugin: com.palantir.gradle.dist.service.DiagnosticsManifestPlugin
         
         repositories {
@@ -32,21 +32,32 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
  
         dependencies {
           implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
-//          runtimeClasspathExtracted
         }
         
+        jar {
+            manifest {
+                attributes("FOO": "BAR")
+            }
+        }
         
         task doStuff  {
           doLast {
-            println configurations.runtimeClasspath.files
-            println configurations.runtimeClasspath.attributes.keySet()
-            println configurations.runtimeClasspath.attributes.getAttribute(com.palantir.gradle.dist.service.DiagnosticsManifestPlugin.DIAGNOSTIC_JSON_EXTRACTED)
+          
+            configurations.forEach { c ->
+              println c
+            }
           }
         }
         '''
+        writeJavaSourceFile('''
+        package foo;
+        public final class Foo {}
+        ''')
+        addResource("sls-manifest", "diagnostics.json", '[{"type": "foo.v1"}]')
 
         then:
-        def output = runTasks("foo", '-is')
+//        def output = runTasks("doStuff", '-is')
+        def output = runTasks("foo", "jar", '-is')
         println output.standardOutput
         println output.standardError
     }
