@@ -222,10 +222,9 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     // See the internal sls-spec's debug.md document
-    private List<Diagnostics.SupportedDiagnostic> findSupportedDiagnosticTypesFromClasspath() {
-        List<Diagnostics.DiagnosticType> fromRuntimeClasspath = Diagnostics.loadFromConfiguration(
+    private Diagnostics.SupportedDiagnostics findSupportedDiagnosticTypesFromClasspath() {
+        return Diagnostics.loadFromConfiguration(
                 getProject(), getProject().getConfigurations().getByName("runtimeClasspath"));
-        return Diagnostics.asManifestExtension(fromRuntimeClasspath);
     }
 
     private List<ProductDependency> computeProductDependencies() {

@@ -27,6 +27,7 @@ import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.gradle.api.GradleException;
@@ -48,43 +50,52 @@ import org.slf4j.LoggerFactory;
 
 final class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
-    static final String PATH_IN_JAR = "sls-debug/diagnostics.json";
+    static final String PATH_IN_JAR = "sls-manifest/diagnostics.json";
 
-    static List<DiagnosticType> loadFromConfiguration(Project current, Configuration configuration) {
-        return configuration.getResolvedConfiguration().getResolvedArtifacts().stream()
-                .map(artifact -> {
-                    ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-                    if (id instanceof ProjectComponentIdentifier) {
-                        Project dependencyProject = current.project(((ProjectComponentIdentifier) id).getProjectPath());
-                        return maybeGetSourceFileFromLocalProject(dependencyProject);
-                    } else {
-                        return maybeExtractFromJar(artifact.getFile(), id);
-                    }
-                })
+    static SupportedDiagnostics loadFromConfiguration(Project current, Configuration configuration) {
+        List<SupportedDiagnostic> list = Stream.concat(
+                        Stream.of(maybeGetSourceFileFromLocalProject(current)),
+                        configuration.getResolvedConfiguration().getResolvedArtifacts().stream()
+                                .map(artifact -> {
+                                    ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+                                    if (id instanceof ProjectComponentIdentifier) {
+                                        Project dependencyProject =
+                                                current.project(((ProjectComponentIdentifier) id).getProjectPath());
+                                        return maybeGetSourceFileFromLocalProject(dependencyProject);
+                                    } else {
+                                        return maybeExtractFromJar(artifact.getFile(), id);
+                                    }
+                                }))
                 .filter(Optional::isPresent)
-                .flatMap(isPresent -> isPresent.get().types().stream())
+                .flatMap(isPresent -> isPresent.get().get().stream())
                 .distinct() // would be kinda weird if multiple jars claim to provide the same diagnostic type??
-                .sorted(Comparator.comparing(DiagnosticType::toString))
+                .sorted(Comparator.comparing(value -> value.type().toString()))
                 .collect(Collectors.toList());
-    }
 
-    static List<SupportedDiagnostic> asManifestExtension(List<DiagnosticType> items) {
-        return items.stream().map(ImmutableSupportedDiagnostic::of).collect(Collectors.toList());
-    }
-
-    @Value.Immutable
-    @JsonDeserialize(as = ImmutableEmbeddedInJar.class)
-    interface EmbeddedInJar {
-        List<DiagnosticType> types();
+        return SupportedDiagnostics.of(list);
     }
 
     @Value.Immutable
+    interface SupportedDiagnostics {
+        @Value.Parameter
+        @JsonValue
+        List<SupportedDiagnostic> get();
+
+        @JsonCreator
+        static SupportedDiagnostics of(List<SupportedDiagnostic> items) {
+            return ImmutableSupportedDiagnostics.of(items);
+        }
+    }
+
+    // This is the format the sls-spec wants list items to be. <code>{type: "foo.v1"}</code>.
+    @Value.Immutable
+    @JsonDeserialize(as = ImmutableSupportedDiagnostic.class)
     interface SupportedDiagnostic {
         @Value.Parameter
         DiagnosticType type();
     }
 
-    private static Optional<EmbeddedInJar> maybeGetSourceFileFromLocalProject(Project proj) {
+    private static Optional<SupportedDiagnostics> maybeGetSourceFileFromLocalProject(Project proj) {
         JavaPluginConvention javaPlugin = proj.getConvention().findPlugin(JavaPluginConvention.class);
         if (javaPlugin == null) {
             return Optional.empty();
@@ -106,17 +117,23 @@ final class Diagnostics {
             throw new GradleException("Expecting to find 0 or 1 files, found: " + sourceFiles);
         }
         File file = Iterables.getOnlyElement(sourceFiles);
+        String string = null;
         try {
-            return Optional.of(CreateManifestTask.jsonMapper.readValue(file, EmbeddedInJar.class));
+            string = new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
+            SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(file, SupportedDiagnostics.class);
+            log.info("Found diagnostics in local project '{}': '{}'", proj.getPath(), value);
+            return Optional.of(value);
         } catch (IOException e) {
             throw new GradleException(
-                    "Failed to deserialize '" + file + "', expecting something like "
-                            + "{\"types\":[\"foo.v1\", \"bar.v1\"]} ",
+                    "Failed to deserialize '" + proj.getRootDir().toPath().relativize(file.toPath())
+                            + "', expecting something like " + "'[{\"type\":\"foo.v1\"}, {\"type\":\"bar.v1\"}]' but "
+                            + "was '"
+                            + string + "'",
                     e);
         }
     }
 
-    private static Optional<EmbeddedInJar> maybeExtractFromJar(File jarFile, ComponentIdentifier idForLogging) {
+    private static Optional<SupportedDiagnostics> maybeExtractFromJar(File jarFile, ComponentIdentifier idForLogging) {
         if (!jarFile.exists()) {
             log.debug("Artifact did not exist: {}", jarFile);
             return Optional.empty();
@@ -133,7 +150,9 @@ final class Diagnostics {
             }
 
             try (InputStream is = zipFile.getInputStream(zipEntry)) {
-                return Optional.of(CreateManifestTask.jsonMapper.readValue(is, EmbeddedInJar.class));
+                SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(is, SupportedDiagnostics.class);
+                log.info("Found diagnostics embedded in jar '{}': '{}'", idForLogging, value);
+                return Optional.of(value);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load from jar: " + idForLogging);
