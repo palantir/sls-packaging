@@ -207,6 +207,20 @@ public class CreateManifestTask extends DefaultTask {
     @TaskAction
     final void createManifest() throws Exception {
         validateProjectVersion();
+        jsonMapper.writeValue(
+                getManifestFile(),
+                SlsManifest.builder()
+                        .manifestVersion("1.0")
+                        .productType(productType.get())
+                        .productGroup(serviceGroup.get())
+                        .productName(serviceName.get())
+                        .productVersion(getProjectVersion())
+                        .putAllExtensions(manifestExtensions.get())
+                        .putExtensions("product-dependencies", computeProductDependencies())
+                        .build());
+    }
+
+    private List<ProductDependency> computeProductDependencies() {
         if (manifestExtensions.get().containsKey("product-dependencies")) {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
                     + "'product-dependencies' key in manifestExtensions");
@@ -261,17 +275,7 @@ public class CreateManifestTask extends DefaultTask {
             ensureLockfileIsUpToDate(productDeps);
         }
 
-        jsonMapper.writeValue(
-                getManifestFile(),
-                SlsManifest.builder()
-                        .manifestVersion("1.0")
-                        .productType(productType.get())
-                        .productGroup(serviceGroup.get())
-                        .productName(serviceName.get())
-                        .productVersion(getProjectVersion())
-                        .putAllExtensions(manifestExtensions.get())
-                        .putExtensions("product-dependencies", productDeps)
-                        .build());
+        return productDeps;
     }
 
     private void requireAbsentLockfile() {
