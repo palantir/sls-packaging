@@ -29,7 +29,7 @@ dependencies {
 
 /**
  * Per default, Gradle TestKit excludes compileOnly dependencies resulting in ClassNotFoundExceptions when sls-packaging
- * tries to access 'gradle-consistent-versions' classes in integ tests.
+ * tries to access 'gradle-consistent-versions' classes in integ tests e.g. in 'AssetDistributionPluginIntegrationSpec'.
  * https://discuss.gradle.org/t/testkit-somehow-excludes-compileonly-dependencies
  */
 tasks.withType(PluginUnderTestMetadata).configureEach {

@@ -160,6 +160,10 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
      * runtimeElements variant (from configuration runtimeElements) so our {@code sls} variant won't be selected.
      * However, here we only care about testing that it can resolve to <i>something</i>, for the sole purpose of
      * extracting the version the resolved component.
+     *
+     * This test requires the gradle-consistent-versions plugin to be on the same classpath because {@link GcvUtils} is
+     * used. As 'compileOnly' dependencies are not included by Gradle TestKit per default, we need to extend the
+     * classpath for plugins under test in 'gradle-sls-packaging/build.gradle'.
      */
     def 'dist project can be resolved through plain dependency when GCV is applied'() {
         buildFile << """
