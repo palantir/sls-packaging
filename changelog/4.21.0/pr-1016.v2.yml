@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Use hybrid as default GC profile for Java 15 and above
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1016

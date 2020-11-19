@@ -73,7 +73,9 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
         enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
 
-        gc = objectFactory.property(GcProfile.class).value(new GcProfile.Throughput());
+        gc = objectFactory
+                .property(GcProfile.class)
+                .value(javaVersion.map(JavaServiceDistributionExtension::getDefaultGcProfile));
 
         args = objectFactory.listProperty(String.class).empty();
         checkArgs = objectFactory.listProperty(String.class).empty();
@@ -236,5 +238,13 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
     public final <T extends GcProfile> void gc(Class<T> type) {
         gc(type, null);
+    }
+
+    private static GcProfile getDefaultGcProfile(JavaVersion javaVersion) {
+        // For Java 15 and above, use hybrid as the default garbage collector
+        if (javaVersion.compareTo(JavaVersion.toVersion("14")) > 0) {
+            return new GcProfile.Hybrid();
+        }
+        return new GcProfile.Throughput();
     }
 }
