@@ -157,7 +157,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    final MapProperty<String, Object> getManifestExtensions() {
+    public final MapProperty<String, Object> getManifestExtensions() {
         return manifestExtensions;
     }
 
@@ -217,14 +217,7 @@ public class CreateManifestTask extends DefaultTask {
                         .productVersion(getProjectVersion())
                         .putAllExtensions(manifestExtensions.get())
                         .putExtensions("product-dependencies", computeProductDependencies())
-                        .putExtensions("diagnostics", findSupportedDiagnosticTypesFromClasspath())
                         .build());
-    }
-
-    // See the internal sls-spec's debug.md document
-    private Diagnostics.SupportedDiagnostics findSupportedDiagnosticTypesFromClasspath() {
-        return Diagnostics.loadFromConfiguration(
-                getProject(), getProject().getConfigurations().getByName("runtimeClasspath"));
     }
 
     private List<ProductDependency> computeProductDependencies() {

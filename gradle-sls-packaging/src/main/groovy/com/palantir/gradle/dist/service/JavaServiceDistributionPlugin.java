@@ -227,6 +227,17 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
+        project.getPlugins().apply(DiagnosticsManifestPlugin.class);
+        TaskProvider<DiagnosticsManifestPlugin.MergeDiagnosticsJsonTask> mergeDiagnosticsJson = project.getTasks()
+                .withType(DiagnosticsManifestPlugin.MergeDiagnosticsJsonTask.class)
+                .named(DiagnosticsManifestPlugin.mergeDiagnosticsJson);
+        manifest.configure(createManifestTask -> {
+            createManifestTask.dependsOn(mergeDiagnosticsJson);
+            createManifestTask
+                    .getManifestExtensions()
+                    .put("diagnostics", mergeDiagnosticsJson.get().asProvider());
+        });
+
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
 

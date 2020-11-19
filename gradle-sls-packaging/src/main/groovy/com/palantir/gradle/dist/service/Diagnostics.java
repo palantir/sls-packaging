@@ -14,63 +14,31 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.tasks;
+package com.palantir.gradle.dist.service;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.collect.Iterables;
-import com.google.common.io.Files;
+import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.immutables.value.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
-    private static final String PATH_IN_JAR = "sls-manifest/diagnostics.json";
-
-    static SupportedDiagnostics loadFromConfiguration(Project current, Configuration configuration) {
-        List<SupportedDiagnostic> list = Stream.concat(
-                        Stream.of(maybeGetSourceFileFromLocalProject(current)),
-                        configuration.getResolvedConfiguration().getResolvedArtifacts().stream()
-                                .map(artifact -> {
-                                    ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-                                    if (id instanceof ProjectComponentIdentifier) {
-                                        Project dependencyProject =
-                                                current.project(((ProjectComponentIdentifier) id).getProjectPath());
-                                        return maybeGetSourceFileFromLocalProject(dependencyProject);
-                                    } else {
-                                        return maybeExtractFromJar(artifact.getFile(), id);
-                                    }
-                                }))
-                .filter(Optional::isPresent)
-                .flatMap(isPresent -> isPresent.get().get().stream())
-                .distinct() // would be kinda weird if multiple jars claim to provide the same diagnostic type??
-                .sorted(Comparator.comparing(value -> value.type().toString()))
-                .collect(Collectors.toList());
-
-        return SupportedDiagnostics.of(list);
-    }
 
     @Value.Immutable
     public abstract static class SupportedDiagnostics {
@@ -97,31 +65,6 @@ public final class Diagnostics {
         DiagnosticType type();
     }
 
-    private static Optional<SupportedDiagnostics> maybeGetSourceFileFromLocalProject(Project proj) {
-        JavaPluginConvention javaPlugin = proj.getConvention().findPlugin(JavaPluginConvention.class);
-        if (javaPlugin == null) {
-            return Optional.empty();
-        }
-
-        Set<File> sourceFiles = javaPlugin
-                .getSourceSets()
-                .getByName("main")
-                .getResources()
-                .getAsFileTree()
-                .filter(file -> {
-                    return file.toString().endsWith(PATH_IN_JAR);
-                })
-                .getFiles();
-        if (sourceFiles.isEmpty()) {
-            return Optional.empty();
-        }
-        if (sourceFiles.size() > 1) {
-            throw new GradleException("Expecting to find 0 or 1 files, found: " + sourceFiles);
-        }
-        File file = Iterables.getOnlyElement(sourceFiles);
-        return Optional.of(parse(proj, file));
-    }
-
     public static SupportedDiagnostics parse(Project proj, File file) {
         Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
         String string = null;
@@ -138,32 +81,6 @@ public final class Diagnostics {
                                     + "but was '%s'",
                             relativePath, string),
                     e);
-        }
-    }
-
-    private static Optional<SupportedDiagnostics> maybeExtractFromJar(File jarFile, ComponentIdentifier idForLogging) {
-        if (!jarFile.exists()) {
-            log.debug("Artifact did not exist: {}", jarFile);
-            return Optional.empty();
-        } else if (!Files.getFileExtension(jarFile.getName()).equals("jar")) {
-            log.debug("Artifact is not a jar: {}", jarFile);
-            return Optional.empty();
-        }
-
-        try (ZipFile zipFile = new ZipFile(jarFile)) {
-            ZipEntry zipEntry = zipFile.getEntry(PATH_IN_JAR);
-            if (zipEntry == null) {
-                log.debug("Unable to find '{}' in JAR: {}", PATH_IN_JAR, idForLogging);
-                return Optional.empty();
-            }
-
-            try (InputStream is = zipFile.getInputStream(zipEntry)) {
-                SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(is, SupportedDiagnostics.class);
-                log.info("Found diagnostics embedded in jar '{}': '{}'", idForLogging, value);
-                return Optional.of(value);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load from jar: " + idForLogging);
         }
     }
 

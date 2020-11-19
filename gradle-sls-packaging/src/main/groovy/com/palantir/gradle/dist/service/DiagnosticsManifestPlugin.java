@@ -17,14 +17,25 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
-import com.palantir.gradle.dist.tasks.Diagnostics;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.Comparator;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.transform.*;
+import org.gradle.api.artifacts.transform.CacheableTransform;
+import org.gradle.api.artifacts.transform.InputArtifact;
+import org.gradle.api.artifacts.transform.TransformAction;
+import org.gradle.api.artifacts.transform.TransformOutputs;
+import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.attributes.Usage;
@@ -34,18 +45,16 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.artifacts.ArtifactAttributes;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.CacheableTask;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.api.tasks.TaskAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Comparator;
-import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
@@ -140,6 +149,17 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             } catch (IOException e) {
                 throw new GradleException("Failed to write " + out, e);
             }
+        }
+
+        @Internal
+        public Provider<Diagnostics.SupportedDiagnostics> asProvider() {
+            return getOutputJsonFile().getAsFile().map(file -> {
+                try {
+                    return CreateManifestTask.jsonMapper.readValue(file, Diagnostics.SupportedDiagnostics.class);
+                } catch (IOException e) {
+                    throw new GradleException("Failed to read " + file, e);
+                }
+            });
         }
     }
 
