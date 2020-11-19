@@ -47,7 +47,6 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -147,7 +146,6 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             }
         }
 
-        @Internal
         public final Provider<List<Diagnostics.SupportedDiagnostic>> asProvider() {
             return getOutputJsonFile().getAsFile().map(file -> Diagnostics.parse(getProject(), file));
         }

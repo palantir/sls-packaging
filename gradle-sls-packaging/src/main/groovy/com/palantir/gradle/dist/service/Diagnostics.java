@@ -26,6 +26,7 @@ import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -43,7 +44,7 @@ public final class Diagnostics {
     // This is the format the sls-spec wants list items to be. <code>{type: "foo.v1"}</code>.
     @Value.Immutable
     @JsonDeserialize(as = ImmutableSupportedDiagnostic.class)
-    public interface SupportedDiagnostic {
+    public interface SupportedDiagnostic extends Serializable {
         @Value.Parameter
         DiagnosticType type();
     }
@@ -75,7 +76,7 @@ public final class Diagnostics {
      * {@code ([a-z0-9]+\.)+v[0-9]+}, i.e. be lower-case, dot-delimited, and end with a version suffix. For example, the
      * {@code threaddump.v1} diagnosticType  might indicate a value of ThreadDumpV1 from the DiagnosticLogV1 definition.
      */
-    public static final class DiagnosticType {
+    public static final class DiagnosticType implements Serializable {
         private static final Pattern TYPE_PATTERN = Pattern.compile("([a-z0-9]+\\.)+v[0-9]+");
 
         private final String diagnosticTypeString;
