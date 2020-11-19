@@ -49,6 +49,8 @@ import java.util.zip.ZipFile;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
+    public static final String mergeDiagnosticsJson = "mergeDiagnosticsJson";
+
     /**
      * This plugin uses Gradle's Artifact Transforms to extract a single file from all the jars on the classpath
      * (https://docs.gradle.org/current/userguide/artifact_transforms.html).
@@ -101,21 +103,20 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             });
         });
 
-        project.getTasks().register("mergeDiagnosticsJson", MergeDiagnosticsJsonTask.class, task -> {
+        project.getTasks().register(mergeDiagnosticsJson, MergeDiagnosticsJsonTask.class, task -> {
             // We're going to read from this FileCollection, so we need to make sure that Gradle is aware of any
             // task dependencies necessary for fully populate the files (specifically, we need it to run 'jar').
             task.dependsOn(myView.getArtifacts().getArtifactFiles());
 
             task.getInputJsonFiles().set(myView.getArtifacts().getArtifactFiles());
+
+            File out = new File(project.getBuildDir(), task.getName() + ".json");
+            task.getOutputJsonFile().set(out);
         });
     }
 
+    @CacheableTask
     public abstract static class MergeDiagnosticsJsonTask extends DefaultTask {
-
-        public MergeDiagnosticsJsonTask() {
-            File out = new File(getProject().getBuildDir(), getName() + ".json");
-            getOutputJsonFile().set(out);
-        }
 
         @InputFiles
         @PathSensitive(PathSensitivity.NONE)

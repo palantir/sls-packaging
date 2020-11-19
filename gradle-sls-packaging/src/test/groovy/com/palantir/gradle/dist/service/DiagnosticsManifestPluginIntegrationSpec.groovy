@@ -16,12 +16,30 @@
 
 package com.palantir.gradle.dist.service
 
+
 import nebula.test.IntegrationSpec
+
+import java.nio.file.Files
+import java.nio.file.Path
 
 class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
 
+    private void enableLocalBuildCache() {
+        Path localBuildCache = Files.createDirectories(projectDir.toPath().resolve("local-build-cache"))
+        file("gradle.properties") << "org.gradle.caching=true"
+        settingsFile << """
+        buildCache {
+            local {
+                directory = file("${localBuildCache}")
+                enabled = true
+            }
+        }
+        """.stripIndent()
+    }
+
     def 'detects stuff defined in current project'() {
         when:
+        enableLocalBuildCache()
         buildFile << '''
         apply plugin: 'java-library'
         apply plugin: com.palantir.gradle.dist.service.DiagnosticsManifestPlugin
@@ -37,13 +55,26 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         addResource("src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1"}]')
 
         then:
-        def output = runTasks("mergeDiagnosticsJson", '-is')
-        assert new File(projectDir, "build/mergeDiagnosticsJson.json").text == """\
+        runTasks("mergeDiagnosticsJson", '-is')
+        def outFile = new File(projectDir, "build/mergeDiagnosticsJson.json")
+        assert outFile.text == """\
         [ {
           "type" : "foo.v1"
-        } ]""".stripIndent() ?: output.standardOutput
-    }
+        } ]""".stripIndent()
 
+        when:
+        def output2 = runTasks("mergeDiagnosticsJson", '-is')
+
+        then:
+        output2.getStandardOutput().contains("Task :mergeDiagnosticsJson UP-TO-DATE")
+
+        when:
+        outFile.delete()
+        def output3 = runTasks("mergeDiagnosticsJson", '-is')
+
+        then:
+        output3.getStandardOutput().contains("Task :mergeDiagnosticsJson FROM-CACHE")
+    }
 
     def 'detects stuff defined in sibling projects'() {
         when:
@@ -84,6 +115,4 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
           "type" : "myproject2.v1"
         } ]""".stripIndent()
     }
-
-
 }
