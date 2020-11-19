@@ -16,8 +16,10 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import com.palantir.gradle.dist.tasks.Diagnostics;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -26,13 +28,13 @@ import org.gradle.api.artifacts.transform.*;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.LibraryElements;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.artifacts.ArtifactAttributes;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.api.tasks.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +42,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -57,6 +61,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        String fileToExtract = "sls-manifest/diagnostics.json";
+        String attribute = "extracted-" + fileToExtract;
+
         project.getDependencies().getArtifactTypes().getByName("jar", it -> {
             it.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
         });
@@ -73,12 +80,12 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                             project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
 
             details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
-            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, "extracted-file");
+            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
             details.getTo()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, "extracted-file"));
-            details.getParameters().getPathToExtract().set("sls-manifest/diagnostics.json");
+                            project.getObjects().named(LibraryElements.class, attribute));
+            details.getParameters().getPathToExtract().set(fileToExtract);
         });
 
         // In order to get classes & resources from this project bundled into a jar, we make up this new
@@ -98,19 +105,45 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             });
         });
 
-        project.getTasks().register("foo", DefaultTask.class, task -> {
+        project.getTasks().register("mergeDiagnosticsJson", MergeDiagnosticsJsonTask.class, task -> {
             // We're going to read from this FileCollection, so we need to make sure that Gradle is aware of any
             // task dependencies necesary for fully populate the files (specifically, we need it to run 'jar').
             task.dependsOn(myView.getArtifacts().getArtifactFiles());
 
-            task.doLast(t -> {
-                myView.getArtifacts().forEach(resolved -> {
-                    System.out.println(Diagnostics.parse(project, resolved.getFile()));
-                    System.out.println("POOP" + resolved.getFile() + " | "
-                            + resolved.getVariant().getAttributes());
-                });
-            });
+            task.getInputJsonFiles().set(myView.getArtifacts().getArtifactFiles());
         });
+    }
+
+    public abstract static class MergeDiagnosticsJsonTask extends DefaultTask {
+
+        public MergeDiagnosticsJsonTask() {
+            File out = new File(getProject().getBuildDir(), getName() + ".json");
+            getOutputJsonFile().set(out);
+        }
+
+        @InputFiles
+        @PathSensitive(PathSensitivity.NONE)
+        public abstract Property<FileCollection> getInputJsonFiles();
+
+        @OutputFile
+        public abstract RegularFileProperty getOutputJsonFile();
+
+        @TaskAction
+        public void taskAction() {
+            Diagnostics.SupportedDiagnostics aggregated =
+                    Diagnostics.SupportedDiagnostics.of(getInputJsonFiles().get().getFiles().stream()
+                            .flatMap(file -> Diagnostics.parse(getProject(), file).get().stream())
+                            .distinct()
+                            .sorted(Comparator.comparing(v -> v.type().toString()))
+                            .collect(Collectors.toList()));
+
+            File out = getOutputJsonFile().getAsFile().get();
+            try {
+                CreateManifestTask.jsonMapper.writeValue(out, aggregated);
+            } catch (IOException e) {
+                throw new GradleException("Failed to write " + out, e);
+            }
+        }
     }
 
     @CacheableTransform

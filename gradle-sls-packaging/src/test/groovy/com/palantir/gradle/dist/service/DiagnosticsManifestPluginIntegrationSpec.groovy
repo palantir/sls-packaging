@@ -20,7 +20,7 @@ import nebula.test.IntegrationSpec
 
 class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
 
-    def 'do something'() {
+    def 'detects stuff defined in current project'() {
         when:
         buildFile << '''
         apply plugin: 'java-library'
@@ -33,23 +33,14 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         dependencies {
           implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
         }
-        
-        jar {
-            manifest {
-                attributes("FOO": "BAR")
-            }
-        }
-        
         '''
-        writeJavaSourceFile('''
-        package foo;
-        public final class Foo {}
-        ''')
         addResource("src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1"}]')
 
         then:
-        def output = runTasks("foo", '-is')
-        println output.standardOutput
-        println output.standardError
+        def output = runTasks("mergeDiagnosticsJson", '-is')
+        assert new File(projectDir, "build/mergeDiagnosticsJson.json").text == """\
+        [ {
+          "type" : "foo.v1"
+        } ]""".stripIndent() ?: output.standardOutput
     }
 }

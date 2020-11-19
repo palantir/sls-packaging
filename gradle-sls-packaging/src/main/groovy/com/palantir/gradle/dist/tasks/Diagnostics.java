@@ -74,13 +74,13 @@ public final class Diagnostics {
     }
 
     @Value.Immutable
-    abstract static class SupportedDiagnostics {
+    public abstract static class SupportedDiagnostics {
         @Value.Parameter
         @JsonValue
-        abstract List<SupportedDiagnostic> get();
+        public abstract List<SupportedDiagnostic> get();
 
         @JsonCreator
-        static SupportedDiagnostics of(List<SupportedDiagnostic> items) {
+        public static SupportedDiagnostics of(List<SupportedDiagnostic> items) {
             return ImmutableSupportedDiagnostics.of(items);
         }
 
@@ -93,7 +93,7 @@ public final class Diagnostics {
     // This is the format the sls-spec wants list items to be. <code>{type: "foo.v1"}</code>.
     @Value.Immutable
     @JsonDeserialize(as = ImmutableSupportedDiagnostic.class)
-    interface SupportedDiagnostic {
+    public interface SupportedDiagnostic {
         @Value.Parameter
         DiagnosticType type();
     }
@@ -175,7 +175,7 @@ public final class Diagnostics {
      * {@code ([a-z0-9]+\.)+v[0-9]+}, i.e. be lower-case, dot-delimited, and end with a version suffix. For example, the
      * {@code threaddump.v1} diagnosticType  might indicate a value of ThreadDumpV1 from the DiagnosticLogV1 definition.
      */
-    static final class DiagnosticType {
+    public static final class DiagnosticType {
         private static final Pattern TYPE_PATTERN = Pattern.compile("([a-z0-9]+\\.)+v[0-9]+");
 
         private final String diagnosticTypeString;
