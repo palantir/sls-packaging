@@ -75,11 +75,14 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         def output = runTasks("my-server:mergeDiagnosticsJson", '-is')
         println output.standardOutput
         println output.standardError
-        println new File(projectDir, "my-server/build/mergeDiagnosticsJson.json").text
-//        assert new File(projectDir, "my-server/build/mergeDiagnosticsJson.json").text == """\
-//        [ {
-//          "type" : "foo.v1"
-//        } ]""".stripIndent() ?: output.standardOutput
+        assert new File(projectDir, "my-server/build/mergeDiagnosticsJson.json").text == """\
+        [ {
+          "type" : "foo.v1"
+        }, {
+          "type" : "myproject1.v1"
+        }, {
+          "type" : "myproject2.v1"
+        } ]""".stripIndent()
     }
 
 

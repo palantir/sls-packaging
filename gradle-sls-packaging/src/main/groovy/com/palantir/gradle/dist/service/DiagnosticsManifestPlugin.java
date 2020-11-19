@@ -25,11 +25,13 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.transform.*;
-import org.gradle.api.attributes.Attribute;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
+import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.internal.artifacts.ArtifactAttributes;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.*;
@@ -50,53 +52,42 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     /**
      * This plugin uses Gradle's Artifact Transforms to extract a single file from all the jars on the classpath
      * (https://docs.gradle.org/current/userguide/artifact_transforms.html).
-     * We mark all jars with diagnosticJsonExtracted=false and then ask for a view of diagnosticJsonExtracted=true
-     * and gradle figures out it can use the {@link ExtractSingleFile} transform to process the jars and extract
-     * the stuff we want! Crucially, this is all cached _beautifully_.
+     * All we do is tell gradle what function can turn 'usage=jar' into 'usage=(our thing)', and then declare a
+     * a view using 'usage=(our thing)' and it'll just run the {@link ExtractSingleFile} transform
+     * to process the jars and extract the stuff we want! Crucially, this is all cached _beautifully_.
      */
-    public static final Attribute<Boolean> DIAGNOSTIC_JSON_EXTRACTED =
-            Attribute.of("diagnosticJsonExtracted", Boolean.class);
-
     @Override
     public void apply(Project project) {
         String fileToExtract = "sls-manifest/diagnostics.json";
         String attribute = "extracted-" + fileToExtract;
 
-        project.getDependencies().getArtifactTypes().getByName("jar", it -> {
-            it.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
-        });
-
-        Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
-        runtimeClasspath.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
-
         project.getDependencies().registerTransform(ExtractSingleFile.class, details -> {
-            //            details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
-            //            details.getFrom().attribute(ArtifactAttributes.ARTIFACT_FORMAT,
-            // ArtifactTypeDefinition.JAR_TYPE);
-            //            details.getFrom()
-            //                    .attribute(
-            //                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-            //                            project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
+            details.getParameters().getPathToExtract().set(fileToExtract);
+
+            // this USAGE_ATTRIBUTE is already present on everything, so gradle can figure out how to transform to our
+            // attribute value
             details.getFrom()
                     .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
-
-            //            details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
-            //            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
-            //            details.getTo()
-            //                    .attribute(
-            //                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-            //                            project.getObjects().named(LibraryElements.class, attribute));
             details.getTo()
                     .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
-            details.getParameters().getPathToExtract().set(fileToExtract);
+
+            // these ones aren't really necessary, just for tidiness (seems bad to label something a jar when it's not)
+            details.getFrom().attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE);
+            details.getFrom()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
+            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
+            details.getTo()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, attribute));
         });
 
         // In order to get classes & resources from this project bundled into a jar, we make up this new
         // configuration and add a 'self' dependency.
         Configuration consumable = project.getConfigurations().create("runtimeClasspath2", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
-            //            conf.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
-            //            conf.getAttributes().attribute(ArtifactAttributes.ARTIFACT_FORMAT, "jar");
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
@@ -104,16 +95,15 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         project.getDependencies().add(consumable.getName(), project);
 
         ArtifactView myView = consumable.getIncoming().artifactView(v -> {
-            v.lenient(false);
             v.attributes(it -> {
+                // this is where the magic happens!
                 it.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
-                //                it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
             });
         });
 
         project.getTasks().register("mergeDiagnosticsJson", MergeDiagnosticsJsonTask.class, task -> {
             // We're going to read from this FileCollection, so we need to make sure that Gradle is aware of any
-            // task dependencies necesary for fully populate the files (specifically, we need it to run 'jar').
+            // task dependencies necessary for fully populate the files (specifically, we need it to run 'jar').
             task.dependsOn(myView.getArtifacts().getArtifactFiles());
 
             task.getInputJsonFiles().set(myView.getArtifacts().getArtifactFiles());
