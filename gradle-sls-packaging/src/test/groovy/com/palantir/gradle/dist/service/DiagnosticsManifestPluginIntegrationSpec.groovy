@@ -44,5 +44,43 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         } ]""".stripIndent() ?: output.standardOutput
     }
 
-    
+
+    def 'detects stuff defined in sibling projects'() {
+        when:
+        buildFile << '''
+        subprojects {
+            apply plugin: 'java-library'
+            repositories {
+              mavenCentral()
+            }
+        }
+        '''
+
+        addSubproject('my-server', '''
+        apply plugin: com.palantir.gradle.dist.service.DiagnosticsManifestPlugin
+        dependencies {
+            implementation project(':my-project1')
+            implementation project(':my-project2')
+        }
+        ''')
+        addResource("my-server/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1"}]')
+
+        addSubproject('my-project1')
+        addResource("my-project1/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "myproject1.v1"}]')
+
+        addSubproject('my-project2')
+        addResource("my-project2/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "myproject2.v1"}]')
+
+        then:
+        def output = runTasks("my-server:mergeDiagnosticsJson", '-is')
+        println output.standardOutput
+        println output.standardError
+        println new File(projectDir, "my-server/build/mergeDiagnosticsJson.json").text
+//        assert new File(projectDir, "my-server/build/mergeDiagnosticsJson.json").text == """\
+//        [ {
+//          "type" : "foo.v1"
+//        } ]""".stripIndent() ?: output.standardOutput
+    }
+
+
 }

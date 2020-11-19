@@ -18,6 +18,24 @@ package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import com.palantir.gradle.dist.tasks.Diagnostics;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.ArtifactView;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.transform.*;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.Usage;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,25 +44,6 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.ArtifactView;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.transform.*;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
-import org.gradle.api.attributes.Attribute;
-import org.gradle.api.attributes.LibraryElements;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.internal.artifacts.ArtifactAttributes;
-import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
@@ -71,19 +70,24 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         runtimeClasspath.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
 
         project.getDependencies().registerTransform(ExtractSingleFile.class, details -> {
-            details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
-            details.getFrom().attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE);
+            //            details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
+            //            details.getFrom().attribute(ArtifactAttributes.ARTIFACT_FORMAT,
+            // ArtifactTypeDefinition.JAR_TYPE);
+            //            details.getFrom()
+            //                    .attribute(
+            //                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+            //                            project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
             details.getFrom()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
+                    .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
 
-            details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
-            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
+            //            details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
+            //            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
+            //            details.getTo()
+            //                    .attribute(
+            //                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+            //                            project.getObjects().named(LibraryElements.class, attribute));
             details.getTo()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, attribute));
+                    .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
             details.getParameters().getPathToExtract().set(fileToExtract);
         });
 
@@ -91,7 +95,8 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         // configuration and add a 'self' dependency.
         Configuration consumable = project.getConfigurations().create("runtimeClasspath2", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
-            conf.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
+            //            conf.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
+            //            conf.getAttributes().attribute(ArtifactAttributes.ARTIFACT_FORMAT, "jar");
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
@@ -99,8 +104,10 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         project.getDependencies().add(consumable.getName(), project);
 
         ArtifactView myView = consumable.getIncoming().artifactView(v -> {
+            v.lenient(false);
             v.attributes(it -> {
-                it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
+                it.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
+                //                it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
             });
         });
 
