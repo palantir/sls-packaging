@@ -43,4 +43,6 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
           "type" : "foo.v1"
         } ]""".stripIndent() ?: output.standardOutput
     }
+
+    
 }
