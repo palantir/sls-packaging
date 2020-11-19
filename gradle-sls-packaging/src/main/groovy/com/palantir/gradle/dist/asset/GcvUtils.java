@@ -26,7 +26,7 @@ import org.gradle.api.Project;
 final class GcvUtils {
     /**
      * If GCV is applied, we want to lock the asset configuration.
-     * This is to wrong around a bug where, during --write-locks, the locks from locked configurations don't get
+     * This is to work around a bug where during --write-locks, the locks from locked configurations don't get
      * exposed to consumers (as constraints) and so non-locked configurations get different versions than when
      * running without {@code --write-locks}.
      */

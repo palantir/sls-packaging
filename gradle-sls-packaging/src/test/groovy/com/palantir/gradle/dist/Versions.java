@@ -18,7 +18,7 @@ package com.palantir.gradle.dist;
 
 public final class Versions {
 
-    public static final String GRADLE_CONSISTENT_VERSIONS = "1.13.1";
+    public static final String GRADLE_CONSISTENT_VERSIONS = "1.27.0";
 
     private Versions() {}
 }
