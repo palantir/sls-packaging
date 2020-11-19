@@ -52,7 +52,7 @@ public final class Diagnostics {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return get().stream().map(entry -> entry.type().toString()).collect(Collectors.joining(", ", "[", "]"));
         }
     }

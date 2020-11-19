@@ -36,13 +36,11 @@ import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.internal.artifacts.ArtifactAttributes;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.CacheableTask;
@@ -83,12 +81,10 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                     .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
 
             // these ones aren't really necessary, just for tidiness (seems bad to label something a jar when it's not)
-            details.getFrom().attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE);
             details.getFrom()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
                             project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
-            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
             details.getTo()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
@@ -135,7 +131,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         public abstract RegularFileProperty getOutputJsonFile();
 
         @TaskAction
-        public void taskAction() {
+        public final void taskAction() {
             Diagnostics.SupportedDiagnostics aggregated =
                     Diagnostics.SupportedDiagnostics.of(getInputJsonFiles().get().getFiles().stream()
                             .flatMap(file -> Diagnostics.parse(getProject(), file).get().stream())
@@ -152,7 +148,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         }
 
         @Internal
-        public Provider<Diagnostics.SupportedDiagnostics> asProvider() {
+        public final Provider<Diagnostics.SupportedDiagnostics> asProvider() {
             return getOutputJsonFile().getAsFile().map(file -> {
                 try {
                     return CreateManifestTask.jsonMapper.readValue(file, Diagnostics.SupportedDiagnostics.class);
@@ -177,7 +173,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         public abstract Provider<FileSystemLocation> getInputArtifact();
 
         @Override
-        public void transform(TransformOutputs outputs) {
+        public final void transform(TransformOutputs outputs) {
             File jarFile = getInputArtifact().get().getAsFile();
             String pathToExtract = getParameters().getPathToExtract().get();
 
