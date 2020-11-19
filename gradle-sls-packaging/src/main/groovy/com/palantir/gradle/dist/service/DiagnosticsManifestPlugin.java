@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.palantir.gradle.dist.tasks.Diagnostics;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -104,11 +105,10 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
             task.doLast(t -> {
                 myView.getArtifacts().forEach(resolved -> {
+                    System.out.println(Diagnostics.parse(project, resolved.getFile()));
                     System.out.println("POOP" + resolved.getFile() + " | "
                             + resolved.getVariant().getAttributes());
                 });
-                //                System.out.println("DO THE TRANSFORM"
-                //                        + myView.getArtifacts().getArtifactFiles().getFiles());
             });
         });
     }

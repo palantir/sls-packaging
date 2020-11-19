@@ -24,21 +24,6 @@ import com.google.common.io.Files;
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -49,7 +34,19 @@ import org.immutables.value.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class Diagnostics {
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+public final class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
     private static final String PATH_IN_JAR = "sls-manifest/diagnostics.json";
 
@@ -123,13 +120,17 @@ final class Diagnostics {
             throw new GradleException("Expecting to find 0 or 1 files, found: " + sourceFiles);
         }
         File file = Iterables.getOnlyElement(sourceFiles);
+        return Optional.of(parse(proj, file));
+    }
+
+    public static SupportedDiagnostics parse(Project proj, File file) {
         Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
         String string = null;
         try {
             string = new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
             SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(string, SupportedDiagnostics.class);
             log.info("Found diagnostics in local project '{}': '{}'", relativePath, value);
-            return Optional.of(value);
+            return value;
         } catch (IOException e) {
             throw new GradleException(
                     String.format(
