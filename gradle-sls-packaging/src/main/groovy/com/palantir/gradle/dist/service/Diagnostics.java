@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.service;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import com.palantir.logsafe.Preconditions;
@@ -30,7 +31,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.immutables.value.Value;
@@ -40,23 +40,6 @@ import org.slf4j.LoggerFactory;
 public final class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
 
-    @Value.Immutable
-    public abstract static class SupportedDiagnostics {
-        @Value.Parameter
-        @JsonValue
-        public abstract List<SupportedDiagnostic> get();
-
-        @JsonCreator
-        public static SupportedDiagnostics of(List<SupportedDiagnostic> items) {
-            return ImmutableSupportedDiagnostics.of(items);
-        }
-
-        @Override
-        public final String toString() {
-            return get().stream().map(entry -> entry.type().toString()).collect(Collectors.joining(", ", "[", "]"));
-        }
-    }
-
     // This is the format the sls-spec wants list items to be. <code>{type: "foo.v1"}</code>.
     @Value.Immutable
     @JsonDeserialize(as = ImmutableSupportedDiagnostic.class)
@@ -65,13 +48,14 @@ public final class Diagnostics {
         DiagnosticType type();
     }
 
-    public static SupportedDiagnostics parse(Project proj, File file) {
+    public static List<SupportedDiagnostic> parse(Project proj, File file) {
         Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
         String string = null;
         try {
             string = new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
-            SupportedDiagnostics value = CreateManifestTask.jsonMapper.readValue(string, SupportedDiagnostics.class);
-            log.info("Found diagnostics in local project '{}': '{}'", relativePath, value);
+            List<SupportedDiagnostic> value =
+                    CreateManifestTask.jsonMapper.readValue(string, new TypeReference<List<SupportedDiagnostic>>() {});
+            log.info("Deserializing '{}': '{}'", relativePath, value);
             return value;
         } catch (IOException e) {
             throw new GradleException(

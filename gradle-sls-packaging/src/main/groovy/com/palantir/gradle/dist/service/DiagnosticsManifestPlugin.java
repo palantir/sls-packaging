@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -132,12 +133,11 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
         @TaskAction
         public final void taskAction() {
-            Diagnostics.SupportedDiagnostics aggregated =
-                    Diagnostics.SupportedDiagnostics.of(getInputJsonFiles().get().getFiles().stream()
-                            .flatMap(file -> Diagnostics.parse(getProject(), file).get().stream())
-                            .distinct()
-                            .sorted(Comparator.comparing(v -> v.type().toString()))
-                            .collect(Collectors.toList()));
+            List<Diagnostics.SupportedDiagnostic> aggregated = getInputJsonFiles().get().getFiles().stream()
+                    .flatMap(file -> Diagnostics.parse(getProject(), file).stream())
+                    .distinct()
+                    .sorted(Comparator.comparing(v -> v.type().toString()))
+                    .collect(Collectors.toList());
 
             File out = getOutputJsonFile().getAsFile().get();
             try {
@@ -148,14 +148,8 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         }
 
         @Internal
-        public final Provider<Diagnostics.SupportedDiagnostics> asProvider() {
-            return getOutputJsonFile().getAsFile().map(file -> {
-                try {
-                    return CreateManifestTask.jsonMapper.readValue(file, Diagnostics.SupportedDiagnostics.class);
-                } catch (IOException e) {
-                    throw new GradleException("Failed to read " + file, e);
-                }
-            });
+        public final Provider<List<Diagnostics.SupportedDiagnostic>> asProvider() {
+            return getOutputJsonFile().getAsFile().map(file -> Diagnostics.parse(getProject(), file));
         }
     }
 
