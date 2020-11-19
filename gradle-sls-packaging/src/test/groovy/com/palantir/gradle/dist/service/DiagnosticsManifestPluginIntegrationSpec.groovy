@@ -40,24 +40,15 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
             }
         }
         
-        task doStuff  {
-          doLast {
-          
-            configurations.forEach { c ->
-              println c
-            }
-          }
-        }
         '''
         writeJavaSourceFile('''
         package foo;
         public final class Foo {}
         ''')
-        addResource("sls-manifest", "diagnostics.json", '[{"type": "foo.v1"}]')
+        addResource("src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1"}]')
 
         then:
-//        def output = runTasks("doStuff", '-is')
-        def output = runTasks("foo", "jar", '-is')
+        def output = runTasks("foo", '-is')
         println output.standardOutput
         println output.standardError
     }

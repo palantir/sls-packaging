@@ -16,22 +16,12 @@
 
 package com.palantir.gradle.dist.service;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.transform.CacheableTransform;
-import org.gradle.api.artifacts.transform.InputArtifact;
-import org.gradle.api.artifacts.transform.TransformAction;
-import org.gradle.api.artifacts.transform.TransformOutputs;
-import org.gradle.api.artifacts.transform.TransformParameters;
+import org.gradle.api.artifacts.transform.*;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Property;
@@ -42,10 +32,19 @@ import org.gradle.api.tasks.PathSensitivity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
+
     public static final Attribute<Boolean> DIAGNOSTIC_JSON_EXTRACTED =
             Attribute.of("diagnosticJsonExtracted", Boolean.class);
 
+    // https://docs.gradle.org/current/userguide/artifact_transforms.html
     @CacheableTransform
     public abstract static class ExtractFileAction implements TransformAction<ExtractFileAction.Parameters> {
         private static final Logger log = LoggerFactory.getLogger(ExtractFileAction.class);
@@ -95,30 +94,36 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
         project.getDependencies().registerTransform(ExtractFileAction.class, details -> {
             details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
-            // details.getFrom()
-            //         .attribute(
-            //                 LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-            //                 project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
             details.getFrom().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
             details.getTo().attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
-            // details.getParameters().getPathToExtract().set("sls-manifest/diagnostics.json");
-            details.getParameters().getPathToExtract().set("META-INF/MANIFEST.MF");
+            details.getParameters().getPathToExtract().set("sls-manifest/diagnostics.json");
         });
 
-        ArtifactView view = project.getConfigurations()
-                .getByName("runtimeClasspath")
-                .getIncoming()
-                .artifactView(v -> {
-                    v.attributes(it -> {
-                        it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
-                    });
-                });
+        // TODO(dfox): can we avoid needing this?
+        Configuration consumable = project.getConfigurations().create("runtimeClasspath2", conf -> {
+            conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
+            conf.getAttributes().attribute(DIAGNOSTIC_JSON_EXTRACTED, false);
+            conf.setDescription(
+                    "Used by the DiagnosticsManifestPlugin, we just use this configuration to extract stuff");
 
-        project.getTasks().register("foo", DefaultTask.class, foo -> {
-            foo.dependsOn(view.getArtifacts().getArtifactFiles());
-            foo.doLast(t -> {
+            // empirically, seems like we need both of these
+            conf.setCanBeConsumed(true);
+            conf.setCanBeResolved(true);
+        });
+        // In order to get classes & resources from this project bundled into a jar, we take this 'self' dependency
+        project.getDependencies().add(consumable.getName(), project);
+
+        ArtifactView myView = consumable.getIncoming().artifactView(v -> {
+            v.attributes(it -> {
+                it.attribute(DIAGNOSTIC_JSON_EXTRACTED, true);
+            });
+        });
+
+        project.getTasks().register("foo", DefaultTask.class, task -> {
+            task.dependsOn(myView.getArtifacts().getArtifactFiles());
+            task.doLast(t -> {
                 System.out.println("DO THE TRANSFORM"
-                        + view.getArtifacts().getArtifactFiles().getFiles());
+                        + myView.getArtifacts().getArtifactFiles().getFiles());
             });
         });
     }
