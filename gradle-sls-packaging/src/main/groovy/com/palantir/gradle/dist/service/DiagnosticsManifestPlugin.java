@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,11 +38,13 @@ import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.internal.artifacts.ArtifactAttributes;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.CacheableTask;
@@ -62,7 +65,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
      * This plugin uses Gradle's Artifact Transforms to extract a single file from all the jars on the classpath
      * (https://docs.gradle.org/current/userguide/artifact_transforms.html).
      * All we do is tell gradle what function can turn 'usage=jar' into 'usage=(our thing)', and then declare a
-     * a view using 'usage=(our thing)' and it'll just run the {@link ExtractSingleFile} transform
+     * a view using 'usage=(our thing)' and it'll just run the {@link ExtractFileFromJar} transform
      * to process the jars and extract the stuff we want! Crucially, this is all cached _beautifully_.
      */
     @Override
@@ -70,7 +73,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         String fileToExtract = "sls-manifest/diagnostics.json";
         String attribute = "extracted-" + fileToExtract;
 
-        project.getDependencies().registerTransform(ExtractSingleFile.class, details -> {
+        project.getDependencies().registerTransform(ExtractFileFromJar.class, details -> {
             details.getParameters().getPathToExtract().set(fileToExtract);
 
             // this USAGE_ATTRIBUTE is already present on everything, so gradle can figure out how to transform to our
@@ -91,6 +94,23 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                             project.getObjects().named(LibraryElements.class, attribute));
         });
 
+        // we define this 'shortcut' so that we should be able to skip the process of compiling java source files
+        project.getDependencies().registerTransform(SelectSingleFile.class, details -> {
+            details.getParameters().getPathToExtract().set(fileToExtract);
+            details.getFrom()
+                    .attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
+            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
+
+            details.getFrom()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, LibraryElements.RESOURCES));
+            details.getTo()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, attribute));
+        });
+
         // In order to get classes & resources from this project bundled into a jar, we make up this new
         // configuration and add a 'self' dependency.
         Configuration consumable = project.getConfigurations().create("runtimeClasspath2", conf -> {
@@ -104,7 +124,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         ArtifactView myView = consumable.getIncoming().artifactView(v -> {
             v.attributes(it -> {
                 // this is where the magic happens!
-                it.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
+                it.attribute(
+                        LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                        project.getObjects().named(LibraryElements.class, attribute));
             });
         });
 
@@ -152,8 +174,8 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     }
 
     @CacheableTransform
-    public abstract static class ExtractSingleFile implements TransformAction<ExtractSingleFile.Parameters> {
-        private static final Logger log = LoggerFactory.getLogger(ExtractSingleFile.class);
+    public abstract static class ExtractFileFromJar implements TransformAction<ExtractFileFromJar.Parameters> {
+        private static final Logger log = LoggerFactory.getLogger(ExtractFileFromJar.class);
 
         interface Parameters extends TransformParameters {
             @Input
@@ -184,6 +206,40 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
+            }
+        }
+    }
+
+    @CacheableTransform
+    public abstract static class SelectSingleFile implements TransformAction<SelectSingleFile.Parameters> {
+        private static final Logger log = LoggerFactory.getLogger(SelectSingleFile.class);
+
+        interface Parameters extends TransformParameters {
+            @Input
+            Property<String> getPathToExtract();
+        }
+
+        @PathSensitive(PathSensitivity.NAME_ONLY)
+        @InputArtifact
+        public abstract Provider<FileSystemLocation> getInputArtifact();
+
+        @Override
+        public final void transform(TransformOutputs outputs) {
+            File resourcesMainDir = getInputArtifact().get().getAsFile();
+            Path pathToExtract = resourcesMainDir
+                    .toPath()
+                    .resolve(getParameters().getPathToExtract().get());
+
+            if (!Files.exists(pathToExtract)) {
+                log.debug("Could not find '{}' in {}", pathToExtract, resourcesMainDir);
+                return;
+            }
+
+            Path outputFile = outputs.file("SelectSingleFile-output").toPath();
+            try {
+                Files.copy(pathToExtract, outputFile);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Failed to copy '%s'", pathToExtract), e);
             }
         }
     }
