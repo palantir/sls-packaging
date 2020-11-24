@@ -30,6 +30,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
             .registerModule(new GuavaModule())
 
+    private static final String EXTERNAL_JAR = new File("src/test/resources/external.jar").getAbsolutePath();
+
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
         createUntarBuildFile(buildFile)
@@ -156,7 +158,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         execAllowFail('dist/service-name-0.0.1/service/bin/init.sh', 'start')
-        sleep( 1000)
+        sleep(1000)
         file('dist/service-name-0.0.1/var/data/tmp').listFiles().length == 1
         file('dist/service-name-0.0.1/var/data/tmp').listFiles()[0].text == "temp content"
     }
@@ -260,7 +262,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         manifest.get("product-name") == "service-name"
         manifest.get("product-version") == "0.0.1"
         manifest.get("product-type") == "service.v1"
-        manifest.get("extensions").get("foo") == ["bar": ["1","2"]]
+        manifest.get("extensions").get("foo") == ["bar": ["1", "2"]]
     }
 
     def 'can specify service dependencies'() {
@@ -366,8 +368,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
         given:
         createUntarBuildFile(buildFile)
-        buildFile << '''
-            dependencies { compile files("external.jar") }
+
+        buildFile << """
+            dependencies { compile files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
@@ -375,7 +378,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 checkArgs 'myCheckArg1', 'myCheckArg2'
                 env "key1": "val1",
                     "key2": "val2"
-            }'''.stripIndent()
+            }""".stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -430,13 +433,13 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'produce distribution with java 8 gc logging'() {
         createUntarBuildFile(buildFile)
-        buildFile << '''
-            dependencies { compile files("external.jar") }
+        buildFile << """
+            dependencies { compile files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
                 addJava8GcLogging true
-            }'''.stripIndent()
+            }""".stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -475,13 +478,13 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def 'respects java version'() {
         createUntarBuildFile(buildFile)
-        buildFile << '''
-            dependencies { compile files("external.jar") }
+        buildFile << """
+            dependencies { compile files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 14
                 gc 'response-time'
-            }'''.stripIndent()
+            }""".stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
