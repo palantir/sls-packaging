@@ -26,6 +26,7 @@ import java.io.File;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
@@ -48,10 +49,17 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
+        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
+            GcvUtils.lockConfigurationInGcv(project);
+        });
+
+        Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
+            conf.setCanBeConsumed(false);
+        });
+
         AssetDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
-        distributionExtension.setProductDependenciesConfig(
-                project.getConfigurations().create(ASSET_CONFIGURATION));
+        distributionExtension.setProductDependenciesConfig(assetConfiguration);
 
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);
