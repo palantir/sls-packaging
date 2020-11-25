@@ -22,13 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -40,24 +35,22 @@ import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
-import org.gradle.api.attributes.LibraryElements;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
+    // The 'artifactType' attribute is defined by
+    // org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT.
+    // Annoyingly that class is 'internal', even though the values defined in 'ArtifactTypeDefinition' are public!
+    private static final Attribute<String> artifactType = Attribute.of("artifactType", String.class);
     static final String mergeDiagnosticsJson = "mergeDiagnosticsJson";
 
     private static final String FILE_TO_EXTRACT = "sls-manifest/diagnostics.json";
@@ -80,51 +73,56 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
      */
     @Override
     public void apply(Project project) {
-        // The 'artifactType' attribute is defined by
-        // org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT.
-        // Annoyingly that class is 'internal', even though the values defined in 'ArtifactTypeDefinition' are public!
-        Attribute<String> artifactType = Attribute.of("artifactType", String.class);
+        configureExternalDependencyTransform(project);
+        configureProjectDependencyTransform(project);
 
-        // (1) this 'jar -> extracted file' mapping is crucial to analyze downloaded jars (e.g. witchcraft)
+        Configuration consumableRuntimeConfiguration = createConsumableRuntimeConfiguration(project);
+        ArtifactView attributeSpecificArtifactView = consumableRuntimeConfiguration
+                .getIncoming()
+                .artifactView(v -> v.getAttributes().attribute(artifactType, MY_ATTRIBUTE));
+
+        TaskProvider<MergeDiagnosticsJsonTask> mergeDiagnosticsTask = project.getTasks()
+                .register(mergeDiagnosticsJson, MergeDiagnosticsJsonTask.class, task -> {
+                    task.getClasspath()
+                            .from(attributeSpecificArtifactView.getArtifacts().getArtifactFiles());
+                    task.getOutputJsonFile()
+                            .set(project.getLayout().getBuildDirectory().file(task.getName() + ".json"));
+                });
+
+        project.getPlugins().withId("com.palantir.sls-java-service-distribution", plugin -> {
+            project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
+                ext.getManifestExtensions()
+                        .put(
+                                "diagnostics",
+                                mergeDiagnosticsTask
+                                        .flatMap(MergeDiagnosticsJsonTask::getOutputJsonFile)
+                                        .map(file -> Diagnostics.parse(project, file.getAsFile())));
+            });
+            project.getTasks().named("createManifest", CreateManifestTask.class).configure(createManifestTask -> {
+                createManifestTask.dependsOn(mergeDiagnosticsJson);
+            });
+        });
+    }
+
+    private static void configureExternalDependencyTransform(Project project) {
         project.getDependencies().registerTransform(ExtractFileFromJar.class, details -> {
             details.getParameters().getPathToExtract().set(FILE_TO_EXTRACT);
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JAR_TYPE);
             details.getTo().attribute(artifactType, MY_ATTRIBUTE);
-
-            // It's not _strictly_ necessary to define the mapping for the 'org.gradle.libraryelements' attribute,
-            // but it looks a bit weird for something to still be marked as a 'jar' when it's clearly not.
-            details.getFrom()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
-            details.getTo()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
+    }
 
-        // (2) this 'java-resources -> extracted file' thing is just a 'shortcut' so that gradle can complete this
-        // task without needing to compile the java source files from any local projects. If we didn't define this,
-        // then gradle would turn src dirs into a compiled jar, then run that through the transform (1) above.
+    private static void configureProjectDependencyTransform(Project project) {
         project.getDependencies().registerTransform(SelectSingleFile.class, details -> {
             details.getParameters().getPathToExtract().set(FILE_TO_EXTRACT);
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
             details.getTo().attribute(artifactType, MY_ATTRIBUTE);
-
-            details.getFrom()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, LibraryElements.RESOURCES));
-            details.getTo()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
+    }
 
-        // Ideally I'd set our desired attributes right on this configuration, but it seems Gradle doesn't know how to
-        // use our transforms to bridge the gap when we have cross project dependencies :/
+    private static Configuration createConsumableRuntimeConfiguration(Project project) {
         Configuration consumable = project.getConfigurations().create("runtimeClasspathForDiagnostics", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
@@ -132,59 +130,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             conf.setCanBeResolved(true);
             conf.setVisible(false);
         });
+
         project.getDependencies().add(consumable.getName(), project);
-        ArtifactView myView = consumable.getIncoming().artifactView(v -> {
-            v.attributes(it -> {
-                // this is where we 'declare' the destination attributes we care about, and trust gradle to apply
-                // the right transforms
-                it.attribute(artifactType, MY_ATTRIBUTE);
-                it.attribute(
-                        LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                        project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
-            });
-        });
-
-        project.getTasks().register(mergeDiagnosticsJson, MergeDiagnosticsJsonTask.class, task -> {
-            // We're going to read from this FileCollection, so we need to make sure that Gradle is aware of any
-            // task dependencies necessary for fully populate the files (e.g. maybe generating some resources???)
-            task.dependsOn(myView.getArtifacts().getArtifactFiles());
-
-            task.getInputJsonFiles().set(myView.getArtifacts().getArtifactFiles());
-
-            File out = new File(project.getBuildDir(), task.getName() + ".json");
-            task.getOutputJsonFile().set(out);
-        });
-    }
-
-    @CacheableTask
-    public abstract static class MergeDiagnosticsJsonTask extends DefaultTask {
-
-        @InputFiles
-        @PathSensitive(PathSensitivity.NONE)
-        public abstract Property<FileCollection> getInputJsonFiles();
-
-        @OutputFile
-        public abstract RegularFileProperty getOutputJsonFile();
-
-        @TaskAction
-        public final void taskAction() {
-            List<Diagnostics.SupportedDiagnostic> aggregated = getInputJsonFiles().get().getFiles().stream()
-                    .flatMap(file -> Diagnostics.parse(getProject(), file).stream())
-                    .distinct()
-                    .sorted(Comparator.comparing(v -> v.type().toString()))
-                    .collect(Collectors.toList());
-
-            File out = getOutputJsonFile().getAsFile().get();
-            try {
-                CreateManifestTask.jsonMapper.writeValue(out, aggregated);
-            } catch (IOException e) {
-                throw new GradleException("Failed to write " + out, e);
-            }
-        }
-
-        public final Provider<List<Diagnostics.SupportedDiagnostic>> asProvider() {
-            return getOutputJsonFile().getAsFile().map(file -> Diagnostics.parse(getProject(), file));
-        }
+        return consumable;
     }
 
     @CacheableTransform

@@ -227,7 +227,7 @@ public class BaseDistributionExtension {
         this.ignoredProductDependencies.add(id);
     }
 
-    public final Provider<Map<String, Object>> getManifestExtensions() {
+    public final MapProperty<String, Object> getManifestExtensions() {
         return this.manifestExtensions;
     }
 

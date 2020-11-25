@@ -38,11 +38,11 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
     }
 
     def 'detects stuff defined in current project'() {
-        when:
+        given:
         enableLocalBuildCache()
-        buildFile << '''
+        buildFile << """
         apply plugin: 'java-library'
-        apply plugin: com.palantir.gradle.dist.service.DiagnosticsManifestPlugin
+        ${applyPlugin(DiagnosticsManifestPlugin.class)}
         
         repositories {
           mavenCentral()
@@ -51,34 +51,36 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         dependencies {
           implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
         }
-        '''
+        """.stripIndent()
         addResource("src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1", "docs" : "This does something"}]')
 
+        when:
+        runTasksSuccessfully("mergeDiagnosticsJson", '-is')
+
         then:
-        runTasks("mergeDiagnosticsJson", '-is')
-        def outFile = new File(projectDir, "build/mergeDiagnosticsJson.json")
-        assert outFile.text == """\
+        def outFile = file("build/mergeDiagnosticsJson.json")
+        outFile.text == """\
         [ {
           "type" : "foo.v1",
           "docs" : "This does something"
         } ]""".stripIndent()
 
         when:
-        def output2 = runTasks("mergeDiagnosticsJson", '-is')
+        def result2 = runTasksSuccessfully("mergeDiagnosticsJson", '-is')
 
         then:
-        output2.getStandardOutput().contains("Task :mergeDiagnosticsJson UP-TO-DATE")
+        result2.wasUpToDate(":mergeDiagnosticsJson")
 
         when:
         outFile.delete()
-        def output3 = runTasks("mergeDiagnosticsJson", '-is')
+        def result3 = runTasksSuccessfully("mergeDiagnosticsJson", '-is')
 
         then:
-        output3.getStandardOutput().contains("Task :mergeDiagnosticsJson FROM-CACHE")
+        result3.getStandardOutput().contains("Task :mergeDiagnosticsJson FROM-CACHE")
     }
 
     def 'detects stuff defined in sibling projects'() {
-        when:
+        given:
         buildFile << '''
         subprojects {
             apply plugin: 'java-library'
@@ -103,11 +105,13 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         addSubproject('my-project2')
         addResource("my-project2/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "myproject2.v1", "docs" : "Click me if you dare!"}]')
 
+        when:
+        def output = runTasksSuccessfully("my-server:mergeDiagnosticsJson", '-is')
+
         then:
-        def output = runTasks("my-server:mergeDiagnosticsJson", '-is')
         println output.standardOutput
         println output.standardError
-        assert new File(projectDir, "my-server/build/mergeDiagnosticsJson.json").text == """\
+        file("my-server/build/mergeDiagnosticsJson.json").text == """\
         [ {
           "type" : "foo.v1",
           "docs" : "This does something"
