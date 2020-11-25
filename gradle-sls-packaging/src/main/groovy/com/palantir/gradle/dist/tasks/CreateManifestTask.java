@@ -157,7 +157,7 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
-    public final MapProperty<String, Object> getManifestExtensions() {
+    final MapProperty<String, Object> getManifestExtensions() {
         return manifestExtensions;
     }
 
