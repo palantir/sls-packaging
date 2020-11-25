@@ -39,12 +39,11 @@ import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
+import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.LibraryElements;
-import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.internal.artifacts.ArtifactAttributes;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.CacheableTask;
@@ -73,15 +72,15 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         String fileToExtract = "sls-manifest/diagnostics.json";
         String attribute = "extracted-" + fileToExtract;
 
+        // I'm using `Attribute.of("artifactType", String.class)` because
+        // ArtifactAttributes.ARTIFACT_FORMAT seems to be internal, even though the values are public ???
+        Attribute<String> artifactType = Attribute.of("artifactType", String.class);
+
         project.getDependencies().registerTransform(ExtractFileFromJar.class, details -> {
             details.getParameters().getPathToExtract().set(fileToExtract);
 
-            // this USAGE_ATTRIBUTE is already present on everything, so gradle can figure out how to transform to our
-            // attribute value
-            details.getFrom()
-                    .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
-            details.getTo()
-                    .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, attribute));
+            details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JAR_TYPE);
+            details.getTo().attribute(artifactType, attribute);
 
             // these ones aren't really necessary, just for tidiness (seems bad to label something a jar when it's not)
             details.getFrom()
@@ -97,9 +96,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         // we define this 'shortcut' so that we should be able to skip the process of compiling java source files
         project.getDependencies().registerTransform(SelectSingleFile.class, details -> {
             details.getParameters().getPathToExtract().set(fileToExtract);
-            details.getFrom()
-                    .attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
-            details.getTo().attribute(ArtifactAttributes.ARTIFACT_FORMAT, attribute);
+
+            details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
+            details.getTo().attribute(artifactType, attribute);
 
             details.getFrom()
                     .attribute(
@@ -127,6 +126,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                 it.attribute(
                         LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
                         project.getObjects().named(LibraryElements.class, attribute));
+                it.attribute(artifactType, attribute);
             });
         });
 
