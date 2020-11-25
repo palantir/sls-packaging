@@ -123,14 +123,16 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                             project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
 
-        Configuration consumable = project.getConfigurations().create("runtimeClasspath2", conf -> {
+        // Ideally I'd set our desired attributes right on this configuration, but it seems Gradle doesn't know how to
+        // use our transforms to bridge the gap when we have cross project dependencies :/
+        Configuration consumable = project.getConfigurations().create("runtimeClasspathForDiagnostics", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
+            conf.setVisible(false);
         });
         project.getDependencies().add(consumable.getName(), project);
-
         ArtifactView myView = consumable.getIncoming().artifactView(v -> {
             v.attributes(it -> {
                 // this is where we 'declare' the destination attributes we care about, and trust gradle to apply
