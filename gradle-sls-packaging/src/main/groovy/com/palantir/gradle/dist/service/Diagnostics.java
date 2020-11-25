@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -41,30 +42,31 @@ import org.slf4j.LoggerFactory;
 public final class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
 
-    // This is the format the sls-spec wants list items to be. <code>{type: "foo.v1"}</code>.
+    // This is the format the sls-spec wants list items to be. <code>{ type: "foo.v1", docs: "Lorem ipsum" }</code>.
     @Value.Immutable
     @JsonDeserialize(as = ImmutableSupportedDiagnostic.class)
     public interface SupportedDiagnostic extends Serializable {
-        @Value.Parameter
+        String EXAMPLE = "[{\"type\":\"foo.v1\", \"docs\":\"...\"}, \"{\"type\":\"bar.v1\", \"docs\":\"...\"}]";
+
         DiagnosticType type();
+
+        String docs();
     }
 
     public static List<SupportedDiagnostic> parse(Project proj, File file) {
         Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
         String string = null;
         try {
-            string = new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
+            string = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
             List<SupportedDiagnostic> value =
                     CreateManifestTask.jsonMapper.readValue(string, new TypeReference<List<SupportedDiagnostic>>() {});
-            log.info("Deserializing '{}': '{}'", relativePath, value);
+            log.info("Deserialized '{}': '{}'", relativePath, value);
             return value;
         } catch (IOException e) {
             throw new GradleException(
                     String.format(
-                            "Failed to deserialize '%s', "
-                                    + "expecting something like '[{\"type\":\"foo.v1\"}, {\"type\":\"bar.v1\"}]' "
-                                    + "but was '%s'",
-                            relativePath, string),
+                            "Failed to deserialize '%s', expecting something like '%s' but was '%s'",
+                            relativePath, SupportedDiagnostic.EXAMPLE, string),
                     e);
         }
     }
