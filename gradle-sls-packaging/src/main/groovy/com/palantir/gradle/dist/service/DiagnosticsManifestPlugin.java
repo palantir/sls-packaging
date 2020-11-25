@@ -35,6 +35,7 @@ import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -79,7 +80,13 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         Configuration consumableRuntimeConfiguration = createConsumableRuntimeConfiguration(project);
         ArtifactView attributeSpecificArtifactView = consumableRuntimeConfiguration
                 .getIncoming()
-                .artifactView(v -> v.getAttributes().attribute(artifactType, MY_ATTRIBUTE));
+                .artifactView(v -> {
+                    v.getAttributes().attribute(artifactType, MY_ATTRIBUTE);
+                    v.getAttributes()
+                            .attribute(
+                                    LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                                    project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
+                });
 
         TaskProvider<MergeDiagnosticsJsonTask> mergeDiagnosticsTask = project.getTasks()
                 .register(mergeDiagnosticsJson, MergeDiagnosticsJsonTask.class, task -> {
@@ -110,6 +117,15 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JAR_TYPE);
             details.getTo().attribute(artifactType, MY_ATTRIBUTE);
+
+            details.getFrom()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
+            details.getTo()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
     }
 
@@ -119,6 +135,15 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
             details.getTo().attribute(artifactType, MY_ATTRIBUTE);
+
+            details.getFrom()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, LibraryElements.RESOURCES));
+            details.getTo()
+                    .attribute(
+                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
     }
 
