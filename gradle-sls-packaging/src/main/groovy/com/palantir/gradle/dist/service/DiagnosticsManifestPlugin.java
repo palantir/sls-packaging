@@ -58,31 +58,42 @@ import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
-    public static final String mergeDiagnosticsJson = "mergeDiagnosticsJson";
+    static final String mergeDiagnosticsJson = "mergeDiagnosticsJson";
+
+    private static final String FILE_TO_EXTRACT = "sls-manifest/diagnostics.json";
+    private static final String MY_ATTRIBUTE = "extracted-" + FILE_TO_EXTRACT;
 
     /**
-     * This plugin uses Gradle's Artifact Transforms to extract a single file from all the jars on the classpath
-     * (https://docs.gradle.org/current/userguide/artifact_transforms.html).
-     * All we do is tell gradle what function can turn 'usage=jar' into 'usage=(our thing)', and then declare a
-     * a view using 'usage=(our thing)' and it'll just run the {@link ExtractFileFromJar} transform
-     * to process the jars and extract the stuff we want! Crucially, this is all cached _beautifully_.
+     * This plugin uses a few slightly 'advanced' gradle features:
+     *
+     * - "attributes" (https://docs.gradle.org/current/userguide/variant_attributes.html)
+     * - "artifact transforms" (https://docs.gradle.org/current/userguide/artifact_transforms.html)
+     *
+     * These seem to be the new idiomatic way of doing things (and Gradle uses them _heavily_ internally, e.g. to
+     * delineate the 'api' vs 'implementation' stuff in the {@link org.gradle.api.plugins.JavaPlugin}).
+     * They let us declaratively express things in a _really_ nice way,
+     * with beautiful granular caching etc. See https://docs.gradle.org/current/userguide/variant_model.html for some
+     * helpful diagrams. Also try running `./gradlew outgoingVariants` on a project to visualize what's going on.
+     *
+     * We define a couple of {@link TransformAction}s so that when we define we want just than extracted file, and
+     * gradle has all these jars and resources, it can use the right TransformAction to bridge the gap.
      */
     @Override
     public void apply(Project project) {
-        String fileToExtract = "sls-manifest/diagnostics.json";
-        String attribute = "extracted-" + fileToExtract;
-
-        // I'm using `Attribute.of("artifactType", String.class)` because
-        // ArtifactAttributes.ARTIFACT_FORMAT seems to be internal, even though the values are public ???
+        // The 'artifactType' attribute is defined by
+        // org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT.
+        // Annoyingly that class is 'internal', even though the values defined in 'ArtifactTypeDefinition' are public!
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
 
+        // (1) this 'jar -> extracted file' mapping is crucial to analyze downloaded jars (e.g. witchcraft)
         project.getDependencies().registerTransform(ExtractFileFromJar.class, details -> {
-            details.getParameters().getPathToExtract().set(fileToExtract);
+            details.getParameters().getPathToExtract().set(FILE_TO_EXTRACT);
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JAR_TYPE);
-            details.getTo().attribute(artifactType, attribute);
+            details.getTo().attribute(artifactType, MY_ATTRIBUTE);
 
-            // these ones aren't really necessary, just for tidiness (seems bad to label something a jar when it's not)
+            // It's not _strictly_ necessary to define the mapping for the 'org.gradle.libraryelements' attribute,
+            // but it looks a bit weird for something to still be marked as a 'jar' when it's clearly not.
             details.getFrom()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
@@ -90,15 +101,17 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             details.getTo()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, attribute));
+                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
 
-        // we define this 'shortcut' so that we should be able to skip the process of compiling java source files
+        // (2) this 'java-resources -> extracted file' thing is just a 'shortcut' so that gradle can complete this
+        // task without needing to compile the java source files from any local projects. If we didn't define this,
+        // then gradle would turn src dirs into a compiled jar, then run that through the transform (1) above.
         project.getDependencies().registerTransform(SelectSingleFile.class, details -> {
-            details.getParameters().getPathToExtract().set(fileToExtract);
+            details.getParameters().getPathToExtract().set(FILE_TO_EXTRACT);
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
-            details.getTo().attribute(artifactType, attribute);
+            details.getTo().attribute(artifactType, MY_ATTRIBUTE);
 
             details.getFrom()
                     .attribute(
@@ -107,11 +120,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             details.getTo()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, attribute));
+                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
         });
 
-        // In order to get classes & resources from this project bundled into a jar, we make up this new
-        // configuration and add a 'self' dependency.
         Configuration consumable = project.getConfigurations().create("runtimeClasspath2", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
@@ -122,17 +133,18 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
         ArtifactView myView = consumable.getIncoming().artifactView(v -> {
             v.attributes(it -> {
-                // this is where the magic happens!
+                // this is where we 'declare' the destination attributes we care about, and trust gradle to apply
+                // the right transforms
+                it.attribute(artifactType, MY_ATTRIBUTE);
                 it.attribute(
                         LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                        project.getObjects().named(LibraryElements.class, attribute));
-                it.attribute(artifactType, attribute);
+                        project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
             });
         });
 
         project.getTasks().register(mergeDiagnosticsJson, MergeDiagnosticsJsonTask.class, task -> {
             // We're going to read from this FileCollection, so we need to make sure that Gradle is aware of any
-            // task dependencies necessary for fully populate the files (specifically, we need it to run 'jar').
+            // task dependencies necessary for fully populate the files (e.g. maybe generating some resources???)
             task.dependsOn(myView.getArtifacts().getArtifactFiles());
 
             task.getInputJsonFiles().set(myView.getArtifacts().getArtifactFiles());

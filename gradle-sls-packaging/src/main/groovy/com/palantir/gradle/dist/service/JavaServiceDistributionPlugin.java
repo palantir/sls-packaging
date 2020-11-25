@@ -228,10 +228,11 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
         project.getPlugins().apply(DiagnosticsManifestPlugin.class);
-        TaskProvider<DiagnosticsManifestPlugin.MergeDiagnosticsJsonTask> mergeDiagnosticsJson = project.getTasks()
-                .withType(DiagnosticsManifestPlugin.MergeDiagnosticsJsonTask.class)
-                .named(DiagnosticsManifestPlugin.mergeDiagnosticsJson);
         manifest.configure(createManifestTask -> {
+            TaskProvider<DiagnosticsManifestPlugin.MergeDiagnosticsJsonTask> mergeDiagnosticsJson = project.getTasks()
+                    .withType(DiagnosticsManifestPlugin.MergeDiagnosticsJsonTask.class)
+                    .named(DiagnosticsManifestPlugin.mergeDiagnosticsJson);
+
             createManifestTask.dependsOn(mergeDiagnosticsJson);
             createManifestTask
                     .getManifestExtensions()
