@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.google.common.collect.ImmutableSet
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -160,7 +161,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     }
 
     def 'throws if declared dependency is also ignored'() {
-       setup:
+        setup:
         buildFile << """
             createManifest {
                 productDependencies = [
@@ -603,7 +604,11 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         result.task(":foo-server:createManifest").outcome == TaskOutcome.SUCCESS
         result.task(":foo-api:configureProductDependencies").outcome == TaskOutcome.SUCCESS
         result.task(':foo-api:jar') == null
-        result.tasks.size() == 2
+        result.tasks.collect({ it.path }).toSet() == ImmutableSet.of(
+                ":foo-api:configureProductDependencies",
+                ":foo-api:processResources",
+                ":foo-server:mergeDiagnosticsJson",
+                ":foo-server:createManifest")
     }
 
     def "createManifest discovers in repo product dependencies"() {
