@@ -1,0 +1,8 @@
+type: feature
+feature:
+  description: 'For java services, a new `diagnostics` extension of the sls manifest
+    will be populated based on the `sls-manifest/diagnostics.json` file found locally
+    or in any jar in runtimeClasspath. Contents should look like `{["type": "foo.v1", "docs": "..."]}`,
+    as defined in the sls-spec.'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1034
