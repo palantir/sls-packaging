@@ -75,7 +75,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
      * with beautiful granular caching etc. See https://docs.gradle.org/current/userguide/variant_model.html for some
      * helpful diagrams. Also try running `./gradlew outgoingVariants` on a project to visualize what's going on.
      *
-     * We define a couple of {@link TransformAction}s so that when we define we want just than extracted file, and
+     * We define a couple of {@link TransformAction}s so that when we define that we want just an extracted file, and
      * gradle has all these jars and resources, it can use the right TransformAction to bridge the gap.
      */
     @Override
