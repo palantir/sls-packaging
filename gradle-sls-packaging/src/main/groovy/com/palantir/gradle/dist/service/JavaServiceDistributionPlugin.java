@@ -143,27 +143,30 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.dependsOn(manifestClassPathTask);
                     task.getLazyMainClassName().set(mainClassName);
 
-                    task.doLast(t -> {
-                        if (distributionExtension.getEnableManifestClasspath().get()) {
-                            // Replace standard classpath with pathing jar in order to circumnavigate length limits:
-                            // https://issues.gradle.org/browse/GRADLE-2992
-                            String winFileText = GFileUtils.readFile(task.getWindowsScript());
+                    if (distributionExtension.getEnableManifestClasspath().get()) {
+                        task.doLast(new Action<Task>() {
+                            @Override
+                            public void execute(Task _task) {
+                                // Replace standard classpath with pathing jar in order to circumnavigate length limits:
+                                // https://issues.gradle.org/browse/GRADLE-2992
+                                String winFileText = GFileUtils.readFile(task.getWindowsScript());
 
-                            // Remove too-long-classpath and use pathing jar instead
-                            String cleanedText = winFileText
-                                    .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
-                                    .replaceAll(
-                                            "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
-                                            "$1%APP_HOME%\\\\lib\\\\"
-                                                    + manifestClassPathTask
-                                                            .get()
-                                                            .getArchiveFileName()
-                                                            .get()
-                                                    + "$2");
+                                // Remove too-long-classpath and use pathing jar instead
+                                String cleanedText = winFileText
+                                        .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
+                                        .replaceAll(
+                                                "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
+                                                "$1%APP_HOME%\\\\lib\\\\"
+                                                        + manifestClassPathTask
+                                                                .get()
+                                                                .getArchiveFileName()
+                                                                .get()
+                                                        + "$2");
 
-                            GFileUtils.writeFile(cleanedText, task.getWindowsScript());
-                        }
-                    });
+                                GFileUtils.writeFile(cleanedText, task.getWindowsScript());
+                            }
+                        });
+                    }
                 });
 
         TaskProvider<Jar> jarTask = project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME);
