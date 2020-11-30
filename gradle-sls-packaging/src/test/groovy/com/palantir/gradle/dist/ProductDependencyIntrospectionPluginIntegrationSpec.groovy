@@ -34,10 +34,11 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
                 maven { url "file://${mavenRepo.absolutePath}" }
             }
             configurations {
-                foo
+                foo {
+                    extendsFrom configurations.productDependencies
+                }
             }
             dependencies {
-                foo configurations.productDependencies
                 foo 'com.palantir.product:test'
             }
         """.stripIndent()
