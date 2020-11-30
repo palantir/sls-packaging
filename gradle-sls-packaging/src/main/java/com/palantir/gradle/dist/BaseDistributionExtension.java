@@ -189,7 +189,7 @@ public class BaseDistributionExtension {
     }
 
     /** Lazily configures and adds a {@link ProductDependency}. */
-    public final void productDependency(@DelegatesTo(ProductDependency.class) Closure closure) {
+    public final void productDependency(@DelegatesTo(ProductDependency.class) Closure<ProductDependency> closure) {
         productDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
             try {
@@ -220,7 +220,7 @@ public class BaseDistributionExtension {
         this.ignoredProductDependencies.add(new ProductId(ignoredProductId));
     }
 
-    public final void ignoredProductDependency(@DelegatesTo(ProductId.class) Closure closure) {
+    public final void ignoredProductDependency(@DelegatesTo(ProductId.class) Closure<ProductId> closure) {
         ProductId id = new ProductId();
         ConfigureUtil.configureUsing(closure).execute(id);
         id.isValid();

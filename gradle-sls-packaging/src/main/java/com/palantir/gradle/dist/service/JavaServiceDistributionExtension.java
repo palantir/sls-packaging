@@ -215,7 +215,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         return gc;
     }
 
-    public final void gc(String type, @Nullable @DelegatesTo(GcProfile.class) Closure configuration) {
+    public final void gc(String type, @Nullable @DelegatesTo(GcProfile.class) Closure<GcProfile> configuration) {
         GcProfile newGc = objectFactory.newInstance(GcProfile.PROFILE_NAMES.get(type));
         if (configuration != null) {
             ConfigureUtil.configure(configuration, newGc);

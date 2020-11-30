@@ -35,7 +35,7 @@ final class GradleWorkarounds {
         return (ListProperty<T>) Proxy.newProxyInstance(
                 GradleWorkarounds.class.getClassLoader(),
                 new Class<?>[] {org.gradle.api.internal.provider.CollectionProviderInternal.class, ListProperty.class},
-                (proxy, method, args) -> {
+                (_proxy, method, args) -> {
                     // Find matching method on CollectionPropertyInternal
                     // org.gradle.api.internal.provider.CollectionProviderInternal
                     if (method.getDeclaringClass()
@@ -49,7 +49,7 @@ final class GradleWorkarounds {
                             return property.get().size();
                         }
                         throw new GradleException(
-                                String.format("Could not proxy method '%s' to object %s", method, property));
+                                String.format("Could not proxy method '%s' to object %s", method, property.get()));
                     } else {
                         return method.invoke(property, args);
                     }

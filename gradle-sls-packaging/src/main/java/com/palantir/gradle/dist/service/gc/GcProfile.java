@@ -22,14 +22,13 @@ import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.gradle.api.JavaVersion;
 
 public interface GcProfile extends Serializable {
     long serialVersionUID = 1L;
 
     @VisibleForTesting
-    Map<String, Class<? extends GcProfile>> PROFILE_NAMES = ImmutableMap.of(
+    ImmutableMap<String, Class<? extends GcProfile>> PROFILE_NAMES = ImmutableMap.of(
             "throughput", GcProfile.Throughput.class,
             "response-time", GcProfile.ResponseTime.class,
             "hybrid", GcProfile.Hybrid.class,
@@ -39,7 +38,7 @@ public interface GcProfile extends Serializable {
 
     class Throughput implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return ImmutableList.of("-XX:+UseParallelOldGC");
         }
     }
@@ -92,7 +91,7 @@ public interface GcProfile extends Serializable {
 
     class Hybrid implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA");
         }
     }
@@ -103,7 +102,7 @@ public interface GcProfile extends Serializable {
      */
     class NoProfile implements GcProfile {
         @Override
-        public List<String> gcJvmOpts(JavaVersion javaVersion) {
+        public List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return Collections.emptyList();
         }
     }

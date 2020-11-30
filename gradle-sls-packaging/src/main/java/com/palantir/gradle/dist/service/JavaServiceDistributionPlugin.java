@@ -20,7 +20,6 @@ import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
-import com.palantir.gradle.dist.service.tasks.CopyLauncherBinariesTask;
 import com.palantir.gradle.dist.service.tasks.CopyYourkitAgentTask;
 import com.palantir.gradle.dist.service.tasks.CopyYourkitLicenseTask;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
@@ -31,6 +30,7 @@ import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
@@ -38,10 +38,13 @@ import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
@@ -51,12 +54,12 @@ import org.gradle.util.GFileUtils;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
-    private static final String GO_JAVA_LAUNCHER_BINARIES = "goJavaLauncherBinaries";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:1.10.0";
     private static final String GO_INIT = "com.palantir.launching:go-init:1.10.0";
     public static final String GROUP_NAME = "Distribution";
 
-    @SuppressWarnings("checkstyle:methodlength")
+    @Override
+    @SuppressWarnings({"checkstyle:methodlength", "RawTypes"})
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
@@ -90,16 +93,26 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         distributionExtension.setProductDependenciesConfig(
                 project.getConfigurations().getByName("runtimeClasspath"));
 
-        // Create configuration to load executable dependencies
-        project.getConfigurations().maybeCreate(GO_JAVA_LAUNCHER_BINARIES);
-        project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_JAVA_LAUNCHER);
-        project.getDependencies().add(GO_JAVA_LAUNCHER_BINARIES, GO_INIT);
         Provider<String> mainClassName = distributionExtension
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
-        TaskProvider<CopyLauncherBinariesTask> copyLauncherBinaries =
-                project.getTasks().register("copyLauncherBinaries", CopyLauncherBinariesTask.class);
+        // Create configuration to load executable dependencies
+        Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
+        project.getDependencies().add(launcherConfig.getName(), GO_JAVA_LAUNCHER);
+        Configuration initConfig = project.getConfigurations().create("goInitBinary");
+        project.getDependencies().add(initConfig.getName(), GO_INIT);
+        TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
+                .register("copyLauncherBinaries", Copy.class, task -> {
+                    task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
+                    task.from(project.provider(() -> project.tarTree(initConfig.getSingleFile())));
+                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
+                    task.eachFile(fcd -> {
+                        String[] segments = fcd.getRelativePath().getSegments();
+                        fcd.setRelativePath(new RelativePath(
+                                !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
+                    });
+                });
 
         TaskProvider<Jar> manifestClassPathTask = project.getTasks()
                 .register("manifestClasspathJar", Jar.class, task -> {
@@ -109,28 +122,31 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                             + "sizes are limited.");
                     task.getArchiveAppendix().set("manifest-classpath");
 
-                    task.doFirst(t -> {
-                        FileCollection runtimeClasspath =
-                                project.getConfigurations().getByName("runtimeClasspath");
+                    task.doFirst(new Action<Task>() {
+                        @Override
+                        public void execute(Task _task) {
+                            FileCollection runtimeClasspath =
+                                    project.getConfigurations().getByName("runtimeClasspath");
 
-                        FileCollection jarOutputs = project.getTasks()
-                                .withType(Jar.class)
-                                .getByName(JavaPlugin.JAR_TASK_NAME)
-                                .getOutputs()
-                                .getFiles();
+                            FileCollection jarOutputs = project.getTasks()
+                                    .withType(Jar.class)
+                                    .getByName(JavaPlugin.JAR_TASK_NAME)
+                                    .getOutputs()
+                                    .getFiles();
 
-                        String classPath = runtimeClasspath.plus(jarOutputs).getFiles().stream()
-                                .map(File::getName)
-                                .collect(Collectors.joining(" "));
-                        task.getManifest()
-                                .getAttributes()
-                                .put(
-                                        "Class-Path",
-                                        classPath
-                                                + " "
-                                                + task.getArchiveFileName().get());
+                            String classPath = runtimeClasspath.plus(jarOutputs).getFiles().stream()
+                                    .map(File::getName)
+                                    .collect(Collectors.joining(" "));
+                            task.getManifest()
+                                    .getAttributes()
+                                    .put(
+                                            "Class-Path",
+                                            classPath
+                                                    + " "
+                                                    + task.getArchiveFileName().get());
+                        }
                     });
-                    task.onlyIf(t ->
+                    task.onlyIf(_unused ->
                             distributionExtension.getEnableManifestClasspath().get());
                 });
 
@@ -143,25 +159,30 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.dependsOn(manifestClassPathTask);
                     task.getLazyMainClassName().set(mainClassName);
 
-                    task.doLast(t -> {
-                        if (distributionExtension.getEnableManifestClasspath().get()) {
-                            // Replace standard classpath with pathing jar in order to circumnavigate length limits:
-                            // https://issues.gradle.org/browse/GRADLE-2992
-                            String winFileText = GFileUtils.readFile(task.getWindowsScript());
+                    task.doLast(new Action<Task>() {
+                        @Override
+                        public void execute(Task _task) {
+                            if (distributionExtension
+                                    .getEnableManifestClasspath()
+                                    .get()) {
+                                // Replace standard classpath with pathing jar in order to circumnavigate length limits:
+                                // https://issues.gradle.org/browse/GRADLE-2992
+                                String winFileText = GFileUtils.readFile(task.getWindowsScript());
 
-                            // Remove too-long-classpath and use pathing jar instead
-                            String cleanedText = winFileText
-                                    .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
-                                    .replaceAll(
-                                            "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
-                                            "$1%APP_HOME%\\\\lib\\\\"
-                                                    + manifestClassPathTask
-                                                            .get()
-                                                            .getArchiveFileName()
-                                                            .get()
-                                                    + "$2");
+                                // Remove too-long-classpath and use pathing jar instead
+                                String cleanedText = winFileText
+                                        .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
+                                        .replaceAll(
+                                                "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
+                                                "$1%APP_HOME%\\\\lib\\\\"
+                                                        + manifestClassPathTask
+                                                                .get()
+                                                                .getArchiveFileName()
+                                                                .get()
+                                                        + "$2");
 
-                            GFileUtils.writeFile(cleanedText, task.getWindowsScript());
+                                GFileUtils.writeFile(cleanedText, task.getWindowsScript());
+                            }
                         }
                     });
                 });
@@ -170,7 +191,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         // HACKHACK all fields of CreateStartScript are eager so we configure the task after evaluation to
         // ensure everything has been correctly configured
-        project.afterEvaluate(p -> startScripts.configure(task -> {
+        project.afterEvaluate(_p -> startScripts.configure(task -> {
             task.setApplicationName(
                     distributionExtension.getDistributionServiceName().get());
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
@@ -270,7 +291,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);
         });
 
-        project.afterEvaluate(p -> launchConfigTask.configure(task -> {
+        project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
@@ -281,7 +302,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             }
         }));
 
-        project.afterEvaluate(proj -> distTar.configure(task -> {
+        project.afterEvaluate(_proj -> distTar.configure(task -> {
             DistTarTask.configure(project, task, distributionExtension, jarTask);
         }));
 

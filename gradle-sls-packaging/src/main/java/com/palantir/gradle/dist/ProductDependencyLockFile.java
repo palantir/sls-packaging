@@ -46,7 +46,7 @@ public final class ProductDependencyLockFile {
                                 matcher.group("max"),
                                 null));
                     }
-                    return Stream.of();
+                    return Stream.empty();
                 })
                 .collect(toList());
     }

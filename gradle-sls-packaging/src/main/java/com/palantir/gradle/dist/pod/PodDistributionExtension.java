@@ -53,7 +53,8 @@ public class PodDistributionExtension extends BaseDistributionExtension {
         this.services.set(services);
     }
 
-    public final void service(String name, @DelegatesTo(PodServiceDefinition.class) Closure closure) {
+    public final void service(
+            String name, @DelegatesTo(PodServiceDefinition.class) Closure<PodServiceDefinition> closure) {
         PodServiceDefinition service = new PodServiceDefinition();
         ConfigureUtil.configureUsing(closure).execute(service);
         this.services.put(name, service);
@@ -71,7 +72,8 @@ public class PodDistributionExtension extends BaseDistributionExtension {
         this.volumes.set(volumes);
     }
 
-    public final void volume(String name, @DelegatesTo(PodVolumeDefinition.class) Closure closure) {
+    public final void volume(
+            String name, @DelegatesTo(PodVolumeDefinition.class) Closure<PodVolumeDefinition> closure) {
         PodVolumeDefinition volume = new PodVolumeDefinition();
         ConfigureUtil.configureUsing(closure).execute(volume);
         this.volumes.put(name, volume);

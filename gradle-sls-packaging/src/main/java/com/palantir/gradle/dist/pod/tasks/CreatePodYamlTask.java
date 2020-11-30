@@ -94,7 +94,7 @@ public class CreatePodYamlTask extends DefaultTask {
                 throw new GradleException(String.format(SERVICE_VALIDATION_FAIL_FORMAT, key, e.getMessage()));
             }
 
-            value.getVolumeMap().forEach((volumeKey, volumeValue) -> {
+            value.getVolumeMap().forEach((_volumeKey, volumeValue) -> {
                 if (!volumeDefinitions.get().containsKey(volumeValue)) {
                     throw new GradleException(String.format(
                             SERVICE_VALIDATION_FAIL_FORMAT,

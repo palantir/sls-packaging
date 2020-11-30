@@ -37,6 +37,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String ASSET_CONFIGURATION = "assetBundle";
 
     @Override
+    @SuppressWarnings("RawTypes")
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {

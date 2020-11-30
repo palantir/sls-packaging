@@ -44,7 +44,7 @@ public class LazyCreateStartScriptTask extends CreateStartScripts {
     }
 
     @Override
-    public final void setMainClassName(@Nullable String mainClassName) {
+    public final void setMainClassName(@Nullable String _mainClassName) {
         throw new UnsupportedOperationException("Use lazy property instead");
     }
 }

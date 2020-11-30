@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
@@ -45,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +62,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
+import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
@@ -181,7 +182,7 @@ public class CreateManifestTask extends DefaultTask {
         // HACKHACK serializable way of representing all dependencies
         return productDependenciesConfig.get().getIncoming().getResolutionResult().getAllComponents().stream()
                 // intentionally using a lambda as otherwise we break gradle 4.10 support
-                .map(result -> result.getId())
+                .map(ResolvedComponentResult::getId)
                 .map(ComponentIdentifier::getDisplayName)
                 .collect(Collectors.toSet());
     }
@@ -205,14 +206,14 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @TaskAction
-    final void createManifest() throws Exception {
+    final void createManifest() throws IOException {
         validateProjectVersion();
         if (manifestExtensions.get().containsKey("product-dependencies")) {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
                     + "'product-dependencies' key in manifestExtensions");
         }
 
-        Map<ProductId, ProductDependency> allProductDependencies = Maps.newHashMap();
+        Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
         getProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
             Preconditions.checkArgument(
@@ -236,7 +237,7 @@ public class CreateManifestTask extends DefaultTask {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
             }
-            allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, newDependency) -> {
+            allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
                 ProductDependency mergedDependency =
                         mergeDependencies(productId, declaredDependency, discoveredDependency);
                 if (mergedDependency.equals(discoveredDependency)) {
@@ -365,7 +366,7 @@ public class CreateManifestTask extends DefaultTask {
 
     @SuppressWarnings("checkstyle:CyclomaticComplexity")
     private Map<ProductId, ProductDependency> discoverProductDependencies() {
-        Map<ProductId, ProductDependency> discoveredProductDependencies = Maps.newHashMap();
+        Map<ProductId, ProductDependency> discoveredProductDependencies = new HashMap<>();
         productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
                 .flatMap(artifact -> {
                     String artifactName = artifact.getId().getDisplayName();
@@ -498,12 +499,12 @@ public class CreateManifestTask extends DefaultTask {
                     // Ensure we re-run task to write locks
                     task.getOutputs().upToDateWhen(new Spec<Task>() {
                         @Override
-                        public boolean isSatisfiedBy(Task task) {
+                        public boolean isSatisfiedBy(Task _task) {
                             return !project.getGradle().getStartParameter().isWriteDependencyLocks();
                         }
                     });
                 });
-        project.getPluginManager().withPlugin("lifecycle-base", p -> {
+        project.getPluginManager().withPlugin("lifecycle-base", _p -> {
             project.getTasks()
                     .named(LifecycleBasePlugin.CHECK_TASK_NAME)
                     .configure(task -> task.dependsOn(createManifest));

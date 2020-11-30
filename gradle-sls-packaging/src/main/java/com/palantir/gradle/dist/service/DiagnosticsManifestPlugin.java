@@ -73,6 +73,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
      * gradle has all these jars and resources, it can use the right TransformAction to bridge the gap.
      */
     @Override
+    @SuppressWarnings("RawTypes")
     public void apply(Project project) {
         configureExternalDependencyTransform(project);
         configureProjectDependencyTransform(project);
@@ -96,7 +97,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                             .set(project.getLayout().getBuildDirectory().file(task.getName() + ".json"));
                 });
 
-        project.getPlugins().withId("com.palantir.sls-java-service-distribution", plugin -> {
+        project.getPlugins().withId("com.palantir.sls-java-service-distribution", _plugin -> {
             project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
                 ext.getManifestExtensions()
                         .put(

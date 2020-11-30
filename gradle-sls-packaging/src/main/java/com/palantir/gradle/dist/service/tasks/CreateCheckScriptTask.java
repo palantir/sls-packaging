@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
+import java.io.IOException;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -53,7 +54,7 @@ public class CreateCheckScriptTask extends DefaultTask {
     }
 
     @TaskAction
-    final void createInitScript() {
+    final void createInitScript() throws IOException {
         if (!checkArgs.get().isEmpty()) {
             EmitFiles.replaceVars(
                             JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),

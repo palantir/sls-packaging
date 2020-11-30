@@ -60,7 +60,7 @@ public final class MainClassResolver {
     }
 
     private static boolean anyLinesInFileContain(Path path, String text) {
-        try (Stream<String> lines = java.nio.file.Files.lines(path, StandardCharsets.UTF_8)) {
+        try (Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8)) {
             return lines.anyMatch(line -> line.contains(text));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -68,9 +68,9 @@ public final class MainClassResolver {
     }
 
     private static Stream<Path> allJavaFilesIn(Path rootPath) {
-        try (Stream<Path> paths = java.nio.file.Files.walk(rootPath, Integer.MAX_VALUE)) {
+        try (Stream<Path> paths = Files.walk(rootPath, Integer.MAX_VALUE)) {
             return paths
-                    .filter(path -> Files.isRegularFile(path))
+                    .filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".java"))
                     .collect(Collectors.toSet())
                     .stream();
