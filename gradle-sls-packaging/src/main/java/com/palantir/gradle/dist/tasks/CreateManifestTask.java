@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -254,7 +254,10 @@ public class CreateManifestTask extends DefaultTask {
                 return mergedDependency;
             });
         });
-        List<ProductDependency> productDeps = new ArrayList<>(allProductDependencies.values());
+        List<ProductDependency> productDeps = allProductDependencies.values().stream()
+                .sorted(Comparator.comparing(ProductDependency::getProductGroup)
+                        .thenComparing(ProductDependency::getProductName))
+                .collect(ImmutableList.toImmutableList());
 
         if (productDeps.isEmpty()) {
             requireAbsentLockfile();

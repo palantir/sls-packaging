@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 public final class ProductId implements Serializable {
     private static final Splitter SPLITTER = Splitter.on(':');
@@ -68,5 +69,23 @@ public final class ProductId implements Serializable {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        ProductId productId = (ProductId) other;
+        return Objects.equals(productGroup, productId.productGroup)
+                && Objects.equals(productName, productId.productName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(productGroup, productName);
     }
 }
