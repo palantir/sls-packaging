@@ -397,6 +397,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-Djdk.tls.client.enableSessionTicketExtension=false',
+                '-Djdk.tls.server.enableSessionTicketExtension=false',
                 '-XX:+UseParallelOldGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -420,6 +422,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-Djdk.tls.client.enableSessionTicketExtension=false',
+                '-Djdk.tls.server.enableSessionTicketExtension=false',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .env(LaunchConfigTask.defaultEnvironment)
@@ -457,6 +461,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-Djdk.tls.client.enableSessionTicketExtension=false',
+                '-Djdk.tls.server.enableSessionTicketExtension=false',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
                 "-XX:-TraceClassUnloading",
