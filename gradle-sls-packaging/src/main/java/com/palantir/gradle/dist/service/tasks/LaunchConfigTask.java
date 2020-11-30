@@ -62,7 +62,12 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:HeapDumpPath=var/log",
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
-            "-Dsun.net.inetaddr.ttl=20");
+            "-Dsun.net.inetaddr.ttl=20",
+            // Disable RFC 5077 TLS session ticket support due to incompatibility with common implementations.
+            // This allows us to decouple JVM upgrades from enabling session ticket support.
+            // See https://www.oracle.com/java/technologies/javase/14-relnote-issues.html#JDK-8228396
+            "-Djdk.tls.client.enableSessionTicketExtension=false",
+            "-Djdk.tls.server.enableSessionTicketExtension=false");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
