@@ -159,12 +159,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.dependsOn(manifestClassPathTask);
                     task.getLazyMainClassName().set(mainClassName);
 
-                    task.doLast(new Action<Task>() {
-                        @Override
-                        public void execute(Task _task) {
-                            if (distributionExtension
-                                    .getEnableManifestClasspath()
-                                    .get()) {
+                    if (distributionExtension.getEnableManifestClasspath().get()) {
+                        task.doLast(new Action<Task>() {
+                            @Override
+                            public void execute(Task _task) {
                                 // Replace standard classpath with pathing jar in order to circumnavigate length limits:
                                 // https://issues.gradle.org/browse/GRADLE-2992
                                 String winFileText = GFileUtils.readFile(task.getWindowsScript());
@@ -183,8 +181,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
                                 GFileUtils.writeFile(cleanedText, task.getWindowsScript());
                             }
-                        }
-                    });
+                        });
+                    }
                 });
 
         TaskProvider<Jar> jarTask = project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME);
