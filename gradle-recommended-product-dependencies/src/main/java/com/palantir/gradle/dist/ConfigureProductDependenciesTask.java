@@ -24,7 +24,6 @@ import java.util.Set;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.java.archives.Manifest;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
@@ -37,24 +36,22 @@ import org.gradle.api.tasks.bundling.Jar;
  */
 public class ConfigureProductDependenciesTask extends DefaultTask {
 
+    private final Jar jar;
     private final SetProperty<ProductDependency> productDependencies =
             getProject().getObjects().setProperty(ProductDependency.class);
 
-    public ConfigureProductDependenciesTask() {
+    public ConfigureProductDependenciesTask(Jar jar) {
         setDescription("Configures the 'jar' task to write the input product dependencies into its manifest");
+
+        this.jar = jar;
+        jar.dependsOn(this);
     }
 
     @TaskAction
     final void action() {
-        getProject()
-                .getTasks()
-                .withType(Jar.class)
-                .named(JavaPlugin.JAR_TASK_NAME)
-                .configure(jar -> {
-                    Preconditions.checkState(
-                            !jar.getState().getExecuted(), "Attempted to configure jar task after it was executed");
-                    jar.getManifest().from(createManifest(getProject(), productDependencies.get()));
-                });
+        Preconditions.checkState(
+                !jar.getState().getExecuted(), "Attempted to configure jar task after it was executed");
+        jar.getManifest().from(createManifest(getProject(), productDependencies.get()));
     }
 
     public final void setProductDependencies(Provider<Set<ProductDependency>> productDependencies) {

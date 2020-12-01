@@ -16,9 +16,9 @@
 
 package com.palantir.gradle.dist;
 
+import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
@@ -30,14 +30,18 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         final RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        TaskProvider<?> configureProductDependenciesTask = project.getTasks()
-                .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-                    cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
-                });
+        TaskProvider<DefaultTask> configureProductDependencies =
+                project.getTasks().register("configureProductDependencies", DefaultTask.class);
 
-        // Ensure that the jar task depends on this wiring task
-        project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME).configure(jar -> {
-            jar.dependsOn(configureProductDependenciesTask);
+        project.getTasks().withType(Jar.class).configureEach(jar -> {
+            project.getTasks()
+                    .register("configureProductDependencies_" + jar.getName(), ConfigureProductDependenciesTask.class)
+                    .configure(configureProductDependenciesTask -> {
+                        configureProductDependencies.configure(
+                                task -> task.dependsOn(configureProductDependenciesTask));
+                        configureProductDependenciesTask.setProductDependencies(
+                                ext.getRecommendedProductDependenciesProvider());
+                    });
         });
     }
 }
