@@ -95,14 +95,69 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         runTasksSuccessfully('-DignoreDeprecations=true', '--write-locks', ':jar')
 
         then:
-        fileExists("build/libs/root-project.jar")
+        verifyCorrectRecommendedProductDeps('build/libs/root-project.jar')
+    }
+
+    def 'when gradle-shadow-jar is applied, the pdeps are put into the thin and shadow jar manifest'() {
+        settingsFile  << '''
+            rootProject.name = "root-project"
+        '''.stripIndent()
+
+        buildFile << '''
+            buildscript {
+                repositories {
+                    jcenter()
+                    maven { url 'https://dl.bintray.com/palantir/releases' }
+                }
+            
+                dependencies {
+                    classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:1.27.0'
+                    classpath 'com.palantir.gradle.shadow-jar:gradle-shadow-jar:1.2.0'
+                }
+            }
+            
+            apply plugin: 'java-library'
+            apply plugin: 'com.palantir.recommended-product-dependencies'
+            apply plugin: 'com.palantir.consistent-versions'
+            apply plugin: 'com.palantir.shadow-jar'
+            
+            repositories {
+                jcenter()
+            }
+            
+            dependencies {
+                implementation 'one.util:streamex:0.7.3'
+            }
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = '1.0.0'
+                    maximumVersion = '1.x.x'
+                }
+            }
+        '''.stripIndent()
+
+        when:
+        runTasksSuccessfully('--write-locks', 'jar', 'shadowJar')
+
+        then:
+        verifyCorrectRecommendedProductDeps('build/libs/root-project.jar')
+        verifyCorrectRecommendedProductDeps('build/libs/root-project-thin.jar')
+    }
+
+    def verifyCorrectRecommendedProductDeps(String jarFilePath) {
+        assert fileExists(jarFilePath)
 
         def dep = Iterables.getOnlyElement(
-                readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
-        dep.productGroup == "group"
-        dep.productName == "name"
-        dep.minimumVersion == "1.0.0"
-        dep.maximumVersion == "1.x.x"
+                readRecommendedProductDeps(file(jarFilePath)).recommendedProductDependencies())
+        assert dep.productGroup == "group"
+        assert dep.productName == "name"
+        assert dep.minimumVersion == "1.0.0"
+        assert dep.maximumVersion == "1.x.x"
+
+        return true
     }
 
     def readRecommendedProductDeps(File jarFile) {
