@@ -98,7 +98,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         verifyCorrectRecommendedProductDeps('build/libs/root-project.jar')
     }
 
-    def 'when gradle-shadow-jar is applied, the pdeps are put into the thin and shadow jar manifest'() {
+    def 'when gradle-shadow-jar is applied, the pdeps are put into the shadow jar manifest'() {
         settingsFile  << '''
             rootProject.name = "root-project"
         '''.stripIndent()
@@ -112,7 +112,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
             
                 dependencies {
                     classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:1.27.0'
-                    classpath 'com.palantir.gradle.shadow-jar:gradle-shadow-jar:1.2.0'
+                    classpath 'com.palantir.gradle.shadow-jar:gradle-shadow-jar:1.3.0'
                 }
             }
             
@@ -120,14 +120,6 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
             apply plugin: 'com.palantir.recommended-product-dependencies'
             apply plugin: 'com.palantir.consistent-versions'
             apply plugin: 'com.palantir.shadow-jar'
-            
-            repositories {
-                jcenter()
-            }
-            
-            dependencies {
-                implementation 'one.util:streamex:0.7.3'
-            }
 
             recommendedProductDependencies {
                 productDependency {
@@ -140,11 +132,10 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         '''.stripIndent()
 
         when:
-        runTasksSuccessfully('--write-locks', 'jar', 'shadowJar')
+        runTasksSuccessfully('--write-locks', 'shadowJar')
 
         then:
         verifyCorrectRecommendedProductDeps('build/libs/root-project.jar')
-        verifyCorrectRecommendedProductDeps('build/libs/root-project-thin.jar')
     }
 
     def verifyCorrectRecommendedProductDeps(String jarFilePath) {
