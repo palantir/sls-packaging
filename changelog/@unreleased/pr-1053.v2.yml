@@ -1,0 +1,8 @@
+type: improvement
+improvement:
+  description: Recommended product dependencies are added to the manifests of all
+    jar tasks in the projects where `com.palantir.recommended-product-dependencies`
+    is applied. This means `shadowJar` from the gradle shadow plugin now picks up
+    recommended product dependencies.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1053
