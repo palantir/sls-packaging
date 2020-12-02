@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist;
 
-import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskProvider;
@@ -30,18 +29,15 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         final RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        TaskProvider<DefaultTask> configureProductDependencies =
-                project.getTasks().register("configureProductDependencies", DefaultTask.class);
+        TaskProvider<ConfigureProductDependenciesTask> configureProductDependencies = project.getTasks()
+                .register(
+                        "configureProductDependencies",
+                        ConfigureProductDependenciesTask.class,
+                        configureProductDependenciesTask -> {
+                            configureProductDependenciesTask.setProductDependencies(
+                                    ext.getRecommendedProductDependenciesProvider());
+                        });
 
-        project.getTasks().withType(Jar.class).configureEach(jar -> {
-            project.getTasks()
-                    .register("configureProductDependencies_" + jar.getName(), ConfigureProductDependenciesTask.class)
-                    .configure(configureProductDependenciesTask -> {
-                        configureProductDependencies.configure(
-                                task -> task.dependsOn(configureProductDependenciesTask));
-                        configureProductDependenciesTask.setProductDependencies(
-                                ext.getRecommendedProductDependenciesProvider());
-                    });
-        });
+        project.getTasks().withType(Jar.class).configureEach(jar -> jar.dependsOn(configureProductDependencies));
     }
 }
