@@ -1,0 +1,8 @@
+type: fix
+fix:
+  description: When parsing the `sls-manifest/diagnostics.json` file out of jars,
+    sls-packaging no longer performs strict validation on its structure (as this can
+    prevent the rollout of jars which include extra fields). Instead it just passes
+    everything on as long as it's a JSON object.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1054
