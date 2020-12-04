@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
-import com.palantir.gradle.dist.service.Diagnostics.SupportedDiagnostic;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
 import java.io.IOException;
@@ -46,10 +46,10 @@ public abstract class MergeDiagnosticsJsonTask extends DefaultTask {
 
     @TaskAction
     public final void taskAction() {
-        List<SupportedDiagnostic> aggregated = getClasspath().getFiles().stream()
+        List<ObjectNode> aggregated = getClasspath().getFiles().stream()
                 .flatMap(file -> Diagnostics.parse(getProject(), file).stream())
                 .distinct()
-                .sorted(Comparator.comparing(v -> v.type().toString()))
+                .sorted(Comparator.comparing(node -> node.get("type").asText()))
                 .collect(Collectors.toList());
 
         File out = getOutputJsonFile().getAsFile().get();

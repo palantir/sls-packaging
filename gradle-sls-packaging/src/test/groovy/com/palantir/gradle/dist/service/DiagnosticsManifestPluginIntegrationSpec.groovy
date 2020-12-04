@@ -52,7 +52,8 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
           implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
         }
         """.stripIndent()
-        addResource("src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1", "docs" : "This does something"}]')
+        addResource("src/main/resources/sls-manifest", "diagnostics.json",
+                '[{"type": "foo.v1", "docs" : "This does something", "safe" : false}]')
 
         when:
         runTasksSuccessfully("mergeDiagnosticsJson", '-is')
@@ -62,7 +63,8 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         outFile.text == """\
         [ {
           "type" : "foo.v1",
-          "docs" : "This does something"
+          "docs" : "This does something",
+          "safe" : false
         } ]""".stripIndent()
 
         when:
@@ -97,13 +99,16 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
             implementation project(':my-project2')
         }
         ''')
-        addResource("my-server/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "foo.v1", "docs" : "This does something"}]')
+        addResource("my-server/src/main/resources/sls-manifest", "diagnostics.json",
+                '[{"type": "foo.v1", "docs" : "This does something"}]')
 
         addSubproject('my-project1')
-        addResource("my-project1/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "myproject1.v1", "docs" : "Who knows what this does"}]')
+        addResource("my-project1/src/main/resources/sls-manifest", "diagnostics.json",
+                '[{"type": "myproject1.v1", "docs" : "Who knows what this does"}]')
 
         addSubproject('my-project2')
-        addResource("my-project2/src/main/resources/sls-manifest", "diagnostics.json", '[{"type": "myproject2.v1", "docs" : "Click me if you dare!"}]')
+        addResource("my-project2/src/main/resources/sls-manifest", "diagnostics.json",
+                '[{"type": "myproject2.v1", "docs" : "Click me if you dare!"}]')
 
         when:
         def output = runTasksSuccessfully("my-server:mergeDiagnosticsJson", '-is')
