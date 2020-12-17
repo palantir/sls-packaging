@@ -1,0 +1,9 @@
+acceptedBreaks:
+  "4.25.1":
+    com.palantir.sls-packaging:gradle-recommended-product-dependencies:
+    - code: "java.method.returnTypeChangedCovariantly"
+      old: "method org.gradle.api.provider.Provider<java.util.Set<com.palantir.gradle.dist.ProductDependency>>\
+        \ com.palantir.gradle.dist.RecommendedProductDependenciesExtension::getRecommendedProductDependenciesProvider()"
+      new: "method org.gradle.api.provider.SetProperty<com.palantir.gradle.dist.ProductDependency>\
+        \ com.palantir.gradle.dist.RecommendedProductDependenciesExtension::getRecommendedProductDependenciesProvider()"
+      justification: "not really a break"
