@@ -26,11 +26,11 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
     @Override
     public final void apply(Project project) {
-        final RecommendedProductDependenciesExtension ext = project.getExtensions()
+        RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
         project.getPluginManager().withPlugin("java", _plugin -> {
-            TaskProvider<?> configureProductDependenciesTask = project.getTasks()
+            TaskProvider<ConfigureProductDependenciesTask> configureProductDependenciesTask = project.getTasks()
                     .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
                         cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
                     });
