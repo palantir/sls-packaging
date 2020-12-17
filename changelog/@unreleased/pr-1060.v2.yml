@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Expose pdeps as a property
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1060
