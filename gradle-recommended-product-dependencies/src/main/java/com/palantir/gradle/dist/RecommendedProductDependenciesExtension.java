@@ -21,7 +21,6 @@ import groovy.lang.DelegatesTo;
 import java.util.Set;
 import javax.inject.Inject;
 import org.gradle.api.Project;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.util.ConfigureUtil;
@@ -47,7 +46,7 @@ public class RecommendedProductDependenciesExtension {
         }));
     }
 
-    public final Provider<Set<ProductDependency>> getRecommendedProductDependenciesProvider() {
+    public final SetProperty<ProductDependency> getRecommendedProductDependenciesProvider() {
         return recommendedProductDependencies;
     }
 
