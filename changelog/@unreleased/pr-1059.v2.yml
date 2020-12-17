@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Expose provider on RecommendedProductDependenciesExtension
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1059
