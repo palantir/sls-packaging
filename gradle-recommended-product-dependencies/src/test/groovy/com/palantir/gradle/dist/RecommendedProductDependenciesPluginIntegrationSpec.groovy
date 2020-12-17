@@ -32,6 +32,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         rootProject.name = "root-project"
         """.stripIndent()
         buildFile << """
+            apply plugin: 'java'
             apply plugin: 'com.palantir.recommended-product-dependencies'
 
             recommendedProductDependencies {
