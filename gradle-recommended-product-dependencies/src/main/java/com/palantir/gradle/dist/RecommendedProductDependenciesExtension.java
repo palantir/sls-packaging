@@ -47,10 +47,16 @@ public class RecommendedProductDependenciesExtension {
         }));
     }
 
-    final Provider<Set<ProductDependency>> getRecommendedProductDependenciesProvider() {
+    public final Provider<Set<ProductDependency>> getRecommendedProductDependenciesProvider() {
         return recommendedProductDependencies;
     }
 
+    /**
+     * The product dependencies of this project.
+     *
+     * @deprecated Use {@link #getRecommendedProductDependenciesProvider()} instead.
+     */
+    @Deprecated
     public final Set<ProductDependency> getRecommendedProductDependencies() {
         return recommendedProductDependencies.get();
     }
