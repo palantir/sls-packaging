@@ -26,18 +26,22 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
     @Override
     public final void apply(Project project) {
-        project.getPlugins().apply("java");
         final RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
-        TaskProvider<?> configureProductDependenciesTask = project.getTasks()
-                .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-                    cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
-                });
+        project.getPluginManager().withPlugin("java", _plugin -> {
+            TaskProvider<?> configureProductDependenciesTask = project.getTasks()
+                    .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
+                        cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
+                    });
 
-        // Ensure that the jar task depends on this wiring task
-        project.getTasks().withType(Jar.class).named(JavaPlugin.JAR_TASK_NAME).configure(jar -> {
-            jar.dependsOn(configureProductDependenciesTask);
+            // Ensure that the jar task depends on this wiring task
+            project.getTasks()
+                    .withType(Jar.class)
+                    .named(JavaPlugin.JAR_TASK_NAME)
+                    .configure(jar -> {
+                        jar.dependsOn(configureProductDependenciesTask);
+                    });
         });
     }
 }
