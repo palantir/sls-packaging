@@ -44,7 +44,7 @@ import org.immutables.value.Value;
 
 public class LaunchConfigTask extends DefaultTask {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final List<String> java8gcLoggingOptions = ImmutableList.of(
+    private static final List<String> JAVA_8_GC_LOGGING_OPTIONS = ImmutableList.of(
             "-XX:+PrintGCDateStamps",
             "-XX:+PrintGCDetails",
             "-XX:-TraceClassUnloading",
@@ -53,7 +53,11 @@ public class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
-    private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+    private static final List<String> JAVA_14_OPTIONS = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+
+    // TODO(fawind): Remove once jdk 15.0.2 is released and rolled out: https://bugs.openjdk.java.net/browse/JDK-8253566
+    private static final List<String> JAVA_15_SUBTYPE_CHECK_OPTIONS =
+            ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -172,10 +176,14 @@ public class LaunchConfigTask extends DefaultTask {
                         .args(args.get())
                         .classpath(relativizeToServiceLibDirectory(classpath))
                         .addAllJvmOpts(alwaysOnJvmOptions)
-                        .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
+                        .addAllJvmOpts(addJava8GcLogging.get() ? JAVA_8_GC_LOGGING_OPTIONS : ImmutableList.of())
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
-                                        ? java14Options
+                                        ? JAVA_14_OPTIONS
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("15")) >= 0
+                                        ? JAVA_15_SUBTYPE_CHECK_OPTIONS
                                         : ImmutableList.of())
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
