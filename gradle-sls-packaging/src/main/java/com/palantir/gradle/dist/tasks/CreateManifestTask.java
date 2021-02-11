@@ -212,6 +212,7 @@ public class CreateManifestTask extends DefaultTask {
         this.manifestFile = manifestFile;
     }
 
+    @SuppressWarnings("checkstyle:CyclomaticComplexity")
     @TaskAction
     final void createManifest() throws IOException {
         validateProjectVersion();
@@ -249,6 +250,10 @@ public class CreateManifestTask extends DefaultTask {
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
+            }
+            if (getOptionalProductIds().get().contains(productId)) {
+                log.trace("Product dependency for '{}' set as optional", productId);
+                discoveredDependency.setOptional(true);
             }
             allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
                 ProductDependency mergedDependency =

@@ -180,6 +180,26 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         buildResult.output.contains('Encountered product dependency declaration that was also ignored')
     }
 
+    def 'throws if declared dependency is also optional'() {
+        setup:
+        buildFile << """
+            createManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
+                ]
+                optionalProductIds = [
+                    new com.palantir.gradle.dist.ProductId("group:name"), 
+                ]
+            }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksAndFail(':createManifest')
+
+        then:
+        buildResult.output.contains('Encountered product dependency declaration that was also declared as optional')
+    }
+
     def 'Resolve unspecified productDependencies'() {
         setup:
         buildFile << """
@@ -288,6 +308,52 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         then:
         def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
         manifest.get("extensions").get("product-dependencies").isEmpty()
+    }
+
+    def 'Mark as optional product dependencies'() {
+        setup:
+        buildFile << """
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+
+            tasks.createManifest {
+                optionalProductIds = [
+                    new com.palantir.gradle.dist.ProductId("group:name"), 
+                    new com.palantir.gradle.dist.ProductId("group:name2")
+                ]
+            }
+        """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.0.0, 1.x.x)
+        group:name2 (2.0.0, 2.x.x)
+        """.stripIndent()
+
+        when:
+        runTasks(':createManifest')
+
+        then:
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.0.0",
+                        "recommended-version": "1.2.0",
+                        "maximum-version"    : "1.x.x",
+                        "optional"           : true
+
+                ],
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name2",
+                        "minimum-version"    : "2.0.0",
+                        "recommended-version": "2.2.0",
+                        "maximum-version"    : "2.x.x",
+                        "optional"           : true
+                ]
+        ]
     }
 
     def "Merges duplicate discovered dependencies with same version"() {
