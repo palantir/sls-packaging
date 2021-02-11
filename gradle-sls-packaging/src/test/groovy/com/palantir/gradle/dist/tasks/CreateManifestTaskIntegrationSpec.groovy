@@ -203,15 +203,17 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "product-group"      : "group",
                         "product-name"       : "name",
                         "minimum-version"    : "1.0.0",
+                        "recommended-version": "1.2.0",
                         "maximum-version"    : "1.x.x",
-                        "recommended-version": "1.2.0"
+                        "optional"           : false
                 ],
                 [
                         "product-group"      : "group",
                         "product-name"       : "name2",
                         "minimum-version"    : "2.0.0",
+                        "recommended-version": "2.2.0",
                         "maximum-version"    : "2.x.x",
-                        "recommended-version": "2.2.0"
+                        "optional"           : false
                 ]
         ]
     }
@@ -247,15 +249,18 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "product-group"      : "group",
                         "product-name"       : "name",
                         "minimum-version"    : "1.1.0",
+                        "recommended-version": "1.2.0",
                         "maximum-version"    : "1.x.x",
-                        "recommended-version": "1.2.0"
+                        "optional"           : false
+
                 ],
                 [
                         "product-group"      : "group",
                         "product-name"       : "name2",
                         "minimum-version"    : "2.0.0",
+                        "recommended-version": "2.2.0",
                         "maximum-version"    : "2.x.x",
-                        "recommended-version": "2.2.0"
+                        "optional"           : false
                 ]
         ]
     }
@@ -309,8 +314,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "product-group"      : "group",
                         "product-name"       : "name2",
                         "minimum-version"    : "2.0.0",
+                        "recommended-version": "2.2.0",
                         "maximum-version"    : "2.x.x",
-                        "recommended-version": "2.2.0"
+                        "optional"           : false
                 ]
         ]
     }
@@ -338,8 +344,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "product-group"      : "group",
                         "product-name"       : "name2",
                         "minimum-version"    : "2.1.0",
+                        "recommended-version": "2.2.0",
                         "maximum-version"    : "2.6.x",
-                        "recommended-version": "2.2.0"
+                        "optional"           : false
                 ]
         ]
     }
@@ -663,6 +670,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "minimum-version"    : "0.0.0",
                         "recommended-version": "1.0.0",
                         "maximum-version"    : "1.x.x",
+                        "optional"           :  false
                 ],
         ]
     }
@@ -725,6 +733,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "minimum-version"    : "0.0.0",
                         "recommended-version": "1.0.0",
                         "maximum-version"    : "1.x.x",
+                        "optional"           : false
                 ],
         ]
     }
