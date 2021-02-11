@@ -30,8 +30,8 @@ public final class ProductDependencyLockFile {
 
     private static final String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
     public static final String PROJECT_VERSION = "$projectVersion";
-    private static final Pattern LOCK_PATTERN =
-            Pattern.compile("^(?<group>[^:]+):(?<name>[^ ]+) \\((?<min>[^,]+), (?<max>[^\\)]+)\\)$");
+    private static final Pattern LOCK_PATTERN = Pattern.compile(
+            "^(?<group>[^:]+):(?<name>[^ ]+) \\((?<min>[^,]+), (?<max>[^\\)]+)\\)(?<optional> optional)?$");
     public static final String LOCK_FILE = "product-dependencies.lock";
 
     public static List<ProductDependency> fromString(String contents, String projectVersion) {
@@ -44,7 +44,8 @@ public final class ProductDependencyLockFile {
                                 matcher.group("name"),
                                 matcher.group("min").equals(PROJECT_VERSION) ? projectVersion : matcher.group("min"),
                                 matcher.group("max"),
-                                null));
+                                null,
+                                matcher.group("optional") != null));
                     }
                     return Stream.empty();
                 })
@@ -55,11 +56,12 @@ public final class ProductDependencyLockFile {
             List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
         return deps.stream()
                 .map(dep -> String.format(
-                        "%s:%s (%s, %s)",
+                        "%s:%s (%s, %s)%s",
                         dep.getProductGroup(),
                         dep.getProductName(),
                         renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
-                        dep.getMaximumVersion()))
+                        dep.getMaximumVersion(),
+                        dep.getOptional() ? " optional" : ""))
                 .sorted()
                 .collect(Collectors.joining("\n", HEADER, "\n"));
     }
