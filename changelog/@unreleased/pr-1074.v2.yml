@@ -1,0 +1,7 @@
+type: feature
+feature:
+  description: |-
+    Support `optional` field in the `ProductDependency` class.
+    It also allows discovered dependencies to be set optional through the `optionalProductDependency` declaration in the manifest.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1074
