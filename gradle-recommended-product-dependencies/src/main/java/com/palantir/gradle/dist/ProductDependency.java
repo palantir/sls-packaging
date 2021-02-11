@@ -164,8 +164,13 @@ public final class ProductDependency implements Serializable {
     @Override
     public String toString() {
         return String.format(
-                "%s:%s(min: %s, recommended: %s, max: %s)",
-                productGroup, productName, minimumVersion, recommendedVersion, maximumVersion);
+                "%s:%s(min: %s, recommended: %s, max: %s)%s",
+                productGroup,
+                productName,
+                minimumVersion,
+                recommendedVersion,
+                maximumVersion,
+                optional ? " optional" : "");
     }
 
     public String getProductGroup() {
@@ -229,11 +234,12 @@ public final class ProductDependency implements Serializable {
                 && productName.equals(that.productName)
                 && minimumVersion.equals(that.minimumVersion)
                 && Objects.equals(recommendedVersion, that.recommendedVersion)
-                && maximumVersion.equals(that.maximumVersion);
+                && maximumVersion.equals(that.maximumVersion)
+                && optional == that.optional;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(productGroup, productName, minimumVersion, recommendedVersion, maximumVersion);
+        return Objects.hash(productGroup, productName, minimumVersion, recommendedVersion, maximumVersion, optional);
     }
 }
