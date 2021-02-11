@@ -326,8 +326,8 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
         file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
-        group:name (1.0.0, 1.x.x)
-        group:name2 (2.0.0, 2.x.x)
+        group:name (1.0.0, 1.x.x) optional
+        group:name2 (2.0.0, 2.x.x) optional
         """.stripIndent()
 
         when:
