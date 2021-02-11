@@ -269,10 +269,6 @@ public class CreateManifestTask extends DefaultTask {
                                     discoveredDependency,
                                     declaredDependency);
                 }
-                if (getOptionalProductIds().get().contains(productId)) {
-                    log.trace("Product dependency for '{}' set as optional", productId);
-                    mergedDependency.setOptional(true);
-                }
                 return mergedDependency;
             });
         });
