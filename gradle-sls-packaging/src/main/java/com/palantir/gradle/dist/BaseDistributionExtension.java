@@ -53,6 +53,7 @@ public class BaseDistributionExtension {
     private final Property<String> podName;
     private final Property<ProductType> productType;
     private final ListProperty<ProductDependency> productDependencies;
+    private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
@@ -67,6 +68,7 @@ public class BaseDistributionExtension {
         podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
+        optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
@@ -206,6 +208,18 @@ public class BaseDistributionExtension {
             }
             return dep;
         }));
+    }
+
+    public final Provider<Set<ProductId>> getOptionalProductDependencies() {
+        return optionalProductDependencies;
+    }
+
+    public final void optionalProductDependency(String productGroup, String productName) {
+        this.optionalProductDependencies.add(new ProductId(productGroup, productName));
+    }
+
+    public final void optionalProductDependency(String ignoredProductId) {
+        this.optionalProductDependencies.add(new ProductId(ignoredProductId));
     }
 
     public final Provider<Set<ProductId>> getIgnoredProductDependencies() {

@@ -45,6 +45,9 @@ public final class ProductDependency implements Serializable {
     @JsonProperty("maximum-version")
     private String maximumVersion;
 
+    @JsonProperty("optional")
+    private boolean optional = false;
+
     public ProductDependency() {}
 
     public ProductDependency(
@@ -192,6 +195,14 @@ public final class ProductDependency implements Serializable {
 
     public void setMaximumVersion(String maximumVersion) {
         this.maximumVersion = maximumVersion;
+    }
+
+    public boolean getOptional() {
+        return optional;
+    }
+
+    public void setOptional(boolean optional) {
+        this.optional = optional;
     }
 
     @Override
