@@ -55,13 +55,24 @@ public final class ProductDependency implements Serializable {
             String productName,
             String minimumVersion,
             String maximumVersion,
-            String recommendedVersion) {
+            String recommendedVersion,
+            boolean optional) {
         this.productGroup = productGroup;
         this.productName = productName;
         this.minimumVersion = minimumVersion;
         this.maximumVersion = maximumVersion;
         this.recommendedVersion = recommendedVersion;
+        this.optional = optional;
         isValid();
+    }
+
+    public ProductDependency(
+            String productGroup,
+            String productName,
+            String minimumVersion,
+            String maximumVersion,
+            String recommendedVersion) {
+        this(productGroup, productName, minimumVersion, maximumVersion, recommendedVersion, false);
     }
 
     /**

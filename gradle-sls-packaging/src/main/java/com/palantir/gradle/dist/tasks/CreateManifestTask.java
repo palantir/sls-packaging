@@ -462,7 +462,8 @@ public class CreateManifestTask extends DefaultTask {
                                         recommendedDep.getProductName(),
                                         recommendedDep.getMinimumVersion(),
                                         recommendedDep.getMaximumVersion(),
-                                        recommendedDep.getRecommendedVersion()));
+                                        recommendedDep.getRecommendedVersion(),
+                                        recommendedDep.getOptional()));
                     } catch (IOException | IllegalArgumentException e) {
                         log.debug(
                                 "Failed to load product dependency for artifact '{}', file '{}', '{}'",
