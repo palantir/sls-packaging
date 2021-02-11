@@ -218,8 +218,8 @@ public class BaseDistributionExtension {
         this.optionalProductDependencies.add(new ProductId(productGroup, productName));
     }
 
-    public final void optionalProductDependency(String ignoredProductId) {
-        this.optionalProductDependencies.add(new ProductId(ignoredProductId));
+    public final void optionalProductDependency(String optionalProductId) {
+        this.optionalProductDependencies.add(new ProductId(optionalProductId));
     }
 
     public final Provider<Set<ProductId>> getIgnoredProductDependencies() {
