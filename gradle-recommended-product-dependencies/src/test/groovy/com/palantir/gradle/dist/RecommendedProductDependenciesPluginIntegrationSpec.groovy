@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist
 
-
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.Iterables
 import java.util.jar.Manifest
@@ -104,6 +103,30 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.productName == "name"
         dep.minimumVersion == "1.0.0"
         dep.maximumVersion == "1.x.x"
+    }
+
+    def 'does not allow you to add an optional dependency'() {
+        buildFile << """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.recommended-product-dependencies'
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = '1.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = '1.2.3'
+                    optional = true
+                }
+            }
+        """.stripIndent()
+
+        when:
+        def executionResult = runTasksWithFailure(':jar')
+
+        then:
+        executionResult.failure.cause.cause.message.contains 'Optional dependencies are not supported'
     }
 
     def readRecommendedProductDeps(File jarFile) {
