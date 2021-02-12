@@ -45,6 +45,9 @@ public final class ProductDependency implements Serializable {
     @JsonProperty("maximum-version")
     private String maximumVersion;
 
+    @JsonProperty("optional")
+    private boolean optional = false;
+
     public ProductDependency() {}
 
     public ProductDependency(
@@ -52,13 +55,24 @@ public final class ProductDependency implements Serializable {
             String productName,
             String minimumVersion,
             String maximumVersion,
-            String recommendedVersion) {
+            String recommendedVersion,
+            boolean optional) {
         this.productGroup = productGroup;
         this.productName = productName;
         this.minimumVersion = minimumVersion;
         this.maximumVersion = maximumVersion;
         this.recommendedVersion = recommendedVersion;
+        this.optional = optional;
         isValid();
+    }
+
+    public ProductDependency(
+            String productGroup,
+            String productName,
+            String minimumVersion,
+            String maximumVersion,
+            String recommendedVersion) {
+        this(productGroup, productName, minimumVersion, maximumVersion, recommendedVersion, false);
     }
 
     /**
@@ -150,8 +164,13 @@ public final class ProductDependency implements Serializable {
     @Override
     public String toString() {
         return String.format(
-                "%s:%s(min: %s, recommended: %s, max: %s)",
-                productGroup, productName, minimumVersion, recommendedVersion, maximumVersion);
+                "%s:%s(min: %s, recommended: %s, max: %s)%s",
+                productGroup,
+                productName,
+                minimumVersion,
+                recommendedVersion,
+                maximumVersion,
+                optional ? " optional" : "");
     }
 
     public String getProductGroup() {
@@ -194,6 +213,14 @@ public final class ProductDependency implements Serializable {
         this.maximumVersion = maximumVersion;
     }
 
+    public boolean getOptional() {
+        return optional;
+    }
+
+    public void setOptional(boolean optional) {
+        this.optional = optional;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -207,11 +234,12 @@ public final class ProductDependency implements Serializable {
                 && productName.equals(that.productName)
                 && minimumVersion.equals(that.minimumVersion)
                 && Objects.equals(recommendedVersion, that.recommendedVersion)
-                && maximumVersion.equals(that.maximumVersion);
+                && maximumVersion.equals(that.maximumVersion)
+                && optional == that.optional;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(productGroup, productName, minimumVersion, recommendedVersion, maximumVersion);
+        return Objects.hash(productGroup, productName, minimumVersion, recommendedVersion, maximumVersion, optional);
     }
 }

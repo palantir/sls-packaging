@@ -25,13 +25,13 @@ class ProductDependencyLockFileTest extends Specification {
         when:
         List<ProductDependency> sample = [
                 new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null),
-                new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null)
+                new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null, true)
         ]
 
         then:
         ProductDependencyLockFile.asString(sample, [] as Set<ProductId>, '0.0.0') == """\
         # Run ./gradlew --write-locks to regenerate this file
-        com.palantir.other:bar (0.2.0, 0.x.x)
+        com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
         """.stripIndent()
     }
@@ -54,13 +54,13 @@ class ProductDependencyLockFileTest extends Specification {
         List<ProductDependency> result = ProductDependencyLockFile.fromString("""\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x)
-        com.palantir.product:foo (1.20.0, 1.x.x)
+        com.palantir.product:foo (1.20.0, 1.x.x) optional
         """.stripIndent(), "0.0.0")
 
         then:
         result.size() == 2
         result[0] == new ProductDependency("com.palantir.other", "bar", "0.2.0", "0.x.x", null)
-        result[1] == new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null)
+        result[1] == new ProductDependency("com.palantir.product", "foo", "1.20.0", "1.x.x", null, true)
     }
 
     def 'round-trips without recommended version'() {

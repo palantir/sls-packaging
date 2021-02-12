@@ -7,3 +7,9 @@ acceptedBreaks:
       new: "method org.gradle.api.provider.SetProperty<com.palantir.gradle.dist.ProductDependency>\
         \ com.palantir.gradle.dist.RecommendedProductDependenciesExtension::getRecommendedProductDependenciesProvider()"
       justification: "not really a break"
+  "4.26.0":
+    com.palantir.sls-packaging:gradle-recommended-product-dependencies:
+    - code: "java.class.defaultSerializationChanged"
+      old: "class com.palantir.gradle.dist.ProductDependency"
+      new: "class com.palantir.gradle.dist.ProductDependency"
+      justification: "Old class is semantically equivalent to optional=false"

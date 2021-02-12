@@ -98,6 +98,8 @@ public class CreateManifestTask extends DefaultTask {
 
     private final ListProperty<ProductDependency> productDependencies =
             getProject().getObjects().listProperty(ProductDependency.class);
+    private final SetProperty<ProductId> optionalProductIds =
+            getProject().getObjects().setProperty(ProductId.class);
     private final SetProperty<ProductId> ignoredProductIds =
             getProject().getObjects().setProperty(ProductId.class);
     private final Property<Configuration> productDependenciesConfig =
@@ -168,6 +170,11 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
+    final SetProperty<ProductId> getOptionalProductIds() {
+        return optionalProductIds;
+    }
+
+    @Input
     final SetProperty<ProductId> getIgnoredProductIds() {
         return ignoredProductIds;
     }
@@ -205,6 +212,7 @@ public class CreateManifestTask extends DefaultTask {
         this.manifestFile = manifestFile;
     }
 
+    @SuppressWarnings("checkstyle:CyclomaticComplexity")
     @TaskAction
     final void createManifest() throws IOException {
         validateProjectVersion();
@@ -227,6 +235,12 @@ public class CreateManifestTask extends DefaultTask {
                                 + "dependency or ignore",
                         productId));
             }
+            if (getOptionalProductIds().get().contains(productId)) {
+                throw new IllegalArgumentException(String.format(
+                        "Encountered product dependency declaration that was also declared as optional for '%s', "
+                                + "either remove the dependency or optional declaration",
+                        productId));
+            }
             allProductDependencies.merge(
                     productId, declaredDep, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
         });
@@ -236,6 +250,10 @@ public class CreateManifestTask extends DefaultTask {
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
+            }
+            if (getOptionalProductIds().get().contains(productId)) {
+                log.trace("Product dependency for '{}' set as optional", productId);
+                discoveredDependency.setOptional(true);
             }
             allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
                 ProductDependency mergedDependency =
@@ -445,7 +463,8 @@ public class CreateManifestTask extends DefaultTask {
                                         recommendedDep.getProductName(),
                                         recommendedDep.getMinimumVersion(),
                                         recommendedDep.getMaximumVersion(),
-                                        recommendedDep.getRecommendedVersion()));
+                                        recommendedDep.getRecommendedVersion(),
+                                        recommendedDep.getOptional()));
                     } catch (IOException | IllegalArgumentException e) {
                         log.debug(
                                 "Failed to load product dependency for artifact '{}', file '{}', '{}'",
@@ -493,6 +512,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getAllProductDependencies());
                     task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
+                    task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getManifestExtensions().set(ext.getManifestExtensions());
                     task.getInRepoProductIds()
