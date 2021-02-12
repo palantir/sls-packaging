@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.base.Throwables
 import com.google.common.collect.Iterables
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
@@ -126,7 +127,8 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         def executionResult = runTasksWithFailure(':jar')
 
         then:
-        executionResult.failure.cause.cause.message.contains 'Optional dependencies are not supported'
+        def rootCause = Throwables.getRootCause(executionResult.failure)
+        rootCause.message.contains 'Optional dependencies are not supported'
     }
 
     def readRecommendedProductDeps(File jarFile) {
