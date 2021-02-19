@@ -82,12 +82,18 @@ public final class ProductDependencyMerger {
                 .filter(version -> satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
 
+        // Since recommended--and thus, discovered--product dependencies cannot be optional, if we are merging
+        // optional and non-optional dependencies, then the one with `optional = true` must be an explicit product
+        // dependency and should always take precedence.
+        boolean optional = dep1.getOptional() || dep2.getOptional();
+
         ProductDependency result = new ProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
         result.setMaximumVersion(maximumVersion.toString());
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
+        result.setOptional(optional);
         result.isValid();
         return result;
     }
