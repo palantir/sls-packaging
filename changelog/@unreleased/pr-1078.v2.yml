@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: If a dependency is discovered (non-optional) but declared explicitly as optional, it will be recognized as `optional`.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1078
