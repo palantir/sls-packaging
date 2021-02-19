@@ -82,12 +82,16 @@ public final class ProductDependencyMerger {
                 .filter(version -> satisfiesMaxVersion(maximumVersion, version))
                 .max(VersionComparator.INSTANCE);
 
+        // Optional iff both inputs are optional; otherwise, we want to conservatively propagate the strict requirement.
+        boolean optional = dep1.getOptional() && dep2.getOptional();
+
         ProductDependency result = new ProductDependency();
         result.setMinimumVersion(minimumVersion.toString());
         result.setMaximumVersion(maximumVersion.toString());
         recommendedVersion.map(Objects::toString).ifPresent(result::setRecommendedVersion);
         result.setProductGroup(dep1.getProductGroup());
         result.setProductName(dep1.getProductName());
+        result.setOptional(optional);
         result.isValid();
         return result;
     }

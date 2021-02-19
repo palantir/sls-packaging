@@ -60,6 +60,20 @@ class ProductDependencyMergerTest extends Specification {
         e.message.contains("minimumVersion and maximumVersion must be different")
     }
 
+    def "merges optional and non-optional"() {
+        given:
+        def dep1 = newRecommendation("2.0.0", "2.x.x")
+        def dep2 = new ProductDependency("group", "name", "2.0.0", "2.x.x", null, true)
+
+        when:
+        def merged = ProductDependencyMerger.merge(dep1, dep2)
+        def merged2 = ProductDependencyMerger.merge(dep2, dep2)
+
+        then:
+        !merged.optional
+        merged2.optional
+    }
+
     private ProductDependency newRecommendation(String min, String max, String recommended = null) {
         return new ProductDependency("group", "name", min, max, recommended)
     }
