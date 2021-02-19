@@ -271,7 +271,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "minimum-version"    : "1.1.0",
                         "recommended-version": "1.2.0",
                         "maximum-version"    : "1.x.x",
-                        "optional"           : false
+                        "optional"           : true
 
                 ],
                 [
