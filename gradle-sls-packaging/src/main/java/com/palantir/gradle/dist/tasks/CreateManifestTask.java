@@ -45,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -222,6 +223,8 @@ public class CreateManifestTask extends DefaultTask {
         }
 
         Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
+        Set<ProductId> allOptionalDependencies =
+                new HashSet<>(getOptionalProductIds().get());
         getProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
             Preconditions.checkArgument(
@@ -243,6 +246,10 @@ public class CreateManifestTask extends DefaultTask {
             }
             allProductDependencies.merge(
                     productId, declaredDep, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
+            if (declaredDep.getOptional()) {
+                log.trace("Product dependency for '{}' declared as optional", productId);
+                allOptionalDependencies.add(productId);
+            }
         });
 
         // Merge all discovered and declared product dependencies
@@ -269,10 +276,9 @@ public class CreateManifestTask extends DefaultTask {
             });
         });
 
-        // Ensure explicitly optional product dependencies are marked as such.
-        getOptionalProductIds()
-                .get()
-                .forEach(productId -> allProductDependencies.computeIfPresent(productId, (_productId, existingDep) -> {
+        // Ensure optional product dependencies are marked as such.
+        allOptionalDependencies.forEach(
+                productId -> allProductDependencies.computeIfPresent(productId, (_productId, existingDep) -> {
                     log.trace("Product dependency for '{}' set as optional", productId);
                     existingDep.setOptional(true);
                     return existingDep;
