@@ -251,10 +251,6 @@ public class CreateManifestTask extends DefaultTask {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
             }
-            if (getOptionalProductIds().get().contains(productId)) {
-                log.trace("Product dependency for '{}' set as optional", productId);
-                discoveredDependency.setOptional(true);
-            }
             allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
                 ProductDependency mergedDependency =
                         mergeDependencies(productId, declaredDependency, discoveredDependency);
@@ -272,6 +268,16 @@ public class CreateManifestTask extends DefaultTask {
                 return mergedDependency;
             });
         });
+
+        // Ensure explicitly optional product dependencies are marked as such.
+        getOptionalProductIds()
+                .get()
+                .forEach(productId -> allProductDependencies.computeIfPresent(productId, (_productId, existingDep) -> {
+                    log.trace("Product dependency for '{}' set as optional", productId);
+                    existingDep.setOptional(true);
+                    return existingDep;
+                }));
+
         List<ProductDependency> productDeps = allProductDependencies.values().stream()
                 .sorted(Comparator.comparing(ProductDependency::getProductGroup)
                         .thenComparing(ProductDependency::getProductName))

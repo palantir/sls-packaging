@@ -247,13 +247,13 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             
             createManifest {
                 productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0", true), 
                 ]
             }
         """.stripIndent()
         file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
-        group:name (1.1.0, 1.x.x)
+        group:name (1.1.0, 1.x.x) optional
         group:name2 (2.0.0, 2.x.x)
         """.stripIndent()
 

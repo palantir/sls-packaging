@@ -67,9 +67,11 @@ class ProductDependencyMergerTest extends Specification {
 
         when:
         def merged = ProductDependencyMerger.merge(dep1, dep2)
+        def merged2 = ProductDependencyMerger.merge(dep2, dep2)
 
         then:
-        merged.optional
+        !merged.optional
+        merged2.optional
     }
 
     private ProductDependency newRecommendation(String min, String max, String recommended = null) {
