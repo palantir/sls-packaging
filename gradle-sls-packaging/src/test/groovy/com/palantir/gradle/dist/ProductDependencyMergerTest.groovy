@@ -75,5 +75,4 @@ class ProductDependencyMergerTest extends Specification {
     private ProductDependency newRecommendation(String min, String max, String recommended = null) {
         return new ProductDependency("group", "name", min, max, recommended)
     }
-
 }
