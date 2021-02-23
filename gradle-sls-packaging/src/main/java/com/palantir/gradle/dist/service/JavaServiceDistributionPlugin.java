@@ -257,6 +257,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
             task.dependsOn("jar");
+            task.dependsOn(javaAgentConfiguration);
             if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
                 task.doFirst(new Action<Task>() {
                     @Override
@@ -276,6 +277,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     jarTask.get().getArchiveFile().get(), p.getConfigurations().getByName("runtimeClasspath")));
             task.setArgs(distributionExtension.getArgs().get());
             task.setJvmArgs(ImmutableList.builder()
+                    .addAll(javaAgentConfiguration.getFiles().stream()
+                            .map(file -> "-javaagent:" + file.getAbsolutePath())
+                            .collect(Collectors.toList()))
                     .addAll(distributionExtension.getDefaultJvmOpts().get())
                     .addAll(distributionExtension.getGcJvmOptions().get())
                     .build());
@@ -287,9 +291,17 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             // Set compression in constructor so that task output has the right name from the start.
             task.setCompression(Compression.GZIP);
             task.getArchiveExtension().set("sls.tgz");
-
-            task.dependsOn(startScripts, initScript, checkScript, yourkitAgent, yourkitLicense);
-            task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);
+            task.dependsOn(
+                    startScripts,
+                    initScript,
+                    checkScript,
+                    yourkitAgent,
+                    yourkitLicense,
+                    copyLauncherBinaries,
+                    launchConfigTask,
+                    manifest,
+                    manifestClassPathTask,
+                    javaAgentConfiguration);
         });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
