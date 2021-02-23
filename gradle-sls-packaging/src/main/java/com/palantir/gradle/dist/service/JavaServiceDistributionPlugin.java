@@ -311,14 +311,18 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
-            task.setJavaAgents(javaAgentConfiguration.getAsFileTree());
+            task.getJavaAgents().setFrom(javaAgentConfiguration);
             if (distributionExtension.getEnableManifestClasspath().get()) {
-                task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
+                task.getClasspath().builtBy(manifestClassPathTask.get());
+                task.getClasspath()
+                        .from(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
-                task.setClasspath(jarTask.get()
-                        .getOutputs()
-                        .getFiles()
-                        .plus(distributionExtension.getProductDependenciesConfig()));
+                task.getClasspath().builtBy(jarTask.get());
+                task.getClasspath()
+                        .from(jarTask.get()
+                                .getOutputs()
+                                .getFiles()
+                                .plus(distributionExtension.getProductDependenciesConfig()));
             }
         }));
 

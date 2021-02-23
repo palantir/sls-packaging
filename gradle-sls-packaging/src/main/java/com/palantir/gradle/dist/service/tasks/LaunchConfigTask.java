@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.JavaVersion;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -42,7 +43,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.immutables.value.Value;
 
-public class LaunchConfigTask extends DefaultTask {
+public abstract class LaunchConfigTask extends DefaultTask {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
     private static final List<String> java8gcLoggingOptions = ImmutableList.of(
             "-XX:+PrintGCDateStamps",
@@ -84,9 +85,6 @@ public class LaunchConfigTask extends DefaultTask {
     private final MapProperty<String, String> env = getProject().getObjects().mapProperty(String.class, String.class);
     private RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
     private RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
-
-    private FileCollection classpath;
-    private FileCollection javaAgents;
 
     public LaunchConfigTask() {
         staticLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
@@ -145,22 +143,10 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     @InputFiles
-    public final FileCollection getClasspath() {
-        return classpath;
-    }
+    public abstract ConfigurableFileCollection getClasspath();
 
     @InputFiles
-    public final FileCollection getJavaAgents() {
-        return javaAgents;
-    }
-
-    public final void setClasspath(FileCollection classpath) {
-        this.classpath = classpath;
-    }
-
-    public final void setJavaAgents(FileCollection javaAgents) {
-        this.javaAgents = javaAgents;
-    }
+    public abstract ConfigurableFileCollection getJavaAgents();
 
     @OutputFile
     public final RegularFileProperty getStaticLauncher() {
@@ -180,7 +166,7 @@ public class LaunchConfigTask extends DefaultTask {
                         .serviceName(serviceName.get())
                         .javaHome(javaHome.getOrElse(""))
                         .args(args.get())
-                        .classpath(relativizeToServiceLibDirectory(classpath))
+                        .classpath(relativizeToServiceLibDirectory(getClasspath()))
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
@@ -201,7 +187,7 @@ public class LaunchConfigTask extends DefaultTask {
                         .serviceName(serviceName.get())
                         .javaHome(javaHome.getOrElse(""))
                         .args(checkArgs.get())
-                        .classpath(relativizeToServiceLibDirectory(classpath))
+                        .classpath(relativizeToServiceLibDirectory(getClasspath()))
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(defaultJvmOpts.get())
@@ -216,7 +202,7 @@ public class LaunchConfigTask extends DefaultTask {
     }
 
     private List<String> javaAgentArgs() {
-        return javaAgents.getFiles().stream()
+        return getJavaAgents().getFiles().stream()
                 .map(file -> "-javaagent:service/lib/agent/" + file.getName())
                 .collect(Collectors.toList());
     }
