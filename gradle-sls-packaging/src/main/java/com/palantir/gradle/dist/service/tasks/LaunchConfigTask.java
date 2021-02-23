@@ -86,6 +86,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
     private RegularFileProperty staticLauncher = getProject().getObjects().fileProperty();
     private RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
 
+    @SuppressWarnings("PublicConstructorForAbstractClass")
     public LaunchConfigTask() {
         staticLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
         checkLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-check.yml"));
