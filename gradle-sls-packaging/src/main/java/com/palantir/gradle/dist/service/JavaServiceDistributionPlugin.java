@@ -89,9 +89,12 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             }));
         });
 
+        Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+        Configuration javaAgentConfiguration = project.getConfigurations().maybeCreate("javaAgent");
+        javaAgentConfiguration.setTransitive(false);
+
         // Set default configuration to look for product dependencies to be runtimeClasspath
-        distributionExtension.setProductDependenciesConfig(
-                project.getConfigurations().getByName("runtimeClasspath"));
+        distributionExtension.setProductDependenciesConfig(runtimeClasspath);
 
         Provider<String> mainClassName = distributionExtension
                 .getMainClass()
@@ -290,6 +293,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
+            task.setJavaAgents(javaAgentConfiguration.getAsFileTree());
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {

@@ -86,6 +86,7 @@ public class LaunchConfigTask extends DefaultTask {
     private RegularFileProperty checkLauncher = getProject().getObjects().fileProperty();
 
     private FileCollection classpath;
+    private FileCollection javaAgents;
 
     public LaunchConfigTask() {
         staticLauncher.set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
@@ -148,8 +149,17 @@ public class LaunchConfigTask extends DefaultTask {
         return classpath;
     }
 
+    @InputFiles
+    public final FileCollection getJavaAgents() {
+        return javaAgents;
+    }
+
     public final void setClasspath(FileCollection classpath) {
         this.classpath = classpath;
+    }
+
+    public final void setJavaAgents(FileCollection javaAgents) {
+        this.javaAgents = javaAgents;
     }
 
     @OutputFile
@@ -171,6 +181,7 @@ public class LaunchConfigTask extends DefaultTask {
                         .javaHome(javaHome.getOrElse(""))
                         .args(args.get())
                         .classpath(relativizeToServiceLibDirectory(classpath))
+                        .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
                         .addAllJvmOpts(
@@ -191,6 +202,7 @@ public class LaunchConfigTask extends DefaultTask {
                         .javaHome(javaHome.getOrElse(""))
                         .args(checkArgs.get())
                         .classpath(relativizeToServiceLibDirectory(classpath))
+                        .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(defaultJvmOpts.get())
                         .env(defaultEnvironment)
@@ -203,9 +215,15 @@ public class LaunchConfigTask extends DefaultTask {
         OBJECT_MAPPER.writeValue(scriptFile, config);
     }
 
+    private List<String> javaAgentArgs() {
+        return javaAgents.getFiles().stream()
+                .map(file -> "-javaagent:service/lib/agent/" + file.getName())
+                .collect(Collectors.toList());
+    }
+
     private static List<String> relativizeToServiceLibDirectory(FileCollection files) {
         return files.getFiles().stream()
-                .map(file -> String.format("service/lib/%s", file.getName()))
+                .map(file -> "service/lib/" + file.getName())
                 .collect(Collectors.toList());
     }
 

@@ -62,6 +62,10 @@ final class DistTarTask {
                 });
             }
 
+            root.into("service/lib/agent", t -> {
+                t.from(project.getConfigurations().named("javaAgent"));
+            });
+
             root.into("service/bin", t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
                 t.setFileMode(0755);
