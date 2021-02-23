@@ -90,7 +90,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         });
 
         Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
-        Configuration javaAgentConfiguration = project.getConfigurations().maybeCreate("javaAgent");
+        Configuration javaAgentConfiguration = project.getConfigurations().create("javaAgent");
         javaAgentConfiguration.setTransitive(false);
 
         // Set default configuration to look for product dependencies to be runtimeClasspath
