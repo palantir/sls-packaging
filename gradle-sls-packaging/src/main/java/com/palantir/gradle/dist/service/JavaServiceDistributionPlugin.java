@@ -50,6 +50,7 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
+import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.util.GFileUtils;
 import org.gradle.util.GradleVersion;
 
@@ -258,6 +259,18 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
             task.dependsOn("jar");
             task.dependsOn(javaAgentConfiguration);
+            task.jvmArgs(ImmutableList.<String>builder()
+                    .addAll(distributionExtension.getDefaultJvmOpts().get())
+                    .addAll(distributionExtension.getGcJvmOptions().get())
+                    .build());
+            task.getJvmArgumentProviders().add(new CommandLineArgumentProvider() {
+                @Override
+                public Iterable<String> asArguments() {
+                    return javaAgentConfiguration.getFiles().stream()
+                            .map(file -> "-javaagent:" + file.getAbsolutePath())
+                            .collect(Collectors.toList());
+                }
+            });
             if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
                 task.doFirst(new Action<Task>() {
                     @Override
@@ -268,21 +281,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             } else {
                 task.getMainClass().set(mainClassName);
             }
-            task.doFirst(new Action<Task>() {
-                @Override
-                public void execute(Task _task) {
-                    task.setJvmArgs(ImmutableList.builder()
-                            .addAll(
-                                    javaAgentConfiguration.isCanBeResolved()
-                                            ? javaAgentConfiguration.getFiles().stream()
-                                                    .map(file -> "-javaagent:" + file.getAbsolutePath())
-                                                    .collect(Collectors.toList())
-                                            : Collections.emptyList())
-                            .addAll(distributionExtension.getDefaultJvmOpts().get())
-                            .addAll(distributionExtension.getGcJvmOptions().get())
-                            .build());
-                }
-            });
         });
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
