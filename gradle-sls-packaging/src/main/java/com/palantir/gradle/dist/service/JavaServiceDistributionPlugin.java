@@ -268,6 +268,21 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             } else {
                 task.getMainClass().set(mainClassName);
             }
+            task.doFirst(new Action<Task>() {
+                @Override
+                public void execute(Task _task) {
+                    task.setJvmArgs(ImmutableList.builder()
+                            .addAll(
+                                    javaAgentConfiguration.isCanBeResolved()
+                                            ? javaAgentConfiguration.getFiles().stream()
+                                                    .map(file -> "-javaagent:" + file.getAbsolutePath())
+                                                    .collect(Collectors.toList())
+                                            : Collections.emptyList())
+                            .addAll(distributionExtension.getDefaultJvmOpts().get())
+                            .addAll(distributionExtension.getGcJvmOptions().get())
+                            .build());
+                }
+            });
         });
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
@@ -276,13 +291,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setClasspath(project.files(
                     jarTask.get().getArchiveFile().get(), p.getConfigurations().getByName("runtimeClasspath")));
             task.setArgs(distributionExtension.getArgs().get());
-            task.setJvmArgs(ImmutableList.builder()
-                    .addAll(javaAgentConfiguration.getFiles().stream()
-                            .map(file -> "-javaagent:" + file.getAbsolutePath())
-                            .collect(Collectors.toList()))
-                    .addAll(distributionExtension.getDefaultJvmOpts().get())
-                    .addAll(distributionExtension.getGcJvmOptions().get())
-                    .build());
         }));
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
