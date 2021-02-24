@@ -1079,6 +1079,29 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA'])
     }
 
+    def 'applies java agents'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                compile files("${EXTERNAL_JAR}")
+                javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 11
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+        actualStaticConfig.jvmOpts().contains("-javaagent:service/lib/agent/byte-buddy-agent-1.10.21.jar")
+        fileExists('dist/service-name-0.0.1/service/lib/agent/byte-buddy-agent-1.10.21.jar')
+    }
+
     private static createUntarBuildFile(File buildFile) {
         buildFile << '''
             plugins {
