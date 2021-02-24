@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service;
 
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
@@ -50,6 +51,7 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
+import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.util.GFileUtils;
 import org.gradle.util.GradleVersion;
 
@@ -89,9 +91,20 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             }));
         });
 
+        Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+        Configuration javaAgentConfiguration = project.getConfigurations()
+                .create("javaAgent", new Action<Configuration>() {
+                    @Override
+                    public void execute(Configuration javaAgent) {
+                        // Each javaAgent is applied via a '-javaagent:path/to/agent.jar' argument
+                        // Agents should have no dependencies, but this allows us to avoid adding
+                        // non-agent jars as agents if any are listed.
+                        javaAgent.setTransitive(false);
+                    }
+                });
+
         // Set default configuration to look for product dependencies to be runtimeClasspath
-        distributionExtension.setProductDependenciesConfig(
-                project.getConfigurations().getByName("runtimeClasspath"));
+        distributionExtension.setProductDependenciesConfig(runtimeClasspath);
 
         Provider<String> mainClassName = distributionExtension
                 .getMainClass()
@@ -254,6 +267,18 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
             task.dependsOn("jar");
+            task.dependsOn(javaAgentConfiguration);
+            task.getJvmArgumentProviders().add(new CommandLineArgumentProvider() {
+                @Override
+                public Iterable<String> asArguments() {
+                    return ImmutableList.<String>builder()
+                            .addAll(distributionExtension.getDefaultJvmOpts().get())
+                            .addAll(distributionExtension.getGcJvmOptions().get())
+                            .addAll(Collections2.transform(
+                                    javaAgentConfiguration.getFiles(), file -> "-javaagent:" + file.getAbsolutePath()))
+                            .build();
+                }
+            });
             if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
                 task.doFirst(new Action<Task>() {
                     @Override
@@ -272,10 +297,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setClasspath(project.files(
                     jarTask.get().getArchiveFile().get(), p.getConfigurations().getByName("runtimeClasspath")));
             task.setArgs(distributionExtension.getArgs().get());
-            task.setJvmArgs(ImmutableList.builder()
-                    .addAll(distributionExtension.getDefaultJvmOpts().get())
-                    .addAll(distributionExtension.getGcJvmOptions().get())
-                    .build());
         }));
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
@@ -284,20 +305,29 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             // Set compression in constructor so that task output has the right name from the start.
             task.setCompression(Compression.GZIP);
             task.getArchiveExtension().set("sls.tgz");
-
-            task.dependsOn(startScripts, initScript, checkScript, yourkitAgent, yourkitLicense);
-            task.dependsOn(copyLauncherBinaries, launchConfigTask, manifest, manifestClassPathTask);
+            task.dependsOn(
+                    startScripts,
+                    initScript,
+                    checkScript,
+                    yourkitAgent,
+                    yourkitLicense,
+                    copyLauncherBinaries,
+                    launchConfigTask,
+                    manifest,
+                    manifestClassPathTask,
+                    javaAgentConfiguration);
         });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
-            if (distributionExtension.getEnableManifestClasspath().get()) {
-                task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
-            } else {
-                task.setClasspath(jarTask.get()
-                        .getOutputs()
-                        .getFiles()
-                        .plus(distributionExtension.getProductDependenciesConfig()));
-            }
+            task.getJavaAgents().setFrom(javaAgentConfiguration);
+            task.getClasspath()
+                    .from(
+                            distributionExtension.getEnableManifestClasspath().get()
+                                    ? manifestClassPathTask.get().getOutputs().getFiles()
+                                    : jarTask.get()
+                                            .getOutputs()
+                                            .getFiles()
+                                            .plus(distributionExtension.getProductDependenciesConfig()));
         }));
 
         project.afterEvaluate(_proj -> distTar.configure(task -> {

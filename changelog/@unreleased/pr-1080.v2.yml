@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: JavaServiceDistributionPlugin supports adding java agents using a new `javaAgent` dependency configuration
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1080
