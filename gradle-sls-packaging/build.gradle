@@ -58,7 +58,7 @@ pluginBundle {
     }
 }
 
-def yourkitVersion = "2020.9-b416"
+def yourkitVersion = "2020.9-b424"
 def yourkitFilename = "YourKit-JavaProfiler-${yourkitVersion}"
 
 task downloadYourkitDist(type: Download) {
@@ -71,7 +71,7 @@ task downloadYourkitDist(type: Download) {
 task verifyYourkitDist(type: Verify, dependsOn: downloadYourkitDist) {
     src file("${buildDir}/${yourkitFilename}.zip")
     algorithm 'SHA-256'
-    checksum 'b802b2d97722d34ae1dcb005562e32ddff10119650fd94686fb01525cb8a3f9b'
+    checksum 'd13bc0a0c992dcf6d32abd93d61d1486a9cf92723379f661d62ac11ebcd2ecbb'
 }
 
 task extractYourkitAgent(type: Copy, dependsOn: verifyYourkitDist) {
