@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service;
 
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
@@ -259,16 +260,15 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
             task.dependsOn("jar");
             task.dependsOn(javaAgentConfiguration);
-            task.jvmArgs(ImmutableList.<String>builder()
-                    .addAll(distributionExtension.getDefaultJvmOpts().get())
-                    .addAll(distributionExtension.getGcJvmOptions().get())
-                    .build());
             task.getJvmArgumentProviders().add(new CommandLineArgumentProvider() {
                 @Override
                 public Iterable<String> asArguments() {
-                    return javaAgentConfiguration.getFiles().stream()
-                            .map(file -> "-javaagent:" + file.getAbsolutePath())
-                            .collect(Collectors.toList());
+                    return ImmutableList.<String>builder()
+                            .addAll(distributionExtension.getDefaultJvmOpts().get())
+                            .addAll(distributionExtension.getGcJvmOptions().get())
+                            .addAll(Collections2.transform(
+                                    javaAgentConfiguration.getFiles(), file -> "-javaagent:" + file.getAbsolutePath()))
+                            .build();
                 }
             });
             if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
