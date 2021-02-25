@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.JavaVersion;
@@ -204,8 +206,23 @@ public abstract class LaunchConfigTask extends DefaultTask {
 
     private List<String> javaAgentArgs() {
         return getJavaAgents().getFiles().stream()
-                .map(file -> "-javaagent:service/lib/agent/" + file.getName())
+                .map(file -> "-javaagent:service/lib/agent/"
+                        + validateJavaAgent(file).getName())
                 .collect(Collectors.toList());
+    }
+
+    /** Returns the input file. An exception is thrown if the {@code agentFile} is not a java agent. */
+    private static File validateJavaAgent(File agentFile) {
+        try {
+            JarFile agentJarFile = new JarFile(agentFile);
+            if (!agentJarFile.getManifest().getMainAttributes().containsKey(new Attributes.Name("Premain-Class"))) {
+                throw new IllegalArgumentException("Jar file " + agentFile.getName()
+                        + " is not a java agent and contains no Premain-Class manifest entry");
+            }
+            return agentFile;
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
     }
 
     private static List<String> relativizeToServiceLibDirectory(FileCollection files) {
