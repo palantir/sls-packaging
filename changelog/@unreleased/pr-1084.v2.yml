@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: The new `javaAgent` configuration is no longer non-transitive
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1084
