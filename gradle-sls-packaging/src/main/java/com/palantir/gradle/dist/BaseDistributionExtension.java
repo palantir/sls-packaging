@@ -52,6 +52,7 @@ public class BaseDistributionExtension {
     private final Property<String> serviceName;
     private final Property<String> podName;
     private final Property<ProductType> productType;
+    private final Property<Boolean> lenientInternalLocks;
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
@@ -67,6 +68,9 @@ public class BaseDistributionExtension {
         serviceName = project.getObjects().property(String.class);
         podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
+        lenientInternalLocks = project.getObjects().property(Boolean.class);
+        lenientInternalLocks.convention(false);
+
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
@@ -131,6 +135,14 @@ public class BaseDistributionExtension {
 
     public final void setProductType(ProductType productType) {
         this.productType.set(productType);
+    }
+
+    public final Provider<Boolean> getLenientInternalLocks() {
+        return lenientInternalLocks;
+    }
+
+    public final void setLenientInternalLocks(boolean lenient) {
+        this.lenientInternalLocks.set(lenient);
     }
 
     /**

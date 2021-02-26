@@ -589,6 +589,75 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
     }
 
+    def 'allows floating minimum version in product dependency that is published by this repo if lenient mode'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.1'
+        }
+        """
+
+        helper.addSubproject("foo-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+            
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'foo-service'
+                    minimumVersion = '0.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+        def barDir = helper.addSubproject("bar-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            dependencies {
+                compile project(':foo-api')
+            }
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'bar-service'
+                lenientInternalLocks true
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+            }
+        """.stripIndent())
+
+        file('product-dependencies.lock', barDir).text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        com.palantir.group:foo-service (\$projectVersion, 1.x.x)
+        """.stripIndent()
+
+        when:
+        def result = runTasks('bar-server:createManifest')
+
+        then:
+        result.task(":bar-server:createManifest").outcome == TaskOutcome.SUCCESS
+        def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml', barDir).text, Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "com.palantir.group",
+                        "product-name"       : "foo-service",
+                        "minimum-version"    : "0.0.0",
+                        "recommended-version": "1.0.1",
+                        "maximum-version"    : "1.x.x",
+                        "optional"           : false
+                ]
+        ]
+
+    }
+
     def 'merging two dirty product dependencies is not acceptable'() {
         buildFile << """
         allprojects {

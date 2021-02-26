@@ -53,17 +53,25 @@ public final class ProductDependencyLockFile {
     }
 
     public static String asString(
-            List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
+            List<ProductDependency> deps,
+            Set<ProductId> servicesDeclaredInProject,
+            String projectVersion,
+            boolean forceCurrent) {
         return deps.stream()
                 .map(dep -> String.format(
                         "%s:%s (%s, %s)%s",
                         dep.getProductGroup(),
                         dep.getProductName(),
-                        renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
+                        renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep, forceCurrent),
                         dep.getMaximumVersion(),
                         dep.getOptional() ? " optional" : ""))
                 .sorted()
                 .collect(Collectors.joining("\n", HEADER, "\n"));
+    }
+
+    public static String asString(
+            List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
+        return asString(deps, servicesDeclaredInProject, projectVersion, false);
     }
 
     /**
@@ -73,10 +81,13 @@ public final class ProductDependencyLockFile {
      * version of such dependencies with a placeholder, {@code $projectVersion}.
      */
     private static String renderDepMinimumVersion(
-            Set<ProductId> servicesDeclaredInProject, String projectVersion, ProductDependency dep) {
+            Set<ProductId> servicesDeclaredInProject,
+            String projectVersion,
+            ProductDependency dep,
+            boolean forceCurrent) {
         ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
         if (servicesDeclaredInProject.contains(productId)
-                && dep.getMinimumVersion().equals(projectVersion)) {
+                && (forceCurrent || dep.getMinimumVersion().equals(projectVersion))) {
             return PROJECT_VERSION;
         } else {
             return dep.getMinimumVersion();
