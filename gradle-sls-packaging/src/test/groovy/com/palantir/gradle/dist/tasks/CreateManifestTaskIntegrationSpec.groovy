@@ -485,67 +485,14 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         projectVersion << ['1.0.0-rc1.dirty', '1.0.0']
     }
 
-    @Unroll
-    def 'masks minimum version in product dependency that is published by this repo if same as project version (#projectVersion)'() {
+    def 'always write projectVersion as minimum version in product dependency that is published by this repo'() {
         setup:
         buildFile << """
         allprojects {
-            project.version = '$projectVersion'
+            project.version = '1.0.1'
         }
         """
-        helper.addSubproject("foo-api", """
-            apply plugin: 'java'
-            apply plugin: 'com.palantir.sls-recommended-dependencies'
-            
-            recommendedProductDependencies {
-                productDependency {
-                    productGroup = 'com.palantir.group'
-                    productName = 'foo-service'
-                    minimumVersion = rootProject.version
-                    maximumVersion = '1.x.x'
-                    recommendedVersion = rootProject.version
-                }
-            }
-        """.stripIndent())
-        helper.addSubproject("foo-server", """
-            apply plugin: 'com.palantir.sls-java-service-distribution'
-            distribution {
-                serviceGroup 'com.palantir.group'
-                serviceName 'foo-service'
-                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
-                args 'server', 'var/conf/my-service.yml'
-            }
-        """.stripIndent())
-        helper.addSubproject("bar-server", """
-            apply plugin: 'com.palantir.sls-java-service-distribution'
-            dependencies {
-                compile project(':foo-api')
-            }
-            distribution {
-                serviceGroup 'com.palantir.group'
-                serviceName 'bar-service'
-                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
-                args 'server', 'var/conf/my-service.yml'
-            }
-        """.stripIndent())
 
-        when:
-        runTasks('--write-locks')
-
-        then:
-        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service ($projectVersion, 1.x.x)'
-
-        where:
-        projectVersion << ['1.0.0-rc1.dirty', '1.0.0']
-    }
-
-    def 'does not mask minimum version in product dependency that is published by this repo if different from project version'() {
-        setup:
-        buildFile << """
-        allprojects {
-            project.version = '1.0.0-rc1.dirty'
-        }
-        """
         helper.addSubproject("foo-api", """
             apply plugin: 'java'
             apply plugin: 'com.palantir.sls-recommended-dependencies'
@@ -569,7 +516,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 args 'server', 'var/conf/my-service.yml'
             }
         """.stripIndent())
-        helper.addSubproject("bar-server", """
+        def barDir = helper.addSubproject("bar-server", """
             apply plugin: 'com.palantir.sls-java-service-distribution'
             dependencies {
                 compile project(':foo-api')
@@ -582,11 +529,28 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             }
         """.stripIndent())
 
+        file('product-dependencies.lock', barDir).text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        com.palantir.group:foo-service (\$projectVersion, 1.x.x)
+        """.stripIndent()
+
         when:
-        runTasks('--write-locks')
+        def result = runTasks('bar-server:createManifest')
 
         then:
-        file('bar-server/product-dependencies.lock').readLines().contains 'com.palantir.group:foo-service (0.0.0, 1.x.x)'
+        result.task(":bar-server:createManifest").outcome == TaskOutcome.SUCCESS
+        def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml', barDir).text, Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "com.palantir.group",
+                        "product-name"       : "foo-service",
+                        "minimum-version"    : "0.0.0",
+                        "recommended-version": "1.0.1",
+                        "maximum-version"    : "1.x.x",
+                        "optional"           : false
+                ]
+        ]
+
     }
 
     def 'merging two dirty product dependencies is not acceptable'() {

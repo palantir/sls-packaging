@@ -52,14 +52,13 @@ public final class ProductDependencyLockFile {
                 .collect(toList());
     }
 
-    public static String asString(
-            List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject, String projectVersion) {
+    public static String asString(List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject) {
         return deps.stream()
                 .map(dep -> String.format(
                         "%s:%s (%s, %s)%s",
                         dep.getProductGroup(),
                         dep.getProductName(),
-                        renderDepMinimumVersion(servicesDeclaredInProject, projectVersion, dep),
+                        renderDepMinimumVersion(servicesDeclaredInProject, dep),
                         dep.getMaximumVersion(),
                         dep.getOptional() ? " optional" : ""))
                 .sorted()
@@ -67,16 +66,14 @@ public final class ProductDependencyLockFile {
     }
 
     /**
-     * If a product ends up taking a product dependency on another product that's published in the same repo, and the
-     * minimum version in that dependency tracks the project's version, then the lock file would have to be regenerated
-     * every commit, such that all PRs will end up conflicting with each other. To avoid this, we replace the minimum
-     * version of such dependencies with a placeholder, {@code $projectVersion}.
+     * If a product ends up taking a product dependency on another product that's published in the same repo then the
+     * lock file would have to be regenerated every commit, such that all PRs will end up conflicting with each other.
+     * And sometimes it is not even possible to know what the proper minimum version is in time to write the lock file.
+     * To avoid this, we replace the minimum version of such dependencies with a placeholder, {@code $projectVersion}.
      */
-    private static String renderDepMinimumVersion(
-            Set<ProductId> servicesDeclaredInProject, String projectVersion, ProductDependency dep) {
+    private static String renderDepMinimumVersion(Set<ProductId> servicesDeclaredInProject, ProductDependency dep) {
         ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
-        if (servicesDeclaredInProject.contains(productId)
-                && dep.getMinimumVersion().equals(projectVersion)) {
+        if (servicesDeclaredInProject.contains(productId)) {
             return PROJECT_VERSION;
         } else {
             return dep.getMinimumVersion();

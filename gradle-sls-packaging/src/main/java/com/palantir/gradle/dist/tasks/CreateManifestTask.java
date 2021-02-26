@@ -347,8 +347,7 @@ public class CreateManifestTask extends DefaultTask {
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
-        String upToDateContents =
-                ProductDependencyLockFile.asString(productDeps, inRepoProductIds.get(), getProjectVersion());
+        String upToDateContents = ProductDependencyLockFile.asString(productDeps, inRepoProductIds.get());
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {

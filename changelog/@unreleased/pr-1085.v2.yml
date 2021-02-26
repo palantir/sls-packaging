@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Always write “$projectVersion” as the minimumVersion in lock files for dependencies that are in the same repository …
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1085

@@ -29,7 +29,7 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
-        ProductDependencyLockFile.asString(sample, [] as Set<ProductId>, '0.0.0') == """\
+        ProductDependencyLockFile.asString(sample, [] as Set<ProductId>) == """\
         # Run ./gradlew --write-locks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
@@ -39,9 +39,9 @@ class ProductDependencyLockFileTest extends Specification {
     def 'serialize project version'() {
         when:
         def result = ProductDependencyLockFile.asString(
-                [ new ProductDependency("com.palantir.product", "foo", "1.0.0", "1.x.x", null),],
-                [new ProductId("com.palantir.product", "foo")] as Set<ProductId>,
-                '1.0.0')
+                [new ProductDependency("com.palantir.product", "foo", "1.0.0", "1.x.x", null),],
+                [new ProductId("com.palantir.product", "foo")] as Set<ProductId>
+        )
         then:
         result == '''\
         # Run ./gradlew --write-locks to regenerate this file
@@ -71,6 +71,6 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
-        input == ProductDependencyLockFile.fromString(ProductDependencyLockFile.asString(input, [] as Set<ProductId>,"0.0.0"), "0.0.0")
+        input == ProductDependencyLockFile.fromString(ProductDependencyLockFile.asString(input, [] as Set<ProductId>), "0.0.0")
     }
 }
