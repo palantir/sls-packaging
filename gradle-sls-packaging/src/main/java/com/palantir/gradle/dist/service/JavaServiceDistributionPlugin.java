@@ -92,16 +92,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         });
 
         Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
-        Configuration javaAgentConfiguration = project.getConfigurations()
-                .create("javaAgent", new Action<Configuration>() {
-                    @Override
-                    public void execute(Configuration javaAgent) {
-                        // Each javaAgent is applied via a '-javaagent:path/to/agent.jar' argument
-                        // Agents should have no dependencies, but this allows us to avoid adding
-                        // non-agent jars as agents if any are listed.
-                        javaAgent.setTransitive(false);
-                    }
-                });
+        Configuration javaAgentConfiguration = project.getConfigurations().create("javaAgent");
 
         // Set default configuration to look for product dependencies to be runtimeClasspath
         distributionExtension.setProductDependenciesConfig(runtimeClasspath);

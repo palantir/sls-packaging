@@ -1102,6 +1102,26 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         fileExists('dist/service-name-0.0.1/service/lib/agent/byte-buddy-agent-1.10.21.jar')
     }
 
+    def 'fails at build time when non-agent jars are provided as agents'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                compile files("${EXTERNAL_JAR}")
+                javaAgent files("${EXTERNAL_JAR}")
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 11
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        def result = runTasksAndFail(':distTar')
+
+        then:
+        result.output.contains('is not a java agent and contains no Premain-Class manifest entry')
+    }
+
     private static createUntarBuildFile(File buildFile) {
         buildFile << '''
             plugins {
