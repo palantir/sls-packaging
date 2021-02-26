@@ -75,16 +75,6 @@ public final class ProductDependency implements Serializable {
         this(productGroup, productName, minimumVersion, maximumVersion, recommendedVersion, false);
     }
 
-    public ProductDependency(ProductDependency source) {
-        this(
-                source.productGroup,
-                source.productName,
-                source.minimumVersion,
-                source.maximumVersion,
-                source.recommendedVersion,
-                source.optional);
-    }
-
     /**
      * We intentionally tolerate .dirty version strings for minimum and recommended version to ensure local development
      * remains tolerable.

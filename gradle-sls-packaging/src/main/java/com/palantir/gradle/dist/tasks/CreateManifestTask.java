@@ -96,8 +96,6 @@ public class CreateManifestTask extends DefaultTask {
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
     private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
-    private final Property<Boolean> lenientInternalLocks =
-            getProject().getObjects().property(Boolean.class);
 
     private final ListProperty<ProductDependency> productDependencies =
             getProject().getObjects().listProperty(ProductDependency.class);
@@ -160,11 +158,6 @@ public class CreateManifestTask extends DefaultTask {
     @Input
     final Property<ProductType> getProductType() {
         return productType;
-    }
-
-    @Input
-    final Property<Boolean> getLenientInternalLocks() {
-        return lenientInternalLocks;
     }
 
     @Input
@@ -354,8 +347,7 @@ public class CreateManifestTask extends DefaultTask {
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
-        String upToDateContents = ProductDependencyLockFile.asString(
-                productDeps, inRepoProductIds.get(), getProjectVersion(), lenientInternalLocks.get());
+        String upToDateContents = ProductDependencyLockFile.asString(productDeps, inRepoProductIds.get());
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
@@ -528,7 +520,6 @@ public class CreateManifestTask extends DefaultTask {
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
-                    task.getLenientInternalLocks().set(ext.getLenientInternalLocks());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getAllProductDependencies());
                     task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
