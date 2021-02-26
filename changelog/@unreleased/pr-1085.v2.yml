@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Allow more lenient minimum version compares for intra-module product …
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1085
