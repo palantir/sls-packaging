@@ -21,8 +21,6 @@ import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
-import com.palantir.gradle.dist.service.tasks.CopyYourkitAgentTask;
-import com.palantir.gradle.dist.service.tasks.CopyYourkitLicenseTask;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
@@ -243,11 +241,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
                 });
 
-        TaskProvider<CopyYourkitAgentTask> yourkitAgent =
-                project.getTasks().register("copyYourkitAgent", CopyYourkitAgentTask.class);
-        TaskProvider<CopyYourkitLicenseTask> yourkitLicense =
-                project.getTasks().register("copyYourkitLicense", CopyYourkitLicenseTask.class);
-
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
@@ -300,8 +293,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     startScripts,
                     initScript,
                     checkScript,
-                    yourkitAgent,
-                    yourkitLicense,
                     copyLauncherBinaries,
                     launchConfigTask,
                     manifest,

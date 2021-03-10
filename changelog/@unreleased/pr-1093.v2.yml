@@ -1,0 +1,5 @@
+type: break
+break:
+  description: The yourkit java profiling agent is no longer bundled into distributions.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1093
