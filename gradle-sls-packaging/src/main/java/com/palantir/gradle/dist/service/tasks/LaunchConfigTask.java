@@ -57,6 +57,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
     private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+    private static List<String> java15Options =
+            ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
 
     private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -176,6 +178,10 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
                                         ? java14Options
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("15")) == 0
+                                        ? java15Options
                                         : ImmutableList.of())
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
