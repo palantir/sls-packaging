@@ -3,7 +3,7 @@ apply plugin: 'java-gradle-plugin'
 apply plugin: 'org.inferred.processors'
 apply plugin: 'com.palantir.revapi'
 
-apply from: "${rootDir}/gradle/publish-jar.gradle"
+apply plugin: 'com.palantir.external-publish-jar'
 
 dependencies {
     compile gradleApi()
