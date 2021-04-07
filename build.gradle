@@ -1,8 +1,9 @@
 buildscript {
     repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
+        gradlePluginPortal()
+        mavenCentral()
         maven { url 'https://palantir.bintray.com/releases' }
+        jcenter()
     }
 
     dependencies {
@@ -29,8 +30,9 @@ allprojects {
     group 'com.palantir.sls-packaging'
 
     repositories {
-        jcenter()
+        mavenCentral()
         maven { url 'https://palantir.bintray.com/releases' }
+        jcenter()
     }
 }
 
