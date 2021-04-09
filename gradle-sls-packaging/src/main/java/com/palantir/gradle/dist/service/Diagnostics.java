@@ -36,6 +36,7 @@ public final class Diagnostics {
             "[{\"type\":\"foo.v1\", \"docs\":\"...\"}, \"{\"type\":\"bar.v1\", " + "\"docs\":\"...\"}]";
 
     public static List<ObjectNode> parse(Project proj, File file) {
+        log.error("TOMP: 3");
         Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
         String string = null;
         try {
@@ -43,8 +44,10 @@ public final class Diagnostics {
             List<ObjectNode> value =
                     CreateManifestTask.jsonMapper.readValue(string, new TypeReference<List<ObjectNode>>() {});
             log.info("Deserialized '{}': '{}'", relativePath, value);
+            log.error("TOMP: 4");
             return value;
         } catch (IOException e) {
+            log.error("TOMP: 5", e);
             throw new GradleException(
                     String.format(
                             "Failed to deserialize '%s', expecting something like '%s' but was '%s'",

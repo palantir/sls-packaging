@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
+    private static final Logger log = LoggerFactory.getLogger(DiagnosticsManifestPlugin.class);
 
     // The 'artifactType' attribute is defined by
     // org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT.
@@ -97,8 +98,11 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                             .set(project.getLayout().getBuildDirectory().file(task.getName() + ".json"));
                 });
 
+        log.error("TOMP: 0");
         project.getPlugins().withId("com.palantir.sls-java-service-distribution", _plugin -> {
+            log.error("TOMP: 1");
             project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
+                log.error("TOMP: 2");
                 ext.getManifestExtensions()
                         .put(
                                 "diagnostics",
