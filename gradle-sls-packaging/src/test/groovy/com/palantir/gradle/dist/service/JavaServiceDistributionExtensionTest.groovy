@@ -76,8 +76,6 @@ class JavaServiceDistributionExtensionTest extends Specification {
             setExcludeFromVar(['c', 'd'])
             setEnv(['a': 'b', 'c': 'd'])
             setEnv(['foo': 'bar'])
-            setManifestExtensions(['a': 'b', 'c': 'd'])
-            setManifestExtensions(['foo': 'bar'])
         }
 
         then:

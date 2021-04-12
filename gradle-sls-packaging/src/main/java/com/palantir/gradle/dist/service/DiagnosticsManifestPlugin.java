@@ -107,12 +107,11 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                         ext.getDistributionServiceGroup().get(),
                         ext.getDistributionServiceName().get());
                 ext.getManifestExtensions().get().forEach((key, value) -> log.error("entry: {} -> {}", key, value));
-                ext.getManifestExtensions()
-                        .put(
-                                "diagnostics",
-                                mergeDiagnosticsTask
-                                        .flatMap(MergeDiagnosticsJsonTask::getOutputJsonFile)
-                                        .map(file -> Diagnostics.parse(project, file.getAsFile())));
+                ext.setManifestExtension(
+                        "diagnostics",
+                        mergeDiagnosticsTask
+                                .flatMap(MergeDiagnosticsJsonTask::getOutputJsonFile)
+                                .map(file -> Diagnostics.parse(project, file.getAsFile())));
             });
             project.getTasks().named("createManifest", CreateManifestTask.class).configure(createManifestTask -> {
                 createManifestTask.dependsOn(mergeDiagnosticsJson);

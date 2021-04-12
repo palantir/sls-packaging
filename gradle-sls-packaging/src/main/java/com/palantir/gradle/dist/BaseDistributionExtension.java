@@ -253,10 +253,6 @@ public class BaseDistributionExtension {
         manifestExtensions.put(extensionName, extension);
     }
 
-    public final void setManifestExtensions(Map<String, Object> extensions) {
-        manifestExtensions.set(extensions);
-    }
-
     public final Configuration getProductDependenciesConfig() {
         return productDependenciesConfig;
     }
