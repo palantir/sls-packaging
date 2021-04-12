@@ -518,7 +518,9 @@ public class CreateManifestTask extends DefaultTask {
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
                     log.error(
-                            "TOMP CREATE: {}:{}", ext.getDistributionServiceGroup(), ext.getDistributionServiceName());
+                            "TOMP CREATE: {}:{}",
+                            ext.getDistributionServiceGroup().get(),
+                            ext.getDistributionServiceName().get());
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());

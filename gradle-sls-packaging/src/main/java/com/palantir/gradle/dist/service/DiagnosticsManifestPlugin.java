@@ -104,9 +104,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
                 log.error(
                         "TOMP 2: {}:{}\n{}",
-                        ext.getDistributionServiceGroup(),
-                        ext.getDistributionServiceName(),
-                        ext.getManifestExtensions());
+                        ext.getDistributionServiceGroup().get(),
+                        ext.getDistributionServiceName().get(),
+                        ext.getManifestExtensions().get());
                 ext.getManifestExtensions()
                         .put(
                                 "diagnostics",
