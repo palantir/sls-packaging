@@ -20,6 +20,7 @@ import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.pod.tasks.CreatePodYamlTask;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import com.palantir.gradle.dist.service.MergeDiagnosticsJsonTask;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import org.gradle.api.InvalidUserCodeException;
@@ -49,8 +50,13 @@ public final class PodDistributionPlugin implements Plugin<Project> {
         distributionExtension.setProductDependenciesConfig(
                 project.getConfigurations().create("podBundle"));
 
-        TaskProvider<CreateManifestTask> manifest =
-                CreateManifestTask.createManifestTask(project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
+                project,
+                distributionExtension,
+                project.getTasks()
+                        .withType(MergeDiagnosticsJsonTask.class)
+                        .iterator()
+                        .next());
 
         TaskProvider<CreatePodYamlTask> podYaml = project.getTasks()
                 .register("createPodYaml", CreatePodYamlTask.class, task -> {

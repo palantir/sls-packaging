@@ -106,6 +106,9 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                         "TOMP 2: {}:{} with map:",
                         ext.getDistributionServiceGroup().get(),
                         ext.getDistributionServiceName().get());
+                if (ext.getManifestExtensions().get().size() == 0) {
+                    log.error("map is empty");
+                }
                 ext.getManifestExtensions().get().forEach((key, value) -> log.error("entry: {} -> {}", key, value));
                 ext.setManifestExtension(
                         "diagnostics",

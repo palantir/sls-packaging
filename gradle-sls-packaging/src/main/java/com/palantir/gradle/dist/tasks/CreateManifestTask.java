@@ -20,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
@@ -35,6 +37,8 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.gradle.dist.service.Diagnostics;
+import com.palantir.gradle.dist.service.MergeDiagnosticsJsonTask;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -108,6 +112,8 @@ public class CreateManifestTask extends DefaultTask {
 
     private final MapProperty<String, Object> manifestExtensions =
             getProject().getObjects().mapProperty(String.class, Object.class);
+    private final ListProperty<ObjectNode> diagnostics =
+            getProject().getObjects().listProperty(ObjectNode.class);
     private File manifestFile;
 
     public CreateManifestTask() {
@@ -163,6 +169,11 @@ public class CreateManifestTask extends DefaultTask {
     @Input
     final MapProperty<String, Object> getManifestExtensions() {
         return manifestExtensions;
+    }
+
+    @Input
+    final ListProperty<ObjectNode> getDiagnostics() {
+        return diagnostics;
     }
 
     @Input
@@ -300,6 +311,10 @@ public class CreateManifestTask extends DefaultTask {
             ensureLockfileIsUpToDate(productDeps);
         }
 
+        Map<String, Object> manifestExtensionsInstance = ImmutableMap.<String, Object>builder()
+                .putAll(manifestExtensions.get())
+                .put("diagnostics", diagnostics.get())
+                .build();
         jsonMapper.writeValue(
                 getManifestFile(),
                 SlsManifest.builder()
@@ -308,7 +323,7 @@ public class CreateManifestTask extends DefaultTask {
                         .productGroup(serviceGroup.get())
                         .productName(serviceName.get())
                         .productVersion(getProjectVersion())
-                        .putAllExtensions(manifestExtensions.get())
+                        .putAllExtensions(manifestExtensionsInstance)
                         .putExtensions("product-dependencies", productDeps)
                         .build());
     }
@@ -519,13 +534,17 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
+    public static TaskProvider<CreateManifestTask> createManifestTask(
+            Project project, BaseDistributionExtension ext, MergeDiagnosticsJsonTask mergeDiagnosticsTask) {
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
                     log.error(
                             "TOMP CREATE: {}:{} with map:",
                             ext.getDistributionServiceGroup().get(),
                             ext.getDistributionServiceName().get());
+                    if (ext.getManifestExtensions().get().size() == 0) {
+                        log.error("map is empty");
+                    }
                     ext.getManifestExtensions().get().forEach((key, value) -> log.error("entry: {} -> {}", key, value));
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
@@ -536,6 +555,10 @@ public class CreateManifestTask extends DefaultTask {
                     task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getManifestExtensions().set(ext.getManifestExtensions());
+                    task.getDiagnostics()
+                            .set(mergeDiagnosticsTask
+                                    .getOutputJsonFile()
+                                    .map(file -> Diagnostics.parse(project, file.getAsFile())));
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())

@@ -20,6 +20,7 @@ import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import com.palantir.gradle.dist.service.MergeDiagnosticsJsonTask;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
@@ -62,8 +63,13 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
                 project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
         distributionExtension.setProductDependenciesConfig(assetConfiguration);
 
-        TaskProvider<CreateManifestTask> manifest =
-                CreateManifestTask.createManifestTask(project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
+                project,
+                distributionExtension,
+                project.getTasks()
+                        .withType(MergeDiagnosticsJsonTask.class)
+                        .iterator()
+                        .next());
 
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);

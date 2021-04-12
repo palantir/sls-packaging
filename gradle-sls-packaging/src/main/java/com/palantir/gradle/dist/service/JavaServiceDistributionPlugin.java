@@ -241,8 +241,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getCheckArgs().set(distributionExtension.getCheckArgs());
                 });
 
-        TaskProvider<CreateManifestTask> manifest =
-                CreateManifestTask.createManifestTask(project, distributionExtension);
+        TaskProvider<CreateManifestTask> manifest = CreateManifestTask.createManifestTask(
+                project,
+                distributionExtension,
+                project.getTasks()
+                        .withType(MergeDiagnosticsJsonTask.class)
+                        .iterator()
+                        .next());
 
         TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
