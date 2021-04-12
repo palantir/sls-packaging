@@ -221,6 +221,11 @@ public class CreateManifestTask extends DefaultTask {
             throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
                     + "'product-dependencies' key in manifestExtensions");
         }
+        if (!manifestExtensions.get().containsKey("diagnostics")) {
+            throw new IllegalArgumentException(String.format(
+                    "Expected diagnostics block: %s:%s of %s",
+                    serviceGroup.get(), serviceName.get(), productType.get().toString()));
+        }
 
         Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
         Set<ProductId> allOptionalDependencies =
@@ -518,10 +523,10 @@ public class CreateManifestTask extends DefaultTask {
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
                     log.error(
-                            "TOMP CREATE: {}:{}",
+                            "TOMP CREATE: {}:{} with map:",
                             ext.getDistributionServiceGroup().get(),
-                            ext.getDistributionServiceName().get(),
-                            ext.getManifestExtensions().get());
+                            ext.getDistributionServiceName().get());
+                    ext.getManifestExtensions().get().forEach((key, value) -> log.error("entry: {} -> {}", key, value));
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());

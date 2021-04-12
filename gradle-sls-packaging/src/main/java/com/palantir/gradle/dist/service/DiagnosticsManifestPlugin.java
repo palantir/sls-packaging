@@ -103,10 +103,10 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             log.error("TOMP: 1");
             project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
                 log.error(
-                        "TOMP 2: {}:{}\n{}",
+                        "TOMP 2: {}:{} with map:",
                         ext.getDistributionServiceGroup().get(),
-                        ext.getDistributionServiceName().get(),
-                        ext.getManifestExtensions().get());
+                        ext.getDistributionServiceName().get());
+                ext.getManifestExtensions().get().forEach((key, value) -> log.error("entry: {} -> {}", key, value));
                 ext.getManifestExtensions()
                         .put(
                                 "diagnostics",
