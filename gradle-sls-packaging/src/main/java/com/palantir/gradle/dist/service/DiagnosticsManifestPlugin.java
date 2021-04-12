@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
-import com.palantir.logsafe.SafeArg;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,17 +37,17 @@ import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
-    private static final Logger log = LoggerFactory.getLogger(DiagnosticsManifestPlugin.class);
+    private static final Logger log = Logging.getLogger(DiagnosticsManifestPlugin.class);
 
     // The 'artifactType' attribute is defined by
     // org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT.
@@ -104,10 +103,10 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             log.error("TOMP: 1");
             project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
                 log.error(
-                        "TOMP: 2",
-                        SafeArg.of("ext.getManifestExtensions", ext.getManifestExtensions()),
-                        SafeArg.of("ext-service-group", ext.getDistributionServiceGroup()),
-                        SafeArg.of("ext-service-name", ext.getDistributionServiceName()));
+                        "TOMP 2: {}:{}\n{}",
+                        ext.getDistributionServiceGroup(),
+                        ext.getDistributionServiceName(),
+                        ext.getManifestExtensions());
                 ext.getManifestExtensions()
                         .put(
                                 "diagnostics",
@@ -172,7 +171,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
     @CacheableTransform
     public abstract static class ExtractFileFromJar implements TransformAction<ExtractFileFromJar.Parameters> {
-        private static final Logger log = LoggerFactory.getLogger(ExtractFileFromJar.class);
+        private static final Logger log = Logging.getLogger(ExtractFileFromJar.class);
 
         interface Parameters extends TransformParameters {
             @Input
@@ -209,7 +208,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
 
     @CacheableTransform
     public abstract static class SelectSingleFile implements TransformAction<SelectSingleFile.Parameters> {
-        private static final Logger log = LoggerFactory.getLogger(SelectSingleFile.class);
+        private static final Logger log = Logging.getLogger(SelectSingleFile.class);
 
         interface Parameters extends TransformParameters {
             @Input
