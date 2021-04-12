@@ -35,6 +35,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.logsafe.SafeArg;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -517,6 +518,10 @@ public class CreateManifestTask extends DefaultTask {
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
+                    log.error(
+                            "TOMP CREATE",
+                            SafeArg.of("service-group", ext.getDistributionServiceGroup()),
+                            SafeArg.of("service-name", ext.getDistributionServiceName()));
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());

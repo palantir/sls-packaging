@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.logsafe.SafeArg;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,7 +103,11 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         project.getPlugins().withId("com.palantir.sls-java-service-distribution", _plugin -> {
             log.error("TOMP: 1");
             project.getExtensions().configure(JavaServiceDistributionExtension.class, ext -> {
-                log.error("TOMP: 2");
+                log.error(
+                        "TOMP: 2",
+                        SafeArg.of("ext.getManifestExtensions", ext.getManifestExtensions()),
+                        SafeArg.of("ext-service-group", ext.getDistributionServiceGroup()),
+                        SafeArg.of("ext-service-name", ext.getDistributionServiceName()));
                 ext.getManifestExtensions()
                         .put(
                                 "diagnostics",
