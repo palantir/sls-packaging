@@ -520,7 +520,8 @@ public class CreateManifestTask extends DefaultTask {
                     log.error(
                             "TOMP CREATE: {}:{}",
                             ext.getDistributionServiceGroup().get(),
-                            ext.getDistributionServiceName().get());
+                            ext.getDistributionServiceName().get(),
+                            ext.getManifestExtensions().get());
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
