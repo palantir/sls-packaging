@@ -35,7 +35,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
             
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             version '0.0.1'

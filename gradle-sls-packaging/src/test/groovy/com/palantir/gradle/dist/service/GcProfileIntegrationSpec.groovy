@@ -37,7 +37,7 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
             }
             
             repositories {
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             project.version = '1.0.0'

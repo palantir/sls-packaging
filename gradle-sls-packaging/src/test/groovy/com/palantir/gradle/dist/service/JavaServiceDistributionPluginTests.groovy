@@ -173,7 +173,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             version '0.0.1'
@@ -213,7 +213,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             class MyVersion {
@@ -576,7 +576,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             distribution {
                 serviceName "my-service"
@@ -610,7 +610,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             version '0.0.1'
             distribution {
@@ -655,7 +655,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             version '0.0.1'
             distribution {
@@ -790,7 +790,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             dependencies {
                 implementation project(':child')
@@ -806,7 +806,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             dependencies {
                 api "com.google.guava:guava:19.0"
@@ -856,7 +856,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << """
             buildscript {
                 repositories {
-                    maven { url 'https://dl.bintray.com/palantir/releases' }
+                    mavenCentral()
                     jcenter()
                 }
                 dependencies {
@@ -922,7 +922,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             dependencies {
                 implementation project(':child')
@@ -938,7 +938,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
             dependencies {
                 api "com.google.guava:guava:19.0"
@@ -1021,7 +1021,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             version '0.0.1'
@@ -1056,7 +1056,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             version '0.0.1'
@@ -1133,7 +1133,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
             repositories {
                 jcenter()
-                maven { url "https://palantir.bintray.com/releases" }
+                mavenCentral()
             }
 
             version '0.0.1'
