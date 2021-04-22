@@ -856,7 +856,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << """
             buildscript {
                 repositories {
-                    maven { url 'https://dl.bintray.com/palantir/releases' }
+                    mavenCentral()
                     jcenter()
                 }
                 dependencies {
