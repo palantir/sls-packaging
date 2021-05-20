@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
@@ -99,6 +100,8 @@ public class CreateManifestTask extends DefaultTask {
 
     private final ListProperty<ProductDependency> productDependencies =
             getProject().getObjects().listProperty(ProductDependency.class);
+    private final ListProperty<ProductDependency> discoveredProductDependencies =
+            getProject().getObjects().listProperty(ProductDependency.class);
     private final SetProperty<ProductId> optionalProductIds =
             getProject().getObjects().setProperty(ProductId.class);
     private final SetProperty<ProductId> ignoredProductIds =
@@ -171,6 +174,11 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     @Input
+    final ListProperty<ProductDependency> getDiscoveredProductDependencies() {
+        return discoveredProductDependencies;
+    }
+
+    @Input
     final SetProperty<ProductId> getOptionalProductIds() {
         return optionalProductIds;
     }
@@ -226,7 +234,7 @@ public class CreateManifestTask extends DefaultTask {
         Set<ProductId> allOptionalDependencies =
                 new HashSet<>(getOptionalProductIds().get());
         getProductDependencies().get().forEach(declaredDep -> {
-            ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
+            ProductId productId = ProductId.of(declaredDep);
             Preconditions.checkArgument(
                     !serviceGroup.get().equals(productId.getProductGroup())
                             || !serviceName.get().equals(productId.getProductName()),
@@ -253,7 +261,8 @@ public class CreateManifestTask extends DefaultTask {
         });
 
         // Merge all discovered and declared product dependencies
-        discoverProductDependencies().forEach((productId, discoveredDependency) -> {
+        discoverProductDependencies().forEach(discoveredDependency -> {
+            ProductId productId = ProductId.of(discoveredDependency);
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
@@ -396,10 +405,28 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    @SuppressWarnings("checkstyle:CyclomaticComplexity")
-    private Map<ProductId, ProductDependency> discoverProductDependencies() {
-        Map<ProductId, ProductDependency> discoveredProductDependencies = new HashMap<>();
-        productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
+    private Set<ProductDependency> discoverProductDependencies() {
+        List<ProductDependency> dpds;
+        if (discoveredProductDependencies.isPresent()
+                && !discoveredProductDependencies.get().isEmpty()) {
+            dpds = discoveredProductDependencies.get();
+        } else {
+            dpds = doDefaultProductDependencyDiscovery();
+        }
+
+        // De-dup the set of discovered dependencies so that if one is a dupe of the manually set dependencies, we only
+        // display the "please remove the manual setting" message once.
+        Map<ProductId, ProductDependency> discoveredDeps = new HashMap<>();
+        dpds.forEach(productDependency -> {
+            ProductId productId = ProductId.of(productDependency);
+            discoveredDeps.merge(
+                    productId, productDependency, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
+        });
+        return ImmutableSet.copyOf(discoveredDeps.values());
+    }
+
+    private List<ProductDependency> doDefaultProductDependencyDiscovery() {
+        return productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
                 .flatMap(artifact -> {
                     String artifactName = artifact.getId().getDisplayName();
                     ComponentIdentifier id = artifact.getId().getComponentIdentifier();
@@ -486,13 +513,7 @@ public class CreateManifestTask extends DefaultTask {
                     }
                 })
                 .filter(this::isNotSelfProductDependency)
-                .forEach(productDependency -> {
-                    ProductId productId =
-                            new ProductId(productDependency.getProductGroup(), productDependency.getProductName());
-                    discoveredProductDependencies.merge(
-                            productId, productDependency, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
-                });
-        return discoveredProductDependencies;
+                .collect(Collectors.toList());
     }
 
     private boolean isNotSelfProductDependency(ProductDependency dependency) {
@@ -522,6 +543,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getProductDependencies().set(ext.getAllProductDependencies());
+                    task.getDiscoveredProductDependencies().set(ext.getDiscoveredProductDependencies());
                     task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
                     task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());

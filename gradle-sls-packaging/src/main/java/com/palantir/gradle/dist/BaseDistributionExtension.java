@@ -53,6 +53,7 @@ public class BaseDistributionExtension {
     private final Property<String> podName;
     private final Property<ProductType> productType;
     private final ListProperty<ProductDependency> productDependencies;
+    private final ListProperty<ProductDependency> discoveredDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final ProviderFactory providerFactory;
@@ -68,6 +69,7 @@ public class BaseDistributionExtension {
         podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
+        discoveredDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
 
@@ -208,6 +210,14 @@ public class BaseDistributionExtension {
             }
             return dep;
         }));
+    }
+
+    public final void discoveredProductDependency(ProductDependency productDependency) {
+        discoveredDependencies.add(productDependency);
+    }
+
+    public final ListProperty<ProductDependency> getDiscoveredProductDependencies() {
+        return discoveredDependencies;
     }
 
     public final Provider<Set<ProductId>> getOptionalProductDependencies() {

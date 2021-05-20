@@ -768,6 +768,73 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         ]
     }
 
+    def 'Provided discovered dependencies are used when set'() {
+        setup:
+        buildFile << """
+        allprojects {
+            project.version = '1.0.0'
+            group "com.palantir.group"
+        }
+        """
+        helper.addSubproject("bar-api", """
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.sls-recommended-dependencies'
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'com.palantir.group'
+                    productName = 'bar-service'
+                    minimumVersion = '0.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = rootProject.version
+                }
+            }
+        """.stripIndent())
+        helper.addSubproject("bar-lib", """
+            apply plugin: 'java'
+            dependencies {
+                compile project(':bar-api')
+            }
+        """.stripIndent())
+        helper.addSubproject("foo-server", """
+            apply plugin: 'com.palantir.sls-java-service-distribution'
+            
+            dependencies {
+                compile project(':bar-lib')
+            }
+
+            import com.palantir.gradle.dist.ProductDependency
+            def pd = new ProductDependency('com.palantir.group', 'other-service', '0.5.0', '2.x.x', '1.0.0')
+            distribution {
+                serviceGroup 'com.palantir.group'
+                serviceName 'foo-service'
+                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
+                args 'server', 'var/conf/my-service.yml'
+                
+                discoveredProductDependency pd
+            }
+        """.stripIndent())
+
+        when:
+        def result = runTasks('foo-server:createManifest', '--write-locks')
+
+        then:
+        result.task(":foo-server:createManifest").outcome == TaskOutcome.SUCCESS
+        result.task(':bar-api:jar') == null
+
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("foo-server/build/deployment/manifest.yml"), Map)
+        manifest.get("extensions").get("product-dependencies") == [
+                [
+                        "product-group"      : "com.palantir.group",
+                        "product-name"       : "other-service",
+                        "minimum-version"    : "0.5.0",
+                        "recommended-version": "1.0.0",
+                        "maximum-version"    : "2.x.x",
+                        "optional"           : false
+                ],
+        ]
+    }
+
     def "check depends on createManifest"() {
         when:
         def result = runTasks(':check')
