@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: move product dep calcs into own task
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1146
