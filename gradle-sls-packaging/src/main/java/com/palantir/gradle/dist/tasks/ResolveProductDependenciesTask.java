@@ -27,6 +27,7 @@ import com.palantir.gradle.dist.ProductDependencyReport;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
+import com.palantir.gradle.dist.Serializations;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
@@ -195,7 +196,6 @@ public class ResolveProductDependenciesTask extends DefaultTask {
         return outputFile;
     }
 
-    @SuppressWarnings("checkstyle:CyclomaticComplexity")
     @TaskAction
     final void computeProductDependencies() throws IOException {
         Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
@@ -265,18 +265,22 @@ public class ResolveProductDependenciesTask extends DefaultTask {
                         .thenComparing(ProductDependency::getProductName))
                 .collect(ImmutableList.toImmutableList());
 
-        CreateManifestTask.jsonMapper.writeValue(
-                getOutputFile().getAsFile().get(), ProductDependencyReport.of(productDeps));
+        Serializations.writeProductDependencyReport(
+                ProductDependencyReport.of(productDeps),
+                getOutputFile().getAsFile().get());
     }
 
     private Set<ProductDependency> dedupDiscoveredProductDependencies() {
         // De-dup the set of discovered dependencies so that if one is a dupe of the manually set dependencies, we only
         // display the "please remove the manual setting" message once.
+        // also remove any references to self
         Map<ProductId, ProductDependency> discoveredDeps = new HashMap<>();
-        discoveredProductDependencies.get().forEach(productDependency -> {
-            ProductId productId = ProductId.of(productDependency);
-            discoveredDeps.merge(productId, productDependency, ProductDependencyMerger::merge);
-        });
+        discoveredProductDependencies.get().stream()
+                .filter(this::isNotSelfProductDependency)
+                .forEach(productDependency -> {
+                    ProductId productId = ProductId.of(productDependency);
+                    discoveredDeps.merge(productId, productDependency, ProductDependencyMerger::merge);
+                });
         return ImmutableSet.copyOf(discoveredDeps.values());
     }
 
@@ -342,8 +346,8 @@ public class ResolveProductDependenciesTask extends DefaultTask {
                     }
 
                     try {
-                        RecommendedProductDependencies recommendedDeps = CreateManifestTask.jsonMapper.readValue(
-                                pdeps.get(), RecommendedProductDependencies.class);
+                        RecommendedProductDependencies recommendedDeps =
+                                Serializations.jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
                         return recommendedDeps.recommendedProductDependencies().stream()
                                 .peek(productDependency -> log.info(
                                         "Product dependency recommendation made by artifact '{}', file '{}', "
@@ -367,7 +371,6 @@ public class ResolveProductDependenciesTask extends DefaultTask {
                         return Stream.empty();
                     }
                 })
-                .filter(this::isNotSelfProductDependency)
                 .collect(Collectors.toList());
     }
 

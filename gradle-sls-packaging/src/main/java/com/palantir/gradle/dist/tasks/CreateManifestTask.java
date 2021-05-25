@@ -16,10 +16,6 @@
 
 package com.palantir.gradle.dist.tasks;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +27,7 @@ import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductDependencyReport;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
+import com.palantir.gradle.dist.Serializations;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
@@ -69,10 +66,6 @@ import org.gradle.util.GFileUtils;
 
 public class CreateManifestTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(CreateManifestTask.class);
-    public static final ObjectMapper jsonMapper = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
-            .enable(SerializationFeature.INDENT_OUTPUT);
 
     private final SetProperty<ProductId> inRepoProductIds =
             getProject().getObjects().setProperty(ProductId.class);
@@ -143,8 +136,8 @@ public class CreateManifestTask extends DefaultTask {
                     + "'product-dependencies' key in manifestExtensions");
         }
 
-        ProductDependencyReport pdr =
-                jsonMapper.readValue(productDependenciesFile.get().getAsFile(), ProductDependencyReport.class);
+        ProductDependencyReport pdr = Serializations.readProductDependencyReport(
+                productDependenciesFile.getAsFile().get());
         List<ProductDependency> productDeps = pdr.productDependencies();
 
         if (productDeps.isEmpty()) {
@@ -153,17 +146,16 @@ public class CreateManifestTask extends DefaultTask {
             ensureLockfileIsUpToDate(productDeps);
         }
 
-        jsonMapper.writeValue(
-                getManifestFile(),
-                SlsManifest.builder()
-                        .manifestVersion("1.0")
-                        .productType(productType.get())
-                        .productGroup(serviceGroup.get())
-                        .productName(serviceName.get())
-                        .productVersion(getProjectVersion())
-                        .putAllExtensions(manifestExtensions.get())
-                        .putExtensions("product-dependencies", productDeps)
-                        .build());
+        SlsManifest slsManifest = SlsManifest.builder()
+                .manifestVersion("1.0")
+                .productType(productType.get())
+                .productGroup(serviceGroup.get())
+                .productName(serviceName.get())
+                .productVersion(getProjectVersion())
+                .putAllExtensions(manifestExtensions.get())
+                .putExtensions("product-dependencies", productDeps)
+                .build();
+        Serializations.writeSlsManifest(slsManifest, getManifestFile());
     }
 
     private void requireAbsentLockfile() {

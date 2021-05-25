@@ -24,7 +24,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSlsManifest.class)
-@JsonDeserialize(as = ImmutableSlsManifest.class)
+@JsonDeserialize(builder = SlsManifest.Builder.class)
 public interface SlsManifest {
     @JsonProperty("manifest-version")
     String manifestVersion();
