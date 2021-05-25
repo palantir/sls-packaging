@@ -18,6 +18,8 @@ package com.palantir.gradle.dist.tasks;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyMerger;
@@ -59,6 +61,7 @@ import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 @CacheableTask
@@ -70,7 +73,7 @@ public class ResolveProductDependenciesTask extends DefaultTask {
     private final Property<String> serviceName = getProject().getObjects().property(String.class);
     private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
 
-    private final ListProperty<ProductDependency> productDependencies =
+    private final ListProperty<ProductDependency> declaredProductDependencies =
             getProject().getObjects().listProperty(ProductDependency.class);
     private final SetProperty<ProductId> optionalProductIds =
             getProject().getObjects().setProperty(ProductId.class);
@@ -78,12 +81,30 @@ public class ResolveProductDependenciesTask extends DefaultTask {
             getProject().getObjects().setProperty(ProductId.class);
     private final Property<Configuration> productDependenciesConfig =
             getProject().getObjects().property(Configuration.class);
+    private final ListProperty<ProductDependency> discoveredProductDependencies =
+            getProject().getObjects().listProperty(ProductDependency.class);
 
     private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
     public ResolveProductDependenciesTask() {
         dependsOn(otherProjectProductDependenciesTasks());
-        outputFile.convention(() -> new File(getTemporaryDir(), "endpoint-minimum-versions.json"));
+        outputFile.convention(() -> new File(getTemporaryDir(), "resolved-product-dependencies.json"));
+        discoveredProductDependencies.convention(getProject().provider(this::findRecommendedProductDependenies));
+    }
+
+    static TaskProvider<ResolveProductDependenciesTask> createResolveProductDependenciesTask(
+            Project project, BaseDistributionExtension ext, Provider<Set<ProductId>> provider) {
+        TaskProvider<ResolveProductDependenciesTask> depTask = project.getTasks()
+                .register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
+                    task.getServiceName().set(ext.getDistributionServiceName());
+                    task.getServiceGroup().set(ext.getDistributionServiceGroup());
+                    task.getDeclaredProductDependencies().set(ext.getAllProductDependencies());
+                    task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
+                    task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
+                    task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
+                    task.getInRepoProductIds().set(provider);
+                });
+        return depTask;
     }
 
     /**
@@ -128,8 +149,13 @@ public class ResolveProductDependenciesTask extends DefaultTask {
     }
 
     @Input
-    final ListProperty<ProductDependency> getProductDependencies() {
-        return productDependencies;
+    final ListProperty<ProductDependency> getDeclaredProductDependencies() {
+        return declaredProductDependencies;
+    }
+
+    @Input
+    final ListProperty<ProductDependency> getDiscoveredProductDependencies() {
+        return discoveredProductDependencies;
     }
 
     @Input
@@ -175,8 +201,8 @@ public class ResolveProductDependenciesTask extends DefaultTask {
         Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
         Set<ProductId> allOptionalDependencies =
                 new HashSet<>(getOptionalProductIds().get());
-        getProductDependencies().get().forEach(declaredDep -> {
-            ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
+        getDeclaredProductDependencies().get().forEach(declaredDep -> {
+            ProductId productId = ProductId.of(declaredDep);
             Preconditions.checkArgument(
                     !serviceGroup.get().equals(productId.getProductGroup())
                             || !serviceName.get().equals(productId.getProductName()),
@@ -202,7 +228,8 @@ public class ResolveProductDependenciesTask extends DefaultTask {
         });
 
         // Merge all discovered and declared product dependencies
-        discoverProductDependencies().forEach((productId, discoveredDependency) -> {
+        dedupDiscoveredProductDependencies().forEach(discoveredDependency -> {
+            ProductId productId = ProductId.of(discoveredDependency);
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
@@ -242,10 +269,19 @@ public class ResolveProductDependenciesTask extends DefaultTask {
                 getOutputFile().getAsFile().get(), ProductDependencyReport.of(productDeps));
     }
 
-    @SuppressWarnings("checkstyle:CyclomaticComplexity")
-    private Map<ProductId, ProductDependency> discoverProductDependencies() {
-        Map<ProductId, ProductDependency> discoveredProductDependencies = new HashMap<>();
-        productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
+    private Set<ProductDependency> dedupDiscoveredProductDependencies() {
+        // De-dup the set of discovered dependencies so that if one is a dupe of the manually set dependencies, we only
+        // display the "please remove the manual setting" message once.
+        Map<ProductId, ProductDependency> discoveredDeps = new HashMap<>();
+        discoveredProductDependencies.get().forEach(productDependency -> {
+            ProductId productId = ProductId.of(productDependency);
+            discoveredDeps.merge(productId, productDependency, ProductDependencyMerger::merge);
+        });
+        return ImmutableSet.copyOf(discoveredDeps.values());
+    }
+
+    private List<ProductDependency> findRecommendedProductDependenies() {
+        return productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
                 .flatMap(artifact -> {
                     String artifactName = artifact.getId().getDisplayName();
                     ComponentIdentifier id = artifact.getId().getComponentIdentifier();
@@ -332,12 +368,7 @@ public class ResolveProductDependenciesTask extends DefaultTask {
                     }
                 })
                 .filter(this::isNotSelfProductDependency)
-                .forEach(productDependency -> {
-                    ProductId productId =
-                            new ProductId(productDependency.getProductGroup(), productDependency.getProductName());
-                    discoveredProductDependencies.merge(productId, productDependency, ProductDependencyMerger::merge);
-                });
-        return discoveredProductDependencies;
+                .collect(Collectors.toList());
     }
 
     private boolean isNotSelfProductDependency(ProductDependency dependency) {

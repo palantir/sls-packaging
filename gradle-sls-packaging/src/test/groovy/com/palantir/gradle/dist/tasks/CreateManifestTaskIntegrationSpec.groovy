@@ -195,7 +195,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         buildResult.output.contains('Encountered product dependency declaration that was also declared as optional')
     }
 
-    def "throws if user declares dependency on the same product"() {
+    def "throws if declared dependency on the same product"() {
         buildFile << """
             distribution {
                 productDependency {
@@ -776,6 +776,49 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                         "product-name"       : "bar-service",
                         "minimum-version"    : "0.0.0",
                         "recommended-version": "1.0.0",
+                        "maximum-version"    : "1.x.x",
+                        "optional"           : false
+                ],
+        ]
+    }
+
+    def 'use provided discovered dependencies'() {
+        setup:
+        addStandardProductDependency()
+        buildFile << """
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+            import com.palantir.gradle.dist.ProductDependency
+            def pd = new ProductDependency('com.palantir.group', 'other-service', '0.5.0', '2.x.x', '1.0.0')
+            resolveProductDependencies {
+                discoveredProductDependencies = [pd]
+            }
+        """
+
+        when:
+        def result = runTasks('createManifest', '--write-locks')
+
+        then:
+        result.task(":createManifest").outcome == TaskOutcome.SUCCESS
+
+        def manifest = CreateManifestTask.jsonMapper.readValue(file("build/deployment/manifest.yml"), Map)
+        def prodDeps = manifest.get("extensions").get("product-dependencies")
+        prodDeps.size() == 2
+        prodDeps == [
+                [
+                        "product-group"      : "com.palantir.group",
+                        "product-name"       : "other-service",
+                        "minimum-version"    : "0.5.0",
+                        "recommended-version": "1.0.0",
+                        "maximum-version"    : "2.x.x",
+                        "optional"           : false
+                ],
+                [
+                        "product-group"      : "group",
+                        "product-name"       : "name",
+                        "minimum-version"    : "1.0.0",
+                        "recommended-version": "1.2.0",
                         "maximum-version"    : "1.x.x",
                         "optional"           : false
                 ],

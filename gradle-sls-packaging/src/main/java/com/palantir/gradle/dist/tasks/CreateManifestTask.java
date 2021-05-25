@@ -273,16 +273,8 @@ public class CreateManifestTask extends DefaultTask {
                 () -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(project.getRootProject())
                         .keySet());
 
-        TaskProvider<ResolveProductDependenciesTask> depTask = project.getTasks()
-                .register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
-                    task.getServiceName().set(ext.getDistributionServiceName());
-                    task.getServiceGroup().set(ext.getDistributionServiceGroup());
-                    task.getProductDependencies().set(ext.getAllProductDependencies());
-                    task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
-                    task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
-                    task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
-                    task.getInRepoProductIds().set(provider);
-                });
+        TaskProvider<ResolveProductDependenciesTask> depTask =
+                ResolveProductDependenciesTask.createResolveProductDependenciesTask(project, ext, provider);
 
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
