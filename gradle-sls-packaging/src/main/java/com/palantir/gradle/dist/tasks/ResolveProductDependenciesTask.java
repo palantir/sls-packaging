@@ -66,31 +66,16 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 @CacheableTask
-public class ResolveProductDependenciesTask extends DefaultTask {
+public abstract class ResolveProductDependenciesTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(ResolveProductDependenciesTask.class);
 
-    private final SetProperty<ProductId> inRepoProductIds =
-            getProject().getObjects().setProperty(ProductId.class);
-    private final Property<String> serviceName = getProject().getObjects().property(String.class);
-    private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
-
-    private final ListProperty<ProductDependency> declaredProductDependencies =
-            getProject().getObjects().listProperty(ProductDependency.class);
-    private final SetProperty<ProductId> optionalProductIds =
-            getProject().getObjects().setProperty(ProductId.class);
-    private final SetProperty<ProductId> ignoredProductIds =
-            getProject().getObjects().setProperty(ProductId.class);
     private final Property<Configuration> productDependenciesConfig =
             getProject().getObjects().property(Configuration.class);
-    private final ListProperty<ProductDependency> discoveredProductDependencies =
-            getProject().getObjects().listProperty(ProductDependency.class);
-
-    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
 
     public ResolveProductDependenciesTask() {
         dependsOn(otherProjectProductDependenciesTasks());
-        outputFile.convention(() -> new File(getTemporaryDir(), "resolved-product-dependencies.json"));
-        discoveredProductDependencies.convention(getProject().provider(this::findRecommendedProductDependenies));
+        getOutputFile().convention(() -> new File(getTemporaryDir(), "resolved-product-dependencies.json"));
+        getDiscoveredProductDependencies().convention(getProject().provider(this::findRecommendedProductDependenies));
     }
 
     static TaskProvider<ResolveProductDependenciesTask> createResolveProductDependenciesTask(
@@ -140,39 +125,25 @@ public class ResolveProductDependenciesTask extends DefaultTask {
     }
 
     @Input
-    final Property<String> getServiceName() {
-        return serviceName;
-    }
+    public abstract Property<String> getServiceName();
 
     @Input
-    final Property<String> getServiceGroup() {
-        return serviceGroup;
-    }
+    public abstract Property<String> getServiceGroup();
 
     @Input
-    final ListProperty<ProductDependency> getDeclaredProductDependencies() {
-        return declaredProductDependencies;
-    }
+    public abstract ListProperty<ProductDependency> getDeclaredProductDependencies();
 
     @Input
-    final ListProperty<ProductDependency> getDiscoveredProductDependencies() {
-        return discoveredProductDependencies;
-    }
+    public abstract ListProperty<ProductDependency> getDiscoveredProductDependencies();
 
     @Input
-    final SetProperty<ProductId> getOptionalProductIds() {
-        return optionalProductIds;
-    }
+    public abstract SetProperty<ProductId> getOptionalProductIds();
 
     @Input
-    final SetProperty<ProductId> getIgnoredProductIds() {
-        return ignoredProductIds;
-    }
+    public abstract SetProperty<ProductId> getIgnoredProductIds();
 
     @Input
-    final SetProperty<ProductId> getInRepoProductIds() {
-        return inRepoProductIds;
-    }
+    public abstract SetProperty<ProductId> getInRepoProductIds();
 
     /**
      * Contents of the given configuration.  Cannot list the configuration itself as an input property because the
@@ -192,9 +163,7 @@ public class ResolveProductDependenciesTask extends DefaultTask {
     }
 
     @OutputFile
-    final RegularFileProperty getOutputFile() {
-        return outputFile;
-    }
+    public abstract RegularFileProperty getOutputFile();
 
     @TaskAction
     final void computeProductDependencies() throws IOException {
@@ -204,8 +173,8 @@ public class ResolveProductDependenciesTask extends DefaultTask {
         getDeclaredProductDependencies().get().forEach(declaredDep -> {
             ProductId productId = ProductId.of(declaredDep);
             Preconditions.checkArgument(
-                    !serviceGroup.get().equals(productId.getProductGroup())
-                            || !serviceName.get().equals(productId.getProductName()),
+                    !getServiceGroup().get().equals(productId.getProductGroup())
+                            || !getServiceName().get().equals(productId.getProductName()),
                     "Invalid for product to declare an explicit dependency on itself, please remove: %s",
                     declaredDep);
             if (getIgnoredProductIds().get().contains(productId)) {
@@ -275,7 +244,7 @@ public class ResolveProductDependenciesTask extends DefaultTask {
         // display the "please remove the manual setting" message once.
         // also remove any references to self
         Map<ProductId, ProductDependency> discoveredDeps = new HashMap<>();
-        discoveredProductDependencies.get().stream()
+        getDiscoveredProductDependencies().get().stream()
                 .filter(this::isNotSelfProductDependency)
                 .forEach(productDependency -> {
                     ProductId productId = ProductId.of(productDependency);
@@ -375,7 +344,7 @@ public class ResolveProductDependenciesTask extends DefaultTask {
     }
 
     private boolean isNotSelfProductDependency(ProductDependency dependency) {
-        return !serviceGroup.get().equals(dependency.getProductGroup())
-                || !serviceName.get().equals(dependency.getProductName());
+        return !getServiceGroup().get().equals(dependency.getProductGroup())
+                || !getServiceName().get().equals(dependency.getProductName());
     }
 }

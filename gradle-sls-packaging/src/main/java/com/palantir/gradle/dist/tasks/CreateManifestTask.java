@@ -80,8 +80,6 @@ public class CreateManifestTask extends DefaultTask {
             getProject().getObjects().mapProperty(String.class, Object.class);
     private File manifestFile;
 
-    public CreateManifestTask() {}
-
     @Input
     final Property<String> getServiceName() {
         return serviceName;
