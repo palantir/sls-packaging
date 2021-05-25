@@ -18,6 +18,8 @@ package com.palantir.gradle.dist.tasks
 
 import com.google.common.collect.ImmutableSet
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.ProductDependency
+
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.dependencies.DependencyGraph
@@ -26,6 +28,16 @@ import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
 
 class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
+
+    static final String STANDARD_PRODUCT_DEPENDENCY = '''
+        productDependency {
+            productGroup = 'group'
+            productName = 'name'
+            minimumVersion = '1.0.0'
+            maximumVersion = '1.x.x'
+            recommendedVersion = '1.2.0'
+        }
+        '''
 
     File mavenRepo
 
@@ -36,22 +48,14 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 id 'com.palantir.sls-java-service-distribution'
             }
 
-            import com.palantir.gradle.dist.ProductType
-
             repositories {
                 maven {url "file:///${mavenRepo.getAbsolutePath()}"}
             }
 
             project.version = '1.0.0'
-
-            // If we create a custom task and then do --write-locks, the original task will be invoked anyway
-            // So, let's just configure the original task, yea?
-            tasks.createManifest {
-                serviceName = "serviceName"
-                serviceGroup = "serviceGroup"
-                productType = ProductType.SERVICE_V1
-                manifestExtensions = [:]
-                manifestFile = new File(project.buildDir, "/deployment/manifest.yml")
+            distribution {
+                serviceName 'serviceName'
+                serviceGroup 'serviceGroup'
             }
         """.stripIndent()
     }
@@ -71,13 +75,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         // run it first to ensure cache is warmed up
         runTasks(':createManifest')
 
-        buildFile << """
-            createManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"),
-                ]
-            }
-        """.stripIndent()
+        addStandardProductDependency()
 
         when:
         def buildResult = runTasksAndFail(':createManifest')
@@ -145,11 +143,16 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
     def 'merges declared product dependencies'() {
         setup:
         buildFile << """
-            createManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0"), 
-                ]
+            distribution {
+                $STANDARD_PRODUCT_DEPENDENCY
+                //add same with a different minimum version
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = '1.1.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = '1.2.0'
+                }
             }
         """.stripIndent()
 
@@ -162,14 +165,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'throws if declared dependency is also ignored'() {
         setup:
+        addStandardProductDependency();
         buildFile << """
-            createManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
-                ]
-                ignoredProductIds = [
-                    new com.palantir.gradle.dist.ProductId("group:name"), 
-                ]
+            distribution {
+                ignoredProductDependency('group:name')
             }
         """.stripIndent()
 
@@ -182,14 +181,10 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
     def 'throws if declared dependency is also optional'() {
         setup:
+        addStandardProductDependency();
         buildFile << """
-            createManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0"), 
-                ]
-                optionalProductIds = [
-                    new com.palantir.gradle.dist.ProductId("group:name"), 
-                ]
+            distribution {
+                optionalProductDependency('group:name')
             }
         """.stripIndent()
 
@@ -198,6 +193,26 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         buildResult.output.contains('Encountered product dependency declaration that was also declared as optional')
+    }
+
+    def "throws if user declares dependency on the same product"() {
+        buildFile << """
+            distribution {
+                productDependency {
+                    productGroup = 'serviceGroup'
+                    productName = 'serviceName'
+                    minimumVersion = '1.1.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = '1.2.0'
+                }
+            }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksAndFail(':createManifest')
+
+        then:
+        buildResult.output.contains('Invalid for product to declare an explicit dependency on itself')
     }
 
     def 'Resolve unspecified productDependencies'() {
@@ -244,11 +259,16 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             dependencies {
                 runtime 'a:a:1.0'
             }
-            
-            createManifest {
-                productDependencies = [
-                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.1.0", "1.x.x", "1.2.0", true), 
-                ]
+            distribution {
+                //add same with a different minimum version and optional
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = '1.1.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = '1.2.0'
+                    optional = true
+                }
             }
         """.stripIndent()
         file('product-dependencies.lock').text = """\
@@ -291,13 +311,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             dependencies {
                 runtime 'a:a:1.0'
             }
-
-            tasks.createManifest {
-                productDependencies = []
-                ignoredProductIds = [
-                    new com.palantir.gradle.dist.ProductId("group:name"), 
-                    new com.palantir.gradle.dist.ProductId("group:name2")
-                ]
+            distribution {
+                ignoredProductDependency('group:name')
+                ignoredProductDependency('group:name2')
             }
         """.stripIndent()
         file('product-dependencies.lock').delete()
@@ -316,12 +332,9 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
             dependencies {
                 runtime 'a:a:1.0'
             }
-
-            tasks.createManifest {
-                optionalProductIds = [
-                    new com.palantir.gradle.dist.ProductId("group:name"), 
-                    new com.palantir.gradle.dist.ProductId("group:name2")
-                ]
+            distribution {
+                optionalProductDependency('group:name')
+                optionalProductDependency('group:name2')
             }
         """.stripIndent()
         file('product-dependencies.lock').text = """\
@@ -423,7 +436,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 runtime 'b:b:1.0'
             }
             // Configure this service to have the same coordinates as the (sole) dependency coming from b:b:1.0
-            tasks.createManifest {
+            distribution {
                 serviceGroup = "group"
                 serviceName = "name2"
             }
@@ -645,6 +658,7 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 ":foo-api:configureProductDependencies",
                 ":foo-api:processResources",
                 ":foo-server:mergeDiagnosticsJson",
+                ":foo-server:resolveProductDependencies",
                 ":foo-server:createManifest")
     }
 
@@ -875,5 +889,13 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
                 CreateManifestTaskIntegrationSpec.class.getResourceAsStream("/b-duplicate-different-versions-1.0.jar"),
                 new File(mavenRepo, "e/e/1.0/e-1.0.jar").toPath(),
                 StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    private void addStandardProductDependency(boolean optional = false) {
+        buildFile << """
+            distribution {
+                $STANDARD_PRODUCT_DEPENDENCY
+            }
+            """.stripIndent()
     }
 }
