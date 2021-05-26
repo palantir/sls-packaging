@@ -16,13 +16,13 @@
 
 package com.palantir.gradle.dist.tasks
 
-import java.nio.file.Files
-import com.palantir.gradle.dist.GradleIntegrationSpec;
-import java.nio.file.StandardCopyOption;
-import nebula.test.dependencies.DependencyGraph;
-import nebula.test.dependencies.GradleDependencyGenerator;
+import nebula.test.dependencies.DependencyGraph
+import nebula.test.dependencies.GradleDependencyGenerator
 
-abstract class AbstractTaskSpec extends GradleIntegrationSpec {
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+class ProductDependencyTestFixture {
     static final String STANDARD_PRODUCT_DEPENDENCY = '''
         productDependency {
             productGroup = 'group'
@@ -34,6 +34,13 @@ abstract class AbstractTaskSpec extends GradleIntegrationSpec {
         '''
 
     File mavenRepo
+    File projectDir
+    File buildFile
+
+    ProductDependencyTestFixture(File projectDir, File buildFile) {
+        this.projectDir = projectDir
+        this.buildFile = buildFile
+    }
 
     def setup() {
         generateDependencies()
@@ -85,7 +92,7 @@ abstract class AbstractTaskSpec extends GradleIntegrationSpec {
                 StandardCopyOption.REPLACE_EXISTING)
     }
 
-    void addStandardProductDependency(boolean optional = false) {
+    void addStandardProductDependency() {
         buildFile << """
             distribution {
                 $STANDARD_PRODUCT_DEPENDENCY

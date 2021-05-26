@@ -17,16 +17,21 @@
 package com.palantir.gradle.dist.tasks
 
 import com.google.common.collect.ImmutableSet
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.Serializations
 import com.palantir.gradle.dist.SlsManifest
 import org.gradle.testkit.runner.TaskOutcome
 
-class CreateManifestIntegrationSpec extends AbstractTaskSpec {
+class CreateManifestIntegrationSpec extends GradleIntegrationSpec {
 
     File manifestFile
+    @Delegate
+    ProductDependencyTestFixture pdtf
 
     def setup() {
         manifestFile = new File(projectDir, 'build/deployment/manifest.yml')
+        pdtf = new ProductDependencyTestFixture(projectDir, buildFile)
+        pdtf.setup()
     }
 
     def 'fails if lockfile is not up to date'() {

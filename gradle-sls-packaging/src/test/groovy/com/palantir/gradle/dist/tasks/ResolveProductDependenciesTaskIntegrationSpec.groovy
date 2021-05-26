@@ -16,26 +16,31 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.ProductDependency
 import com.palantir.gradle.dist.Serializations
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
 
-class ResolveProductDependenciesTaskIntegrationSpec extends AbstractTaskSpec {
+class ResolveProductDependenciesTaskIntegrationSpec extends GradleIntegrationSpec {
 
     public static final String REPORT_FILE_PATH = 'build/tmp/resolveProductDependencies/resolved-product-dependencies.json'
 
+    @Delegate
+    ProductDependencyTestFixture pdtf
     File reportFile
 
     def setup() {
         reportFile = new File(projectDir, REPORT_FILE_PATH)
+        pdtf = new ProductDependencyTestFixture(projectDir, buildFile)
+        pdtf.setup()
     }
 
     def 'merges declared product dependencies'() {
         setup:
         buildFile << """
             distribution {
-                $STANDARD_PRODUCT_DEPENDENCY
+                $ProductDependencyTestFixture.STANDARD_PRODUCT_DEPENDENCY
                 //add same with a different minimum version
                 productDependency {
                     productGroup = 'group'
@@ -59,7 +64,7 @@ class ResolveProductDependenciesTaskIntegrationSpec extends AbstractTaskSpec {
 
     def 'throws if declared dependency is also ignored'() {
         setup:
-        addStandardProductDependency();
+        addStandardProductDependency()
         buildFile << """
             distribution {
                 ignoredProductDependency('group:name')
@@ -75,7 +80,7 @@ class ResolveProductDependenciesTaskIntegrationSpec extends AbstractTaskSpec {
 
     def 'throws if declared dependency is also optional'() {
         setup:
-        addStandardProductDependency();
+        addStandardProductDependency()
         buildFile << """
             distribution {
                 optionalProductDependency('group:name')

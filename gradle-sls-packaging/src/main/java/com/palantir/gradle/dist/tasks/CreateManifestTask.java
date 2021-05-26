@@ -259,12 +259,12 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
-        Provider<Set<ProductId>> provider = project.provider(
+        Provider<Set<ProductId>> productIdProvider = project.provider(
                 () -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(project.getRootProject())
                         .keySet());
 
         TaskProvider<ResolveProductDependenciesTask> depTask =
-                ResolveProductDependenciesTask.createResolveProductDependenciesTask(project, ext, provider);
+                ResolveProductDependenciesTask.createResolveProductDependenciesTask(project, ext, productIdProvider);
 
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
@@ -273,7 +273,7 @@ public class CreateManifestTask extends DefaultTask {
                     task.getProductType().set(ext.getProductType());
                     task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
-                    task.getInRepoProductIds().set(provider);
+                    task.getInRepoProductIds().set(productIdProvider);
                     task.getProductDependenciesFile().set(depTask.get().getOutputFile());
                     // Ensure we re-run task to write locks
                     task.getOutputs().upToDateWhen(new Spec<Task>() {
