@@ -38,8 +38,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
@@ -134,9 +136,7 @@ public class CreateManifestTask extends DefaultTask {
                     + "'product-dependencies' key in manifestExtensions");
         }
 
-        ProductDependencyReport pdr = Serializations.readProductDependencyReport(
-                productDependenciesFile.getAsFile().get());
-        List<ProductDependency> productDeps = pdr.productDependencies();
+        List<ProductDependency> productDeps = loadProductDependencies();
 
         if (productDeps.isEmpty()) {
             requireAbsentLockfile();
@@ -154,6 +154,38 @@ public class CreateManifestTask extends DefaultTask {
                 .putExtensions("product-dependencies", productDeps)
                 .build();
         Serializations.writeSlsManifest(slsManifest, getManifestFile());
+    }
+
+    private List<ProductDependency> loadProductDependencies() {
+        ProductDependencyReport pdr = Serializations.readProductDependencyReport(
+                productDependenciesFile.getAsFile().get());
+        List<ProductDependency> productDeps = pdr.productDependencies();
+        validateProductDeps(productDeps);
+        return productDeps;
+    }
+
+    /**
+     * Check that the provided product dependencies do not include a reference to the current
+     * product and also that there are no duplicates.
+     */
+    private void validateProductDeps(List<ProductDependency> productDeps) {
+        List<ProductId> productIds = productDeps.stream().map(ProductId::of).collect(Collectors.toList());
+        Map<ProductId, Long> countMap =
+                productIds.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        ProductId selfId =
+                new ProductId(getServiceGroup().get(), getServiceName().get());
+        Preconditions.checkArgument(
+                !countMap.containsKey(selfId),
+                "Product dependencies cannot contain reference to this product: %s",
+                selfId);
+        List<String> dupes = countMap.entrySet().stream()
+                .filter(e -> e.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .map(ProductId::toString)
+                .collect(Collectors.toList());
+        Preconditions.checkArgument(
+                dupes.isEmpty(), "Some product dependencies have been declared more than once: %s", dupes);
     }
 
     private void requireAbsentLockfile() {
