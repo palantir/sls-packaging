@@ -45,22 +45,4 @@ class CreateManifestTaskTest extends ProjectSpec {
         Exception exception = thrown()
         exception.message.contains("Project version must be a valid SLS version: 1.0.0foo")
     }
-
-    def "Fails if user declares dependency on the same product"() {
-        project.version = "1.0.0"
-        CreateManifestTask task = project.tasks.create("m", CreateManifestTask)
-        task.serviceGroup = "serviceGroup"
-        task.serviceName = "serviceName"
-        task.productDependencies = [
-                new ProductDependency("serviceGroup", "serviceName", "1.1.0", "1.x.x", "1.2.0"),
-        ]
-
-        when:
-        task.createManifest()
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message.contains 'Invalid for product to declare an explicit dependency on itself'
-
-    }
 }
