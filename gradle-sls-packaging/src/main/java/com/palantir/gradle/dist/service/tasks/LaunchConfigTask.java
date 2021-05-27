@@ -183,7 +183,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .args(args.get())
                         .classpath(relativizeToServiceLibDirectory(getClasspath()))
                         .containerSupport(
-                                containerSupport.get() && javaVersion.get().compareTo(JAVA_11) >= 1)
+                                containerSupport.get() && javaVersion.get().compareTo(JAVA_11) >= 0)
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
