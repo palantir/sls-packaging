@@ -56,6 +56,9 @@ public abstract class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
+    private static final JavaVersion JAVA_11 = JavaVersion.toVersion("11");
+    private static final JavaVersion JAVA_14 = JavaVersion.toVersion("14");
+    private static final JavaVersion JAVA_15 = JavaVersion.toVersion("15");
     private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
     private static List<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
@@ -81,6 +84,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
             getProject().getObjects().property(Boolean.class);
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
     private final Property<JavaVersion> javaVersion = getProject().getObjects().property(JavaVersion.class);
+    private final Property<Boolean> containerSupport = getProject().getObjects().property(Boolean.class);
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> defaultJvmOpts =
@@ -120,6 +124,12 @@ public abstract class LaunchConfigTask extends DefaultTask {
     @Optional
     public final Property<String> getJavaHome() {
         return javaHome;
+    }
+
+    @Input
+    @Optional
+    public final Property<Boolean> getContainerSupport() {
+        return containerSupport;
     }
 
     @Input
@@ -172,17 +182,13 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .javaHome(javaHome.getOrElse(""))
                         .args(args.get())
                         .classpath(relativizeToServiceLibDirectory(getClasspath()))
+                        .containerSupport(
+                                containerSupport.get() && javaVersion.get().compareTo(JAVA_11) >= 1)
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
-                        .addAllJvmOpts(
-                                javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
-                                        ? java14Options
-                                        : ImmutableList.of())
-                        .addAllJvmOpts(
-                                javaVersion.get().compareTo(JavaVersion.toVersion("15")) == 0
-                                        ? java15Options
-                                        : ImmutableList.of())
+                        .addAllJvmOpts(javaVersion.get().compareTo(JAVA_14) >= 0 ? java14Options : ImmutableList.of())
+                        .addAllJvmOpts(javaVersion.get().compareTo(JAVA_15) == 0 ? java15Options : ImmutableList.of())
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
                         .putAllEnv(defaultEnvironment)
@@ -270,6 +276,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
         List<String> args();
 
         Map<String, String> env();
+
+        boolean containerSupport();
 
         static Builder builder() {
             return new Builder();
