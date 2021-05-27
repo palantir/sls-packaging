@@ -277,7 +277,10 @@ public abstract class LaunchConfigTask extends DefaultTask {
 
         Map<String, String> env();
 
-        boolean containerSupport();
+        @Value.Default
+        default boolean containerSupport() {
+            return false;
+        }
 
         static Builder builder() {
             return new Builder();
