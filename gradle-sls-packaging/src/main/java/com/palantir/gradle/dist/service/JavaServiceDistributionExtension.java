@@ -41,6 +41,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final Property<JavaVersion> javaVersion;
     private final Property<String> mainClass;
     private final Property<String> javaHome;
+    private final Property<Boolean> enableContainerSupport;
     private final Property<Boolean> addJava8GcLogging;
     private final Property<Boolean> enableManifestClasspath;
     private final Property<GcProfile> gc;
@@ -69,6 +70,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
             return "$JAVA_" + javaVersionValue.getMajorVersion() + "_HOME";
         }));
+        enableContainerSupport = objectFactory.property(Boolean.class).value(false);
 
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
         enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
@@ -113,6 +115,14 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
     public final void javaHome(String newJavaHome) {
         this.javaHome.set(newJavaHome);
+    }
+
+    public final Provider<Boolean> getEnableContainerSupport() {
+        return enableContainerSupport;
+    }
+
+    public final void enableContainerSupport(boolean newEnableContainerSupport) {
+        this.enableContainerSupport.set(newEnableContainerSupport);
     }
 
     public final Provider<Boolean> getAddJava8GcLogging() {

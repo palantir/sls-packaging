@@ -84,7 +84,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
             getProject().getObjects().property(Boolean.class);
     private final Property<String> javaHome = getProject().getObjects().property(String.class);
     private final Property<JavaVersion> javaVersion = getProject().getObjects().property(JavaVersion.class);
-    private final Property<Boolean> containerSupport = getProject().getObjects().property(Boolean.class);
+    private final Property<Boolean> enableContainerSupport =
+            getProject().getObjects().property(Boolean.class);
     private final ListProperty<String> args = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
     private final ListProperty<String> defaultJvmOpts =
@@ -128,8 +129,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
 
     @Input
     @Optional
-    public final Property<Boolean> getContainerSupport() {
-        return containerSupport;
+    public final Property<Boolean> getEnableContainerSupport() {
+        return enableContainerSupport;
     }
 
     @Input
@@ -182,8 +183,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .javaHome(javaHome.getOrElse(""))
                         .args(args.get())
                         .classpath(relativizeToServiceLibDirectory(getClasspath()))
-                        .containerSupport(
-                                containerSupport.get() && javaVersion.get().compareTo(JAVA_11) >= 0)
+                        .containerSupport(enableContainerSupport.get()
+                                && javaVersion.get().compareTo(JAVA_11) >= 0)
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())

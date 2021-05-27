@@ -500,6 +500,63 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         ])
     }
 
+    def 'enables container support if enabled and >= JAVA 11'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { compile files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 14
+                enableContainerSupport true
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+        actualStaticConfig.containerSupport().is(true)
+    }
+
+//    def 'does not enable container support by default'() {
+//        createUntarBuildFile(buildFile)
+//        buildFile << """
+//            dependencies { compile files("${EXTERNAL_JAR}") }
+//            tasks.jar.archiveBaseName = "internal"
+//            distribution {
+//                javaVersion 11
+//            }""".stripIndent()
+//        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+//
+//        when:
+//        runTasks(':build', ':distTar', ':untar')
+//
+//        then:
+//        def actualStaticConfig = OBJECT_MAPPER.readValue(
+//                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+//        actualStaticConfig.containerSupport().is(false)
+//    }
+//
+//    def 'does not enable container support by default'() {
+//        createUntarBuildFile(buildFile)
+//        buildFile << """
+//            dependencies { compile files("${EXTERNAL_JAR}") }
+//            tasks.jar.archiveBaseName = "internal"
+//            distribution {
+//                javaVersion 11
+//            }""".stripIndent()
+//        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+//
+//        when:
+//        runTasks(':build', ':distTar', ':untar')
+//
+//        then:
+//        def actualStaticConfig = OBJECT_MAPPER.readValue(
+//                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+//        actualStaticConfig.containerSupport().is(false)
+//    }
 
     def 'produce distribution bundle that populates check.sh'() {
         given:
