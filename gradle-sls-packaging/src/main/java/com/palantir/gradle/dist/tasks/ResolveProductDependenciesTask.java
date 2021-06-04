@@ -30,6 +30,7 @@ import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.Serializations;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,6 +47,8 @@ import java.util.zip.ZipFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
@@ -53,7 +57,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -82,13 +85,15 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
             Project project, BaseDistributionExtension ext, Provider<Set<ProductId>> provider) {
         TaskProvider<ResolveProductDependenciesTask> depTask = project.getTasks()
                 .register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
+                    Provider<Configuration> configProvider = project.provider(ext::getProductDependenciesConfig);
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getDeclaredProductDependencies().set(ext.getAllProductDependencies());
-                    task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
+                    task.setConfiguration(configProvider);
                     task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getInRepoProductIds().set(provider);
+                    task.dependsOn(configProvider);
                 });
         return depTask;
     }
@@ -254,93 +259,56 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     }
 
     private List<ProductDependency> findRecommendedProductDependenies() {
-        return productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
-                .flatMap(artifact -> {
-                    String artifactName = artifact.getId().getDisplayName();
-                    ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-                    Optional<String> pdeps = Optional.empty();
+        // This will find both intra-project and third party artifacts because the project artifacts are resolved to
+        // their generated jar files.
+        Stream<ResolvedArtifact> artifactStream =
+                productDependenciesConfig.get().getResolvedConfiguration().getFirstLevelModuleDependencies().stream()
+                        .map(ResolvedDependency::getAllModuleArtifacts)
+                        .flatMap(Collection::stream)
+                        .filter(a -> "jar".equals(a.getExtension()))
+                        .distinct();
 
-                    // Extract product dependencies directly from Jar task for in project dependencies
-                    if (id instanceof ProjectComponentIdentifier) {
-                        Project dependencyProject = getProject()
-                                .getRootProject()
-                                .project(((ProjectComponentIdentifier) id).getProjectPath());
-                        if (dependencyProject.getPlugins().hasPlugin(JavaPlugin.class)) {
-                            Jar jar = (Jar) dependencyProject.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
-
-                            pdeps = Optional.ofNullable(jar.getManifest()
-                                            .getEffectiveManifest()
-                                            .getAttributes()
-                                            .get(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
-                                    .map(Object::toString);
-                        }
-                    } else {
-                        if (!artifact.getFile().exists()) {
-                            log.debug("Artifact did not exist: {}", artifact.getFile());
-                            return Stream.empty();
-                        } else if (!com.google.common.io.Files.getFileExtension(
-                                        artifact.getFile().getName())
-                                .equals("jar")) {
-                            log.debug("Artifact is not jar: {}", artifact.getFile());
-                            return Stream.empty();
-                        }
-
-                        Manifest manifest;
-                        try {
-                            ZipFile zipFile = new ZipFile(artifact.getFile());
-                            ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
-                            if (manifestEntry == null) {
-                                log.debug("Manifest file does not exist in jar for '${coord}'");
-                                return Stream.empty();
-                            }
-                            manifest = new Manifest(zipFile.getInputStream(manifestEntry));
-                        } catch (IOException e) {
-                            log.warn(
-                                    "IOException encountered when processing artifact '{}', file '{}', {}",
-                                    artifactName,
-                                    artifact.getFile(),
-                                    e);
-                            return Stream.empty();
-                        }
-
-                        pdeps = Optional.ofNullable(manifest.getMainAttributes()
-                                .getValue(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
-                    }
-                    if (!pdeps.isPresent()) {
-                        log.debug(
-                                "No product dependency found for artifact '{}', file '{}'",
-                                artifactName,
-                                artifact.getFile());
-                        return Stream.empty();
-                    }
-
-                    try {
-                        RecommendedProductDependencies recommendedDeps =
-                                Serializations.jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
-                        return recommendedDeps.recommendedProductDependencies().stream()
-                                .peek(productDependency -> log.info(
-                                        "Product dependency recommendation made by artifact '{}', file '{}', "
-                                                + "dependency recommendation '{}'",
-                                        artifactName,
-                                        artifact,
-                                        productDependency))
-                                .map(recommendedDep -> new ProductDependency(
-                                        recommendedDep.getProductGroup(),
-                                        recommendedDep.getProductName(),
-                                        recommendedDep.getMinimumVersion(),
-                                        recommendedDep.getMaximumVersion(),
-                                        recommendedDep.getRecommendedVersion(),
-                                        recommendedDep.getOptional()));
-                    } catch (IOException | IllegalArgumentException e) {
-                        log.debug(
-                                "Failed to load product dependency for artifact '{}', file '{}', '{}'",
-                                artifactName,
-                                artifact,
-                                e);
-                        return Stream.empty();
-                    }
-                })
+        return artifactStream
+                .map(ResolveProductDependenciesTask::getProductDependenciesFromArtifact)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .flatMap(Collection::stream)
+                .distinct()
                 .collect(Collectors.toList());
+    }
+
+    static Optional<Collection<ProductDependency>> getProductDependenciesFromArtifact(ResolvedArtifact artifact) {
+        File jarFile = artifact.getFile();
+        try (ZipFile zipFile = new ZipFile(jarFile)) {
+            String artifactName = artifact.getId().getDisplayName();
+            ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
+            if (manifestEntry == null) {
+                return Optional.empty();
+            }
+            Attributes attrs = new Manifest(zipFile.getInputStream(manifestEntry)).getMainAttributes();
+            if (!attrs.containsKey(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_ATTRIBUTE)) {
+                return Optional.empty();
+            }
+
+            Set<ProductDependency> recommendedDeps = Serializations.jsonMapper
+                    .readValue(
+                            attrs.getValue(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_ATTRIBUTE),
+                            RecommendedProductDependencies.class)
+                    .recommendedProductDependencies();
+            if (recommendedDeps.isEmpty()) {
+                return Optional.empty();
+            }
+            log.info(
+                    "Product dependency recommendation made by artifact '{}', file '{}', "
+                            + "dependency recommendation '{}'",
+                    artifactName,
+                    artifact,
+                    recommendedDeps);
+            return Optional.of(recommendedDeps);
+        } catch (IOException e) {
+            log.warn("Failed to load product dependency for artifact '{}', file '{}', '{}'", artifact, jarFile, e);
+            return Optional.empty();
+        }
     }
 
     private boolean isNotSelfProductDependency(ProductDependency dependency) {
