@@ -198,6 +198,9 @@ And the complete list of configurable properties:
    inferred from a JAR file whose MANIFEST contains the classpath entries.
  * (optional) `excludeFromVar` a list of directories (relative to `${projectDir}/var`) to exclude from the distribution,
    defaulting to `['log', 'run']`.
+ * (optional) `javaVersion` a fixed override for the desired major Java runtime version (e.g. `javaVersion JavaVersion.VERSION_15`).
+   This defaults to the Java `targetCompatibility` version.
+   Setting this automatically sets `javaHome` to the appropriate corresponding value.
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run. When your `targetCompatibility` is Java 8 or less, this value will be blank. For
    Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
