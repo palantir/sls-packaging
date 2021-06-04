@@ -31,12 +31,12 @@ import com.palantir.gradle.dist.Serializations;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -93,6 +93,9 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                     task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getInRepoProductIds().set(provider);
+
+                    // Need the dependsOn because the configuration is not set as an Input property and
+                    // we need the artifacts in it to be resolved.
                     task.dependsOn(configProvider);
                 });
         return depTask;
@@ -270,24 +273,22 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
 
         return artifactStream
                 .map(ResolveProductDependenciesTask::getProductDependenciesFromArtifact)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .flatMap(Collection::stream)
                 .distinct()
                 .collect(Collectors.toList());
     }
 
-    static Optional<Collection<ProductDependency>> getProductDependenciesFromArtifact(ResolvedArtifact artifact) {
+    private static Collection<ProductDependency> getProductDependenciesFromArtifact(ResolvedArtifact artifact) {
         File jarFile = artifact.getFile();
         try (ZipFile zipFile = new ZipFile(jarFile)) {
             String artifactName = artifact.getId().getDisplayName();
             ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
             if (manifestEntry == null) {
-                return Optional.empty();
+                return Collections.emptySet();
             }
             Attributes attrs = new Manifest(zipFile.getInputStream(manifestEntry)).getMainAttributes();
             if (!attrs.containsKey(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_ATTRIBUTE)) {
-                return Optional.empty();
+                return Collections.emptySet();
             }
 
             Set<ProductDependency> recommendedDeps = Serializations.jsonMapper
@@ -296,7 +297,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                             RecommendedProductDependencies.class)
                     .recommendedProductDependencies();
             if (recommendedDeps.isEmpty()) {
-                return Optional.empty();
+                return Collections.emptySet();
             }
             log.info(
                     "Product dependency recommendation made by artifact '{}', file '{}', "
@@ -304,10 +305,10 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                     artifactName,
                     artifact,
                     recommendedDeps);
-            return Optional.of(recommendedDeps);
+            return recommendedDeps;
         } catch (IOException e) {
             log.warn("Failed to load product dependency for artifact '{}', file '{}', '{}'", artifact, jarFile, e);
-            return Optional.empty();
+            return Collections.emptySet();
         }
     }
 
