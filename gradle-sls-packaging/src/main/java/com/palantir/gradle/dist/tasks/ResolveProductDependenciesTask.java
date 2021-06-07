@@ -20,13 +20,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductDependencyReport;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
-import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.Serializations;
 import java.io.File;
 import java.io.IOException;
@@ -49,11 +47,6 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedDependency;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.artifacts.result.ResolvedComponentResult;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -66,17 +59,12 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.jvm.tasks.Jar;
 
 @CacheableTask
 public abstract class ResolveProductDependenciesTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(ResolveProductDependenciesTask.class);
 
-    private final Property<Configuration> productDependenciesConfig =
-            getProject().getObjects().property(Configuration.class);
-
     public ResolveProductDependenciesTask() {
-        dependsOn(otherProjectProductDependenciesTasks());
         getOutputFile().convention(() -> new File(getTemporaryDir(), "resolved-product-dependencies.json"));
         getDiscoveredProductDependencies().convention(getProject().provider(this::findRecommendedProductDependenies));
     }
@@ -89,7 +77,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getDeclaredProductDependencies().set(ext.getAllProductDependencies());
-                    task.setConfiguration(configProvider);
+                    task.getProductDependenciesConfig().set(configProvider);
                     task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
                     task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
                     task.getInRepoProductIds().set(provider);
@@ -99,37 +87,6 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                     task.dependsOn(configProvider);
                 });
         return depTask;
-    }
-
-    /**
-     * A lazy collection of tasks that ensure the {@link Jar} task of any project dependencies from
-     * {@link #productDependenciesConfig} is correctly populated with the recommended product dependencies of that
-     * project, if any (specifically, if they apply the {@link RecommendedProductDependenciesPlugin}).
-     */
-    private Provider<FileCollection> otherProjectProductDependenciesTasks() {
-        return productDependenciesConfig.map(productDeps -> {
-            // Using a ConfigurableFileCollection simply because it implements Buildable and provides a convenient API
-            // to wire up task dependencies to it in a lazy way.
-            ConfigurableFileCollection emptyFileCollection = getProject().files();
-            productDeps.getIncoming().getArtifacts().getArtifacts().stream()
-                    .flatMap(artifact -> {
-                        ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-
-                        // Depend on the ConfigureProductDependenciesTask, if it exists, which will wire up the jar
-                        // manifest
-                        // with recommended product dependencies.
-                        if (id instanceof ProjectComponentIdentifier) {
-                            Project dependencyProject = getProject()
-                                    .getRootProject()
-                                    .project(((ProjectComponentIdentifier) id).getProjectPath());
-                            return Stream.of(
-                                    dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
-                        }
-                        return Stream.empty();
-                    })
-                    .forEach(emptyFileCollection::builtBy);
-            return emptyFileCollection;
-        });
     }
 
     @Input
@@ -153,22 +110,8 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     @Input
     public abstract SetProperty<ProductId> getInRepoProductIds();
 
-    /**
-     * Contents of the given configuration.  Cannot list the configuration itself as an input property because the
-     * caching calculations attempt to resolve the configuration at config time.  This can lead to an error for
-     * configs that connot be resolved directly at that stage.  Caching and up-to-date calcs thus use this property.
-     */
     @Input
-    final Set<String> getProductDependenciesConfig() {
-        return productDependenciesConfig.get().getIncoming().getResolutionResult().getAllComponents().stream()
-                .map(ResolvedComponentResult::getId)
-                .map(ComponentIdentifier::getDisplayName)
-                .collect(Collectors.toSet());
-    }
-
-    final void setConfiguration(Provider<Configuration> config) {
-        this.productDependenciesConfig.set(config);
-    }
+    public abstract Property<Configuration> getProductDependenciesConfig();
 
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
@@ -265,7 +208,11 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
         // This will find both intra-project and third party artifacts because the project artifacts are resolved to
         // their generated jar files.
         Stream<ResolvedArtifact> artifactStream =
-                productDependenciesConfig.get().getResolvedConfiguration().getFirstLevelModuleDependencies().stream()
+                getProductDependenciesConfig()
+                        .get()
+                        .getResolvedConfiguration()
+                        .getFirstLevelModuleDependencies()
+                        .stream()
                         .map(ResolvedDependency::getAllModuleArtifacts)
                         .flatMap(Collection::stream)
                         .filter(a -> "jar".equals(a.getExtension()))
