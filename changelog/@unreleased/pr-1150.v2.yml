@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: resolve race condition with jar manifest manipulation
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1150

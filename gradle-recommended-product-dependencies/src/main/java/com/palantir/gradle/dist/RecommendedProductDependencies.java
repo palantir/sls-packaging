@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Attributes.Name;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -28,6 +30,8 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableRecommendedProductDependencies.class)
 public interface RecommendedProductDependencies {
     String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
+    Attributes.Name SLS_RECOMMENDED_PRODUCT_DEPS_ATTRIBUTE =
+            new Name(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY);
 
     @JsonProperty("recommended-product-dependencies")
     Set<ProductDependency> recommendedProductDependencies();

@@ -185,58 +185,6 @@ class CreateManifestIntegrationSpec extends GradleIntegrationSpec {
         file('bar-server/product-dependencies.lock').text.contains 'com.palantir.group:foo-service ($projectVersion, 1.x.x)'
     }
 
-    def "createManifest does not force compilation of sibling projects"() {
-        setup:
-        buildFile << """
-        allprojects {
-            project.version = '1.0.0'
-            group "com.palantir.group"
-        }
-        """
-        helper.addSubproject("foo-api", """
-            apply plugin: 'java'
-            apply plugin: 'com.palantir.sls-recommended-dependencies'
-
-            recommendedProductDependencies {
-                productDependency {
-                    productGroup = 'com.palantir.group'
-                    productName = 'foo-service'
-                    minimumVersion = '0.0.0'
-                    maximumVersion = '1.x.x'
-                    recommendedVersion = rootProject.version
-                }
-            }
-        """.stripIndent())
-        helper.addSubproject("foo-server", """
-            apply plugin: 'com.palantir.sls-java-service-distribution'
-            
-            dependencies {
-                compile project(':foo-api')
-            }
-
-            distribution {
-                serviceGroup 'com.palantir.group'
-                serviceName 'foo-service'
-                mainClass 'com.palantir.foo.bar.MyServiceMainClass'
-                args 'server', 'var/conf/my-service.yml'
-            }
-        """.stripIndent())
-
-        when:
-        def result = runTasks('foo-server:createManifest')
-
-        then:
-        result.task(":foo-server:createManifest").outcome == TaskOutcome.SUCCESS
-        result.task(":foo-api:configureProductDependencies").outcome == TaskOutcome.SUCCESS
-        result.task(':foo-api:jar') == null
-        result.tasks.collect({ it.path }).toSet() == ImmutableSet.of(
-                ":foo-api:configureProductDependencies",
-                ":foo-api:processResources",
-                ":foo-server:mergeDiagnosticsJson",
-                ":foo-server:resolveProductDependencies",
-                ":foo-server:createManifest")
-    }
-
     def "check depends on createManifest"() {
         when:
         def result = runTasks(':check')
