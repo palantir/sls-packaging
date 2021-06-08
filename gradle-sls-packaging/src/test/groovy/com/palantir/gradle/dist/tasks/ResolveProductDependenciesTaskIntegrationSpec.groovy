@@ -395,6 +395,7 @@ class ResolveProductDependenciesTaskIntegrationSpec extends GradleIntegrationSpe
 
         then:
         result.task(":foo-server:resolveProductDependencies").outcome == TaskOutcome.SUCCESS
+        result.task(':bar-api:jar') == null
 
         List<ProductDependency> prodDeps = readReport()
         prodDeps.size() == 1
@@ -450,6 +451,7 @@ class ResolveProductDependenciesTaskIntegrationSpec extends GradleIntegrationSpe
 
         then:
         result.task(":foo-server:resolveProductDependencies").outcome == TaskOutcome.SUCCESS
+        result.task(':bar-api:jar') == null
         List<ProductDependency> prodDeps = readReport()
         prodDeps.size() == 1
         prodDeps[0] == new ProductDependency('com.palantir.group', 'bar-service', '0.0.0', '1.x.x', '1.0.0')
