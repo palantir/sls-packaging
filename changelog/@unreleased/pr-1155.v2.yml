@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Revert "move product dep calcs into own task (#1146)"
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1155
