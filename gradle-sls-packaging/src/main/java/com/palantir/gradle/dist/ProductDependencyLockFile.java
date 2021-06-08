@@ -72,7 +72,7 @@ public final class ProductDependencyLockFile {
      * To avoid this, we replace the minimum version of such dependencies with a placeholder, {@code $projectVersion}.
      */
     private static String renderDepMinimumVersion(Set<ProductId> servicesDeclaredInProject, ProductDependency dep) {
-        ProductId productId = ProductId.of(dep);
+        ProductId productId = new ProductId(dep.getProductGroup(), dep.getProductName());
         if (servicesDeclaredInProject.contains(productId)) {
             return PROJECT_VERSION;
         } else {
