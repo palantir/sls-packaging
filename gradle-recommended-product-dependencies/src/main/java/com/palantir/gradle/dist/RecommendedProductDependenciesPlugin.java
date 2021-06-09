@@ -18,9 +18,12 @@ package com.palantir.gradle.dist;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.Directory;
+import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.jvm.tasks.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
@@ -30,18 +33,32 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
         project.getPluginManager().withPlugin("java", _plugin -> {
-            TaskProvider<ConfigureProductDependenciesTask> configureProductDependenciesTask = project.getTasks()
-                    .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-                        cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
-                    });
+            Provider<Directory> dir = project.getLayout().getBuildDirectory().dir("product-dependencies");
+            TaskProvider<CompileRecommendedProductDependencies> compilePdeps = project.getTasks()
+                    .register(
+                            "compileRecommendedProductDependencies",
+                            CompileRecommendedProductDependencies.class,
+                            task -> {
+                                task.getRecommendedProductDependencies()
+                                        .set(ext.getRecommendedProductDependenciesProvider());
+                                task.getOutputFile()
+                                        .set(dir.map(directory -> directory.file(
+                                                RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY
+                                                        + "/product-dependencies.json")));
+                            });
 
-            // Ensure that the jar task depends on this wiring task
             project.getTasks()
-                    .withType(Jar.class)
-                    .named(JavaPlugin.JAR_TASK_NAME)
-                    .configure(jar -> {
-                        jar.dependsOn(configureProductDependenciesTask);
-                    });
+                    .named(
+                            JavaPlugin.PROCESS_RESOURCES_TASK_NAME,
+                            processResources -> processResources.dependsOn(compilePdeps));
+
+            SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+            sourceSets.getByName("main").resources(resources -> {
+                SourceDirectorySet sourceDir = project.getObjects()
+                        .sourceDirectorySet("product-dependencies", "Recommended product dependencies")
+                        .srcDir(dir);
+                resources.source(sourceDir);
+            });
         });
     }
 }

@@ -16,25 +16,26 @@
 
 package com.palantir.gradle.dist
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.common.base.Throwables
+
 import com.google.common.collect.Iterables
-import java.util.jar.Manifest
 import java.util.zip.ZipFile
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 
 class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpec {
-
-    def "Adds recommended product dependencies to manifest"() {
-        settingsFile  << """
-        rootProject.name = "root-project"
-        """.stripIndent()
+    def setup() {
         buildFile << """
-            apply plugin: 'java'
-            apply plugin: 'com.palantir.recommended-product-dependencies'
+        plugins {
+            id 'com.palantir.consistent-versions' version '1.28.0' apply false
+        }
+        apply plugin: 'java'
+        apply plugin: 'com.palantir.recommended-product-dependencies'
+        """.stripIndent()
+    }
 
+    def 'Jar includes recommended product dependencies'() {
+        buildFile << """
             recommendedProductDependencies {
                 productDependency {
                     productGroup = 'group'
@@ -47,13 +48,14 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         """.stripIndent()
 
         when:
-        runTasksSuccessfully(':jar')
+        def result = runTasksSuccessfully(':jar')
 
         then:
-        fileExists("build/libs/root-project.jar")
+        result.wasExecuted("compileRecommendedProductDependencies")
+        fileExists("build/libs/${moduleName}.jar")
 
         def dep = Iterables.getOnlyElement(
-                readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
+                readRecommendedProductDeps(file("build/libs/${moduleName}.jar")).recommendedProductDependencies())
         dep.productGroup == "group"
         dep.productName == "name"
         dep.minimumVersion == "1.0.0"
@@ -63,81 +65,49 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
 
     def "Works with consistent-versions"() {
         def repo = generateMavenRepo('group:name:1.0.0')
-        settingsFile  << """
-        rootProject.name = "root-project"
-        """.stripIndent()
         buildFile << """
-            plugins {
-                id 'com.palantir.consistent-versions' version '1.13.1'
-                id 'java-library'
-            }
-            apply plugin: 'com.palantir.recommended-product-dependencies'
-            
-            repositories {
-                ${repo.mavenRepositoryBlock}
-            }
-            
-            dependencies {
-                // just so it becomes available to gradle-consistent-versions' getVersion
-                implementation 'group:name:1.0.0'
-            }
+        apply plugin: 'com.palantir.consistent-versions'   
+        apply plugin: 'com.palantir.recommended-product-dependencies'
+        
+        
+        repositories {
+            ${repo.mavenRepositoryBlock}
+        }
+        
+        dependencies {
+            // just so it becomes available to gradle-consistent-versions' getVersion
+            implementation 'group:name:1.0.0'
+        }
 
-            recommendedProductDependencies {
-                productDependency {
-                    productGroup = 'group'
-                    productName = 'name'
-                    minimumVersion = getVersion('group:name')
-                    maximumVersion = '1.x.x'
-                }
+        recommendedProductDependencies {
+            productDependency {
+                productGroup = 'group'
+                productName = 'name'
+                minimumVersion = getVersion('group:name')
+                maximumVersion = '1.x.x'
             }
+        }
         """.stripIndent()
 
         when:
-        runTasksSuccessfully('-DignoreDeprecations=true', '--write-locks', ':jar')
+        def result = runTasksSuccessfully( '--write-locks', ':jar')
 
         then:
-        fileExists("build/libs/root-project.jar")
+        result.wasExecuted("compileRecommendedProductDependencies")
+        fileExists("build/libs/${moduleName}.jar")
 
         def dep = Iterables.getOnlyElement(
-                readRecommendedProductDeps(file("build/libs/root-project.jar")).recommendedProductDependencies())
+                readRecommendedProductDeps(file("build/libs/${moduleName}.jar")).recommendedProductDependencies())
         dep.productGroup == "group"
         dep.productName == "name"
         dep.minimumVersion == "1.0.0"
         dep.maximumVersion == "1.x.x"
     }
 
-    def 'does not allow you to add an optional dependency'() {
-        buildFile << """
-            apply plugin: 'java'
-            apply plugin: 'com.palantir.recommended-product-dependencies'
-
-            recommendedProductDependencies {
-                productDependency {
-                    productGroup = 'group'
-                    productName = 'name'
-                    minimumVersion = '1.0.0'
-                    maximumVersion = '1.x.x'
-                    recommendedVersion = '1.2.3'
-                    optional = true
-                }
-            }
-        """.stripIndent()
-
-        when:
-        def executionResult = runTasksWithFailure(':jar')
-
-        then:
-        def rootCause = Throwables.getRootCause(executionResult.failure)
-        rootCause.message.contains 'Optional dependencies are not supported'
-    }
-
     def readRecommendedProductDeps(File jarFile) {
         def zf = new ZipFile(jarFile)
-        def manifestEntry = zf.getEntry("META-INF/MANIFEST.MF")
-        def manifest = new Manifest(zf.getInputStream(manifestEntry))
-        return new ObjectMapper().readValue(
-                manifest.getMainAttributes().getValue(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY),
-                RecommendedProductDependencies)
+        def resource = zf.getEntry("${RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY}/product-dependencies.json")
+        return CompileRecommendedProductDependencies.MAPPER.readValue(zf.getInputStream(resource), RecommendedProductDependencies)
     }
 
     private static GradleDependencyGenerator generateMavenRepo(String... graph) {
