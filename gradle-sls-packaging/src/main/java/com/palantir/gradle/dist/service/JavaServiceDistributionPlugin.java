@@ -54,7 +54,7 @@ import org.gradle.util.GFileUtils;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
-    private static final String GO_JAVA_VERSION = "1.12.0-rc5";
+    private static final String GO_JAVA_VERSION = "1.12.0";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:" + GO_JAVA_VERSION;
     private static final String GO_INIT = "com.palantir.launching:go-init:" + GO_JAVA_VERSION;
     public static final String GROUP_NAME = "Distribution";
