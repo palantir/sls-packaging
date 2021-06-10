@@ -28,6 +28,8 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
+    public static final String RESOURCE_PATH =
+            RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json";
 
     @Override
     public final void apply(Project project) {
@@ -59,10 +61,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                         "compileRecommendedProductDependencies", CompileRecommendedProductDependencies.class, task -> {
                             task.getRecommendedProductDependencies()
                                     .set(ext.getRecommendedProductDependenciesProvider());
-                            task.getOutputFile()
-                                    .set(dir.map(directory -> directory.file(
-                                            RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY
-                                                    + "/product-dependencies.json")));
+                            task.getOutputFile().set(dir.map(directory -> directory.file(RESOURCE_PATH)));
                         });
 
         project.getTasks()

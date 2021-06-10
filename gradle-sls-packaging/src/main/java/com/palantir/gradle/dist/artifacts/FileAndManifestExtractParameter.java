@@ -20,7 +20,10 @@ import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 
-interface PathParameter extends TransformParameters {
+public interface FileAndManifestExtractParameter extends TransformParameters {
     @Input
     Property<String> getPathToExtract();
+
+    @Input
+    Property<String> getKeyToExtract();
 }

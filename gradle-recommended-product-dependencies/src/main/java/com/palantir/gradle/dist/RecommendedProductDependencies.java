@@ -23,7 +23,6 @@ import java.util.Set;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@Value.Style(jdkOnly = true)
 @JsonSerialize(as = ImmutableRecommendedProductDependencies.class)
 @JsonDeserialize(as = ImmutableRecommendedProductDependencies.class)
 public interface RecommendedProductDependencies {
@@ -32,9 +31,9 @@ public interface RecommendedProductDependencies {
     @JsonProperty("recommended-product-dependencies")
     Set<ProductDependency> recommendedProductDependencies();
 
+    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
+
     static Builder builder() {
         return new Builder();
     }
-
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
 }
