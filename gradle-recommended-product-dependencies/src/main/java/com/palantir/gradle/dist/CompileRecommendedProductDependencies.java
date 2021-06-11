@@ -36,7 +36,7 @@ public abstract class CompileRecommendedProductDependencies extends DefaultTask 
     abstract RegularFileProperty getOutputFile();
 
     @TaskAction
-    void action() throws IOException {
+    final void action() throws IOException {
         Set<ProductDependency> value = getRecommendedProductDependencies().get();
         MAPPER.writeValue(
                 getOutputFile().getAsFile().get(),

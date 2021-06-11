@@ -83,8 +83,8 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         result.wasExecuted("compileRecommendedProductDependencies")
         fileExists("build/libs/${moduleName}.jar")
 
-        def dep = Iterables.getOnlyElement(
-                readRecommendedProductDeps(file("build/libs/${moduleName}.jar")).recommendedProductDependencies())
+        def dep = Iterables.getOnlyElement(readRecommendedProductDeps(file("build/libs/${moduleName}.jar"))
+                .recommendedProductDependencies())
         dep.productGroup == "group"
         dep.productName == "name"
         dep.minimumVersion == "1.0.0"

@@ -22,8 +22,7 @@ import nebula.test.ProjectSpec
 class RecommendedProductDependenciesExtensionTest extends ProjectSpec {
 
     def 'does not allow you to add an optional dependency'() {
-        RecommendedProductDependenciesExtension ext =
-                new RecommendedProductDependenciesExtension(getProject());
+        RecommendedProductDependenciesExtension ext = new RecommendedProductDependenciesExtension(getProject());
 
         when:
         ext.productDependency({ ->
