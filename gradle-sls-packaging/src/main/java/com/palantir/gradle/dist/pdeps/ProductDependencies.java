@@ -22,7 +22,7 @@ import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
 import com.palantir.gradle.dist.artifacts.ExtractSingleFileOrManifest;
-import com.palantir.gradle.dist.artifacts.PreferProjectCompatabilityRule;
+import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -34,13 +34,14 @@ import org.gradle.api.tasks.TaskProvider;
 public final class ProductDependencies {
 
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
-            Project project, BaseDistributionExtension ext) {
+            Project project, Configuration configuration, BaseDistributionExtension ext) {
         Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
-        Configuration pdepsConfig = DependencyDiscovery.copyClasspath(project, "productDependencies");
+        Configuration pdepsConfig =
+                DependencyDiscovery.copyConfiguration(project, configuration.getName(), "productDependencies");
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
-        PreferProjectCompatabilityRule.configureRule(project);
+        PreferProjectCompatibilityRule.configureRule(project);
 
         DependencyDiscovery.configureJarTransform(
                 project, ExtractSingleFileOrManifest.class, DependencyDiscovery.PRODUCT_DEPENDENCIES, params -> {

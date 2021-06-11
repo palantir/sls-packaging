@@ -19,10 +19,11 @@ package com.palantir.gradle.dist.artifacts;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
@@ -31,12 +32,9 @@ import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
-import org.gradle.util.GFileUtils;
 
 @CacheableTransform
 public abstract class ExtractSingleFileOrManifest implements TransformAction<FileAndManifestExtractParameter> {
-    private static final String MANIFEST = "META-INF/MANIFEST.MF";
-
     @PathSensitive(PathSensitivity.NAME_ONLY)
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInputArtifact();
@@ -47,10 +45,10 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
         String pathToExtract = getParameters().getPathToExtract().get();
         String manifestKey = getParameters().getKeyToExtract().get();
 
-        try (ZipFile zipFile = new ZipFile(jarFile)) {
-            ZipEntry fileEntry = zipFile.getEntry(pathToExtract);
+        try (JarFile jar = new JarFile(jarFile)) {
+            ZipEntry fileEntry = jar.getEntry(pathToExtract);
             if (fileEntry != null) {
-                try (InputStream is = zipFile.getInputStream(fileEntry)) {
+                try (InputStream is = jar.getInputStream(fileEntry)) {
                     String newFileName = com.google.common.io.Files.getNameWithoutExtension(jarFile.getName()) + "-"
                             + pathToExtract.replaceAll("/", "-");
                     File outputFile = outputs.file(newFileName);
@@ -59,11 +57,12 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
                 return;
             }
 
-            ZipEntry manifestEntry = zipFile.getEntry(MANIFEST);
-            if (manifestEntry != null) {
-                Manifest manifest = new Manifest(zipFile.getInputStream(manifestEntry));
+            Manifest manifest = jar.getManifest();
+            if (manifest.getMainAttributes().containsKey(manifestKey)) {
                 File outputFile = outputs.file("manifest.json");
-                GFileUtils.writeFile(manifest.getMainAttributes().getValue(manifestKey), outputFile);
+                Files.write(
+                        outputFile.toPath(),
+                        manifest.getMainAttributes().getValue(manifestKey).getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);

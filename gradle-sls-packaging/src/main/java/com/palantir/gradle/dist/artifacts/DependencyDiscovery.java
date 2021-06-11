@@ -37,20 +37,20 @@ public final class DependencyDiscovery {
         return conf.getIncoming().artifactView(v -> {
             v.getAttributes().attribute(ARTIFACT_FORMAT, targetArtifact);
             Category projectCategory =
-                    project.getObjects().named(Category.class, PreferProjectCompatabilityRule.PROJECT);
+                    project.getObjects().named(Category.class, PreferProjectCompatibilityRule.PROJECT);
             v.getAttributes().attribute(Category.CATEGORY_ATTRIBUTE, projectCategory);
         });
     }
 
-    public static Configuration copyClasspath(Project project, String name) {
+    public static Configuration copyConfiguration(Project project, String configurationName, String name) {
         Configuration conf = project.getConfigurations()
-                .create(GUtil.toLowerCamelCase("runtimeClasspathFor " + name), c -> {
+                .create(GUtil.toLowerCamelCase(configurationName + " for " + name), c -> {
                     c.setCanBeConsumed(true);
                     c.setCanBeResolved(true);
                     c.setVisible(false);
                 });
         Map<String, String> projectDependency =
-                ImmutableMap.of("path", project.getPath(), "configuration", "runtimeElements");
+                ImmutableMap.of("path", project.getPath(), "configuration", configurationName);
         project.getDependencies().add(conf.getName(), project.getDependencies().project(projectDependency));
         return conf;
     }
@@ -68,7 +68,7 @@ public final class DependencyDiscovery {
             details.getTo()
                     .attribute(
                             Category.CATEGORY_ATTRIBUTE,
-                            project.getObjects().named(Category.class, PreferProjectCompatabilityRule.EXTERNAL));
+                            project.getObjects().named(Category.class, PreferProjectCompatibilityRule.EXTERNAL));
         });
     }
 
@@ -86,7 +86,7 @@ public final class DependencyDiscovery {
             details.getTo()
                     .attribute(
                             Category.CATEGORY_ATTRIBUTE,
-                            project.getObjects().named(Category.class, PreferProjectCompatabilityRule.PROJECT));
+                            project.getObjects().named(Category.class, PreferProjectCompatibilityRule.PROJECT));
         });
     }
 

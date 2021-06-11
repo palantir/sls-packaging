@@ -23,7 +23,17 @@ import org.gradle.api.attributes.AttributeMatchingStrategy;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 
-public final class PreferProjectCompatabilityRule implements AttributeCompatibilityRule<Category> {
+/**
+ * PreferProjectCompatibilityRule works alongside artifactTransformers in {@link DependencyDiscovery} to ensure that
+ * we apply the right transformation to project dependencies to avoid compilation.
+ *
+ * Since the consuming {@link org.gradle.api.artifacts.ArtifactView} specifies that it requires
+ * {@link Category#CATEGORY_ATTRIBUTE} of {@link PreferProjectCompatibilityRule#PROJECT} Gradle will select outgoing
+ * variants that have the attribute applied and ignore variants with other values. This rule will make it so that
+ * we will fall back to accepting a variant with {@link Category#CATEGORY_ATTRIBUTE} of
+ * {@link PreferProjectCompatibilityRule#EXTERNAL} if there is no other variants.
+ */
+public final class PreferProjectCompatibilityRule implements AttributeCompatibilityRule<Category> {
 
     public static final String PROJECT = "project";
     public static final String EXTERNAL = "external";
@@ -34,7 +44,7 @@ public final class PreferProjectCompatabilityRule implements AttributeCompatibil
         categorySchema
                 .getCompatibilityRules()
                 .add(
-                        PreferProjectCompatabilityRule.class,
+                        PreferProjectCompatibilityRule.class,
                         actionConfiguration -> actionConfiguration.params(
                                 project.getObjects().named(Category.class, PROJECT),
                                 project.getObjects().named(Category.class, EXTERNAL)));
@@ -44,7 +54,7 @@ public final class PreferProjectCompatabilityRule implements AttributeCompatibil
     private final Category external;
 
     @Inject
-    PreferProjectCompatabilityRule(Category project, Category external) {
+    PreferProjectCompatibilityRule(Category project, Category external) {
         this.project = project;
         this.external = external;
     }
