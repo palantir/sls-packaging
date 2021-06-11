@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.pdeps;
 
 import com.palantir.gradle.dist.BaseDistributionExtension;
+import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
@@ -59,6 +60,10 @@ public final class ProductDependencies {
             task.getServiceName().set(ext.getDistributionServiceName());
             task.getServiceGroup().set(ext.getDistributionServiceGroup());
 
+            task.getInRepoProductIds()
+                    .set(project.provider(
+                            () -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(project.getRootProject())
+                                    .keySet()));
             task.getProductDependencies().set(ext.getAllProductDependencies());
             task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
             task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());

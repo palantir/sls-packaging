@@ -61,6 +61,9 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     abstract ListProperty<ProductDependency> getProductDependencies();
 
     @Input
+    abstract SetProperty<ProductId> getInRepoProductIds();
+
+    @Input
     abstract SetProperty<ProductId> getOptionalProductIds();
 
     @Input
@@ -79,7 +82,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                 new HashSet<>(getOptionalProductIds().get());
 
         getProductDependencies().get().forEach(declaredDep -> {
-            ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
+            ProductId productId = ProductId.of(declaredDep);
             Preconditions.checkArgument(
                     !getServiceGroup().get().equals(productId.getProductGroup())
                             || !getServiceName().get().equals(productId.getProductName()),
@@ -153,12 +156,16 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
 
     private ProductDependency mergeDependencies(ProductId productId, ProductDependency dep1, ProductDependency dep2) {
         ProductDependency mergedDep = ProductDependencyMerger.merge(dep1, dep2);
-        // if (getInRepoProductIds().get().contains(productId)
-        //         && (dep1.getMinimumVersion().equals(getProjectVersion())
-        //                 || dep2.getMinimumVersion().equals(getProjectVersion()))) {
-        //     mergedDep.setMinimumVersion(getProjectVersion());
-        // }
+        if (getInRepoProductIds().get().contains(productId)
+                && (dep1.getMinimumVersion().equals(getProjectVersion())
+                        || dep2.getMinimumVersion().equals(getProjectVersion()))) {
+            mergedDep.setMinimumVersion(getProjectVersion());
+        }
         return mergedDep;
+    }
+
+    private String getProjectVersion() {
+        return getProject().getVersion().toString();
     }
 
     private static RecommendedProductDependencies safeDeserialize(File file) {
