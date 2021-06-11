@@ -73,7 +73,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     abstract ConfigurableFileCollection getProductDependenciesFiles();
 
     @OutputFile
-    abstract RegularFileProperty getManifestFile();
+    public abstract RegularFileProperty getManifestFile();
 
     @TaskAction
     public final void resolve() throws IOException {

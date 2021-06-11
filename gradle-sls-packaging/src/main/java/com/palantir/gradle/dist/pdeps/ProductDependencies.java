@@ -34,10 +34,10 @@ import org.gradle.api.tasks.TaskProvider;
 public final class ProductDependencies {
 
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
-            Project project, String sourceConfiguration, BaseDistributionExtension ext) {
+            Project project, BaseDistributionExtension ext) {
         Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
-        Configuration pdepsConfig =
-                DependencyDiscovery.copyConfiguration(project, sourceConfiguration, "productDependencies");
+        Configuration pdepsConfig = DependencyDiscovery.copyConfiguration(
+                project, ext.getProductDependenciesConfig().getName(), "productDependencies");
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
