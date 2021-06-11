@@ -32,6 +32,35 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         apply plugin: 'java'
         apply plugin: 'com.palantir.recommended-product-dependencies'
         """.stripIndent()
+
+    }
+
+    def "Manifest includes recommended product dependencies"() {
+        buildFile << """
+        recommendedProductDependencies {
+            productDependency {
+                productGroup = 'group'
+                productName = 'name'
+                minimumVersion = '1.0.0'
+                maximumVersion = '1.x.x'
+                recommendedVersion = '1.2.3'
+            }
+        }
+        """.stripIndent()
+
+        when:
+        runTasksSuccessfully(':jar')
+
+        then:
+        fileExists("build/libs/${moduleName}.jar")
+
+        def dep = Iterables.getOnlyElement(
+                readRecommendedProductDeps(file("build/libs/${moduleName}.jar")).recommendedProductDependencies())
+        dep.productGroup == "group"
+        dep.productName == "name"
+        dep.minimumVersion == "1.0.0"
+        dep.maximumVersion == "1.x.x"
+        dep.recommendedVersion == "1.2.3"
     }
 
     def 'Jar includes recommended product dependencies'() {
