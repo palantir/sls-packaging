@@ -62,6 +62,10 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                             task.getRecommendedProductDependencies()
                                     .set(ext.getRecommendedProductDependenciesProvider());
                             task.getOutputFile().set(dir.map(directory -> directory.file(RESOURCE_PATH)));
+                            task.getOutputFile()
+                                    .set(dir.map(directory -> directory.file(
+                                            RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY
+                                                    + "/product-dependencies.json")));
                         });
 
         project.getTasks()
