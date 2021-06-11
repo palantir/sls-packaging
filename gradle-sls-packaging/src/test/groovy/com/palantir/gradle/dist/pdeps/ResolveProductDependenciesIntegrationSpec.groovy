@@ -42,7 +42,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         import ${BaseDistributionExtension.class.getCanonicalName()}
         
         def ext = project.extensions.create("base", BaseDistributionExtension, project)
-        ProductDependencies.registerProductDependencyTasks(project, ext);
+        ProductDependencies.registerProductDependencyTasks(project,"runtimeElements", ext);
         """.stripIndent()
     }
 

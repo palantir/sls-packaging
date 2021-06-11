@@ -43,7 +43,7 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
     public final void transform(TransformOutputs outputs) {
         File jarFile = getInputArtifact().get().getAsFile();
         String pathToExtract = getParameters().getPathToExtract().get();
-        String manifestKey = getParameters().getKeyToExtract().get();
+        String key = getParameters().getKeyToExtract().get();
 
         try (JarFile jar = new JarFile(jarFile)) {
             ZipEntry fileEntry = jar.getEntry(pathToExtract);
@@ -58,11 +58,10 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
             }
 
             Manifest manifest = jar.getManifest();
-            if (manifest.getMainAttributes().containsKey(manifestKey)) {
+            String value = manifest.getMainAttributes().getValue(key);
+            if (value != null) {
                 File outputFile = outputs.file("manifest.json");
-                Files.write(
-                        outputFile.toPath(),
-                        manifest.getMainAttributes().getValue(manifestKey).getBytes(StandardCharsets.UTF_8));
+                Files.write(outputFile.toPath(), value.getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
