@@ -26,8 +26,6 @@ import com.palantir.gradle.dist.artifacts.SelectSingleFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
-import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -57,52 +55,18 @@ public final class ProductDependencies {
         ArtifactView discoveredDependencies =
                 DependencyDiscovery.getFilteredArtifact(project, pdepsConfig, DependencyDiscovery.PRODUCT_DEPENDENCIES);
 
-        TaskProvider<ResolveProductDependenciesTask> resolveProductDependencies = project.getTasks()
-                .register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
-                    task.getServiceName().set(ext.getDistributionServiceName());
-                    task.getServiceGroup().set(ext.getDistributionServiceGroup());
+        return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
+            task.getServiceName().set(ext.getDistributionServiceName());
+            task.getServiceGroup().set(ext.getDistributionServiceGroup());
 
-                    task.getProductDependencies().set(ext.getAllProductDependencies());
-                    task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
-                    task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
+            task.getProductDependencies().set(ext.getAllProductDependencies());
+            task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
+            task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
 
-                    task.getProductDependenciesFiles()
-                            .from(discoveredDependencies.getArtifacts().getArtifactFiles());
+            task.getProductDependenciesFiles()
+                    .from(discoveredDependencies.getArtifacts().getArtifactFiles());
 
-                    task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
-                });
-
-        return resolveProductDependencies;
-    }
-
-    private static void configureProjectDependencyTransform(Project project) {
-        project.getDependencies().registerTransform(SelectSingleFile.class, details -> {
-            details.getParameters().getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
-
-            details.getFrom()
-                    .attribute(DependencyDiscovery.ARTIFACT_FORMAT, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
-            details.getTo().attribute(DependencyDiscovery.ARTIFACT_FORMAT, DependencyDiscovery.PRODUCT_DEPENDENCIES);
-
-            details.getFrom()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, LibraryElements.RESOURCES));
-            details.getTo()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects()
-                                    .named(LibraryElements.class, DependencyDiscovery.PRODUCT_DEPENDENCIES));
-        });
-    }
-
-    private static ArtifactView getAttributeArtifacts(Project project, Configuration configuration) {
-        return configuration.getIncoming().artifactView(v -> {
-            v.getAttributes().attribute(DependencyDiscovery.ARTIFACT_FORMAT, DependencyDiscovery.PRODUCT_DEPENDENCIES);
-            v.getAttributes()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects()
-                                    .named(LibraryElements.class, DependencyDiscovery.PRODUCT_DEPENDENCIES));
+            task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
     }
 
