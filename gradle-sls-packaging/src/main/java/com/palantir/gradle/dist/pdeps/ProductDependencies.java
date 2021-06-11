@@ -38,7 +38,7 @@ public final class ProductDependencies {
         Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
         Configuration pdepsConfig = DependencyDiscovery.copyClasspath(project, "productDependencies");
 
-        // Register compatability rule to ensure that ResourceTransform is applied onto project dependencies so we
+        // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
         PreferProjectCompatabilityRule.configureRule(project);
 
