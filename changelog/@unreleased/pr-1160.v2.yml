@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: Disable biased locking by providing `-XX:-UseBiasedLocking` to jvm
+    args for java versions prior to jdk15.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1160
