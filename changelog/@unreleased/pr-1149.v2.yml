@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Bump go-java-launcher version to include automatic container heap sizing.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1149
