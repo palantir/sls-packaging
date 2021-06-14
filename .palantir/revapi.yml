@@ -13,3 +13,8 @@ acceptedBreaks:
       old: "class com.palantir.gradle.dist.ProductDependency"
       new: "class com.palantir.gradle.dist.ProductDependency"
       justification: "Old class is semantically equivalent to optional=false"
+  "5.3.0":
+    com.palantir.sls-packaging:gradle-recommended-product-dependencies:
+    - code: "java.field.removed"
+      old: "field com.palantir.gradle.dist.RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_ATTRIBUTE"
+      justification: "Reverting change"

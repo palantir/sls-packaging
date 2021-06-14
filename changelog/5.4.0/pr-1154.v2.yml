@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: removes change to depend directly on configurations
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1154

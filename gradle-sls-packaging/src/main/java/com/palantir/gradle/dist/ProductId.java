@@ -45,10 +45,6 @@ public final class ProductId implements Serializable {
         this.productName = productName;
     }
 
-    public static ProductId of(ProductDependency pd) {
-        return new ProductId(pd.getProductGroup(), pd.getProductName());
-    }
-
     @Override
     public String toString() {
         return productGroup + ":" + productName;

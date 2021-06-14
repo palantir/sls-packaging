@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.tasks;
 
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.Serializations;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,7 @@ public final class ConfigTarTask {
                     .set(project.provider(() -> project.getVersion().toString()));
             task.getArchiveExtension().set(ext.getProductType().map(productType -> {
                 try {
-                    String productTypeString = Serializations.jsonMapper.writeValueAsString(productType);
+                    String productTypeString = CreateManifestTask.jsonMapper.writeValueAsString(productType);
                     return productTypeString
                             .substring(1, productTypeString.lastIndexOf('.'))
                             .concat(".config.tgz");
