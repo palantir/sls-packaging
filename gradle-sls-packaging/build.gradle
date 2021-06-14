@@ -17,6 +17,8 @@ dependencies {
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-guava"
     compile 'com.palantir.safe-logging:preconditions'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'

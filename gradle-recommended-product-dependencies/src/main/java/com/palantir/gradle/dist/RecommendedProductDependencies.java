@@ -32,9 +32,9 @@ public interface RecommendedProductDependencies {
     @JsonProperty("recommended-product-dependencies")
     Set<ProductDependency> recommendedProductDependencies();
 
+    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
+
     static Builder builder() {
         return new Builder();
     }
-
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
 }
