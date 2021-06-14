@@ -47,7 +47,7 @@ import org.immutables.value.Value;
 
 public abstract class LaunchConfigTask extends DefaultTask {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final List<String> java8gcLoggingOptions = ImmutableList.of(
+    private static final ImmutableList<String> java8gcLoggingOptions = ImmutableList.of(
             "-XX:+PrintGCDateStamps",
             "-XX:+PrintGCDetails",
             "-XX:-TraceClassUnloading",
@@ -56,11 +56,13 @@ public abstract class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
-    private static List<String> java14Options = ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
-    private static List<String> java15Options =
+    private static final ImmutableList<String> java14Options =
+            ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+    private static final ImmutableList<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
+    private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
 
-    private static final List<String> alwaysOnJvmOptions = ImmutableList.of(
+    private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
             "-Djava.io.tmpdir=var/data/tmp",
             "-XX:ErrorFile=var/log/hs_err_pid%p.log",
@@ -182,6 +184,14 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) == 0
                                         ? java15Options
+                                        : ImmutableList.of())
+                        // Biased locking is disabled on java 15+ https://openjdk.java.net/jeps/374
+                        // We disable biased locking on all releases in order to reduce safepoint time,
+                        // revoking biased locks requires a safepoint, and can occur for non-obvious
+                        // reasons, e.g. System.identityHashCode.
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("15")) < 0
+                                        ? disableBiasedLocking
                                         : ImmutableList.of())
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
