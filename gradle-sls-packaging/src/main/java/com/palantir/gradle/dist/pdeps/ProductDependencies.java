@@ -26,7 +26,6 @@ import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -36,8 +35,6 @@ public final class ProductDependencies {
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
         Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
-        Configuration pdepsConfig = DependencyDiscovery.copyConfiguration(
-                project, ext.getProductDependenciesConfig().getName(), "productDependencies");
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
@@ -54,8 +51,8 @@ public final class ProductDependencies {
                     params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                 });
 
-        ArtifactView discoveredDependencies =
-                DependencyDiscovery.getFilteredArtifact(project, pdepsConfig, DependencyDiscovery.PRODUCT_DEPENDENCIES);
+        ArtifactView discoveredDependencies = DependencyDiscovery.getFilteredArtifact(
+                project, ext.getProductDependenciesConfig(), DependencyDiscovery.PRODUCT_DEPENDENCIES);
 
         return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
