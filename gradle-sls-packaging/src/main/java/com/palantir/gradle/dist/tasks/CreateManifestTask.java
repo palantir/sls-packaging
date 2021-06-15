@@ -91,7 +91,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @Input
     abstract MapProperty<String, Object> getManifestExtensions();
 
-    @Input
+    @InputFile
     abstract RegularFileProperty getProductDependenciesFile();
 
     @OutputFile
