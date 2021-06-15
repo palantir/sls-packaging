@@ -42,12 +42,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         import ${BaseDistributionExtension.class.getCanonicalName()}
         
         def ext = project.extensions.create("base", BaseDistributionExtension, project)
-<<<<<<< HEAD
         ext.setProductDependenciesConfig(configurations.runtimeClasspath)
         ProductDependencies.registerProductDependencyTasks(project, ext);
-=======
-        ProductDependencies.registerProductDependencyTasks(project,"runtimeElements", ext);
->>>>>>> origin/fo/lazy-pdeps
         """.stripIndent()
     }
 
@@ -84,7 +80,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasks(':resolveProductDependencies')
+        def result = runTasksSuccessfully(':resolveProductDependencies')
 
         then:
         !result.wasExecuted(':child:jar')
@@ -115,7 +111,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasks(':resolveProductDependencies')
+        def result = runTasksSuccessfully(':resolveProductDependencies')
 
         then:
         def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
