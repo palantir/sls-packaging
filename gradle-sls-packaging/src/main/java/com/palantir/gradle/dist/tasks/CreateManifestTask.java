@@ -37,6 +37,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -519,6 +520,10 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
+        // This is simply to get the task wired up with the plugin.  It's output is not used by the createManifest task
+        // yet.
+        ProductDependencies.registerProductDependencyTasks(project, "runtimeElements", ext);
+
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
                     task.getServiceName().set(ext.getDistributionServiceName());
