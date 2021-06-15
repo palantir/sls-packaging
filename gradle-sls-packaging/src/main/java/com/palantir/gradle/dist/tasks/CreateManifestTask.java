@@ -93,7 +93,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @Input
     abstract RegularFileProperty getProductDependenciesFile();
 
-    @Input
+    @InputFile
     abstract RegularFileProperty getManifestFile();
 
     @Input
