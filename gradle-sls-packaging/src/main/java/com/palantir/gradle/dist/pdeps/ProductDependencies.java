@@ -26,33 +26,38 @@ import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class ProductDependencies {
 
+    private static final String PRODUCT_DEPENDENCIES = "product-dependencies";
+
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
         Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
+        Configuration pdepsConfig = DependencyDiscovery.copyConfiguration(
+                project, ext.getProductDependenciesConfig().getName(), "productDependencies");
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
         PreferProjectCompatibilityRule.configureRule(project);
 
         DependencyDiscovery.configureJarTransform(
-                project, ExtractSingleFileOrManifest.class, DependencyDiscovery.PRODUCT_DEPENDENCIES, params -> {
+                project, ExtractSingleFileOrManifest.class, PRODUCT_DEPENDENCIES, params -> {
                     params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                     params.getKeyToExtract().set(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY);
                 });
 
         DependencyDiscovery.configureResourceTransform(
-                project, SelectSingleFile.class, DependencyDiscovery.PRODUCT_DEPENDENCIES, params -> {
+                project, SelectSingleFile.class, PRODUCT_DEPENDENCIES, params -> {
                     params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                 });
 
-        ArtifactView discoveredDependencies = DependencyDiscovery.getFilteredArtifact(
-                project, ext.getProductDependenciesConfig(), DependencyDiscovery.PRODUCT_DEPENDENCIES);
+        ArtifactView discoveredDependencies =
+                DependencyDiscovery.getFilteredArtifact(project, pdepsConfig, PRODUCT_DEPENDENCIES);
         return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
             task.getServiceGroup().set(ext.getDistributionServiceGroup());
