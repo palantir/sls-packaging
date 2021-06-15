@@ -53,7 +53,6 @@ public final class ProductDependencies {
 
         ArtifactView discoveredDependencies = DependencyDiscovery.getFilteredArtifact(
                 project, ext.getProductDependenciesConfig(), DependencyDiscovery.PRODUCT_DEPENDENCIES);
-
         return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
             task.getServiceGroup().set(ext.getDistributionServiceGroup());
