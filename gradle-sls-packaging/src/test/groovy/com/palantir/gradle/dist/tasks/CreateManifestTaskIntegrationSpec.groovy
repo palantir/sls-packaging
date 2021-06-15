@@ -56,6 +56,42 @@ class CreateManifestTaskIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
     }
 
+    def 'Does not warn if declared product dependency is optional and matches merged dependency'() {
+        buildFile << """
+            apply plugin: 'com.palantir.recommended-product-dependencies'
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = getVersion('group:name')
+                    maximumVersion = '1.x.x'
+                }
+            }
+
+            createManifest {
+                productDependencies = [
+                    new com.palantir.gradle.dist.ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0", true),
+                ]
+            }
+
+            dependencies {
+                runtime 'a:a:1.0'
+            }
+        """.stripIndent()
+        file('product-dependencies.lock').text = """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name (1.1.0, 1.x.x) optional
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasks(':createManifest', '--write-locks')
+
+        then:
+        buildResult.task(':createManifest').outcome == TaskOutcome.SUCCESS
+        !buildResult.output.contains("Please remove your declared product dependency on 'group:name' because it is already provided by a jar dependency")
+    }
+
     def 'fails if lockfile is not up to date'() {
         buildFile << """
             dependencies {
