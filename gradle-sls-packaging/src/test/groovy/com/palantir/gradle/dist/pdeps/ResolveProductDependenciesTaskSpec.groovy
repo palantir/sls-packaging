@@ -21,7 +21,7 @@ import com.palantir.gradle.dist.ProductDependency
 import com.palantir.gradle.dist.ProductId
 import nebula.test.ProjectSpec
 
-class ResolveProductDependenciesProjectSpec extends ProjectSpec {
+class ResolveProductDependenciesTaskSpec extends ProjectSpec {
     private static final ProductDependency PDEP = new ProductDependency(
             "group", "name", "1.0.0", "1.x.x", "1.0.0");
     private static final ProductDependency PDEP_2 = new ProductDependency(

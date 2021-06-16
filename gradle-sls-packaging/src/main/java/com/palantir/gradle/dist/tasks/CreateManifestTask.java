@@ -16,12 +16,6 @@
 
 package com.palantir.gradle.dist.tasks;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -67,13 +61,6 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.util.GFileUtils;
 
 public abstract class CreateManifestTask extends DefaultTask {
-    public static final ObjectMapper jsonMapper = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .registerModule(new GuavaModule())
-            .registerModule(new Jdk8Module());
-
     @Input
     abstract SetProperty<ProductId> getInRepoProductIds();
 
@@ -132,7 +119,7 @@ public abstract class CreateManifestTask extends DefaultTask {
             ensureLockfileIsUpToDate(productDependencies);
         }
 
-        jsonMapper.writeValue(
+        ObjectMappers.jsonMapper.writeValue(
                 getManifestFile().getAsFile().get(),
                 SlsManifest.builder()
                         .manifestVersion("1.0")
