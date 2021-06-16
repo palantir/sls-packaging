@@ -30,10 +30,10 @@ public abstract class CompileRecommendedProductDependencies extends DefaultTask 
     static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Input
-    abstract SetProperty<ProductDependency> getRecommendedProductDependencies();
+    public abstract SetProperty<ProductDependency> getRecommendedProductDependencies();
 
     @OutputFile
-    abstract RegularFileProperty getOutputFile();
+    public abstract RegularFileProperty getOutputFile();
 
     @TaskAction
     final void action() throws IOException {
