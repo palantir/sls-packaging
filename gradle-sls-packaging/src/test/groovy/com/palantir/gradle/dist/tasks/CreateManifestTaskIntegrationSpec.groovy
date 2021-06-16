@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.ObjectMappers
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesIntegrationSpec
 import nebula.test.IntegrationSpec
 
@@ -165,7 +166,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         def result = runTasksSuccessfully('bar-server:createManifest')
 
         then:
-        def manifest = CreateManifestTask.jsonMapper.readValue(file('build/deployment/manifest.yml', barDir).text, Map)
+        def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml', barDir).text, Map)
         manifest.get("extensions").get("product-dependencies") == [
                 [
                         "product-group"      : "com.palantir.group",
