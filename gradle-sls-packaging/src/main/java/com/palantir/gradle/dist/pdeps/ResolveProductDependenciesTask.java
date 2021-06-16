@@ -69,7 +69,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     abstract SetProperty<ProductId> getIgnoredProductIds();
 
     @InputFiles
-    abstract ConfigurableFileCollection getProductDependenciesFiles();
+    public abstract ConfigurableFileCollection getProductDependenciesFiles();
 
     @OutputFile
     public abstract RegularFileProperty getManifestFile();
