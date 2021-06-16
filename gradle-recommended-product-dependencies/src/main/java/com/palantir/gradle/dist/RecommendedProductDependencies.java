@@ -19,6 +19,7 @@ package com.palantir.gradle.dist;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.List;
 import java.util.Set;
 import org.immutables.value.Value;
 
@@ -36,5 +37,11 @@ public interface RecommendedProductDependencies {
 
     static Builder builder() {
         return new Builder();
+    }
+
+    static RecommendedProductDependencies of(List<ProductDependency> productDependencies) {
+        return builder()
+                .addAllRecommendedProductDependencies(productDependencies)
+                .build();
     }
 }

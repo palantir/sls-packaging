@@ -53,8 +53,6 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -68,7 +66,6 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.util.GFileUtils;
 
 public abstract class CreateManifestTask extends DefaultTask {
-    private static final Logger log = Logging.getLogger(CreateManifestTask.class);
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)

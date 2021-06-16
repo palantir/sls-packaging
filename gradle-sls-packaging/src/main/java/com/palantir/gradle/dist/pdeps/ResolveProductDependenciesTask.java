@@ -23,9 +23,7 @@ import com.google.common.collect.Multimap;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
-import com.palantir.gradle.dist.RecommendedProductDependencies;
-import com.palantir.gradle.dist.tasks.CreateManifestTask;
-import java.io.File;
+import com.palantir.gradle.dist.Serializations;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -138,18 +136,19 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                                 "Unable to mark missing product dependency '%s' as optional", productId))))
                 .forEach(dep -> dep.setOptional(true));
 
-        CreateManifestTask.jsonMapper.writeValue(
-                getManifestFile().getAsFile().get(),
+        Serializations.writeProductDependencyManifest(
                 ProductDependencyManifest.of(allProductDependencies.values().stream()
                         .sorted(Comparator.comparing(ProductDependency::getProductGroup)
                                 .thenComparing(ProductDependency::getProductName))
-                        .collect(ImmutableList.toImmutableList())));
+                        .collect(ImmutableList.toImmutableList())),
+                getManifestFile().getAsFile().get());
     }
 
     private Multimap<ProductId, ProductDependency> discoverProductDependencies() {
         Stream<ProductDependency> discoveredDependencies = getProductDependenciesFiles().getFiles().stream()
-                .map(ResolveProductDependenciesTask::safeDeserialize)
-                .flatMap(pdeps -> pdeps.recommendedProductDependencies().stream());
+                .map(Serializations::readRecommendedProductDependencies)
+                .flatMap(pdeps -> pdeps.recommendedProductDependencies().stream())
+                .filter(this::isNotSelfProductDependency);
         return discoveredDependencies.collect(
                 ImmutableSetMultimap.toImmutableSetMultimap(ProductId::of, Function.identity()));
     }
@@ -168,11 +167,8 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
         return getProject().getVersion().toString();
     }
 
-    private static RecommendedProductDependencies safeDeserialize(File file) {
-        try {
-            return CreateManifestTask.jsonMapper.readValue(file, RecommendedProductDependencies.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private boolean isNotSelfProductDependency(ProductDependency dependency) {
+        return !getServiceGroup().get().equals(dependency.getProductGroup())
+                || !getServiceName().get().equals(dependency.getProductName());
     }
 }
