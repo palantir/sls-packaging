@@ -16,26 +16,16 @@
 
 package com.palantir.gradle.dist.tasks
 
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesIntegrationSpec
 import nebula.test.IntegrationSpec
-import nebula.test.dependencies.DependencyGraph
-import nebula.test.dependencies.GradleDependencyGenerator
 
 class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
-    File mavenRepo
-
     def setup() {
-        generateDependencies()
         buildFile << """
             apply plugin: 'com.palantir.sls-java-service-distribution'
 
             import com.palantir.gradle.dist.ProductType
-
-            repositories {
-                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
-            }
 
             project.version = '1.0.0'
             
@@ -48,14 +38,14 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
     def 'fails if lockfile is not up to date'() {
         buildFile << """
-            dependencies {
-                implementation 'b:b:1.0'
-            }
+        distribution {
+            ${ResolveProductDependenciesIntegrationSpec.PDEP}
+        }
         """.stripIndent()
 
         file('product-dependencies.lock').text = """\
-            # Run ./gradlew --write-locks to regenerate this file
-            group:name2 (2.0.0, 2.x.x)
+        # Run ./gradlew --write-locks to regenerate this file
+        group:name2 (2.0.0, 2.x.x)
         """.stripIndent()
 
         when:
@@ -80,14 +70,14 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
     def 'fails if lock file disappears'() {
         buildFile << """
-            dependencies {
-                implementation 'b:b:1.0'
-            }
+        distribution {
+            ${ResolveProductDependenciesIntegrationSpec.PDEP}
+        }
         """.stripIndent()
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
-        group:name2 (2.0.0, 2.x.x)
+        group1:name1 (1.0.0, 1.3.x)
         """.stripIndent()
 
         runTasksSuccessfully('createManifest') // ensure task is run once
@@ -102,14 +92,14 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
     def 'fails if lockfile has changed contents'() {
         buildFile << """
-            dependencies {
-                implementation 'b:b:1.0'
-            }
+        distribution {
+            ${ResolveProductDependenciesIntegrationSpec.PDEP}
+        }
         """.stripIndent()
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew --write-locks to regenerate this file
-        group:name2 (2.0.0, 2.x.x)
+        group1:name1 (1.0.0, 1.3.x)
         """.stripIndent()
 
         runTasksSuccessfully('createManifest') // ensure task is run once
@@ -194,36 +184,5 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         result.wasExecuted(":createManifest")
-    }
-
-    def generateDependencies() {
-        DependencyGraph dependencyGraph = new DependencyGraph(
-                "a:a:1.0 -> b:b:1.0|c:c:1.0", "b:b:1.0", "c:c:1.0", "d:d:1.0", "e:e:1.0",
-                "pdep:pdep:1.0")
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(
-                dependencyGraph, new File(projectDir, "build/testrepogen").toString())
-        mavenRepo = generator.generateTestMavenRepo()
-
-
-        // depends on group:name:[1.0.0, 1.x.x]:1.2.0
-        Files.copy(
-                CreateManifestTaskIntegrationSpec.class.getResourceAsStream("/a-1.0.jar"),
-                new File(mavenRepo, "a/a/1.0/a-1.0.jar").toPath(),
-                StandardCopyOption.REPLACE_EXISTING)
-        // depends on group:name2:[2.0.0, 2.x.x]:2.2.0
-        Files.copy(
-                CreateManifestTaskIntegrationSpec.class.getResourceAsStream("/b-1.0.jar"),
-                new File(mavenRepo, "b/b/1.0/b-1.0.jar").toPath(),
-                StandardCopyOption.REPLACE_EXISTING)
-        // Make d.jar a duplicate of b.jar
-        Files.copy(
-                CreateManifestTaskIntegrationSpec.class.getResourceAsStream("/b-1.0.jar"),
-                new File(mavenRepo, "d/d/1.0/d-1.0.jar").toPath(),
-                StandardCopyOption.REPLACE_EXISTING)
-        // e-1.0.jar declares group:name2:[2.1.0, 2.6.x]:2.2.0
-        Files.copy(
-                CreateManifestTaskIntegrationSpec.class.getResourceAsStream("/b-duplicate-different-versions-1.0.jar"),
-                new File(mavenRepo, "e/e/1.0/e-1.0.jar").toPath(),
-                StandardCopyOption.REPLACE_EXISTING)
     }
 }

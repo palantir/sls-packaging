@@ -18,12 +18,14 @@ package com.palantir.gradle.dist.pdeps
 
 import com.palantir.gradle.dist.BaseDistributionExtension
 import com.palantir.gradle.dist.ObjectMappers
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 
 class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
-    private static String PDEP = """
+    public static String PDEP = """
     productDependency {
         productGroup = "group1"
         productName = "name1"
@@ -57,7 +59,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def buildResult = runTasks(':resolveProductDependencies')
 
         then:
-        def manifest = ObjectMappers.readRecommendedProductDependencies(
+        def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
@@ -83,7 +85,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         then:
         !result.wasExecuted(':child:jar')
-        def manifest = ObjectMappers.readRecommendedProductDependencies(
+        def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
@@ -114,7 +116,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def result = runTasksSuccessfully(':resolveProductDependencies')
 
         then:
-        def manifest = ObjectMappers.readRecommendedProductDependencies(
+        def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
