@@ -17,7 +17,7 @@
 package com.palantir.gradle.dist.pdeps
 
 import com.palantir.gradle.dist.BaseDistributionExtension
-import com.palantir.gradle.dist.tasks.CreateManifestTask
+import com.palantir.gradle.dist.ObjectMappers
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.IntegrationSpec
@@ -25,7 +25,7 @@ import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 
 class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
-    private static String PDEP = """
+    public static String PDEP = """
     productDependency {
         productGroup = "group1"
         productName = "name1"
@@ -42,7 +42,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         import ${BaseDistributionExtension.class.getCanonicalName()}
         
         def ext = project.extensions.create("base", BaseDistributionExtension, project)
-        ProductDependencies.registerProductDependencyTasks(project,"runtimeElements", ext);
+        ext.setProductDependenciesConfig(configurations.runtimeClasspath)
+        ProductDependencies.registerProductDependencyTasks(project, ext);
         """.stripIndent()
     }
 
@@ -58,7 +59,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def buildResult = runTasks(':resolveProductDependencies')
 
         then:
-        def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
+        def manifest = ObjectMappers.readProductDependencyManifest(
+                file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -79,11 +81,12 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasks(':resolveProductDependencies')
+        def result = runTasksSuccessfully(':resolveProductDependencies')
 
         then:
         !result.wasExecuted(':child:jar')
-        def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
+        def manifest = ObjectMappers.readProductDependencyManifest(
+                file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -110,15 +113,12 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasks(':resolveProductDependencies')
+        def result = runTasksSuccessfully(':resolveProductDependencies')
 
         then:
-        def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
+        def manifest = ObjectMappers.readProductDependencyManifest(
+                file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
-    }
-
-    def loadManifest(File file) {
-        return CreateManifestTask.jsonMapper.readValue(file, ProductDependencyManifest)
     }
 
 }

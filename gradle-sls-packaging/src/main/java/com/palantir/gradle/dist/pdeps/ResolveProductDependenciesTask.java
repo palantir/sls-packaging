@@ -16,25 +16,24 @@
 
 package com.palantir.gradle.dist.pdeps;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
+import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
-import com.palantir.gradle.dist.RecommendedProductDependencies;
-import com.palantir.gradle.dist.tasks.CreateManifestTask;
-import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
@@ -70,18 +69,33 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     abstract SetProperty<ProductId> getIgnoredProductIds();
 
     @InputFiles
-    abstract ConfigurableFileCollection getProductDependenciesFiles();
+    public abstract ConfigurableFileCollection getProductDependenciesFiles();
 
     @OutputFile
-    abstract RegularFileProperty getManifestFile();
+    public abstract RegularFileProperty getManifestFile();
 
     @TaskAction
     public final void resolve() throws IOException {
+        Map<ProductId, ProductDependency> allProductDependencies =
+                computeDependencies(getProductDependencies().get(), discoverProductDependencies());
+
+        ObjectMappers.writeProductDependencyManifest(
+                ProductDependencyManifest.of(allProductDependencies.values().stream()
+                        .sorted(Comparator.comparing(ProductDependency::getProductGroup)
+                                .thenComparing(ProductDependency::getProductName))
+                        .collect(ImmutableList.toImmutableList())),
+                getManifestFile().getAsFile().get());
+    }
+
+    @VisibleForTesting
+    final Map<ProductId, ProductDependency> computeDependencies(
+            List<ProductDependency> declaredDependencies,
+            Multimap<ProductId, ProductDependency> discoveredDependencies) {
         Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
         Set<ProductId> allOptionalDependencies =
                 new HashSet<>(getOptionalProductIds().get());
 
-        getProductDependencies().get().forEach(declaredDep -> {
+        declaredDependencies.forEach(declaredDep -> {
             ProductId productId = ProductId.of(declaredDep);
             Preconditions.checkArgument(
                     !getServiceGroup().get().equals(productId.getProductGroup())
@@ -109,7 +123,10 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
             }
         });
 
-        discoverProductDependencies().forEach((productId, discoveredDependency) -> {
+        discoveredDependencies.forEach((productId, discoveredDependency) -> {
+            if (isSelfDependency(productId)) {
+                return;
+            }
             if (getIgnoredProductIds().get().contains(productId)) {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
@@ -138,20 +155,14 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                                 "Unable to mark missing product dependency '%s' as optional", productId))))
                 .forEach(dep -> dep.setOptional(true));
 
-        CreateManifestTask.jsonMapper.writeValue(
-                getManifestFile().getAsFile().get(),
-                ProductDependencyManifest.of(allProductDependencies.values().stream()
-                        .sorted(Comparator.comparing(ProductDependency::getProductGroup)
-                                .thenComparing(ProductDependency::getProductName))
-                        .collect(ImmutableList.toImmutableList())));
+        return allProductDependencies;
     }
 
     private Multimap<ProductId, ProductDependency> discoverProductDependencies() {
-        Stream<ProductDependency> discoveredDependencies = getProductDependenciesFiles().getFiles().stream()
-                .map(ResolveProductDependenciesTask::safeDeserialize)
-                .flatMap(pdeps -> pdeps.recommendedProductDependencies().stream());
-        return discoveredDependencies.collect(
-                ImmutableSetMultimap.toImmutableSetMultimap(ProductId::of, Function.identity()));
+        return getProductDependenciesFiles().getFiles().stream()
+                .map(ObjectMappers::readRecommendedProductDependencies)
+                .flatMap(pdeps -> pdeps.recommendedProductDependencies().stream())
+                .collect(ImmutableSetMultimap.toImmutableSetMultimap(ProductId::of, Function.identity()));
     }
 
     private ProductDependency mergeDependencies(ProductId productId, ProductDependency dep1, ProductDependency dep2) {
@@ -168,11 +179,8 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
         return getProject().getVersion().toString();
     }
 
-    private static RecommendedProductDependencies safeDeserialize(File file) {
-        try {
-            return CreateManifestTask.jsonMapper.readValue(file, RecommendedProductDependencies.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private boolean isSelfDependency(ProductId productId) {
+        return getServiceGroup().get().equals(productId.getProductGroup())
+                && getServiceName().get().equals(productId.getProductName());
     }
 }

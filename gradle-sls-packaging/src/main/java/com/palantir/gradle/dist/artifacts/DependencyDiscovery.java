@@ -16,8 +16,6 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import java.util.function.Consumer;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -31,7 +29,6 @@ import org.gradle.util.GUtil;
 
 public final class DependencyDiscovery {
     public static final Attribute<String> ARTIFACT_FORMAT = Attribute.of("artifactType", String.class);
-    public static final String PRODUCT_DEPENDENCIES = "product-dependencies";
 
     public static ArtifactView getFilteredArtifact(Project project, Configuration conf, String targetArtifact) {
         return conf.getIncoming().artifactView(v -> {
@@ -43,16 +40,17 @@ public final class DependencyDiscovery {
     }
 
     public static Configuration copyConfiguration(Project project, String configurationName, String name) {
-        Configuration conf = project.getConfigurations()
-                .create(GUtil.toLowerCamelCase(configurationName + " for " + name), c -> {
-                    c.setCanBeConsumed(true);
-                    c.setCanBeResolved(true);
-                    c.setVisible(false);
+        Configuration consumable = project.getConfigurations()
+                .create(GUtil.toLowerCamelCase(configurationName + " for " + name), conf -> {
+                    conf.extendsFrom(project.getConfigurations().getByName(configurationName));
+                    conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
+                    conf.setCanBeConsumed(true);
+                    conf.setCanBeResolved(true);
+                    conf.setVisible(false);
                 });
-        Map<String, String> projectDependency =
-                ImmutableMap.of("path", project.getPath(), "configuration", configurationName);
-        project.getDependencies().add(conf.getName(), project.getDependencies().project(projectDependency));
-        return conf;
+
+        project.getDependencies().add(consumable.getName(), project);
+        return consumable;
     }
 
     public static <T extends TransformAction<P>, P extends TransformParameters> void configureJarTransform(
