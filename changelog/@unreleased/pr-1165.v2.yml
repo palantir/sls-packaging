@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: the conjure-gradle plugin needs to be able to set the inputs
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1165
