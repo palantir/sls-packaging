@@ -17,7 +17,7 @@
 package com.palantir.gradle.dist.service;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.ObjectMappers;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
@@ -54,7 +54,7 @@ public abstract class MergeDiagnosticsJsonTask extends DefaultTask {
 
         File out = getOutputJsonFile().getAsFile().get();
         try {
-            CreateManifestTask.jsonMapper.writeValue(out, aggregated);
+            ObjectMappers.jsonMapper.writeValue(out, aggregated);
         } catch (IOException e) {
             throw new GradleException("Failed to write " + out, e);
         }

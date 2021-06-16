@@ -19,6 +19,7 @@ package com.palantir.gradle.dist;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.List;
 import java.util.Set;
 import org.immutables.value.Value;
 
@@ -32,9 +33,15 @@ public interface RecommendedProductDependencies {
     @JsonProperty("recommended-product-dependencies")
     Set<ProductDependency> recommendedProductDependencies();
 
+    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
+
     static Builder builder() {
         return new Builder();
     }
 
-    final class Builder extends ImmutableRecommendedProductDependencies.Builder {}
+    static RecommendedProductDependencies of(List<ProductDependency> productDependencies) {
+        return builder()
+                .addAllRecommendedProductDependencies(productDependencies)
+                .build();
+    }
 }

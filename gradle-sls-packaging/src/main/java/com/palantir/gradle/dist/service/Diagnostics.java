@@ -18,7 +18,7 @@ package com.palantir.gradle.dist.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.ObjectMappers;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +41,7 @@ public final class Diagnostics {
         try {
             string = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
             List<ObjectNode> value =
-                    CreateManifestTask.jsonMapper.readValue(string, new TypeReference<List<ObjectNode>>() {});
+                    ObjectMappers.jsonMapper.readValue(string, new TypeReference<List<ObjectNode>>() {});
             log.info("Deserialized '{}': '{}'", relativePath, value);
             return value;
         } catch (IOException e) {

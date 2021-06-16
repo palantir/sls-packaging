@@ -28,6 +28,10 @@ public final class ProductId implements Serializable {
     private String productGroup;
     private String productName;
 
+    public static ProductId of(ProductDependency dependency) {
+        return new ProductId(dependency.getProductGroup(), dependency.getProductName());
+    }
+
     public ProductId() {}
 
     public ProductId(String productId) {
