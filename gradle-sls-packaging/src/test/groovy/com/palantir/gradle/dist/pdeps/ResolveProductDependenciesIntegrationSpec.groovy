@@ -17,9 +17,7 @@
 package com.palantir.gradle.dist.pdeps
 
 import com.palantir.gradle.dist.BaseDistributionExtension
-import com.palantir.gradle.dist.tasks.CreateManifestTask
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+import com.palantir.gradle.dist.ObjectMappers
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
@@ -59,7 +57,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def buildResult = runTasks(':resolveProductDependencies')
 
         then:
-        def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
+        def manifest = ObjectMappers.readRecommendedProductDependencies(
+                file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -84,7 +83,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         then:
         !result.wasExecuted(':child:jar')
-        def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
+        def manifest = ObjectMappers.readRecommendedProductDependencies(
+                file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -114,12 +114,9 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def result = runTasksSuccessfully(':resolveProductDependencies')
 
         then:
-        def manifest = loadManifest(file('build/product-dependencies/pdeps-manifest.json'))
+        def manifest = ObjectMappers.readRecommendedProductDependencies(
+                file('build/product-dependencies/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
-    }
-
-    def loadManifest(File file) {
-        return CreateManifestTask.jsonMapper.readValue(file, ProductDependencyManifest)
     }
 
 }

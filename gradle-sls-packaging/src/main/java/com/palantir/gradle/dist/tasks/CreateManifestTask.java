@@ -27,6 +27,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
+import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
@@ -121,8 +122,8 @@ public abstract class CreateManifestTask extends DefaultTask {
                 "Use productDependencies configuration option instead of setting "
                         + "'product-dependencies' key in manifestExtensions");
 
-        ProductDependencyManifest productDependencyManifest =
-                jsonMapper.readValue(getProductDependenciesFile().get().getAsFile(), ProductDependencyManifest.class);
+        ProductDependencyManifest productDependencyManifest = ObjectMappers.readProductDependencyManifest(
+                getProductDependenciesFile().getAsFile().get());
 
         List<ProductDependency> productDependencies = productDependencyManifest.productDependencies();
         if (productDependencies.isEmpty()) {
