@@ -123,7 +123,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
             }
         });
 
-        discoveredDependencies.forEach((productId, discoveredDependency) -> {
+        discoveredDependencies.asMap().forEach((productId, dependencies) -> {
             if (isSelfDependency(productId)) {
                 return;
             }
@@ -132,20 +132,22 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                 return;
             }
 
-            allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
-                ProductDependency mergedDependency =
-                        mergeDependencies(productId, declaredDependency, discoveredDependency);
-                if (mergedDependency.equals(discoveredDependency)) {
-                    log.error(
-                            "Please remove your declared product dependency on '{}' because it is"
-                                    + " already provided by a jar dependency:\n\n"
-                                    + "\tProvided:     {}\n"
-                                    + "\tYou declared: {}",
-                            productId,
-                            discoveredDependency,
-                            declaredDependency);
-                }
-                return mergedDependency;
+            dependencies.stream().reduce(ProductDependencyMerger::merge).ifPresent(discoveredDependency -> {
+                allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
+                    ProductDependency mergedDependency =
+                            mergeDependencies(productId, declaredDependency, discoveredDependency);
+                    if (mergedDependency.equals(discoveredDependency)) {
+                        log.error(
+                                "Please remove your declared product dependency on '{}' because it is"
+                                        + " already provided by a jar dependency:\n\n"
+                                        + "\tProvided:     {}\n"
+                                        + "\tYou declared: {}",
+                                productId,
+                                discoveredDependency,
+                                declaredDependency);
+                    }
+                    return mergedDependency;
+                });
             });
         });
 
