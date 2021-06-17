@@ -121,6 +121,16 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                 log.trace("Product dependency for '{}' declared as optional", productId);
                 allOptionalDependencies.add(productId);
             }
+            if (discoveredDependencies.containsKey(productId)) {
+                log.error(
+                        "Please remove your declared product dependency on '{}' because it is"
+                                + " already provided by a jar dependency:\n\n"
+                                + "\tProvided:     {}\n"
+                                + "\tYou declared: {}",
+                        productId,
+                        discoveredDependencies.get(productId),
+                        declaredDep);
+            }
         });
 
         discoveredDependencies.forEach((productId, discoveredDependency) -> {
@@ -135,16 +145,6 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
             allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
                 ProductDependency mergedDependency =
                         mergeDependencies(productId, declaredDependency, discoveredDependency);
-                if (mergedDependency.equals(discoveredDependency)) {
-                    log.error(
-                            "Please remove your declared product dependency on '{}' because it is"
-                                    + " already provided by a jar dependency:\n\n"
-                                    + "\tProvided:     {}\n"
-                                    + "\tYou declared: {}",
-                            productId,
-                            discoveredDependency,
-                            declaredDependency);
-                }
                 return mergedDependency;
             });
         });
