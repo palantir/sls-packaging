@@ -121,18 +121,11 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                 log.trace("Product dependency for '{}' declared as optional", productId);
                 allOptionalDependencies.add(productId);
             }
-            if (discoveredDependencies.containsKey(productId)) {
-                log.error(
-                        "Please remove your declared product dependency on '{}' because it is"
-                                + " already provided by a jar dependency:\n\n"
-                                + "\tProvided:     {}\n"
-                                + "\tYou declared: {}",
-                        productId,
-                        discoveredDependencies.get(productId),
-                        declaredDep);
-            }
         });
 
+        // Perform initial merge of the discovered dependencies so that if there are overlaps with declared
+        // dependencies we only log a single time.
+        Map<ProductId, ProductDependency> mergedDiscoveredDependencies = new HashMap<>();
         discoveredDependencies.forEach((productId, discoveredDependency) -> {
             if (isSelfDependency(productId)) {
                 return;
@@ -141,11 +134,24 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
             }
+            mergedDiscoveredDependencies.merge(
+                    productId,
+                    discoveredDependency,
+                    (declaredDependency, _newDependency) ->
+                            mergeDependencies(productId, declaredDependency, discoveredDependency));
+        });
 
+        mergedDiscoveredDependencies.forEach((productId, discoveredDependency) -> {
             allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
-                ProductDependency mergedDependency =
-                        mergeDependencies(productId, declaredDependency, discoveredDependency);
-                return mergedDependency;
+                log.error(
+                        "Please remove your declared product dependency on '{}' because it is"
+                                + " already provided by a jar dependency:\n\n"
+                                + "\tProvided:     {}\n"
+                                + "\tYou declared: {}",
+                        productId,
+                        discoveredDependency,
+                        declaredDependency);
+                return mergeDependencies(productId, declaredDependency, discoveredDependency);
             });
         });
 
