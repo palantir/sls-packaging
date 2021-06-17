@@ -56,7 +56,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def buildResult = runTasks(':resolveProductDependencies')
+        runTasks(':resolveProductDependencies')
 
         then:
         def manifest = ObjectMappers.readProductDependencyManifest(
@@ -113,7 +113,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully(':resolveProductDependencies')
+        runTasksSuccessfully(':resolveProductDependencies')
 
         then:
         def manifest = ObjectMappers.readProductDependencyManifest(
@@ -121,4 +121,34 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         !manifest.productDependencies().isEmpty()
     }
 
+    def 'handles jars without manifest'() {
+        given:
+        GradleDependencyGenerator generator = new GradleDependencyGenerator(
+                new DependencyGraph(
+                        "missingmanifest:missingmanifest:1.0"), new File(projectDir, "build/testrepogen").toString())
+        def mavenRepo = generator.generateTestMavenRepo()
+
+        Files.copy(
+                ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream("/missing-manifest.jar"),
+                new File(mavenRepo, "missingmanifest/missingmanifest/1.0/missingmanifest-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+
+        buildFile << """
+        repositories {
+            maven {url "file:///${mavenRepo.getAbsolutePath()}"}
+        }
+        
+        dependencies {
+            implementation 'missingmanifest:missingmanifest:1.0'
+        }
+        """.stripIndent()
+
+        when:
+        runTasksSuccessfully(':resolveProductDependencies')
+
+        then:
+        def manifest = ObjectMappers.readProductDependencyManifest(
+                file('build/product-dependencies/pdeps-manifest.json'))
+        manifest.productDependencies().isEmpty()
+    }
 }
