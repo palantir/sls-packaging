@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
@@ -57,11 +57,11 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
                 return;
             }
 
-            Manifest manifest = jar.getManifest();
-            String value = manifest.getMainAttributes().getValue(key);
-            if (value != null) {
+            Optional<String> value = Optional.ofNullable(jar.getManifest())
+                    .map(manifest -> manifest.getMainAttributes().getValue(key));
+            if (value.isPresent()) {
                 File outputFile = outputs.file("manifest.json");
-                Files.write(outputFile.toPath(), value.getBytes(StandardCharsets.UTF_8));
+                Files.write(outputFile.toPath(), value.get().getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
