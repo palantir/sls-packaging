@@ -123,10 +123,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
             }
         });
 
-        // Perform initial merge of the discovered dependencies so that if there are overlaps with declared
-        // dependencies we only log a single time.
-        Map<ProductId, ProductDependency> mergedDiscoveredDependencies = new HashMap<>();
-        discoveredDependencies.forEach((productId, discoveredDependency) -> {
+        discoveredDependencies.asMap().forEach((productId, dependencies) -> {
             if (isSelfDependency(productId)) {
                 return;
             }
@@ -134,24 +131,21 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                 log.trace("Ignored product dependency for '{}'", productId);
                 return;
             }
-            mergedDiscoveredDependencies.merge(
-                    productId,
-                    discoveredDependency,
-                    (declaredDependency, _newDependency) ->
-                            mergeDependencies(productId, declaredDependency, discoveredDependency));
-        });
 
-        mergedDiscoveredDependencies.forEach((productId, discoveredDependency) -> {
-            allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
-                log.error(
-                        "Please remove your declared product dependency on '{}' because it is"
-                                + " already provided by a jar dependency:\n\n"
-                                + "\tProvided:     {}\n"
-                                + "\tYou declared: {}",
-                        productId,
-                        discoveredDependency,
-                        declaredDependency);
-                return mergeDependencies(productId, declaredDependency, discoveredDependency);
+            // Perform a reduce first so that so that if there are multiple of the recommended dep we
+            // only log a single time.
+            dependencies.stream().reduce(ProductDependencyMerger::merge).ifPresent(discoveredDependency -> {
+                allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
+                    log.error(
+                            "Please remove your declared product dependency on '{}' because it is"
+                                    + " already provided by a jar dependency:\n\n"
+                                    + "\tProvided:     {}\n"
+                                    + "\tYou declared: {}",
+                            productId,
+                            discoveredDependency,
+                            declaredDependency);
+                    return mergeDependencies(productId, declaredDependency, discoveredDependency);
+                });
             });
         });
 
