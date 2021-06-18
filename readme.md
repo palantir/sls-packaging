@@ -5,7 +5,7 @@
 # SLS Distribution Gradle Plugins
 
 [![Build Status](https://circleci.com/gh/palantir/sls-packaging.svg?style=shield)](https://circleci.com/gh/palantir/sls-packaging)
-[![Download](https://api.bintray.com/packages/palantir/releases/sls-packaging/images/download.svg) ](https://bintray.com/palantir/releases/sls-packaging/_latestVersion)
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/palantir/sls-java-service-distribution/com.palantir.sls-java-service-distribution.gradle.plugin/maven-metadata.xml.svg?label=plugin&logo=gradle)](https://plugins.gradle.org/plugin/com.palantir.sls-java-service-distribution)
 
 A set of Gradle plugins that facilitate packaging projects for distributions conforming to Palantir's Service Layout
 Specification. This project was formerly known as gradle-java-distribution.
