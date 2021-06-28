@@ -111,7 +111,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
             Project project, List<ProductDependency> dependencies, Map<ProductId, Project> inRepoProductIds) {
         return dependencies.stream()
                 .map(dependency -> {
-                    ProductId productId = new ProductId(dependency.getProductGroup(), dependency.getProductName());
+                    ProductId productId = ProductId.of(dependency);
                     if (inRepoProductIds.containsKey(productId)) {
                         String projectPath = inRepoProductIds.get(productId).getPath();
                         return project.getDependencies()

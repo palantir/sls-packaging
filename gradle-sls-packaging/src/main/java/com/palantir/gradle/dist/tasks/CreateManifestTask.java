@@ -16,25 +16,21 @@
 
 package com.palantir.gradle.dist.tasks;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.ConfigureProductDependenciesTask;
+import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.ProductDependency;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
-import com.palantir.gradle.dist.ProductDependencyMerger;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
-import com.palantir.gradle.dist.RecommendedProductDependencies;
-import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.gradle.dist.pdeps.ProductDependencies;
+import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
+import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -43,36 +39,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.artifacts.result.ResolvedComponentResult;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
-import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.provider.ListProperty;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
@@ -80,231 +57,78 @@ import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.util.GFileUtils;
 
-public class CreateManifestTask extends DefaultTask {
-    private static final Logger log = Logging.getLogger(CreateManifestTask.class);
-    public static final ObjectMapper jsonMapper = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
-            .enable(SerializationFeature.INDENT_OUTPUT);
-
-    private final SetProperty<ProductId> inRepoProductIds =
-            getProject().getObjects().setProperty(ProductId.class);
-    private final Property<String> serviceName = getProject().getObjects().property(String.class);
-    private final Property<String> serviceGroup = getProject().getObjects().property(String.class);
-    private final Property<ProductType> productType = getProject().getObjects().property(ProductType.class);
-
-    private final ListProperty<ProductDependency> productDependencies =
-            getProject().getObjects().listProperty(ProductDependency.class);
-    private final SetProperty<ProductId> optionalProductIds =
-            getProject().getObjects().setProperty(ProductId.class);
-    private final SetProperty<ProductId> ignoredProductIds =
-            getProject().getObjects().setProperty(ProductId.class);
-    private final Property<Configuration> productDependenciesConfig =
-            getProject().getObjects().property(Configuration.class);
-
-    private final MapProperty<String, Object> manifestExtensions =
-            getProject().getObjects().mapProperty(String.class, Object.class);
-    private File manifestFile;
-
-    public CreateManifestTask() {
-        dependsOn(otherProjectProductDependenciesTasks());
-    }
-
-    /**
-     * A lazy collection of tasks that ensure the {@link Jar} task of any project dependencies from
-     * {@link #productDependenciesConfig} is correctly populated with the recommended product dependencies of that
-     * project, if any (specifically, if they apply the {@link RecommendedProductDependenciesPlugin}).
-     */
-    private Provider<FileCollection> otherProjectProductDependenciesTasks() {
-        return productDependenciesConfig.map(productDeps -> {
-            // Using a ConfigurableFileCollection simply because it implements Buildable and provides a convenient API
-            // to wire up task dependencies to it in a lazy way.
-            ConfigurableFileCollection emptyFileCollection = getProject().files();
-            productDeps.getIncoming().getArtifacts().getArtifacts().stream()
-                    .flatMap(artifact -> {
-                        ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-
-                        // Depend on the ConfigureProductDependenciesTask, if it exists, which will wire up the jar
-                        // manifest
-                        // with recommended product dependencies.
-                        if (id instanceof ProjectComponentIdentifier) {
-                            Project dependencyProject = getProject()
-                                    .getRootProject()
-                                    .project(((ProjectComponentIdentifier) id).getProjectPath());
-                            return Stream.of(
-                                    dependencyProject.getTasks().withType(ConfigureProductDependenciesTask.class));
-                        }
-                        return Stream.empty();
-                    })
-                    .forEach(emptyFileCollection::builtBy);
-            return emptyFileCollection;
-        });
-    }
+public abstract class CreateManifestTask extends DefaultTask {
+    @Input
+    abstract SetProperty<ProductId> getInRepoProductIds();
 
     @Input
-    final Property<String> getServiceName() {
-        return serviceName;
-    }
+    abstract Property<String> getServiceName();
 
     @Input
-    final Property<String> getServiceGroup() {
-        return serviceGroup;
-    }
+    abstract Property<String> getServiceGroup();
 
     @Input
-    final Property<ProductType> getProductType() {
-        return productType;
-    }
+    abstract Property<ProductType> getProductType();
 
     @Input
-    final MapProperty<String, Object> getManifestExtensions() {
-        return manifestExtensions;
-    }
+    abstract MapProperty<String, Object> getManifestExtensions();
 
-    @Input
-    final ListProperty<ProductDependency> getProductDependencies() {
-        return productDependencies;
-    }
+    @InputFile
+    abstract RegularFileProperty getProductDependenciesFile();
 
-    @Input
-    final SetProperty<ProductId> getOptionalProductIds() {
-        return optionalProductIds;
-    }
-
-    @Input
-    final SetProperty<ProductId> getIgnoredProductIds() {
-        return ignoredProductIds;
-    }
-
-    @Input
-    final SetProperty<ProductId> getInRepoProductIds() {
-        return inRepoProductIds;
-    }
-
-    @Input
-    final Set<String> getProductDependenciesConfig() {
-        // HACKHACK serializable way of representing all dependencies
-        return productDependenciesConfig.get().getIncoming().getResolutionResult().getAllComponents().stream()
-                // intentionally using a lambda as otherwise we break gradle 4.10 support
-                .map(ResolvedComponentResult::getId)
-                .map(ComponentIdentifier::getDisplayName)
-                .collect(Collectors.toSet());
-    }
-
-    final void setConfiguration(Provider<Configuration> config) {
-        this.productDependenciesConfig.set(config);
-    }
+    @OutputFile
+    abstract RegularFileProperty getManifestFile();
 
     @Input
     final String getProjectVersion() {
         return getProject().getVersion().toString();
     }
 
-    @OutputFile
-    final File getManifestFile() {
-        return manifestFile;
+    /**
+     * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
+     * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
+     */
+    @InputFile
+    @org.gradle.api.tasks.Optional
+    final File getLockfileIfExists() {
+        File file = getLockfile();
+        if (file.exists()) {
+            return file;
+        }
+        return null;
     }
 
-    final void setManifestFile(File manifestFile) {
-        this.manifestFile = manifestFile;
-    }
-
-    @SuppressWarnings("checkstyle:CyclomaticComplexity")
     @TaskAction
     final void createManifest() throws IOException {
         validateProjectVersion();
-        if (manifestExtensions.get().containsKey("product-dependencies")) {
-            throw new IllegalArgumentException("Use productDependencies configuration option instead of setting "
-                    + "'product-dependencies' key in manifestExtensions");
-        }
+        Preconditions.checkArgument(
+                !getManifestExtensions().get().containsKey("product-dependencies"),
+                "Use productDependencies configuration option instead of setting "
+                        + "'product-dependencies' key in manifestExtensions");
 
-        Map<ProductId, ProductDependency> allProductDependencies = new HashMap<>();
-        Set<ProductId> allOptionalDependencies =
-                new HashSet<>(getOptionalProductIds().get());
-        getProductDependencies().get().forEach(declaredDep -> {
-            ProductId productId = new ProductId(declaredDep.getProductGroup(), declaredDep.getProductName());
-            Preconditions.checkArgument(
-                    !serviceGroup.get().equals(productId.getProductGroup())
-                            || !serviceName.get().equals(productId.getProductName()),
-                    "Invalid for product to declare an explicit dependency on itself, please remove: %s",
-                    declaredDep);
-            if (getIgnoredProductIds().get().contains(productId)) {
-                throw new IllegalArgumentException(String.format(
-                        "Encountered product dependency declaration that was also ignored for '%s', either remove the "
-                                + "dependency or ignore",
-                        productId));
-            }
-            if (getOptionalProductIds().get().contains(productId)) {
-                throw new IllegalArgumentException(String.format(
-                        "Encountered product dependency declaration that was also declared as optional for '%s', "
-                                + "either remove the dependency or optional declaration",
-                        productId));
-            }
-            allProductDependencies.merge(
-                    productId, declaredDep, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
-            if (declaredDep.getOptional()) {
-                log.trace("Product dependency for '{}' declared as optional", productId);
-                allOptionalDependencies.add(productId);
-            }
-        });
+        ProductDependencyManifest productDependencyManifest = ObjectMappers.readProductDependencyManifest(
+                getProductDependenciesFile().getAsFile().get());
 
-        // Merge all discovered and declared product dependencies
-        discoverProductDependencies().forEach((productId, discoveredDependency) -> {
-            if (getIgnoredProductIds().get().contains(productId)) {
-                log.trace("Ignored product dependency for '{}'", productId);
-                return;
-            }
-            allProductDependencies.merge(productId, discoveredDependency, (declaredDependency, _newDependency) -> {
-                ProductDependency mergedDependency =
-                        mergeDependencies(productId, declaredDependency, discoveredDependency);
-                if (mergedDependency.equals(discoveredDependency)) {
-                    getLogger()
-                            .error(
-                                    "Please remove your declared product dependency on '{}' because it is"
-                                            + " already provided by a jar dependency:\n\n"
-                                            + "\tProvided:     {}\n"
-                                            + "\tYou declared: {}",
-                                    productId,
-                                    discoveredDependency,
-                                    declaredDependency);
-                }
-                return mergedDependency;
-            });
-        });
-
-        // Ensure optional product dependencies are marked as such.
-        allOptionalDependencies.forEach(
-                productId -> allProductDependencies.computeIfPresent(productId, (_productId, existingDep) -> {
-                    log.trace("Product dependency for '{}' set as optional", productId);
-                    existingDep.setOptional(true);
-                    return existingDep;
-                }));
-
-        List<ProductDependency> productDeps = allProductDependencies.values().stream()
-                .sorted(Comparator.comparing(ProductDependency::getProductGroup)
-                        .thenComparing(ProductDependency::getProductName))
-                .collect(ImmutableList.toImmutableList());
-
-        if (productDeps.isEmpty()) {
+        List<ProductDependency> productDependencies = productDependencyManifest.productDependencies();
+        if (productDependencies.isEmpty()) {
             requireAbsentLockfile();
         } else {
-            ensureLockfileIsUpToDate(productDeps);
+            ensureLockfileIsUpToDate(productDependencies);
         }
 
-        jsonMapper.writeValue(
-                getManifestFile(),
+        ObjectMappers.jsonMapper.writeValue(
+                getManifestFile().getAsFile().get(),
                 SlsManifest.builder()
                         .manifestVersion("1.0")
-                        .productType(productType.get())
-                        .productGroup(serviceGroup.get())
-                        .productName(serviceName.get())
+                        .productType(getProductType().get())
+                        .productGroup(getServiceGroup().get())
+                        .productName(getServiceName().get())
                         .productVersion(getProjectVersion())
-                        .putAllExtensions(manifestExtensions.get())
-                        .putExtensions("product-dependencies", productDeps)
+                        .putAllExtensions(getManifestExtensions().get())
+                        .putExtensions("product-dependencies", productDependencies)
                         .build());
     }
 
@@ -326,20 +150,6 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    /**
-     * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
-     * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
-     */
-    @InputFile
-    @org.gradle.api.tasks.Optional
-    final File getLockfileIfExists() {
-        File file = getLockfile();
-        if (file.exists()) {
-            return file;
-        }
-        return null;
-    }
-
     private File getLockfile() {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
@@ -347,7 +157,8 @@ public class CreateManifestTask extends DefaultTask {
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
-        String upToDateContents = ProductDependencyLockFile.asString(productDeps, inRepoProductIds.get());
+        String upToDateContents = ProductDependencyLockFile.asString(
+                productDeps, getInRepoProductIds().get());
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
@@ -396,110 +207,6 @@ public class CreateManifestTask extends DefaultTask {
         }
     }
 
-    @SuppressWarnings("checkstyle:CyclomaticComplexity")
-    private Map<ProductId, ProductDependency> discoverProductDependencies() {
-        Map<ProductId, ProductDependency> discoveredProductDependencies = new HashMap<>();
-        productDependenciesConfig.get().getIncoming().getArtifacts().getArtifacts().stream()
-                .flatMap(artifact -> {
-                    String artifactName = artifact.getId().getDisplayName();
-                    ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-                    Optional<String> pdeps = Optional.empty();
-
-                    // Extract product dependencies directly from Jar task for in project dependencies
-                    if (id instanceof ProjectComponentIdentifier) {
-                        Project dependencyProject = getProject()
-                                .getRootProject()
-                                .project(((ProjectComponentIdentifier) id).getProjectPath());
-                        if (dependencyProject.getPlugins().hasPlugin(JavaPlugin.class)) {
-                            Jar jar = (Jar) dependencyProject.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
-
-                            pdeps = Optional.ofNullable(jar.getManifest()
-                                            .getEffectiveManifest()
-                                            .getAttributes()
-                                            .get(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY))
-                                    .map(Object::toString);
-                        }
-                    } else {
-                        if (!artifact.getFile().exists()) {
-                            log.debug("Artifact did not exist: {}", artifact.getFile());
-                            return Stream.empty();
-                        } else if (!com.google.common.io.Files.getFileExtension(
-                                        artifact.getFile().getName())
-                                .equals("jar")) {
-                            log.debug("Artifact is not jar: {}", artifact.getFile());
-                            return Stream.empty();
-                        }
-
-                        Manifest manifest;
-                        try {
-                            ZipFile zipFile = new ZipFile(artifact.getFile());
-                            ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
-                            if (manifestEntry == null) {
-                                log.debug("Manifest file does not exist in jar for '${coord}'");
-                                return Stream.empty();
-                            }
-                            manifest = new Manifest(zipFile.getInputStream(manifestEntry));
-                        } catch (IOException e) {
-                            log.warn(
-                                    "IOException encountered when processing artifact '{}', file '{}', {}",
-                                    artifactName,
-                                    artifact.getFile(),
-                                    e);
-                            return Stream.empty();
-                        }
-
-                        pdeps = Optional.ofNullable(manifest.getMainAttributes()
-                                .getValue(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY));
-                    }
-                    if (!pdeps.isPresent()) {
-                        log.debug(
-                                "No product dependency found for artifact '{}', file '{}'",
-                                artifactName,
-                                artifact.getFile());
-                        return Stream.empty();
-                    }
-
-                    try {
-                        RecommendedProductDependencies recommendedDeps =
-                                jsonMapper.readValue(pdeps.get(), RecommendedProductDependencies.class);
-                        return recommendedDeps.recommendedProductDependencies().stream()
-                                .peek(productDependency -> log.info(
-                                        "Product dependency recommendation made by artifact '{}', file '{}', "
-                                                + "dependency recommendation '{}'",
-                                        artifactName,
-                                        artifact,
-                                        productDependency))
-                                .map(recommendedDep -> new ProductDependency(
-                                        recommendedDep.getProductGroup(),
-                                        recommendedDep.getProductName(),
-                                        recommendedDep.getMinimumVersion(),
-                                        recommendedDep.getMaximumVersion(),
-                                        recommendedDep.getRecommendedVersion(),
-                                        recommendedDep.getOptional()));
-                    } catch (IOException | IllegalArgumentException e) {
-                        log.debug(
-                                "Failed to load product dependency for artifact '{}', file '{}', '{}'",
-                                artifactName,
-                                artifact,
-                                e);
-                        return Stream.empty();
-                    }
-                })
-                .filter(this::isNotSelfProductDependency)
-                .forEach(productDependency -> {
-                    ProductId productId =
-                            new ProductId(productDependency.getProductGroup(), productDependency.getProductName());
-                    discoveredProductDependencies.merge(
-                            productId, productDependency, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
-                });
-        return discoveredProductDependencies;
-    }
-
-    private boolean isNotSelfProductDependency(ProductDependency dependency) {
-        return !serviceGroup.get().equals(dependency.getProductGroup())
-                || !serviceName.get().equals(dependency.getProductName());
-    }
-
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
         Preconditions.checkArgument(
@@ -515,21 +222,24 @@ public class CreateManifestTask extends DefaultTask {
     }
 
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
+        TaskProvider<ResolveProductDependenciesTask> resolveProductDependenciesTask =
+                ProductDependencies.registerProductDependencyTasks(project, ext);
+
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register("createManifest", CreateManifestTask.class, task -> {
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
-                    task.setManifestFile(new File(project.getBuildDir(), "/deployment/manifest.yml"));
-                    task.getProductDependencies().set(ext.getAllProductDependencies());
-                    task.setConfiguration(project.provider(ext::getProductDependenciesConfig));
-                    task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
-                    task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
+                    task.getManifestFile().set(new File(project.getBuildDir(), "/deployment/manifest.yml"));
+                    task.getProductDependenciesFile()
+                            .set(resolveProductDependenciesTask.flatMap(
+                                    ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())
                                     .keySet()));
+
                     // Ensure we re-run task to write locks
                     task.getOutputs().upToDateWhen(new Spec<Task>() {
                         @Override
@@ -537,7 +247,10 @@ public class CreateManifestTask extends DefaultTask {
                             return !project.getGradle().getStartParameter().isWriteDependencyLocks();
                         }
                     });
+
+                    task.dependsOn(resolveProductDependenciesTask);
                 });
+
         project.getPluginManager().withPlugin("lifecycle-base", _p -> {
             project.getTasks()
                     .named(LifecycleBasePlugin.CHECK_TASK_NAME)
@@ -556,15 +269,5 @@ public class CreateManifestTask extends DefaultTask {
         }
 
         return createManifest;
-    }
-
-    private ProductDependency mergeDependencies(ProductId productId, ProductDependency dep1, ProductDependency dep2) {
-        ProductDependency mergedDep = ProductDependencyMerger.merge(dep1, dep2);
-        if (inRepoProductIds.get().contains(productId)
-                && (dep1.getMinimumVersion().equals(getProjectVersion())
-                        || dep2.getMinimumVersion().equals(getProjectVersion()))) {
-            mergedDep.setMinimumVersion(getProjectVersion());
-        }
-        return mergedDep;
     }
 }

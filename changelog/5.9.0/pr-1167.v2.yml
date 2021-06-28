@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: logs message only if a declared and a recommended overlap
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1167
