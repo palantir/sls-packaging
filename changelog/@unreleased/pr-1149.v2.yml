@@ -1,0 +1,7 @@
+type: break
+break:
+  description: 'Java services running in Rubix will ignore any conf.heap-size or -Xmx/-Xms
+    settings and automatically set their heap size based on the container memory limit.
+    PCloud behavior is unchanged: conf.heap-size is still the supported configuration.'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1149
