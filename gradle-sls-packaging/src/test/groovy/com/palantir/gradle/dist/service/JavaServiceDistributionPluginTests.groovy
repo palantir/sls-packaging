@@ -397,6 +397,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-XX:NativeMemoryTracking=summary',
                 '-XX:+UseParallelOldGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -420,6 +421,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-XX:NativeMemoryTracking=summary',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .env(LaunchConfigTask.defaultEnvironment)
@@ -457,6 +459,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
+                '-XX:NativeMemoryTracking=summary',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
                 "-XX:-TraceClassUnloading",
