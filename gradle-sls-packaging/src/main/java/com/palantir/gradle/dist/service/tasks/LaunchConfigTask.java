@@ -69,7 +69,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
             "-XX:HeapDumpPath=var/log",
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
-            "-Dsun.net.inetaddr.ttl=20");
+            "-Dsun.net.inetaddr.ttl=20",
+            "-XX:NativeMemoryTracking=summary");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
