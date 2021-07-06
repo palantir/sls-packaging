@@ -1126,6 +1126,28 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         result.output.contains('is not a java agent and contains no Premain-Class manifest entry')
     }
 
+    def 'exports management packages on new javas'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { compile files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+        actualStaticConfig.jvmOpts().containsAll([
+                "--add-exports",
+                "java.management/sun.management=ALL-UNNAMED"
+        ])
+    }
+
     private static createUntarBuildFile(File buildFile) {
         buildFile << '''
             plugins {

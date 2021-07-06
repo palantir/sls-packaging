@@ -56,10 +56,15 @@ public abstract class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
-    private static final ImmutableList<String> java14Options =
+    private static final ImmutableList<String> java14PlusOptions =
             ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
     private static final ImmutableList<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
+    // Support safepoint metrics from the internal sun.management package in production. We prefer not
+    // to use '--illegal-access=permit' so that we can avoid unintentional and unbounded illegal access
+    // that we aren't aware of.
+    private static final ImmutableList<String> java16PlusOptions =
+            ImmutableList.of("--add-exports", "java.management/sun.management=ALL-UNNAMED");
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
@@ -180,7 +185,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
-                                        ? java14Options
+                                        ? java14PlusOptions
                                         : ImmutableList.of())
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) == 0
@@ -193,6 +198,10 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("16")) >= 0
+                                        ? java16PlusOptions
                                         : ImmutableList.of())
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
