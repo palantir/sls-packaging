@@ -1,0 +1,7 @@
+type: improvement
+improvement:
+  description: Add a new `writeProductDependenciesLocks` task that allows writing
+    out the `product-dependencies.lock` files without running `--write-locks` and
+    possibly triggering undesirable code paths from other gradle plugins.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1178
