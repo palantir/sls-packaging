@@ -48,6 +48,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -154,13 +155,13 @@ public abstract class CreateManifestTask extends DefaultTask {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
 
-    private static final TaskNameMatcher MARKER_TASK_NAME_MATCHER =
-            new TaskNameMatcher("writeProductDependenciesLocks");
-
     public static boolean shouldWriteLocks(Project project) {
-        StartParameter startParameter = project.getGradle().getStartParameter();
-        return startParameter.isWriteDependencyLocks()
-                || MARKER_TASK_NAME_MATCHER.matchesAny(startParameter.getTaskNames());
+        String taskName = project.getPath().equals(":")
+                ? ":writeProductDependenciesLocks"
+                : project.getPath() + ":writeProductDependenciesLocks";
+        Gradle gradle = project.getGradle();
+        return gradle.getStartParameter().isWriteDependencyLocks()
+                || gradle.getTaskGraph().hasTask(taskName);
     }
 
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
