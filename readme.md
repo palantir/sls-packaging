@@ -85,7 +85,7 @@ distribution {
 }
 ```
 
-sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** to update it. e.g.
+sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it. e.g.
 
 ```
 # Run ./gradlew --write-locks to regenerate this file
