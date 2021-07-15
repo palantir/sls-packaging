@@ -53,10 +53,6 @@ pluginBundle {
             id = 'com.palantir.sls-asset-distribution'
             displayName = 'Creates SLS asset distributions'
         }
-        podDistributionPlugin {
-            id = 'com.palantir.sls-pod-distribution'
-            displayName = 'Creates SLS pod distributions'
-        }
     }
 }
 

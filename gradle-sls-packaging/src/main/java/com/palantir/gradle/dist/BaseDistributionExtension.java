@@ -50,7 +50,6 @@ public class BaseDistributionExtension {
 
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
-    private final Property<String> podName;
     private final Property<ProductType> productType;
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
@@ -65,7 +64,6 @@ public class BaseDistributionExtension {
         providerFactory = project.getProviders();
         serviceGroup = project.getObjects().property(String.class);
         serviceName = project.getObjects().property(String.class);
-        podName = project.getObjects().property(String.class);
         productType = project.getObjects().property(ProductType.class);
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
@@ -73,7 +71,6 @@ public class BaseDistributionExtension {
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
-        podName.set(project.provider(project::getName));
 
         manifestExtensions =
                 project.getObjects().mapProperty(String.class, Object.class).empty();
@@ -115,14 +112,6 @@ public class BaseDistributionExtension {
 
     public final void setServiceName(String serviceName) {
         this.serviceName.set(serviceName);
-    }
-
-    public final Provider<String> getPodName() {
-        return podName;
-    }
-
-    public final void setPodName(String podName) {
-        this.podName.set(podName);
     }
 
     public final Provider<ProductType> getProductType() {

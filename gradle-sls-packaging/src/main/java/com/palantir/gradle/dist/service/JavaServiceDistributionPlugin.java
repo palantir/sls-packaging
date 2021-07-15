@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
-import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
@@ -65,10 +64,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and "
-                    + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
-        }
-        if (project.getPlugins().hasPlugin(PodDistributionPlugin.class)) {
-            throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
         }
         project.getPluginManager().apply("java");
