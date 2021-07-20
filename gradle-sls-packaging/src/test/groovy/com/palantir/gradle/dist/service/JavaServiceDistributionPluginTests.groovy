@@ -370,7 +370,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
@@ -436,7 +436,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'produce distribution with java 8 gc logging'() {
         createUntarBuildFile(buildFile)
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
@@ -483,7 +483,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'respects java version'() {
         createUntarBuildFile(buildFile)
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 14
@@ -533,7 +533,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 enableManifestClasspath true
             }
             dependencies {
-              compile "com.google.guava:guava:19.0"
+              implementation "com.google.guava:guava:19.0"
             }
         '''.stripIndent()
 
@@ -782,7 +782,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             dependencies {
                 implementation project(':child')
-                compile 'org.mockito:mockito-core:2.7.22'
+                implementation 'org.mockito:mockito-core:2.7.22'
             }
         ''')
 
@@ -845,10 +845,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             buildscript {
                 repositories {
                     mavenCentral()
-                    jcenter()
                 }
                 dependencies {
-                    classpath 'com.palantir.gradle.docker:gradle-docker:0.25.0'
+                    classpath 'com.palantir.gradle.docker:gradle-docker:0.27.0'
                 }
             }
             apply plugin: 'com.palantir.docker-compose'
@@ -914,7 +913,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             dependencies {
                 implementation project(':child')
-                compile 'org.mockito:mockito-core:2.7.22'
+                implementation 'org.mockito:mockito-core:2.7.22'
             }
         ''')
 
@@ -1071,7 +1070,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
-                compile files("${EXTERNAL_JAR}")
+                implementation files("${EXTERNAL_JAR}")
                 javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
             }
             tasks.jar.archiveBaseName = "internal"
@@ -1094,7 +1093,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
-                compile files("${EXTERNAL_JAR}")
+                implementation files("${EXTERNAL_JAR}")
                 javaAgent files("${EXTERNAL_JAR}")
             }
             tasks.jar.archiveBaseName = "internal"
@@ -1113,7 +1112,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'exports management packages on new javas'() {
         createUntarBuildFile(buildFile)
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 17
