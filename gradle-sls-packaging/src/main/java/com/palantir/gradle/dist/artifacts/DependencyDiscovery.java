@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.artifacts;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -40,17 +41,20 @@ public final class DependencyDiscovery {
     }
 
     public static Configuration copyConfiguration(Project project, String configurationName, String name) {
-        Configuration consumable = project.getConfigurations()
-                .create(GUtil.toLowerCamelCase(configurationName + " for " + name), conf -> {
-                    conf.extendsFrom(project.getConfigurations().getByName(configurationName));
-                    conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
-                    conf.setCanBeConsumed(true);
-                    conf.setCanBeResolved(true);
-                    conf.setVisible(false);
-                });
+        String newConfigName = GUtil.toLowerCamelCase(GUtil.toLowerCamelCase(configurationName + " for " + name));
+        return Optional.ofNullable(project.getConfigurations().findByName(newConfigName))
+                .orElseGet(() -> {
+                    Configuration consumable = project.getConfigurations().create(newConfigName, conf -> {
+                        conf.extendsFrom(project.getConfigurations().getByName(configurationName));
+                        conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
+                        conf.setCanBeConsumed(true);
+                        conf.setCanBeResolved(true);
+                        conf.setVisible(false);
+                    });
 
-        project.getDependencies().add(consumable.getName(), project);
-        return consumable;
+                    project.getDependencies().add(consumable.getName(), project);
+                    return consumable;
+                });
     }
 
     public static <T extends TransformAction<P>, P extends TransformParameters> void configureJarTransform(

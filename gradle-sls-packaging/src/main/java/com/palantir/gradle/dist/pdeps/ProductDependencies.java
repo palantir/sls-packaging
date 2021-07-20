@@ -38,8 +38,8 @@ public final class ProductDependencies {
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
         Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
-        Configuration pdepsConfig = DependencyDiscovery.copyConfiguration(
-                project, ext.getProductDependenciesConfig().getName(), "productDependencies");
+        Provider<Configuration> pdepsConfigProvider = project.provider(() -> DependencyDiscovery.copyConfiguration(
+                project, ext.getProductDependenciesConfig().getName(), "productDependencies"));
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
@@ -56,8 +56,8 @@ public final class ProductDependencies {
                     params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                 });
 
-        ArtifactView discoveredDependencies =
-                DependencyDiscovery.getFilteredArtifact(project, pdepsConfig, PRODUCT_DEPENDENCIES);
+        Provider<ArtifactView> discoveredDependencies = pdepsConfigProvider.map(
+                pdepsConfig -> DependencyDiscovery.getFilteredArtifact(project, pdepsConfig, PRODUCT_DEPENDENCIES));
         return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
             task.getServiceGroup().set(ext.getDistributionServiceGroup());
@@ -70,8 +70,8 @@ public final class ProductDependencies {
             task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
             task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
 
-            task.getProductDependenciesFiles()
-                    .from(discoveredDependencies.getArtifacts().getArtifactFiles());
+            task.getProductDependenciesFiles().from(discoveredDependencies.map(pdeps -> pdeps.getArtifacts()
+                    .getArtifactFiles()));
 
             task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
