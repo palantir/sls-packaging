@@ -35,7 +35,7 @@ public class SlsBaseDistPlugin implements Plugin<Project> {
 
     public static final String SLS_DIST_USAGE = "sls-dist";
 
-    public static final GradleVersion MINIMUM_GRADLE = GradleVersion.version("5.6");
+    public static final GradleVersion MINIMUM_GRADLE = GradleVersion.version("6.1");
 
     @Override
     public final void apply(Project project) {
