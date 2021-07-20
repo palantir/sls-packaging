@@ -1,5 +1,5 @@
-type: fix
-fix:
-  description: Copy pdeps config lazily
+type: break
+break:
+  description: Copy pdeps config lazily. Increase minimum Gradle version to 6.1.
   links:
   - https://github.com/palantir/sls-packaging/pull/1183
