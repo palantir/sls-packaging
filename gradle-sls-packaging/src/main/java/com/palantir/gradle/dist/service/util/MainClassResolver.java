@@ -40,6 +40,8 @@ public final class MainClassResolver {
                 .map(File::toPath)
                 .flatMap(sourceDir -> allJavaFilesIn(sourceDir)
                         .filter(javaFile -> anyLinesInFileContain(javaFile, "public static void main("))
+                        .filter(javaFile ->
+                                !anyLinesInFileContain(javaFile, "com.palantir.atlasdb.table.description.Schema"))
                         .map(sourceDir::relativize))
                 .collect(Collectors.toSet());
 

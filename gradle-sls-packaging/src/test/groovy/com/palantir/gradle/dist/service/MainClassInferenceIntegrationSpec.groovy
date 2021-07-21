@@ -45,9 +45,15 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
     def 'infers main class correctly'() {
         given:
         buildFile << """
+            dependencies {
+                implementation 'com.palantir.atlasdb:atlasdb-client:0.382.0'
+            }
+
             distribution {
                 serviceName 'service-name'
                 gc 'hybrid'
+
+                ignoredProductDependency('com.palantir.timelock', 'timelock-server')
             }
             
             // Force run to be realized eagerly
@@ -56,6 +62,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
             ${unTarTask('service-name')}
         """.stripIndent()
         file('src/main/java/test/Test.java') << mainClass('Test')
+        file('src/main/java/test/TestSchema.java') << schemaClass('TestSchema')
 
         when:
         runTasks(':untar')
@@ -129,4 +136,15 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
         """.stripIndent()
     }
 
+    static def schemaClass(String className) {
+        return """
+        package test;
+        import com.palantir.atlasdb.table.description.Schema;
+        public class ${className} {
+            public static void main(String[] args) {
+                while(true);
+            }
+        }
+        """.stripIndent()
+    }
 }

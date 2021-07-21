@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: AtlasDB schema classes are now ignored when resolving the main class.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1184
