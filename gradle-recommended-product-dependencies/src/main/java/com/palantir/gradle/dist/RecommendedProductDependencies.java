@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Set;
 import org.immutables.value.Value;
 
+// Automatically suppressed to unblock enforcement in new code
+@SuppressWarnings("ImmutablesStyle")
 @Value.Immutable
 @Value.Style(jdkOnly = true)
 @JsonSerialize(as = ImmutableRecommendedProductDependencies.class)
