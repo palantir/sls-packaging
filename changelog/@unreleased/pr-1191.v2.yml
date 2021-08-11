@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Include `service/bin/launcher-static.yml` in java config tars.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1191
