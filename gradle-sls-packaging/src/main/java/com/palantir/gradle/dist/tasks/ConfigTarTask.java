@@ -46,6 +46,11 @@ public class ConfigTarTask extends Tar {
     @Override
     public final AbstractCopyTask from(Object sourcePath, Action<? super CopySpec> configureAction) {
         return super.from(sourcePath, copySpec -> {
+            // These from tasks are overriden so we can set a default `into` on each from copyspec. Originally, the
+            // task level `into` was set to `deployment`, which forced all files into the `deployment` directory.
+            // However, with launcher-static.yml, we want to keep it at the same path as the dist, in service/bin/,
+            // for consistency. However, other plugins (like hyperion) add their own custom `from`s, so to maintain
+            // backcompat we override all the froms and set the default per from into to be `deployment`.
             copySpec.into("deployment");
             configureAction.execute(copySpec);
         });
