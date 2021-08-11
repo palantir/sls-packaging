@@ -19,18 +19,40 @@ package com.palantir.gradle.dist.tasks;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import groovy.lang.Closure;
 import java.io.File;
 import java.io.IOException;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.file.CopySpec;
+import org.gradle.api.tasks.AbstractCopyTask;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
+import org.gradle.util.ClosureBackedAction;
 
-public final class ConfigTarTask {
-    private ConfigTarTask() {}
+public class ConfigTarTask extends Tar {
+    @Override
+    public final AbstractCopyTask from(Object... sourcePaths) {
+        return this.from(sourcePaths, _ignored -> {});
+    }
 
-    public static TaskProvider<Tar> createConfigTarTask(Project project, BaseDistributionExtension ext) {
-        TaskProvider<Tar> configTar = project.getTasks().register("configTar", Tar.class, task -> {
+    @Override
+    @SuppressWarnings("RawTypes")
+    public final AbstractCopyTask from(Object sourcePath, Closure closure) {
+        return this.from(sourcePath, new ClosureBackedAction<>(closure));
+    }
+
+    @Override
+    public final AbstractCopyTask from(Object sourcePath, Action<? super CopySpec> configureAction) {
+        return super.from(sourcePath, copySpec -> {
+            copySpec.into("deployment");
+            configureAction.execute(copySpec);
+        });
+    }
+
+    public static TaskProvider<ConfigTarTask> createConfigTarTask(Project project, BaseDistributionExtension ext) {
+        TaskProvider<ConfigTarTask> configTar = project.getTasks().register("configTar", ConfigTarTask.class, task -> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription(
                     "Creates a compressed, gzipped tar file that contains the sls configuration files for the product");
@@ -57,8 +79,7 @@ public final class ConfigTarTask {
 
         // TODO(forozco): make this lazy since into does not support providers, but does support callable
         project.afterEvaluate(_p -> configTar.configure(task -> {
-            task.into(String.format(
-                    "%s-%s/deployment", ext.getDistributionServiceName().get(), project.getVersion()));
+            task.into(String.format("%s-%s", ext.getDistributionServiceName().get(), project.getVersion()));
         }));
 
         return configTar;
