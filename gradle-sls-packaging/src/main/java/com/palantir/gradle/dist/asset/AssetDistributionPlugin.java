@@ -99,7 +99,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
                     }));
         }));
 
-        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
+        TaskProvider<ConfigTarTask> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);

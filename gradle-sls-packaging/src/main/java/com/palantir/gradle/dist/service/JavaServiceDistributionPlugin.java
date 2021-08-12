@@ -240,8 +240,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
-        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
-        configTar.configure(task -> task.dependsOn(manifest));
+        TaskProvider<ConfigTarTask> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
+        configTar.configure(task -> {
+            task.from(launchConfigTask.flatMap(LaunchConfigTask::getStaticLauncher), copySpec -> {
+                copySpec.into(DistTarTask.SCRIPTS_DIST_LOCATION);
+            });
+            task.dependsOn(manifest);
+        });
 
         TaskProvider<JavaExec> runTask = project.getTasks().register("run", JavaExec.class, task -> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
