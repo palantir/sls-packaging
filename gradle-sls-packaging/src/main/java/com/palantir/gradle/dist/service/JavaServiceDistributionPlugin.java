@@ -243,7 +243,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         TaskProvider<ConfigTarTask> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> {
             task.from(launchConfigTask.flatMap(LaunchConfigTask::getStaticLauncher), copySpec -> {
-                copySpec.into("service/bin");
+                copySpec.into(DistTarTask.SCRIPTS_DIST_LOCATION);
             });
             task.dependsOn(manifest);
         });

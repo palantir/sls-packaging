@@ -51,12 +51,12 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        def files = directory('dist/foo-service-0.0.1/', projectDir).list()
+        def files = new File(projectDir, 'dist/foo-service-0.0.1/').list()
         files.length == 2
         files.contains('deployment')
-        def manifest = file('dist/foo-service-0.0.1/deployment/manifest.yml', projectDir).text
+        def manifest = new File(projectDir, 'dist/foo-service-0.0.1/deployment/manifest.yml').text
         manifest.contains('service.v1')
-        file('dist/foo-service-0.0.1/service/bin/launcher-static.yml')
+        fileExists('dist/foo-service-0.0.1/service/bin/launcher-static.yml')
     }
 
     def 'configTar task contains the necessary deployment files for assets'() {
@@ -67,10 +67,10 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        def files = directory('dist/foo-asset-0.0.1/', projectDir).list()
+        def files = new File(projectDir, 'dist/foo-asset-0.0.1/').list()
         files.length == 1
         files.contains('deployment')
-        def manifest = file('dist/foo-asset-0.0.1/deployment/manifest.yml', projectDir).text
+        def manifest = new File(projectDir, 'dist/foo-asset-0.0.1/deployment/manifest.yml').text
         manifest.contains('asset.v1')
     }
 

@@ -25,6 +25,8 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 
 final class DistTarTask {
+    static final String SCRIPTS_DIST_LOCATION = "service/bin";
+
     static void configure(
             Project project,
             Tar distTarTask,
@@ -66,7 +68,7 @@ final class DistTarTask {
                 t.from(project.getConfigurations().named("javaAgent"));
             });
 
-            root.into("service/bin", t -> {
+            root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
                 t.setFileMode(0755);
             });
