@@ -102,7 +102,7 @@ public interface GcProfile extends Serializable {
      */
     class NoProfile implements GcProfile {
         @Override
-        public List<String> gcJvmOpts(JavaVersion _javaVersion) {
+        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return Collections.emptyList();
         }
     }
