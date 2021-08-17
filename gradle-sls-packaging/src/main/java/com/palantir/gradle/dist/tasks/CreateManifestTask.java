@@ -214,7 +214,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         if (!OrderableSlsVersion.check(stringVersion)) {
             getProject()
                     .getLogger()
-                    .warn(
+                    .info(
                             "Version string in project {} is not orderable as per SLS specification: {}",
                             getProject().getName(),
                             stringVersion);
