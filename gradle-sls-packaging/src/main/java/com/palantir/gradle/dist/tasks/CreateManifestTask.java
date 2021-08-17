@@ -58,7 +58,6 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
-import org.gradle.util.GFileUtils;
 
 public abstract class CreateManifestTask extends DefaultTask {
     @Input
@@ -154,7 +153,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
 
-    private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
+    private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
@@ -162,7 +161,12 @@ public abstract class CreateManifestTask extends DefaultTask {
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            GFileUtils.writeFile(upToDateContents, lockfile);
+            try {
+                Files.write(lockfile.toPath(), upToDateContents.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing lock file: " + lockfile, e);
+            }
+
             if (!lockfileExists) {
                 getLogger().lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
             } else {
@@ -174,7 +178,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                         "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
                         relativePath, getName()));
             } else {
-                String fromDisk = GFileUtils.readFile(lockfile);
+                String fromDisk = new String(Files.readAllBytes(lockfile.toPath()), StandardCharsets.UTF_8);
                 Preconditions.checkState(
                         fromDisk.equals(upToDateContents),
                         "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
@@ -186,10 +190,10 @@ public abstract class CreateManifestTask extends DefaultTask {
     }
 
     /** Provide a rich diff so the user understands what change will be made before they run --write-locks. */
-    private Optional<String> diff(File existing, String upToDateContents) {
+    private Optional<String> diff(File existing, String upToDateContents) throws IOException {
         try {
             File tempFile = Files.createTempFile("product-dependencies", "lock").toFile();
-            GFileUtils.writeFile(upToDateContents, tempFile);
+            Files.write(tempFile.toPath(), upToDateContents.getBytes(StandardCharsets.UTF_8));
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             getProject().exec(spec -> {

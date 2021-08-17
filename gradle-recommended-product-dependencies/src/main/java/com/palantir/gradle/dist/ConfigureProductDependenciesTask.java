@@ -25,7 +25,6 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.TaskAction;
@@ -62,8 +61,11 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
     }
 
     /** Eagerly creates a manifest containing <b>only</b> the recommended product dependencies. */
+    // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before migrating to Gradle 8.
+    @SuppressWarnings("deprecation")
     private static Manifest createManifest(Project project, Set<ProductDependency> recommendedProductDependencies) {
-        JavaPluginConvention javaConvention = project.getConvention().getPlugin(JavaPluginConvention.class);
+        org.gradle.api.plugins.JavaPluginConvention javaConvention =
+                project.getConvention().getPlugin(org.gradle.api.plugins.JavaPluginConvention.class);
         return javaConvention.manifest(manifest -> {
             String recommendedProductDeps;
             try {

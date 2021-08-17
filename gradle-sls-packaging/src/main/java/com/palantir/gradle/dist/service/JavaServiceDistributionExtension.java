@@ -29,15 +29,14 @@ import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.gradle.util.ConfigureUtil;
 
 public class JavaServiceDistributionExtension extends BaseDistributionExtension {
 
+    private final Project project;
     private final Property<JavaVersion> javaVersion;
     private final Property<String> mainClass;
     private final Property<String> javaHome;
@@ -52,12 +51,15 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
     private final ObjectFactory objectFactory;
 
+    // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before migrating to Gradle 8.
+    @SuppressWarnings("deprecation")
     @Inject
     public JavaServiceDistributionExtension(Project project) {
         super(project);
+        this.project = project;
         objectFactory = project.getObjects();
         javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() -> project.getConvention()
-                .getPlugin(JavaPluginConvention.class)
+                .getPlugin(org.gradle.api.plugins.JavaPluginConvention.class)
                 .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
 
@@ -218,7 +220,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     public final void gc(String type, @Nullable @DelegatesTo(GcProfile.class) Closure<GcProfile> configuration) {
         GcProfile newGc = objectFactory.newInstance(GcProfile.PROFILE_NAMES.get(type));
         if (configuration != null) {
-            ConfigureUtil.configure(configuration, newGc);
+            project.configure(newGc, configuration);
         }
         gc.set(newGc);
     }

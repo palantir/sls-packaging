@@ -6,14 +6,14 @@ apply plugin: 'com.palantir.revapi'
 apply plugin: 'com.palantir.external-publish-jar'
 
 dependencies {
-    compile gradleApi()
-    compile 'com.google.guava:guava'
-    compile 'com.fasterxml.jackson.core:jackson-databind'
-    compile 'com.palantir.sls.versions:sls-versions'
-    compile 'com.palantir.safe-logging:preconditions'
+    api gradleApi()
+    api 'com.google.guava:guava'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.palantir.sls.versions:sls-versions'
+    api 'com.palantir.safe-logging:preconditions'
 
-    testCompile gradleTestKit()
-    testCompile 'com.netflix.nebula:nebula-test'
+    testImplementation gradleTestKit()
+    testImplementation 'com.netflix.nebula:nebula-test'
 
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'

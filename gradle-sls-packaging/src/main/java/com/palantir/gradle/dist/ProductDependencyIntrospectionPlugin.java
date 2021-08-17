@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableMap;
 import com.palantir.logsafe.SafeArg;
 import groovy.lang.Closure;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
@@ -33,14 +35,10 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Provider;
-import org.gradle.util.GFileUtils;
 
 public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
-    private static final Logger log = Logging.getLogger(ProductDependencyIntrospectionPlugin.class);
     static final String PRODUCT_DEPENDENCIES_CONFIGURATION = "productDependencies";
 
     @Override
@@ -103,8 +101,13 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
             return Optional.empty();
         }
 
-        return Optional.of(ProductDependencyLockFile.fromString(
-                GFileUtils.readFile(lockFile), project.getVersion().toString()));
+        try {
+            String rawLockFile = new String(Files.readAllBytes(lockFile.toPath()), StandardCharsets.UTF_8);
+            return Optional.of(ProductDependencyLockFile.fromString(
+                    rawLockFile, project.getVersion().toString()));
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading lock file: " + lockFile, e);
+        }
     }
 
     static List<Dependency> createAllProductDependencies(

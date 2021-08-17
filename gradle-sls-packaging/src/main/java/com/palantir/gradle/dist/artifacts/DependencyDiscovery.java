@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.artifacts;
 
 import java.util.function.Consumer;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
@@ -25,7 +26,6 @@ import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Category;
-import org.gradle.util.GUtil;
 
 public final class DependencyDiscovery {
     public static final Attribute<String> ARTIFACT_FORMAT = Attribute.of("artifactType", String.class);
@@ -40,14 +40,14 @@ public final class DependencyDiscovery {
     }
 
     public static Configuration copyConfiguration(Project project, String configurationName, String name) {
-        Configuration consumable = project.getConfigurations()
-                .create(GUtil.toLowerCamelCase(configurationName + " for " + name), conf -> {
-                    conf.extendsFrom(project.getConfigurations().getByName(configurationName));
-                    conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
-                    conf.setCanBeConsumed(true);
-                    conf.setCanBeResolved(true);
-                    conf.setVisible(false);
-                });
+        String consumableConfigName = configurationName + "For" + StringUtils.capitalize(name);
+        Configuration consumable = project.getConfigurations().create(consumableConfigName, conf -> {
+            conf.extendsFrom(project.getConfigurations().getByName(configurationName));
+            conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
+            conf.setCanBeConsumed(true);
+            conf.setCanBeResolved(true);
+            conf.setVisible(false);
+        });
 
         project.getDependencies().add(consumable.getName(), project);
         return consumable;
