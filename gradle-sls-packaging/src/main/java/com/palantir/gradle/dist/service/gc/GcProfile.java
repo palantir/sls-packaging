@@ -36,19 +36,19 @@ public interface GcProfile extends Serializable {
 
     List<String> gcJvmOpts(JavaVersion javaVersion);
 
-    class Throughput implements GcProfile {
+    final class Throughput implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
+        public List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return ImmutableList.of("-XX:+UseParallelOldGC");
         }
     }
 
-    class ResponseTime implements GcProfile {
+    final class ResponseTime implements GcProfile {
         private int newRatio = 2;
         private int initiatingOccupancyFraction = 68;
 
         @Override
-        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+        public List<String> gcJvmOpts(JavaVersion javaVersion) {
             // The CMS garbage collector was removed in Java 14: https://openjdk.java.net/jeps/363. Users are free to
             // use it up until this release.
             if (javaVersion.compareTo(JavaVersion.toVersion("14")) >= 0) {
@@ -80,18 +80,18 @@ public interface GcProfile extends Serializable {
                     "-XX:+IgnoreUnrecognizedVMOptions");
         }
 
-        public final void initiatingOccupancyFraction(int occupancyFraction) {
+        public void initiatingOccupancyFraction(int occupancyFraction) {
             this.initiatingOccupancyFraction = occupancyFraction;
         }
 
-        public final void newRatio(int newerRatio) {
+        public void newRatio(int newerRatio) {
             this.newRatio = newerRatio;
         }
     }
 
-    class Hybrid implements GcProfile {
+    final class Hybrid implements GcProfile {
         @Override
-        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
+        public List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA");
         }
     }
@@ -100,7 +100,7 @@ public interface GcProfile extends Serializable {
      * This GC profile does not apply any JVM flags which allows services to override GC settings without needing to
      * unset preconfigured flags.
      */
-    class NoProfile implements GcProfile {
+    final class NoProfile implements GcProfile {
         @Override
         public List<String> gcJvmOpts(JavaVersion _javaVersion) {
             return Collections.emptyList();
