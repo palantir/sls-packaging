@@ -30,7 +30,6 @@ import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -322,7 +321,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             throws IOException {
         // Replace standard classpath with pathing jar in order to circumnavigate length limits:
         // https://issues.gradle.org/browse/GRADLE-2992
-        String winFileText = new String(Files.readAllBytes(windowsScript), StandardCharsets.UTF_8);
+        String winFileText = Files.readString(windowsScript);
 
         // Remove too-long-classpath and use pathing jar instead
         String cleanedText = winFileText
@@ -331,6 +330,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                         "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
                         "$1%APP_HOME%\\\\lib\\\\" + manifestClassPathArchiveFileName + "$2");
 
-        Files.write(windowsScript, cleanedText.getBytes(StandardCharsets.UTF_8));
+        Files.writeString(windowsScript, cleanedText);
     }
 }

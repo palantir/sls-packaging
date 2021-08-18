@@ -161,11 +161,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            try {
-                Files.write(lockfile.toPath(), upToDateContents.getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                throw new RuntimeException("Error writing lock file: " + lockfile, e);
-            }
+            Files.writeString(lockfile.toPath(), upToDateContents);
 
             if (!lockfileExists) {
                 getLogger().lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
@@ -178,7 +174,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                         "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
                         relativePath, getName()));
             } else {
-                String fromDisk = new String(Files.readAllBytes(lockfile.toPath()), StandardCharsets.UTF_8);
+                String fromDisk = Files.readString(lockfile.toPath());
                 Preconditions.checkState(
                         fromDisk.equals(upToDateContents),
                         "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
@@ -190,10 +186,10 @@ public abstract class CreateManifestTask extends DefaultTask {
     }
 
     /** Provide a rich diff so the user understands what change will be made before they run --write-locks. */
-    private Optional<String> diff(File existing, String upToDateContents) throws IOException {
+    private Optional<String> diff(File existing, String upToDateContents) {
         try {
             File tempFile = Files.createTempFile("product-dependencies", "lock").toFile();
-            Files.write(tempFile.toPath(), upToDateContents.getBytes(StandardCharsets.UTF_8));
+            Files.writeString(tempFile.toPath(), upToDateContents);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             getProject().exec(spec -> {
