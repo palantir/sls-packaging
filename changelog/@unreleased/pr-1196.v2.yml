@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Use Gradle 7 and increase source compat to 11
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1196
