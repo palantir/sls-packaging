@@ -29,7 +29,6 @@ import org.gradle.api.tasks.AbstractCopyTask;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
-import org.gradle.util.ClosureBackedAction;
 
 public class ConfigTarTask extends Tar {
     @Override
@@ -38,9 +37,10 @@ public class ConfigTarTask extends Tar {
     }
 
     @Override
-    @SuppressWarnings("RawTypes")
+    @SuppressWarnings({"RawTypes", "deprecation"})
     public final AbstractCopyTask from(Object sourcePath, Closure closure) {
-        return this.from(sourcePath, new ClosureBackedAction<>(closure));
+        // TODO(fwindheuser): Replace usage of 'ClosureBackedAction' before moving to Gradle 8.
+        return this.from(sourcePath, new org.gradle.util.ClosureBackedAction<>(closure));
     }
 
     @Override

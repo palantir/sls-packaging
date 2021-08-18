@@ -28,6 +28,10 @@ import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -40,7 +44,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
@@ -49,7 +52,6 @@ import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.process.CommandLineArgumentProvider;
-import org.gradle.util.GFileUtils;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
@@ -59,7 +61,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
 
     @Override
-    @SuppressWarnings({"checkstyle:methodlength", "RawTypes"})
+    @SuppressWarnings({"checkstyle:methodlength", "RawTypes", "deprecation"})
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
@@ -161,23 +163,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                         task.doLast(new Action<Task>() {
                             @Override
                             public void execute(Task _task) {
-                                // Replace standard classpath with pathing jar in order to circumnavigate length limits:
-                                // https://issues.gradle.org/browse/GRADLE-2992
-                                String winFileText = GFileUtils.readFile(task.getWindowsScript());
-
-                                // Remove too-long-classpath and use pathing jar instead
-                                String cleanedText = winFileText
-                                        .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
-                                        .replaceAll(
-                                                "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
-                                                "$1%APP_HOME%\\\\lib\\\\"
-                                                        + manifestClassPathTask
-                                                                .get()
-                                                                .getArchiveFileName()
-                                                                .get()
-                                                        + "$2");
-
-                                GFileUtils.writeFile(cleanedText, task.getWindowsScript());
+                                try {
+                                    replaceManifestClasspath(
+                                            task.getWindowsScript().toPath(),
+                                            manifestClassPathTask
+                                                    .get()
+                                                    .getArchiveFileName()
+                                                    .get());
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
                             }
                         });
                     }
@@ -193,7 +188,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
             task.dependsOn(manifestClassPathTask);
 
-            JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
+            // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before moving to Gradle 8.
+            org.gradle.api.plugins.JavaPluginConvention javaPlugin =
+                    project.getConvention().findPlugin(org.gradle.api.plugins.JavaPluginConvention.class);
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
@@ -318,5 +315,21 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
+    }
+
+    private static void replaceManifestClasspath(Path windowsScript, String manifestClassPathArchiveFileName)
+            throws IOException {
+        // Replace standard classpath with pathing jar in order to circumnavigate length limits:
+        // https://issues.gradle.org/browse/GRADLE-2992
+        String winFileText = Files.readString(windowsScript);
+
+        // Remove too-long-classpath and use pathing jar instead
+        String cleanedText = winFileText
+                .replaceAll("set CLASSPATH=.*", "rem CLASSPATH declaration removed.")
+                .replaceAll(
+                        "(\"%JAVA_EXE%\" .* -classpath \")%CLASSPATH%(\" .*)",
+                        "$1%APP_HOME%\\\\lib\\\\" + manifestClassPathArchiveFileName + "$2");
+
+        Files.writeString(windowsScript, cleanedText);
     }
 }

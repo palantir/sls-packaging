@@ -37,12 +37,14 @@ public class LazyCreateStartScriptTask extends CreateStartScripts {
         return mainClassName;
     }
 
+    @SuppressWarnings("deprecation")
     @Nullable
     @Override
     public final String getMainClassName() {
         return getLazyMainClassName().get();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public final void setMainClassName(@Nullable String _mainClassName) {
         throw new UnsupportedOperationException("Use lazy property instead");

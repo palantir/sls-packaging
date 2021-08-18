@@ -37,7 +37,6 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
-import org.gradle.util.ConfigureUtil;
 
 public class BaseDistributionExtension {
 
@@ -48,6 +47,7 @@ public class BaseDistributionExtension {
             + "(:(?<classifier>[^:@?]*))?"
             + "(@(?<type>[^:@?]*))?");
 
+    private final Project project;
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
     private final Property<ProductType> productType;
@@ -61,6 +61,7 @@ public class BaseDistributionExtension {
 
     @Inject
     public BaseDistributionExtension(Project project) {
+        this.project = project;
         providerFactory = project.getProviders();
         serviceGroup = project.getObjects().property(String.class);
         serviceName = project.getObjects().property(String.class);
@@ -184,7 +185,7 @@ public class BaseDistributionExtension {
         productDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
             try {
-                ConfigureUtil.configureUsing(closure).execute(dep);
+                project.configure(dep, closure);
                 if (dep.getMinimumVersion() != null && dep.getMaximumVersion() == null) {
                     dep.setMaximumVersion(generateMaxVersion(dep.getMinimumVersion()));
                 }
@@ -225,7 +226,7 @@ public class BaseDistributionExtension {
 
     public final void ignoredProductDependency(@DelegatesTo(ProductId.class) Closure<ProductId> closure) {
         ProductId id = new ProductId();
-        ConfigureUtil.configureUsing(closure).execute(id);
+        project.configure(id, closure);
         id.isValid();
         this.ignoredProductDependencies.add(id);
     }

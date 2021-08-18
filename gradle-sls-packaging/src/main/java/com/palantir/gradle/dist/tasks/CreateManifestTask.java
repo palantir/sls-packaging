@@ -58,7 +58,6 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
-import org.gradle.util.GFileUtils;
 
 public abstract class CreateManifestTask extends DefaultTask {
     @Input
@@ -154,7 +153,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
 
-    private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) {
+    private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
@@ -162,7 +161,8 @@ public abstract class CreateManifestTask extends DefaultTask {
         boolean lockfileExists = lockfile.exists();
 
         if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
-            GFileUtils.writeFile(upToDateContents, lockfile);
+            Files.writeString(lockfile.toPath(), upToDateContents);
+
             if (!lockfileExists) {
                 getLogger().lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
             } else {
@@ -174,7 +174,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                         "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
                         relativePath, getName()));
             } else {
-                String fromDisk = GFileUtils.readFile(lockfile);
+                String fromDisk = Files.readString(lockfile.toPath());
                 Preconditions.checkState(
                         fromDisk.equals(upToDateContents),
                         "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
@@ -189,7 +189,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     private Optional<String> diff(File existing, String upToDateContents) {
         try {
             File tempFile = Files.createTempFile("product-dependencies", "lock").toFile();
-            GFileUtils.writeFile(upToDateContents, tempFile);
+            Files.writeString(tempFile.toPath(), upToDateContents);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             getProject().exec(spec -> {
