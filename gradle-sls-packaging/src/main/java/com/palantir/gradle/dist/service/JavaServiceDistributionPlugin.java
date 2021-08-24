@@ -242,7 +242,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.from(launchConfigTask.flatMap(LaunchConfigTask::getStaticLauncher), copySpec -> {
                 copySpec.into(DistTarTask.SCRIPTS_DIST_LOCATION);
             });
-            task.dependsOn(manifest);
+            task.dependsOn(manifest, launchConfigTask, startScripts, copyLauncherBinaries);
         });
 
         TaskProvider<JavaExec> runTask = project.getTasks().register("run", JavaExec.class, task -> {

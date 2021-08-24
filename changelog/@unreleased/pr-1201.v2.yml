@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Declare missing task dependencies of configTar task
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1201
