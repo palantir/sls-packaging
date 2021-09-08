@@ -109,12 +109,6 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
                                 + "dependency or ignore",
                         productId));
             }
-            if (getOptionalProductIds().get().contains(productId)) {
-                throw new IllegalArgumentException(String.format(
-                        "Encountered product dependency declaration that was also declared as optional for '%s', "
-                                + "either remove the dependency or optional declaration",
-                        productId));
-            }
             allProductDependencies.merge(
                     productId, declaredDep, (dep1, dep2) -> mergeDependencies(productId, dep1, dep2));
             if (declaredDep.getOptional()) {
