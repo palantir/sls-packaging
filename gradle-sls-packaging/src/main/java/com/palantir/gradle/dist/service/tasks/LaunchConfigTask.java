@@ -60,11 +60,6 @@ public abstract class LaunchConfigTask extends DefaultTask {
             ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
     private static final ImmutableList<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
-    // Support safepoint metrics from the internal sun.management package in production. We prefer not
-    // to use '--illegal-access=permit' so that we can avoid unintentional and unbounded illegal access
-    // that we aren't aware of.
-    private static final ImmutableList<String> java16PlusOptions =
-            ImmutableList.of("--add-exports", "java.management/sun.management=ALL-UNNAMED");
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
@@ -199,10 +194,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
                                         : ImmutableList.of())
-                        .addAllJvmOpts(
-                                javaVersion.get().compareTo(JavaVersion.toVersion("16")) >= 0
-                                        ? java16PlusOptions
-                                        : ImmutableList.of())
+                        .addAllJvmOpts(ModuleExports.getExports(getProject(), javaVersion.get(), getClasspath()))
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
                         .putAllEnv(defaultEnvironment)
