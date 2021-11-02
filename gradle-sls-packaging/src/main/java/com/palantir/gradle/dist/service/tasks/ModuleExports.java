@@ -44,7 +44,7 @@ final class ModuleExports {
 
     static ImmutableList<String> getExports(Project project, JavaVersion javaVersion, FileCollection classpath) {
         // --add-exports is unnecessary prior to java 16
-        if (javaVersion.compareTo(JavaVersion.VERSION_16) < 0) {
+        if (javaVersion.compareTo(JavaVersion.toVersion("16")) < 0) {
             return ImmutableList.of();
         }
 
