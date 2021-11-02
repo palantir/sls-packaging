@@ -1181,24 +1181,30 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     int execWithExitCode(String... tasks) {
-        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir).inheritIO()
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        Process proc = pb.start()
         int result = proc.waitFor()
         return result
     }
 
     String execWithOutput(String... tasks) {
         StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
-        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir);
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        Process proc = pb.start()
         proc.consumeProcessOutput(sout, serr)
         int result = proc.waitFor()
         int expected = 0
-        Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'", tasks.join(' '), expected), expected, result)
+        Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'\nstdout: %s\nstderr: %s",
+                tasks.join(' '), expected, sout, serr), expected, result)
         return sout.toString()
     }
 
-    String execAllowFail(String... tasks) {
-        new ProcessBuilder().command(tasks).directory(projectDir)
-                .start()
-                .waitFor()
+    void execAllowFail(String... tasks) {
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir)
+                .inheritIO()
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        pb.start().waitFor()
     }
 }

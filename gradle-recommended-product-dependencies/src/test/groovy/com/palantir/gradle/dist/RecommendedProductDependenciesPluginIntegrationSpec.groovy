@@ -27,7 +27,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
     def setup() {
         buildFile << """
         plugins {
-            id 'com.palantir.consistent-versions' version '1.28.0' apply false
+            id 'com.palantir.consistent-versions' version '2.0.0' apply false
         }
         apply plugin: 'java'
         apply plugin: 'com.palantir.recommended-product-dependencies'

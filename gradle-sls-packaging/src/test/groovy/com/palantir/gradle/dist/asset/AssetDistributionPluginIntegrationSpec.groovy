@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.asset
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.Versions
+import spock.lang.Ignore
 
 class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
@@ -149,6 +150,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
      * used. As 'compileOnly' dependencies are not included by Gradle TestKit per default, we need to extend the
      * classpath for plugins under test in 'gradle-sls-packaging/build.gradle'.
      */
+    @Ignore // plugins{} block provides classpath isolation so sls-asset-distribution cannot load gcv types!
     def 'dist project can be resolved through plain dependency when GCV is applied'() {
         buildFile << """
             plugins {

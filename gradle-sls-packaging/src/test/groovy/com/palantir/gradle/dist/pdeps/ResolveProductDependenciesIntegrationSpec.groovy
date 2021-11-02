@@ -41,7 +41,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         import ${ProductDependencies.class.getCanonicalName()}
         import ${BaseDistributionExtension.class.getCanonicalName()}
         
-        def ext = project.extensions.create("base", BaseDistributionExtension, project)
+        def ext = project.extensions.create("distribution", BaseDistributionExtension, project)
         ext.setProductDependenciesConfig(configurations.runtimeClasspath)
         ProductDependencies.registerProductDependencyTasks(project, ext);
         """.stripIndent()
@@ -50,13 +50,13 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     def 'consumes declared product dependencies'() {
         setup:
         buildFile << """
-            base {
+            distribution {
                 ${PDEP}
             }
         """.stripIndent()
 
         when:
-        runTasks(':resolveProductDependencies')
+        runTasksSuccessfully(':resolveProductDependencies')
 
         then:
         def manifest = ObjectMappers.readProductDependencyManifest(
