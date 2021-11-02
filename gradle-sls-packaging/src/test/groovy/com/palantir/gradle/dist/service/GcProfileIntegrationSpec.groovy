@@ -74,7 +74,7 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         runTasks(':extractDistTarForTest')
 
         then:
-        assert "touch-service-1.0.0/service/bin/init.sh start".execute(null, getProjectDir()).waitFor() == 0
+        execWithExitCode('touch-service-1.0.0/service/bin/init.sh', 'start') == 0
         Awaitility.await("file created using ${gc}").until({
             signalFile.exists()
         })
@@ -84,5 +84,13 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
 
         where:
         gc << GcProfile.PROFILE_NAMES.keySet().toArray()
+    }
+
+    int execWithExitCode(String... tasks) {
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir).inheritIO()
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        Process proc = pb.start()
+        int result = proc.waitFor()
+        return result
     }
 }
