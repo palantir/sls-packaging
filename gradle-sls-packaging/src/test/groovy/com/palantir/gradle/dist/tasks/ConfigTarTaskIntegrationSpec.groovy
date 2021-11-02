@@ -77,7 +77,9 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {
         buildFile << """
             apply plugin: 'com.palantir.sls-${pluginType}-distribution'
-            
+            repositories {
+                mavenCentral()
+            }
             distribution {
                 serviceName '${name}'
                 if ('${artifactType}' == 'service') {
