@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: 'Fix the Throughput GC on java 14+: use `-XX:+UseParallelGC` rather
+    than `-XX:+UseParallelOldGC`'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1220
