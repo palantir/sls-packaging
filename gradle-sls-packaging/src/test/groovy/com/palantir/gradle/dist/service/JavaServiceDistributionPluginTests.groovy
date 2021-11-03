@@ -22,6 +22,10 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
+
+import java.util.jar.Attributes
+import java.util.jar.JarOutputStream
+import java.util.jar.Manifest
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
@@ -1129,6 +1133,45 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "--add-exports",
                 "java.management/sun.management=ALL-UNNAMED"
         ])
+    }
+
+    def 'applies exports based on classpath manifests'() {
+        Manifest manifest = new Manifest()
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
+        manifest.getMainAttributes().putValue('Add-Exports', 'jdk.compiler/com.sun.tools.javac.file')
+        File testJar = new File(getProjectDir(),"test.jar");
+        testJar.withOutputStream { fos ->
+            new JarOutputStream(fos, manifest).close()
+        }
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+                javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualOpts = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'),
+                LaunchConfigTask.LaunchConfig)
+                .jvmOpts()
+
+        // Quick check
+        actualOpts.containsAll([
+                "--add-exports",
+                "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED"])
+
+        // Verify args are set in the correct order
+        int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
+        actualOpts.get(compilerPairIndex - 1) == "--add-exports"
     }
 
     private static createUntarBuildFile(File buildFile) {
