@@ -402,7 +402,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:NativeMemoryTracking=summary',
-                '-XX:+UseParallelOldGC',
+                '-XX:+UseParallelGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .env(LaunchConfigTask.defaultEnvironment + [
@@ -473,7 +473,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-Xloggc:var/log/gc-%t-%p.log",
                 "-verbose:gc",
                 "-XX:-UseBiasedLocking",
-                '-XX:+UseParallelOldGC',
+                '-XX:+UseParallelGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .dirs(["var/data/tmp"])

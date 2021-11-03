@@ -39,7 +39,7 @@ public interface GcProfile extends Serializable {
     class Throughput implements GcProfile {
         @Override
         public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
-            return ImmutableList.of("-XX:+UseParallelOldGC");
+            return ImmutableList.of("-XX:+UseParallelGC");
         }
     }
 
