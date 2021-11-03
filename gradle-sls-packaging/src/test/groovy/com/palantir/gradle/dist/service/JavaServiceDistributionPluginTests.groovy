@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
+import org.gradle.testkit.runner.BuildResult
 
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
@@ -29,6 +30,8 @@ import java.util.jar.Manifest
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
+
+import java.util.zip.ZipOutputStream
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
@@ -1172,6 +1175,30 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // Verify args are set in the correct order
         int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
         actualOpts.get(compilerPairIndex - 1) == "--add-exports"
+    }
+
+    def 'Handles jars with no manifest'() {
+        File testJar = new File(getProjectDir(),"test.jar");
+        testJar.withOutputStream { fos ->
+            new ZipOutputStream(fos).close()
+        }
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+                javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        BuildResult result = runTasks(':build', ':distTar', ':untar')
+
+        then:
+        tasksWereSuccessful(result, ':build', ':distTar', ':untar')
     }
 
     private static createUntarBuildFile(File buildFile) {
