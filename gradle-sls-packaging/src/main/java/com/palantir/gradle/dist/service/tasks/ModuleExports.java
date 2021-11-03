@@ -27,7 +27,11 @@ import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 
 /**
- * Utility functionality which mirrors {@code Add-Exports} plumbing from
+ * This utility class reuses the {@code Add-Exports} manifest entry defined in
+ * <a href="https://openjdk.java.net/jeps/261">JEP-261</a> to collect required exports
+ * from the runtime classpath so they may be applied to the static configuration.
+ *
+ * Note that this mirrors {@code Add-Exports} plumbing from
  * <a href="https://github.com/palantir/gradle-baseline/pull/1944">gradle-baseline#1944</a>.
  */
 final class ModuleExports {
