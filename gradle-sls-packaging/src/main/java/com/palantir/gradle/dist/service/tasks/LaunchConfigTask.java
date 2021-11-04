@@ -194,7 +194,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
                                         : ImmutableList.of())
-                        .addAllJvmOpts(ModuleExports.getExports(getProject(), javaVersion.get(), getClasspath()))
+                        .addAllJvmOpts(ModuleArgs.collectClasspathArgs(getProject(), javaVersion.get(), getClasspath()))
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
                         .putAllEnv(defaultEnvironment)
