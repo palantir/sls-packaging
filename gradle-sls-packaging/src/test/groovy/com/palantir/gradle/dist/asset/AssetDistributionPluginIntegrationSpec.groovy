@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.asset
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.Versions
+import spock.lang.Ignore
 
 class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
@@ -89,22 +90,6 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
-    def 'fails when asset and pod plugins are used'() {
-        given:
-        buildFile << '''
-            plugins {
-                id 'com.palantir.sls-pod-distribution'
-                id 'com.palantir.sls-asset-distribution'
-            }
-        '''.stripIndent()
-
-        when:
-        def result = runTasksAndFail(":tasks")
-
-        then:
-        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.")
-    }
-
     def 'can specify service dependencies'() {
         given:
         createUntarBuildFile(buildFile)
@@ -165,6 +150,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
      * used. As 'compileOnly' dependencies are not included by Gradle TestKit per default, we need to extend the
      * classpath for plugins under test in 'gradle-sls-packaging/build.gradle'.
      */
+    @Ignore // plugins{} block provides classpath isolation so sls-asset-distribution cannot load gcv types!
     def 'dist project can be resolved through plain dependency when GCV is applied'() {
         buildFile << """
             plugins {

@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Support `--add-opens` in addition to `--add-exports` based on classpath
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1223

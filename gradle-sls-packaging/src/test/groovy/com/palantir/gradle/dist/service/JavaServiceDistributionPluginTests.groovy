@@ -22,11 +22,18 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
+import org.gradle.testkit.runner.BuildResult
+
+import java.util.jar.Attributes
+import java.util.jar.JarOutputStream
+import java.util.jar.Manifest
 import spock.lang.Unroll
 
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
+
+import java.util.zip.ZipOutputStream
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
@@ -372,7 +379,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
 
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
@@ -400,7 +407,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:NativeMemoryTracking=summary',
-                '-XX:+UseParallelOldGC',
+                '-XX:+UseParallelGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .env(LaunchConfigTask.defaultEnvironment + [
@@ -438,7 +445,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'produce distribution with java 8 gc logging'() {
         createUntarBuildFile(buildFile)
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaHome 'foo'
@@ -471,7 +478,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-Xloggc:var/log/gc-%t-%p.log",
                 "-verbose:gc",
                 "-XX:-UseBiasedLocking",
-                '-XX:+UseParallelOldGC',
+                '-XX:+UseParallelGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .dirs(["var/data/tmp"])
@@ -485,7 +492,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'respects java version'() {
         createUntarBuildFile(buildFile)
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 14
@@ -535,7 +542,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 enableManifestClasspath true
             }
             dependencies {
-              compile "com.google.guava:guava:19.0"
+              implementation "com.google.guava:guava:19.0"
             }
         '''.stripIndent()
 
@@ -764,22 +771,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
-    def 'fails when pod and service plugins are both applied'() {
-        given:
-        buildFile << '''
-            plugins {
-                id 'com.palantir.sls-pod-distribution'
-                id 'com.palantir.sls-java-service-distribution'
-            }
-        '''.stripIndent()
-
-        when:
-        def result = runTasksAndFail(":tasks")
-
-        then:
-        result.output.contains("The plugins 'com.palantir.sls-pod-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
-    }
-
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
         def parent = helper.addSubproject('parent', '''
@@ -800,7 +791,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             dependencies {
                 implementation project(':child')
-                compile 'org.mockito:mockito-core:2.7.22'
+                implementation 'org.mockito:mockito-core:2.7.22'
             }
         ''')
 
@@ -864,10 +855,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             buildscript {
                 repositories {
                     mavenCentral()
-                    jcenter()
                 }
                 dependencies {
-                    classpath 'com.palantir.gradle.docker:gradle-docker:0.25.0'
+                    classpath 'com.palantir.gradle.docker:gradle-docker:0.27.0'
                 }
             }
             apply plugin: 'com.palantir.docker-compose'
@@ -936,7 +926,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             dependencies {
                 implementation project(':child')
-                compile 'org.mockito:mockito-core:2.7.22'
+                implementation 'org.mockito:mockito-core:2.7.22'
             }
         ''')
 
@@ -1093,7 +1083,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
-                compile files("${EXTERNAL_JAR}")
+                implementation files("${EXTERNAL_JAR}")
                 javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
             }
             tasks.jar.archiveBaseName = "internal"
@@ -1116,7 +1106,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
-                compile files("${EXTERNAL_JAR}")
+                implementation files("${EXTERNAL_JAR}")
                 javaAgent files("${EXTERNAL_JAR}")
             }
             tasks.jar.archiveBaseName = "internal"
@@ -1135,7 +1125,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'exports management packages on new javas'() {
         createUntarBuildFile(buildFile)
         buildFile << """
-            dependencies { compile files("${EXTERNAL_JAR}") }
+            dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 17
@@ -1152,6 +1142,108 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "--add-exports",
                 "java.management/sun.management=ALL-UNNAMED"
         ])
+    }
+
+    def 'applies exports based on classpath manifests'() {
+        Manifest manifest = new Manifest()
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
+        manifest.getMainAttributes().putValue('Add-Exports', 'jdk.compiler/com.sun.tools.javac.file')
+        File testJar = new File(getProjectDir(),"test.jar");
+        testJar.withOutputStream { fos ->
+            new JarOutputStream(fos, manifest).close()
+        }
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+                javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualOpts = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'),
+                LaunchConfigTask.LaunchConfig)
+                .jvmOpts()
+
+        // Quick check
+        actualOpts.containsAll([
+                "--add-exports",
+                "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED"])
+
+        // Verify args are set in the correct order
+        int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
+        actualOpts.get(compilerPairIndex - 1) == "--add-exports"
+    }
+
+    def 'applies opens based on classpath manifests'() {
+        Manifest manifest = new Manifest()
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
+        manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
+        File testJar = new File(getProjectDir(),"test.jar");
+        testJar.withOutputStream { fos ->
+            new JarOutputStream(fos, manifest).close()
+        }
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+                javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualOpts = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'),
+                LaunchConfigTask.LaunchConfig)
+                .jvmOpts()
+
+        // Quick check
+        actualOpts.containsAll([
+                "--add-opens",
+                "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED"])
+
+        // Verify args are set in the correct order
+        int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
+        actualOpts.get(compilerPairIndex - 1) == "--add-opens"
+    }
+
+    def 'Handles jars with no manifest'() {
+        File testJar = new File(getProjectDir(),"test.jar");
+        testJar.withOutputStream { fos ->
+            new ZipOutputStream(fos).close()
+        }
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+                javaAgent "net.bytebuddy:byte-buddy-agent:1.10.21"
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        BuildResult result = runTasks(':build', ':distTar', ':untar')
+
+        then:
+        tasksWereSuccessful(result, ':build', ':distTar', ':untar')
     }
 
     private static createUntarBuildFile(File buildFile) {
@@ -1204,24 +1296,30 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     int execWithExitCode(String... tasks) {
-        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir).inheritIO()
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        Process proc = pb.start()
         int result = proc.waitFor()
         return result
     }
 
     String execWithOutput(String... tasks) {
         StringBuffer sout = new StringBuffer(), serr = new StringBuffer()
-        Process proc = new ProcessBuilder().command(tasks).directory(projectDir).start()
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir);
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        Process proc = pb.start()
         proc.consumeProcessOutput(sout, serr)
         int result = proc.waitFor()
         int expected = 0
-        Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'", tasks.join(' '), expected), expected, result)
+        Assert.assertEquals(sprintf("Expected command '%s' to exit with '%d'\nstdout: %s\nstderr: %s",
+                tasks.join(' '), expected, sout, serr), expected, result)
         return sout.toString()
     }
 
-    String execAllowFail(String... tasks) {
-        new ProcessBuilder().command(tasks).directory(projectDir)
-                .start()
-                .waitFor()
+    void execAllowFail(String... tasks) {
+        ProcessBuilder pb = new ProcessBuilder().command(tasks).directory(projectDir)
+                .inheritIO()
+        pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
+        pb.start().waitFor()
     }
 }

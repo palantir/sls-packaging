@@ -63,7 +63,9 @@
             <property name="tokens" value="VARIABLE_DEF"/>
             <property name="allowSamelineMultipleAnnotations" value="true"/>
         </module>
-        <module name="AnnotationUseStyle"/> <!-- Java Style Guide: Annotations -->
+        <module name="AnnotationUseStyle"> <!-- Java Style Guide: Annotations -->
+            <property name="trailingArrayComma" value="ignore"/>
+        </module>
         <module name="ArrayTypeStyle"/> <!-- Java Style Guide: No C-style array declarations -->
         <module name="AvoidEscapedUnicodeCharacters"> <!-- Java Style Guide: Non-ASCII characters -->
             <property name="allowEscapesForControlCharacters" value="true"/>
@@ -405,7 +407,7 @@
             <property name="ignoredAnnotations" value="ParameterizedTest, Test, Before, BeforeEach, After, AfterEach, BeforeClass, BeforeAll, AfterClass, AfterAll"/>
         </module>
         <module name="JavadocMethod"> <!-- Java Style Guide: Where Javadoc is used -->
-            <property name="scope" value="public"/>
+            <property name="accessModifiers" value="public"/>
             <property name="allowMissingParamTags" value="true"/>
             <property name="allowMissingReturnTag" value="true"/>
             <property name="allowedAnnotations" value="Override, Test"/>

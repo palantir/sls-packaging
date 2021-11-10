@@ -8,34 +8,25 @@ apply plugin: 'de.undercouch.download'
 
 dependencies {
     compileOnly 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
-    testRuntime 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
+    testRuntimeOnly 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
 
-    compile gradleApi()
-    compile project(':gradle-recommended-product-dependencies')
-    compile 'com.google.guava:guava'
-    compile 'com.fasterxml.jackson.core:jackson-databind'
-    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-guava"
-    compile 'com.palantir.safe-logging:preconditions'
+    api gradleApi()
+    api project(':gradle-recommended-product-dependencies')
+    api 'com.google.guava:guava'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+    api "com.fasterxml.jackson.datatype:jackson-datatype-guava"
+    api 'com.palantir.safe-logging:preconditions'
+    implementation 'org.apache.commons:commons-lang3'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'
 
-    testCompile gradleTestKit()
-    testCompile 'com.netflix.nebula:nebula-test'
-    testCompile 'org.awaitility:awaitility'
-}
-
-
-/**
- * Per default, Gradle TestKit excludes compileOnly dependencies resulting in ClassNotFoundExceptions when sls-packaging
- * tries to access 'gradle-consistent-versions' classes in integ tests e.g. in 'AssetDistributionPluginIntegrationSpec'.
- * https://discuss.gradle.org/t/testkit-somehow-excludes-compileonly-dependencies
- */
-tasks.withType(PluginUnderTestMetadata).configureEach {
-    pluginClasspath.from(configurations.testRuntime)
+    testImplementation gradleTestKit()
+    testImplementation 'com.netflix.nebula:nebula-test'
+    testImplementation 'org.awaitility:awaitility'
 }
 
 pluginBundle {
@@ -52,10 +43,6 @@ pluginBundle {
         assetDistributionPlugin {
             id = 'com.palantir.sls-asset-distribution'
             displayName = 'Creates SLS asset distributions'
-        }
-        podDistributionPlugin {
-            id = 'com.palantir.sls-pod-distribution'
-            displayName = 'Creates SLS pod distributions'
         }
     }
 }

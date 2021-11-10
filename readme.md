@@ -54,19 +54,11 @@ layout conventions.  Asset distributions differ from service distributions in th
 `service` or `var` directory, and instead utilize a top-level `asset` directory that can contain arbitrary files.
 See [below](#asset-distribution-plugin) for usage.
 
-## Pod Distribution Gradle Plugin
-
-This plugin helps generate configuration to describe a collection of services and produces a distribution that conforms
-with Palantir's SLS pod specification. Pod distributions contain a deployment directory with the `pod.yml` and
-`manifest.yml` files in it. A `pod.yml` contains a set of services that are intended to run together and may have
-requirements about shared resources, such as shared disk.
-See [below](#pod-distribution-plugin) for usage.
-
 ## Usage
 
 ### Product dependencies
 
-'Product dependencies' are declarative metadata about the products your product/asset/pod requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
+'Product dependencies' are declarative metadata about the products your product/asset requires in order to function. When you run `./gradlew distTar`, your product dependencies are embedded in the resultant dist in the `deployment/manifest.yml` file.
 
 Most of your product dependencies should be inferred automatically from on the libraries you depend on.  Any one of these jars may contain an embedded 'recommended product dependency' in its MANIFEST.MF (embedded using the [Recommended Product Dependencies Plugin][]).
 
@@ -282,61 +274,6 @@ The example above, when applied to a project rooted at `~/project`, would create
             another/relocated/path            # contents from `~/project/another/path`
 
 Note that repeated calls to `assets` are processed in-order, and as such, it is possible to overwrite resources
-by specifying that a later invocation be relocated to a previously used destination's ancestor directory.
-
-### Pod Distribution plugin
-
-Apply the plugin using standard Gradle convention:
-
-    plugins {
-        id 'com.palantir.sls-pod-distribution'
-    }
-
-A sample configuration for the Pod plugin:
-
-    distribution {
-        podName "pod-name"
-
-        service "bar-service", {
-            productGroup = "com.palantir.foo"
-            productName = "bar"
-            productVersion = "1.0.0"
-            volumeMap = ["bar-volume": "random-volume"]
-        }
-        service "baz-service", {
-            productGroup = "com.palantir.foo"
-            productName = "baz"
-            productVersion = "1.0.0"
-            volumeMap = ["baz-volume": "random-volume"]
-        }
-
-        volume "random-volume", {
-            desiredSize = "10G"
-        }
-    }
-
-The complete list of configurable properties:
-
- * `podName` the name of this pod, used to construct the final artifact's file name.
- * `service` <service name> <configuration closure> generates a block for a service within the pod. Service names must be kebab case.
-    A service block can be configured with the following properties:
-   * `productGroup` <group> the group of the product backing this service
-   * `productName` <name> the name of the product backing this service
-   * `productVersion` <version> the version of the product backing this service
-   * `volumeMap` <map<mount name, volume name>> a map of volumes to be attached to this service at deployment. Any volume name used
-      must also be declared in a volume block.
- * `volume` <volume name> <configuration closure> generates a block for a shared pod volume. A volume block can be
-    configured with the following properties:
-   * `desiredSize` <size> defines the size of the volume to be provisioned for this pod
-
-The example above, when applied to a project rooted at `~/project`, would create a distribution with the following structure:
-
-    [service-name]-[service-version]/
-        deployment/
-            manifest.yml                      # simple package manifest
-            pod.yml                           # pod definition generated from configuration
-
-Note that repeated calls to `services` and `volumes` are processed in-order, and as such, it is possible to overwrite resources
 by specifying that a later invocation be relocated to a previously used destination's ancestor directory.
 
 ### Packaging

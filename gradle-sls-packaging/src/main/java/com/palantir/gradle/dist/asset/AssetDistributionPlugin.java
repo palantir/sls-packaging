@@ -18,7 +18,6 @@ package com.palantir.gradle.dist.asset;
 
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
-import com.palantir.gradle.dist.pod.PodDistributionPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
@@ -43,10 +42,6 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {
             throw new InvalidUserCodeException("The plugins 'com.palantir.sls-asset-distribution' and "
                     + "'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.");
-        }
-        if (project.getPlugins().hasPlugin(PodDistributionPlugin.class)) {
-            throw new InvalidUserCodeException("The plugins 'com.palantir.sls-pod-distribution' and "
-                    + "'com.palantir.sls-asset-distribution' cannot be used in the same Gradle project.");
         }
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
@@ -104,7 +99,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
                     }));
         }));
 
-        TaskProvider<Tar> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
+        TaskProvider<ConfigTarTask> configTar = ConfigTarTask.createConfigTarTask(project, distributionExtension);
         configTar.configure(task -> task.dependsOn(manifest));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);

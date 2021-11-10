@@ -16,16 +16,17 @@
 
 package com.palantir.gradle.dist.tasks
 
-import com.palantir.gradle.dist.GradleIntegrationSpec
 
-class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
+import nebula.test.IntegrationSpec
+
+class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
 
     def 'configTar task exists for services'() {
         setup:
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
-        runTasks(':configTar')
+        runTasksSuccessfully(':configTar')
 
         then:
         fileExists('build/distributions/foo-service-0.0.1.service.config.tgz')
@@ -36,7 +37,7 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
-        runTasks(':configTar')
+        runTasksSuccessfully(':configTar')
 
         then:
         fileExists('build/distributions/foo-asset-0.0.1.asset.config.tgz')
@@ -47,14 +48,15 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
-        runTasks(':configTar', ':untar')
+        runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        def files = directory('dist/foo-service-0.0.1/', projectDir).list()
-        files.length == 1
+        def files = new File(projectDir, 'dist/foo-service-0.0.1/').list()
+        files.length == 2
         files.contains('deployment')
-        def manifest = file('dist/foo-service-0.0.1/deployment/manifest.yml', projectDir).text
+        def manifest = new File(projectDir, 'dist/foo-service-0.0.1/deployment/manifest.yml').text
         manifest.contains('service.v1')
+        fileExists('dist/foo-service-0.0.1/service/bin/launcher-static.yml')
     }
 
     def 'configTar task contains the necessary deployment files for assets'() {
@@ -62,24 +64,27 @@ class ConfigTarTaskIntegrationSpec extends GradleIntegrationSpec {
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
-        runTasks(':configTar', ':untar')
+        runTasksSuccessfully(':configTar', ':untar')
 
         then:
-        def files = directory('dist/foo-asset-0.0.1/', projectDir).list()
+        def files = new File(projectDir, 'dist/foo-asset-0.0.1/').list()
         files.length == 1
         files.contains('deployment')
-        def manifest = file('dist/foo-asset-0.0.1/deployment/manifest.yml', projectDir).text
+        def manifest = new File(projectDir, 'dist/foo-asset-0.0.1/deployment/manifest.yml').text
         manifest.contains('asset.v1')
     }
 
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {
         buildFile << """
-            plugins {
-                id 'com.palantir.sls-${pluginType}-distribution'
+            apply plugin: 'com.palantir.sls-${pluginType}-distribution'
+            repositories {
+                mavenCentral()
             }
-            
             distribution {
                 serviceName '${name}'
+                if ('${artifactType}' == 'service') {
+                    mainClass 'main.Main'
+                }
             }
 
             version "0.0.1"

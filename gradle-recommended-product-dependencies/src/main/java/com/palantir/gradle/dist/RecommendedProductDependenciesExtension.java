@@ -23,14 +23,15 @@ import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
-import org.gradle.util.ConfigureUtil;
 
 public class RecommendedProductDependenciesExtension {
+    private final Project project;
     private final SetProperty<ProductDependency> recommendedProductDependencies;
     private final ProviderFactory providerFactory;
 
     @Inject
     public RecommendedProductDependenciesExtension(Project project) {
+        this.project = project;
         this.recommendedProductDependencies =
                 project.getObjects().setProperty(ProductDependency.class).empty();
         this.providerFactory = project.getProviders();
@@ -40,7 +41,7 @@ public class RecommendedProductDependenciesExtension {
     public final void productDependency(@DelegatesTo(ProductDependency.class) Closure<?> closure) {
         recommendedProductDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
-            ConfigureUtil.configureUsing(closure).execute(dep);
+            project.configure(dep, closure);
             if (dep.getOptional()) {
                 throw new IllegalArgumentException(String.format(
                         "Optional dependencies are not supported for recommended product "

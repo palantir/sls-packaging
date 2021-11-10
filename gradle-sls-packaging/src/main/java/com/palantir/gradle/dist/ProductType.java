@@ -27,7 +27,4 @@ public enum ProductType {
 
     @JsonProperty("asset.v1")
     ASSET_V1,
-
-    @JsonProperty("pod.v1")
-    POD_V1,
 }

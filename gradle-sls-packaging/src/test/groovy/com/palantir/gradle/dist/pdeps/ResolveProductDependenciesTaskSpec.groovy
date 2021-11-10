@@ -65,16 +65,6 @@ class ResolveProductDependenciesTaskSpec extends ProjectSpec {
         e.message.contains("Encountered product dependency declaration that was also ignored")
     }
 
-    def 'throws if declared dependency is also optional'() {
-        when:
-        task.optionalProductIds.add(PRODUCT_ID)
-        task.computeDependencies(List.of(PDEP), ImmutableSetMultimap.of())
-
-        then:
-        def e = thrown IllegalArgumentException
-        e.message.contains("Encountered product dependency declaration that was also declared as optional")
-    }
-
     def "throws on declared self-dependency"() {
         when:
         task.serviceGroup.set("group")

@@ -2,19 +2,18 @@ buildscript {
     repositories {
         gradlePluginPortal()
         mavenCentral()
-        jcenter()
     }
 
     dependencies {
-        classpath 'com.palantir.gradle.externalpublish:gradle-external-publish-plugin:1.2.1'
-        classpath 'com.palantir.javaformat:gradle-palantir-java-format:2.0.1'
-        classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:1.30.0'
-        classpath 'com.gradle.publish:plugin-publish-plugin:0.15.0'
-        classpath 'com.palantir.baseline:gradle-baseline-java:3.87.0'
+        classpath 'com.palantir.gradle.externalpublish:gradle-external-publish-plugin:1.5.0'
+        classpath 'com.palantir.javaformat:gradle-palantir-java-format:2.6.0'
+        classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:2.0.0'
+        classpath 'com.gradle.publish:plugin-publish-plugin:0.16.0'
+        classpath 'com.palantir.baseline:gradle-baseline-java:4.41.0'
         classpath 'de.undercouch:gradle-download-task:4.1.2'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:0.12.3'
-        classpath 'gradle.plugin.org.inferred:gradle-processors:3.3.0'
-        classpath 'com.palantir.gradle.revapi:gradle-revapi:1.4.4'
+        classpath 'gradle.plugin.org.inferred:gradle-processors:3.6.0'
+        classpath 'com.palantir.gradle.revapi:gradle-revapi:1.5.0'
     }
 }
 
@@ -30,14 +29,13 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
     }
 }
 
 subprojects {
     apply plugin: 'java-library'
     java {
-        sourceCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
     }
 
     tasks.withType(JavaCompile) {
