@@ -27,6 +27,8 @@ import org.gradle.testkit.runner.BuildResult
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import spock.lang.Unroll
+
 import java.util.zip.ZipFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
@@ -847,7 +849,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
     }
 
-    def 'docker can resolve inter-project product dependencies'() {
+    @Unroll
+    def 'docker can resolve inter-project product dependencies (#writeLocksTask)'() {
         buildFile << """
             buildscript {
                 repositories {
@@ -889,7 +892,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         """.stripIndent())
 
-        runTasks("--write-locks")
+        runTasks(writeLocksTask)
 
         // We're just using generateDockerCompose as it conveniently resolves the 'docker' configuration for us
         // Which in turn, conveniently depends on all subprojects' `productDependencies` configurations
@@ -897,6 +900,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         expect:
         runTasks("generateDockerCompose")
+
+        where:
+        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks']
     }
 
     def 'uses the runtimeClasspath in manifest jar'() {

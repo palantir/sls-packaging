@@ -48,6 +48,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -139,7 +140,7 @@ public abstract class CreateManifestTask extends DefaultTask {
             return;
         }
 
-        if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
+        if (shouldWriteLocks(getProject())) {
             lockfile.delete();
             getLogger().lifecycle("Deleted {}", relativePath);
         } else {
@@ -153,6 +154,15 @@ public abstract class CreateManifestTask extends DefaultTask {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
 
+    public static boolean shouldWriteLocks(Project project) {
+        String taskName = project.getPath().equals(":")
+                ? ":writeProductDependenciesLocks"
+                : project.getPath() + ":writeProductDependenciesLocks";
+        Gradle gradle = project.getGradle();
+        return gradle.getStartParameter().isWriteDependencyLocks()
+                || gradle.getTaskGraph().hasTask(taskName);
+    }
+
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
         File lockfile = getLockfile();
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
@@ -160,7 +170,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                 productDeps, getInRepoProductIds().get());
         boolean lockfileExists = lockfile.exists();
 
-        if (getProject().getGradle().getStartParameter().isWriteDependencyLocks()) {
+        if (shouldWriteLocks(getProject())) {
             Files.writeString(lockfile.toPath(), upToDateContents);
 
             if (!lockfileExists) {
@@ -244,7 +254,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                     task.getOutputs().upToDateWhen(new Spec<Task>() {
                         @Override
                         public boolean isSatisfiedBy(Task _task) {
-                            return !project.getGradle().getStartParameter().isWriteDependencyLocks();
+                            return !shouldWriteLocks(project);
                         }
                     });
 
@@ -256,6 +266,11 @@ public abstract class CreateManifestTask extends DefaultTask {
                     .named(LifecycleBasePlugin.CHECK_TASK_NAME)
                     .configure(task -> task.dependsOn(createManifest));
         });
+
+        project.getTasks()
+                .register("writeProductDependenciesLocks", WriteProductDependenciesLocksMarkerTask.class, task -> {
+                    task.dependsOn(createManifest);
+                });
 
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
         // We can't do this at configuration time because it would mess up gradle-consistent-versions.

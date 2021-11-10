@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.tasks
 import com.palantir.gradle.dist.ObjectMappers
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesIntegrationSpec
 import nebula.test.IntegrationSpec
+import spock.lang.Unroll
 
 class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
@@ -177,6 +178,28 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                         "optional"           : false
                 ]
         ]
+    }
+
+    @Unroll
+    def 'writes locks when #writeLocksTask is on the command line'() {
+        buildFile << """
+        distribution {
+            ${ResolveProductDependenciesIntegrationSpec.PDEP}
+        }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksSuccessfully(writeLocksTask)
+
+        then:
+        buildResult.wasExecuted(':createManifest')
+        file('product-dependencies.lock').text == """\
+        # Run ./gradlew --write-locks to regenerate this file
+        group1:name1 (1.0.0, 1.3.x)
+        """.stripIndent()
+
+        where:
+        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
     }
 
     def "check depends on createManifest"() {
