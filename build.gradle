@@ -21,6 +21,7 @@ apply plugin: 'com.palantir.external-publish'
 apply plugin: 'com.palantir.baseline'
 apply plugin: 'com.palantir.git-version'
 apply plugin: 'com.palantir.consistent-versions'
+apply plugin: 'com.palantir.baseline-java-versions'
 
 allprojects {
     apply plugin: 'com.palantir.java-format'
@@ -34,11 +35,12 @@ allprojects {
 
 subprojects {
     apply plugin: 'java-library'
-    java {
-        sourceCompatibility JavaVersion.VERSION_11
-    }
 
     tasks.withType(JavaCompile) {
         options.compilerArgs += ['-Werror', '-Xlint:deprecation']
     }
+}
+
+javaVersions {
+    libraryTarget = 11
 }
