@@ -83,7 +83,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         checkArgs = objectFactory.listProperty(String.class).empty();
         defaultJvmOpts = objectFactory.listProperty(String.class).empty();
         excludeFromVar = objectFactory.listProperty(String.class);
-        excludeFromVar.addAll("log", "run");
+        excludeFromVar.addAll("conf", "log", "run", "security");
 
         env = objectFactory.mapProperty(String.class, String.class).empty();
         setProductType(ProductType.SERVICE_V1);
