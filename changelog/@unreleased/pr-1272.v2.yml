@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Explicitly declare variant for resolving product dependencies
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1272
