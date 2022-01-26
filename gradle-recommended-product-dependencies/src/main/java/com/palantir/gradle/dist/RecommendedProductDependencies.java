@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -29,6 +30,7 @@ import org.immutables.value.Value;
 @Value.Style(jdkOnly = true)
 @JsonSerialize(as = ImmutableRecommendedProductDependencies.class)
 @JsonDeserialize(as = ImmutableRecommendedProductDependencies.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface RecommendedProductDependencies {
     String SLS_RECOMMENDED_PRODUCT_DEPS_KEY = "Sls-Recommended-Product-Dependencies";
 

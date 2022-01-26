@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Ignore unknown properties in serialized data to support forward compatibility.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1280
