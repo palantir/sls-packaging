@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
@@ -28,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class ProductDependency implements Serializable {
     @JsonProperty("product-group")
     private String productGroup;
