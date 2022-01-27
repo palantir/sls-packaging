@@ -407,6 +407,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:NativeMemoryTracking=summary',
+                '-XX:FlightRecorderOptions=stackdepth=256',
                 '-XX:+UseParallelGC',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -431,6 +432,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:NativeMemoryTracking=summary',
+                '-XX:FlightRecorderOptions=stackdepth=256',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
             .env(LaunchConfigTask.defaultEnvironment)
@@ -469,6 +471,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:NativeMemoryTracking=summary',
+                '-XX:FlightRecorderOptions=stackdepth=256',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
                 "-XX:-TraceClassUnloading",
