@@ -70,7 +70,11 @@ public abstract class LaunchConfigTask extends DefaultTask {
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
             "-Dsun.net.inetaddr.ttl=20",
-            "-XX:NativeMemoryTracking=summary");
+            "-XX:NativeMemoryTracking=summary",
+            // Increase default JFR stack depth beyond the default (conservative) 64 frames.
+            // This can be overridden by user-provided options.
+            // See sls-packaging#1230
+            "-XX:FlightRecorderOptions=stackdepth=256");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
