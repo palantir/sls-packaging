@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Increase default JFR stack depth to 256 frames (from 64)
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1282
