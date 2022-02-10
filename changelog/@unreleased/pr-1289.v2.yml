@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Update go-java-launcher to 1.17.0 (was 1.15.0)
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1289
