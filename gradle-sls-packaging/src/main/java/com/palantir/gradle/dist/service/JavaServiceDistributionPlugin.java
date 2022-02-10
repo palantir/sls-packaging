@@ -27,6 +27,9 @@ import com.palantir.gradle.dist.service.tasks.LazyCreateStartScriptTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.logsafe.Preconditions;
+import com.palantir.logsafe.SafeArg;
+import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -34,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
 import org.gradle.api.InvalidUserCodeException;
@@ -55,9 +59,9 @@ import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
-    private static final String GO_JAVA_VERSION = "1.17.0";
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:" + GO_JAVA_VERSION;
-    private static final String GO_INIT = "com.palantir.launching:go-init:" + GO_JAVA_VERSION;
+    private static final String GO_JAVA_VERSION_PROPERTIES = "go-java-version.properties";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
+    private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
 
     @Override
@@ -98,10 +102,11 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
         // Create configuration to load executable dependencies
+        String goJavaLauncherVersion = getGoJavaLauncherVersion();
         Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
-        project.getDependencies().add(launcherConfig.getName(), GO_JAVA_LAUNCHER);
+        project.getDependencies().add(launcherConfig.getName(), GO_JAVA_LAUNCHER + ":" + goJavaLauncherVersion);
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
-        project.getDependencies().add(initConfig.getName(), GO_INIT);
+        project.getDependencies().add(initConfig.getName(), GO_INIT + ":" + goJavaLauncherVersion);
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
                     task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
@@ -331,5 +336,20 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                         "$1%APP_HOME%\\\\lib\\\\" + manifestClassPathArchiveFileName + "$2");
 
         Files.writeString(windowsScript, cleanedText);
+    }
+
+    static String getGoJavaLauncherVersion() {
+        Properties properties = new Properties();
+        try {
+            properties.load(JavaServiceDistributionPlugin.class.getResourceAsStream("/" + GO_JAVA_VERSION_PROPERTIES));
+        } catch (IOException e) {
+            throw new SafeRuntimeException(
+                    "Error loading go-java-version properties file",
+                    e,
+                    SafeArg.of("properties", GO_JAVA_VERSION_PROPERTIES));
+        }
+        return Preconditions.checkNotNull(
+                properties.getProperty("go-java-version"),
+                "Expected go-java-launcher version to be set in " + GO_JAVA_VERSION_PROPERTIES);
     }
 }
