@@ -41,6 +41,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     private static final String EXTERNAL_JAR = new File("src/test/resources/external.jar").getAbsolutePath();
 
+    def setup() {
+        file('gradle.properties') << """
+        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}=${Versions.GO_JAVA_LAUNCHER}
+        """.stripIndent()
+    }
+
     def 'produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
         createUntarBuildFile(buildFile)
@@ -1247,6 +1253,40 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         tasksWereSuccessful(result, ':build', ':distTar', ':untar')
+    }
+
+    def 'can resolve go-java-launcher binaries through GCV'() {
+        // Invalidate the property added in 'setup()'
+        file('gradle.propertes').text.replace(
+                "${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}", "unusedProp")
+
+        def goJavaLauncherVersion = "1.18.0"
+
+        buildFile.text = """
+        plugins {
+            id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
+            id 'com.palantir.sls-java-service-distribution'
+        }
+        
+        version '0.0.1'
+        distribution {
+            serviceName 'service-name'
+            mainClass 'test.Test'
+        }
+        """.stripIndent()
+
+        file('versions.props') << """
+        com.palantir.launching:* = ${goJavaLauncherVersion}
+        """.stripIndent()
+
+        createUntarTask(buildFile)
+
+        when:
+        runTasks(':distTar', ':untar', '--write-locks')
+
+        then:
+        fileExists("dist/service-name-0.0.1/service/bin/go-java-launcher-${goJavaLauncherVersion}/service/bin")
+        fileExists("dist/service-name-0.0.1/service/bin/go-init-${goJavaLauncherVersion}/service/bin")
     }
 
     private static createUntarBuildFile(File buildFile) {

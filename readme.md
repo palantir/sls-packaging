@@ -145,6 +145,13 @@ Apply the plugin using standard Gradle convention:
         id 'com.palantir.sls-java-service-distribution'
     }
 
+Additionally, declare the version of [go-java-launcher](https://github.com/palantir/go-java-launcher) to use:
+
+```
+# Add to 'versions.props' 
+com.palantir.launching:* = 1.18.0
+```
+
 A sample configuration for the Service plugin:
 
     distribution {

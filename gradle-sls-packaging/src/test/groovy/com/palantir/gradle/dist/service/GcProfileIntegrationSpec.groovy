@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.service.tasks
+package com.palantir.gradle.dist.service
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.gc.GcProfile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,6 +60,10 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         Files.createDirectories(path.getParent())
         Files.copy(touchService, path)
         assert signalFile.exists() == false
+
+        file('gradle.properties') << """
+        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}=${Versions.GO_JAVA_LAUNCHER}
+        """.stripIndent()
     }
 
     @Unroll

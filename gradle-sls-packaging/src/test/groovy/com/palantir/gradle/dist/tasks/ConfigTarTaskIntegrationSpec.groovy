@@ -16,10 +16,17 @@
 
 package com.palantir.gradle.dist.tasks
 
-
+import com.palantir.gradle.dist.Versions
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin
 import nebula.test.IntegrationSpec
 
 class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
+
+    def setup() {
+        file('gradle.properties') << """
+        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}=${Versions.GO_JAVA_LAUNCHER}
+        """.stripIndent()
+    }
 
     def 'configTar task exists for services'() {
         setup:
