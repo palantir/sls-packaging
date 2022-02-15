@@ -55,8 +55,9 @@ import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
-    private static final String GO_INIT = "com.palantir.launching:go-init";
+    private static final String GO_JAVA_VERSION = "1.18.0";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:" + GO_JAVA_VERSION;
+    private static final String GO_INIT = "com.palantir.launching:go-init:" + GO_JAVA_VERSION;
     public static final String GROUP_NAME = "Distribution";
 
     @Override
@@ -101,12 +102,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getDependencies().add(launcherConfig.getName(), GO_JAVA_LAUNCHER);
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
         project.getDependencies().add(initConfig.getName(), GO_INIT);
-
-        project.getRepositories().mavenCentral(m -> {
-            m.setName("go-java-launcher-repository");
-            m.content(content -> content.onlyForConfigurations(launcherConfig.getName(), initConfig.getName()));
-        });
-
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
                     task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
