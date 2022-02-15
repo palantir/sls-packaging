@@ -22,18 +22,15 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
-import org.gradle.testkit.runner.BuildResult
-
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-import spock.lang.Unroll
-
 import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
-
-import java.util.zip.ZipOutputStream
+import spock.lang.Unroll
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
@@ -197,6 +194,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             sourceCompatibility = '1.7'
         '''.stripIndent()
 
+        addGoJavaLauncherDeps(buildFile)
         createUntarTask(buildFile)
 
         createFile('var/log/service-name.log')
@@ -247,6 +245,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             sourceCompatibility = '1.7'
         '''.stripIndent()
 
+        addGoJavaLauncherDeps(buildFile)
         createUntarTask(buildFile)
 
         when:
@@ -395,49 +394,49 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
-            .mainClass("test.Test")
-            .serviceName("service-name")
-            .javaHome("foo")
-            .args(["myArg1", "myArg2"])
-            .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
-            .jvmOpts([
-                '-XX:+CrashOnOutOfMemoryError',
-                '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
-                '-Dsun.net.inetaddr.ttl=20',
-                '-XX:NativeMemoryTracking=summary',
-                '-XX:FlightRecorderOptions=stackdepth=256',
-                '-XX:+UseParallelGC',
-                '-Xmx4M',
-                '-Djavax.net.ssl.trustStore=truststore.jks'])
-            .env(LaunchConfigTask.defaultEnvironment + [
-                "key1": "val1",
-                "key2": "val2"])
-            .dirs(["var/data/tmp"])
-            .build()
+                .mainClass("test.Test")
+                .serviceName("service-name")
+                .javaHome("foo")
+                .args(["myArg1", "myArg2"])
+                .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-XX:+UseParallelGC',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .env(LaunchConfigTask.defaultEnvironment + [
+                        "key1": "val1",
+                        "key2": "val2"])
+                .dirs(["var/data/tmp"])
+                .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
 
         def expectedCheckConfig = LaunchConfigTask.LaunchConfig.builder()
-            .mainClass(actualStaticConfig.mainClass())
-            .serviceName(actualStaticConfig.serviceName())
-            .javaHome(actualStaticConfig.javaHome())
-            .args(["myCheckArg1", "myCheckArg2"])
-            .classpath(actualStaticConfig.classpath())
-            .jvmOpts([
-                '-XX:+CrashOnOutOfMemoryError',
-                '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
-                '-Dsun.net.inetaddr.ttl=20',
-                '-XX:NativeMemoryTracking=summary',
-                '-XX:FlightRecorderOptions=stackdepth=256',
-                '-Xmx4M',
-                '-Djavax.net.ssl.trustStore=truststore.jks'])
-            .env(LaunchConfigTask.defaultEnvironment)
-            .dirs(actualStaticConfig.dirs())
-            .build()
+                .mainClass(actualStaticConfig.mainClass())
+                .serviceName(actualStaticConfig.serviceName())
+                .javaHome(actualStaticConfig.javaHome())
+                .args(["myCheckArg1", "myCheckArg2"])
+                .classpath(actualStaticConfig.classpath())
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .env(LaunchConfigTask.defaultEnvironment)
+                .dirs(actualStaticConfig.dirs())
+                .build()
 
         def actualCheckConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigTask.LaunchConfig)
@@ -460,33 +459,33 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
-            .mainClass("test.Test")
-            .serviceName("service-name")
-            .javaHome("foo")
-            .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
-            .jvmOpts([
-                '-XX:+CrashOnOutOfMemoryError',
-                '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
-                '-Dsun.net.inetaddr.ttl=20',
-                '-XX:NativeMemoryTracking=summary',
-                '-XX:FlightRecorderOptions=stackdepth=256',
-                "-XX:+PrintGCDateStamps",
-                "-XX:+PrintGCDetails",
-                "-XX:-TraceClassUnloading",
-                "-XX:+UseGCLogFileRotation",
-                "-XX:GCLogFileSize=10M",
-                "-XX:NumberOfGCLogFiles=10",
-                "-Xloggc:var/log/gc-%t-%p.log",
-                "-verbose:gc",
-                "-XX:-UseBiasedLocking",
-                '-XX:+UseParallelGC',
-                '-Xmx4M',
-                '-Djavax.net.ssl.trustStore=truststore.jks'])
-            .dirs(["var/data/tmp"])
-            .env(["MALLOC_ARENA_MAX": '4'])
-            .build()
+                .mainClass("test.Test")
+                .serviceName("service-name")
+                .javaHome("foo")
+                .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        "-XX:+PrintGCDateStamps",
+                        "-XX:+PrintGCDetails",
+                        "-XX:-TraceClassUnloading",
+                        "-XX:+UseGCLogFileRotation",
+                        "-XX:GCLogFileSize=10M",
+                        "-XX:NumberOfGCLogFiles=10",
+                        "-Xloggc:var/log/gc-%t-%p.log",
+                        "-verbose:gc",
+                        "-XX:-UseBiasedLocking",
+                        '-XX:+UseParallelGC',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .dirs(["var/data/tmp"])
+                .env(["MALLOC_ARENA_MAX": '4'])
+                .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         expectedStaticConfig == actualStaticConfig
@@ -557,10 +556,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         startScript.contains("-manifest-classpath-0.0.1.jar")
         !startScript.contains("-classpath \"%CLASSPATH%\"")
         def classpathJar = file('dist/service-name-0.0.1/service/lib/').listFiles()
-                .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
+                .find({it.name.endsWith("-manifest-classpath-0.0.1.jar")})
         classpathJar.exists()
 
-        def zipManifest = readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace('\r\n ','')
+        def zipManifest = readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace('\r\n ', '')
         zipManifest.contains('Class-Path: ')
         zipManifest.contains('guava-19.0.jar')
         zipManifest.contains('root-project-manifest-classpath-0.0.1.jar')
@@ -579,7 +578,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !startScript.contains("-manifest-classpath-0.1.jar")
         startScript.contains("-classpath \"%CLASSPATH%\"")
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/').listFiles()
-                .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
+                .find({it.name.endsWith("-manifest-classpath-0.1.jar")})
     }
 
     def 'distTar artifact name is set during appropriate lifecycle events'() {
@@ -612,13 +611,15 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         '''.stripIndent()
 
+        addGoJavaLauncherDeps(buildFile)
+
         expect:
         runTasks(':tasks')
     }
 
     def 'exposes an artifact through the sls configuration'() {
         given:
-        helper.addSubproject('parent', '''
+        def parentProject = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -635,6 +636,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 args "hello"
             }
         ''')
+        addGoJavaLauncherDeps(file('build.gradle', parentProject))
 
         def childProject = helper.addSubproject('child', '''
             configurations {
@@ -658,12 +660,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
-        new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+        new File(childProject, 'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
     }
 
     def 'exposes an artifact via dependency with sls-dist usage'() {
         given:
-        helper.addSubproject('producer', '''
+        def producerProject = helper.addSubproject('producer', '''
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -680,6 +682,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 args "hello"
             }
         ''')
+        addGoJavaLauncherDeps(file('build.gradle', producerProject))
 
         def consumer = helper.addSubproject('consumer', '''
             configurations {
@@ -707,7 +710,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         buildResult.task(':producer:distTar').outcome == TaskOutcome.SUCCESS
-        new File(consumer,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+        new File(consumer, 'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
     }
 
     /**
@@ -766,12 +769,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'com.palantir.sls-java-service-distribution'
             }
         '''.stripIndent()
+        addGoJavaLauncherDeps(buildFile)
 
         when:
         def result = runTasksAndFail(":tasks")
 
         then:
-        result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+        result.output.contains(
+                "The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
     }
 
     def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
@@ -798,7 +803,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         ''')
 
-        createUntarTask(new File(parent, "build.gradle"))
+        def parentBuildFile = file('build.gradle', parent)
+        addGoJavaLauncherDeps(parentBuildFile)
+        createUntarTask(parentBuildFile)
 
         helper.addSubproject('child', '''
             plugins {
@@ -819,37 +826,37 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def libFiles = new File(projectDir, 'parent/dist/service-name-0.0.1/service/lib/').listFiles()
-        libFiles.any { it.toString().endsWith('annotations-3.0.1.jar') }
-        libFiles.any { it.toString().endsWith('guava-19.0.jar') }
-        libFiles.any { it.toString().endsWith('mockito-core-2.7.22.jar') }
-        !libFiles.any { it.toString().equals('main') }
+        libFiles.any {it.toString().endsWith('annotations-3.0.1.jar')}
+        libFiles.any {it.toString().endsWith('guava-19.0.jar')}
+        libFiles.any {it.toString().endsWith('mockito-core-2.7.22.jar')}
+        !libFiles.any {it.toString().equals('main')}
 
         // verify start scripts
-        List<String> startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name')
+        List<String> startScript = new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/service-name')
                 .text
-                .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
+                .find(/CLASSPATH=(.*)/) {match, classpath -> classpath}
                 .split(':')
 
-        startScript.any { it.contains('/lib/annotations-3.0.1.jar') }
-        startScript.any { it.contains('/lib/guava-19.0.jar') }
-        startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+        startScript.any {it.contains('/lib/annotations-3.0.1.jar')}
+        startScript.any {it.contains('/lib/guava-19.0.jar')}
+        startScript.any {it.contains('/lib/mockito-core-2.7.22.jar')}
 
         // verify launcher YAML files
         LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
-        launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
-        launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
-        launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+        launcherCheck.classpath.any {it.contains('/lib/annotations-3.0.1.jar')}
+        launcherCheck.classpath.any {it.contains('/lib/guava-19.0.jar')}
+        launcherCheck.classpath.any {it.contains('/lib/mockito-core-2.7.22.jar')}
 
         LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
-        launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
-        launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
-        launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+        launcherStatic.classpath.any {it.contains('/lib/annotations-3.0.1.jar')}
+        launcherStatic.classpath.any {it.contains('/lib/guava-19.0.jar')}
+        launcherStatic.classpath.any {it.contains('/lib/mockito-core-2.7.22.jar')}
     }
 
     @Unroll
@@ -870,7 +877,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
         """.stripIndent()
-        helper.addSubproject("first", """
+        def first = helper.addSubproject("first", """
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -884,7 +891,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 }
             }
         """.stripIndent())
-        helper.addSubproject("second", """
+        addGoJavaLauncherDeps(file('build.gradle', first))
+
+        def second = helper.addSubproject("second", """
             plugins {
                 id 'java'
                 id 'com.palantir.sls-java-service-distribution'
@@ -894,6 +903,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 mainClass "dummy.service.MainClass"
             }
         """.stripIndent())
+        addGoJavaLauncherDeps(file('build.gradle', second))
 
         runTasks(writeLocksTask)
 
@@ -933,7 +943,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         ''')
 
-        createUntarTask(new File(parent, "build.gradle"))
+        def parentBuildFile = file('build.gradle', parent)
+        addGoJavaLauncherDeps(parentBuildFile)
+        createUntarTask(parentBuildFile)
 
         helper.addSubproject('child', '''
             plugins {
@@ -954,18 +966,18 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def libFiles = new File(projectDir, 'parent/dist/service-name-0.0.1/service/lib/').listFiles()
-        libFiles.any { it.toString().endsWith('annotations-3.0.1.jar') }
-        libFiles.any { it.toString().endsWith('guava-19.0.jar') }
-        libFiles.any { it.toString().endsWith('mockito-core-2.7.22.jar') }
-        !libFiles.any { it.toString().equals('main') }
+        libFiles.any {it.toString().endsWith('annotations-3.0.1.jar')}
+        libFiles.any {it.toString().endsWith('guava-19.0.jar')}
+        libFiles.any {it.toString().endsWith('mockito-core-2.7.22.jar')}
+        !libFiles.any {it.toString().equals('main')}
 
-        def classpathJar = libFiles.find { it.name.endsWith("-manifest-classpath-0.0.1.jar") }
+        def classpathJar = libFiles.find {it.name.endsWith("-manifest-classpath-0.0.1.jar")}
         classpathJar.exists()
 
         // verify META-INF/MANIFEST.MF
         String manifestContents = readFromZip(classpathJar, "META-INF/MANIFEST.MF")
                 .readLines()
-                .collect { it.trim() }
+                .collect {it.trim()}
                 .join('')
 
         manifestContents.contains('annotations-3.0.1.jar')
@@ -974,25 +986,25 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !manifestContents.contains('main')
 
         // verify start scripts
-        List<String> startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name')
+        List<String> startScript = new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/service-name')
                 .text
-                .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
+                .find(/CLASSPATH=(.*)/) {match, classpath -> classpath}
                 .split(':')
 
-        startScript.any { it.contains('-manifest-classpath-0.0.1.jar') }
+        startScript.any {it.contains('-manifest-classpath-0.0.1.jar')}
 
         // verify launcher YAML files
         LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
-        launcherCheck.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
+        launcherCheck.classpath.any {it.contains('-manifest-classpath-0.0.1.jar')}
 
         LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
-        launcherStatic.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
+        launcherStatic.classpath.any {it.contains('-manifest-classpath-0.0.1.jar')}
     }
 
     def 'project class files do not appear in output lib directory'() {
@@ -1038,6 +1050,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         '''.stripIndent()
 
+        addGoJavaLauncherDeps(buildFile)
         createUntarTask(buildFile)
 
         when:
@@ -1046,7 +1059,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
-        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
+        actualStaticConfig.jvmOpts.containsAll(
+                ['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
     }
 
     def 'gc profile null configuration closure'() {
@@ -1071,6 +1085,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
         '''.stripIndent()
 
+        addGoJavaLauncherDeps(buildFile)
         createUntarTask(buildFile)
 
         when:
@@ -1151,8 +1166,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Exports', 'jdk.compiler/com.sun.tools.javac.file')
-        File testJar = new File(getProjectDir(),"test.jar");
-        testJar.withOutputStream { fos ->
+        File testJar = new File(getProjectDir(), "test.jar");
+        testJar.withOutputStream {fos ->
             new JarOutputStream(fos, manifest).close()
         }
         createUntarBuildFile(buildFile)
@@ -1190,8 +1205,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
-        File testJar = new File(getProjectDir(),"test.jar");
-        testJar.withOutputStream { fos ->
+        File testJar = new File(getProjectDir(), "test.jar");
+        testJar.withOutputStream {fos ->
             new JarOutputStream(fos, manifest).close()
         }
         createUntarBuildFile(buildFile)
@@ -1226,8 +1241,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     def 'Handles jars with no manifest'() {
-        File testJar = new File(getProjectDir(),"test.jar");
-        testJar.withOutputStream { fos ->
+        File testJar = new File(getProjectDir(), "test.jar");
+        testJar.withOutputStream {fos ->
             new ZipOutputStream(fos).close()
         }
         createUntarBuildFile(buildFile)
@@ -1247,6 +1262,37 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         tasksWereSuccessful(result, ':build', ':distTar', ':untar')
+    }
+
+    def 'can resolve go-java-launcher binaries through GCV'() {
+        def goJavaLauncherVersion = "1.18.0"
+
+        buildFile.text = """
+        plugins {
+            id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
+            id 'com.palantir.sls-java-service-distribution'
+        }
+        
+        version '0.0.1'
+
+        distribution {
+            serviceName 'service-name'
+            mainClass 'test.Test'
+        }
+        """.stripIndent()
+
+        file('versions.props') << """
+        com.palantir.launching:* = ${goJavaLauncherVersion}
+        """.stripIndent()
+
+        createUntarTask(buildFile)
+
+        when:
+        runTasks(':distTar', ':untar', '--write-locks')
+
+        then:
+        fileExists("dist/service-name-0.0.1/service/bin/go-java-launcher-${goJavaLauncherVersion}/service/bin")
+        fileExists("dist/service-name-0.0.1/service/bin/go-init-${goJavaLauncherVersion}/service/bin")
     }
 
     private static createUntarBuildFile(File buildFile) {
@@ -1277,6 +1323,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             sourceCompatibility = '1.7'
         '''.stripIndent()
 
+        addGoJavaLauncherDeps(buildFile)
+
         createUntarTask(buildFile)
     }
 
@@ -1294,7 +1342,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     def readFromZip(File zipFile, String pathInZipFile) {
         def zf = new ZipFile(zipFile)
-        def object = zf.entries().find { it.name == pathInZipFile }
+        def object = zf.entries().find {it.name == pathInZipFile}
         return zf.getInputStream(object).text
     }
 
@@ -1324,5 +1372,15 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .inheritIO()
         pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
         pb.start().waitFor()
+    }
+
+    static void addGoJavaLauncherDeps(File projectBuildFile) {
+        // Pin go-java-launcher dependencies. This is normally done through GCV.
+        projectBuildFile << """
+        dependencies {
+            goJavaLauncherBinary 'com.palantir.launching:go-java-launcher:1.18.0'
+            goInitBinary 'com.palantir.launching:go-init:1.18.0'
+        }
+        """.stripIndent()
     }
 }
