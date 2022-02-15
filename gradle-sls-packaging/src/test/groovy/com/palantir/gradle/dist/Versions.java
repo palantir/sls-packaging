@@ -19,7 +19,6 @@ package com.palantir.gradle.dist;
 public final class Versions {
 
     public static final String GRADLE_CONSISTENT_VERSIONS = "1.27.0";
-    public static final String GO_JAVA_LAUNCHER = "1.17.0";
 
     private Versions() {}
 }

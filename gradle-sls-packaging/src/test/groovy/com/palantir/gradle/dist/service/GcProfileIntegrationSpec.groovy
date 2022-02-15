@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.service
+package com.palantir.gradle.dist.service.tasks
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.service.gc.GcProfile
