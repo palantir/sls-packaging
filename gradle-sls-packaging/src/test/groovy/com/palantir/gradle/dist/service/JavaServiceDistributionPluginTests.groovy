@@ -1252,8 +1252,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def 'can resolve go-java-launcher binaries through GCV'() {
         // Set a lower default version of go-java-launcher so we can verify that we pick up the higher version through
         // GCV
-        file('gradle.propertes') << """
-        "${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}", "1.17.0")
+        file('gradle.properties') << """
+        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}=1.17.0
         """.stripIndent()
 
         def goJavaLauncherVersion = "1.18.0"
@@ -1282,9 +1282,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         createUntarTask(buildFile)
 
         when:
-        runTasks(':distTar', ':untar', '--write-locks')
+        def res = runTasks(':distTar', ':untar', '--write-locks')
 
         then:
+        // Verify the test version is actually used
+        res.output.contains("using test only version override for go-java-launcher: 1.17.0")
+
         fileExists("dist/service-name-0.0.1/service/bin/go-java-launcher-${goJavaLauncherVersion}/service/bin")
         fileExists("dist/service-name-0.0.1/service/bin/go-init-${goJavaLauncherVersion}/service/bin")
     }

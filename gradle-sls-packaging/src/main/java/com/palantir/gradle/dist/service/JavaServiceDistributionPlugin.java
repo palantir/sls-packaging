@@ -346,7 +346,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }
         String versionOverride =
                 project.property(TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP).toString();
-        project.getLogger().info("Using test only version override for go-java-launcher: {}", versionOverride);
+        project.getLogger().lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
         return coordinate + ":" + versionOverride;
     }
 }
