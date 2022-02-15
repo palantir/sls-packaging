@@ -56,6 +56,8 @@ import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
+    // Used as fallback version if no higher version is specified in 'versions.props'.
+    private static final String FALLBACK_GO_JAVA_VERSION = "1.18.0";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
@@ -105,11 +107,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
         project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
-
-        project.getRepositories().mavenCentral(m -> {
-            m.setName("go-java-launcher-repository");
-            m.content(content -> content.onlyForConfigurations(launcherConfig.getName(), initConfig.getName()));
-        });
 
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
@@ -342,10 +339,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         Files.writeString(windowsScript, cleanedText);
     }
 
-    /** To make our unit-test setup simpler, we allow hard-coding a go-java-launcher version, which circumvents GCV. */
+    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher version. */
     private static String getGoJavaLauncherCoordinate(Project project, String coordinate) {
         if (!project.hasProperty(TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP)) {
-            return coordinate;
+            return coordinate + ":" + FALLBACK_GO_JAVA_VERSION;
         }
         String versionOverride =
                 project.property(TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP).toString();

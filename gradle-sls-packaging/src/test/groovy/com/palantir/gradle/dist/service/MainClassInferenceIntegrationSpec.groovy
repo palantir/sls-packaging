@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.GradleIntegrationSpec
-import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 
@@ -41,10 +40,6 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
 
             version '0.0.1'
         '''.stripIndent()
-
-        file('gradle.properties') << """
-        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}=${Versions.GO_JAVA_LAUNCHER}
-        """.stripIndent()
     }
 
     def 'infers main class correctly'() {
