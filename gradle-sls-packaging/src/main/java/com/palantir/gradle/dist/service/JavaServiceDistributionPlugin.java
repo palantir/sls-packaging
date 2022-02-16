@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.dist.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
@@ -55,10 +56,14 @@ import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
-    private static final String GO_JAVA_VERSION = "1.18.0";
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher:" + GO_JAVA_VERSION;
-    private static final String GO_INIT = "com.palantir.launching:go-init:" + GO_JAVA_VERSION;
+    // Used as fallback version if no higher version is specified in 'versions.props'.
+    private static final String FALLBACK_GO_JAVA_VERSION = "1.18.0";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
+    private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
+
+    @VisibleForTesting
+    static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
 
     @Override
     @SuppressWarnings({"checkstyle:methodlength", "RawTypes", "deprecation"})
@@ -99,9 +104,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         // Create configuration to load executable dependencies
         Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
-        project.getDependencies().add(launcherConfig.getName(), GO_JAVA_LAUNCHER);
+        project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
-        project.getDependencies().add(initConfig.getName(), GO_INIT);
+        project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
+
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
                     task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
@@ -331,5 +337,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                         "$1%APP_HOME%\\\\lib\\\\" + manifestClassPathArchiveFileName + "$2");
 
         Files.writeString(windowsScript, cleanedText);
+    }
+
+    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher fallback version. */
+    private static String getGoJavaLauncherCoordinate(Project project, String coordinate) {
+        if (!project.hasProperty(TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)) {
+            return coordinate + ":" + FALLBACK_GO_JAVA_VERSION;
+        }
+        String versionOverride = project.property(TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)
+                .toString();
+        project.getLogger().lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
+        return coordinate + ":" + versionOverride;
     }
 }

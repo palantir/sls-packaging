@@ -1,0 +1,7 @@
+type: improvement
+improvement:
+  description: Get go-java-launcher version from versions.props. Note that this requires
+    adding the go-java-launcher version in "versions.props", e.g. "com.palantir.launching:*
+    = 1.18.0".
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1294
