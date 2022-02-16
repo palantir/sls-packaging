@@ -63,7 +63,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
 
     @VisibleForTesting
-    static final String TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP = "testOnlyGoJavaLauncherVersion";
+    static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
 
     @Override
     @SuppressWarnings({"checkstyle:methodlength", "RawTypes", "deprecation"})
@@ -339,13 +339,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         Files.writeString(windowsScript, cleanedText);
     }
 
-    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher version. */
+    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher fallback version. */
     private static String getGoJavaLauncherCoordinate(Project project, String coordinate) {
-        if (!project.hasProperty(TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP)) {
+        if (!project.hasProperty(TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)) {
             return coordinate + ":" + FALLBACK_GO_JAVA_VERSION;
         }
-        String versionOverride =
-                project.property(TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP).toString();
+        String versionOverride = project.property(TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)
+                .toString();
         project.getLogger().lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
         return coordinate + ":" + versionOverride;
     }

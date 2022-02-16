@@ -1253,7 +1253,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // Set a lower default version of go-java-launcher so we can verify that we pick up the higher version through
         // GCV
         file('gradle.properties') << """
-        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_VERSION_OVERRIDE_PROP}=1.17.0
+        ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE}=1.17.0
         """.stripIndent()
 
         def goJavaLauncherVersion = "1.18.0"
