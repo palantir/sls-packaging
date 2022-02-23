@@ -4,7 +4,7 @@ com.palantir.gradle.consistentversions:gradle-consistent-versions = 1.27.0
 com.palantir.safe-logging:* = 1.21.0
 com.palantir.sls.versions:sls-versions = 1.4.0
 org.apache.commons:commons-lang3 = 3.12.0
-org.immutables:value = 2.9.0
+org.immutables:value = 2.8.8
 
 com.netflix.nebula:nebula-test = 10.0.0
 junit:junit = 4.13.2
