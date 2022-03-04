@@ -8,4 +8,4 @@ org.immutables:value = 2.8.8
 
 com.netflix.nebula:nebula-test = 10.0.0
 junit:junit = 4.13.2
-org.awaitility:awaitility = 4.1.1
+org.awaitility:awaitility = 4.2.0
