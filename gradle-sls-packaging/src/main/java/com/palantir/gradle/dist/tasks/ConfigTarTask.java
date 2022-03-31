@@ -17,11 +17,9 @@
 package com.palantir.gradle.dist.tasks;
 
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import groovy.lang.Closure;
 import java.io.File;
-import java.io.IOException;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.file.CopySpec;
@@ -70,16 +68,7 @@ public class ConfigTarTask extends Tar {
             task.getArchiveBaseName().set(ext.getDistributionServiceName());
             task.getArchiveVersion()
                     .set(project.provider(() -> project.getVersion().toString()));
-            task.getArchiveExtension().set(ext.getProductType().map(productType -> {
-                try {
-                    String productTypeString = ObjectMappers.jsonMapper.writeValueAsString(productType);
-                    return productTypeString
-                            .substring(1, productTypeString.lastIndexOf('.'))
-                            .concat(".config.tgz");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }));
+            task.getArchiveExtension().set("config.tgz");
         });
 
         // TODO(forozco): make this lazy since into does not support providers, but does support callable

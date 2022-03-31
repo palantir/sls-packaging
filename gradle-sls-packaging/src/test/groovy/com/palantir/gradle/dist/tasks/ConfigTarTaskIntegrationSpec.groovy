@@ -29,7 +29,7 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         runTasksSuccessfully(':configTar')
 
         then:
-        fileExists('build/distributions/foo-service-0.0.1.service.config.tgz')
+        fileExists('build/distributions/foo-service-0.0.1.config.tgz')
     }
 
     def 'configTar task exists for assets'() {
@@ -40,7 +40,7 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         runTasksSuccessfully(':configTar')
 
         then:
-        fileExists('build/distributions/foo-asset-0.0.1.asset.config.tgz')
+        fileExists('build/distributions/foo-asset-0.0.1.config.tgz')
     }
 
     def 'configTar task contains the necessary deployment files for services'() {
@@ -92,7 +92,7 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
 
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
-                from tarTree(resources.gzip("\${buildDir}/distributions/${name}-0.0.1.${artifactType}.config.tgz"))
+                from tarTree(resources.gzip("\${buildDir}/distributions/${name}-0.0.1.config.tgz"))
                 into "\${projectDir}/dist"
                 dependsOn configTar
             }
