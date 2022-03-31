@@ -57,7 +57,7 @@ import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     // Used as fallback version if no higher version is specified in 'versions.props'.
-    private static final String FALLBACK_GO_JAVA_VERSION = "1.18.0";
+    private static final String FALLBACK_GO_JAVA_VERSION = "1.19.0";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
