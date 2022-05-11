@@ -19,7 +19,6 @@ package com.palantir.gradle.dist.service.tasks;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -117,12 +116,14 @@ final class ModuleArgs {
                             return Stream.of(f);
                         }
 
-                        return Stream.concat(Stream.of(f), classpathEntries.stream().map(e -> new File(f.getParentFile(), e)));
+                        return Stream.concat(
+                                Stream.of(f), classpathEntries.stream().map(e -> new File(f.getParentFile(), e)));
                     } catch (IOException e) {
                         project.getLogger().warn("Failed to load manifest entry for jar {}", f, e);
                         return Stream.empty();
                     }
-                }).collect(Collectors.toSet());
+                })
+                .collect(Collectors.toSet());
     }
 
     private static Optional<JarManifestModuleInfo> parseModuleInfo(@Nullable java.util.jar.Manifest jarManifest) {
