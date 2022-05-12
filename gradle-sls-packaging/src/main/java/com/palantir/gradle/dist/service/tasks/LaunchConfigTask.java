@@ -157,6 +157,15 @@ public abstract class LaunchConfigTask extends DefaultTask {
     @InputFiles
     public abstract ConfigurableFileCollection getClasspath();
 
+    /**
+     * The difference between fullClasspath and classpath is that classpath is what is written
+     * to the launcher-static.yml file, this <i>might</i> in some cases be the manifest classpath
+     * JAR. Full Classpath on the other hand is always going to be the full set of JARs which may
+     * be the same as classpath if manifest classpath JARs are not used.
+     */
+    @InputFiles
+    public abstract ConfigurableFileCollection getFullClasspath();
+
     @InputFiles
     public abstract ConfigurableFileCollection getJavaAgents();
 
@@ -198,7 +207,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
                                         : ImmutableList.of())
-                        .addAllJvmOpts(ModuleArgs.collectClasspathArgs(getProject(), javaVersion.get(), getClasspath()))
+                        .addAllJvmOpts(
+                                ModuleArgs.collectClasspathArgs(getProject(), javaVersion.get(), getFullClasspath()))
                         .addAllJvmOpts(gcJvmOptions.get())
                         .addAllJvmOpts(defaultJvmOpts.get())
                         .putAllEnv(defaultEnvironment)

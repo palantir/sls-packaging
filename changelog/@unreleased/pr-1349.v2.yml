@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Make ModuleArgs expand manifest classpath JARs for exports and opens
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1349

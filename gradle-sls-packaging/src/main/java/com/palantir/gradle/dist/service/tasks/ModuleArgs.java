@@ -71,6 +71,8 @@ final class ModuleArgs {
                                         .debug("Jar '{}' produced manifest info: {}", file, parsedModuleInfo);
                                 return parsedModuleInfo.orElse(null);
                             }
+                        } else {
+                            project.getLogger().info("File {} wasn't a JAR or file", file);
                         }
                         return null;
                     } catch (IOException e) {
