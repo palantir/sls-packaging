@@ -19,15 +19,11 @@ package com.palantir.gradle.dist.service.tasks;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.JavaVersion;
@@ -64,9 +60,7 @@ final class ModuleArgs {
             return ImmutableList.of();
         }
 
-        Set<File> classpathFiles = loadAllClasspathFiles(project, classpath);
-
-        ImmutableList<JarManifestModuleInfo> classpathInfo = classpathFiles.stream()
+        ImmutableList<JarManifestModuleInfo> classpathInfo = classpath.getFiles().stream()
                 .map(file -> {
                     try {
                         if (file.getName().endsWith(".jar") && file.isFile()) {
@@ -77,6 +71,8 @@ final class ModuleArgs {
                                         .debug("Jar '{}' produced manifest info: {}", file, parsedModuleInfo);
                                 return parsedModuleInfo.orElse(null);
                             }
+                        } else {
+                            project.getLogger().info("File {} wasn't a JAR or file", file);
                         }
                         return null;
                     } catch (IOException e) {
@@ -97,33 +93,6 @@ final class ModuleArgs {
                 .sorted()
                 .flatMap(ModuleArgs::addOpensArg);
         return Stream.concat(exports, opens).collect(ImmutableList.toImmutableList());
-    }
-
-    private static Set<File> loadAllClasspathFiles(Project project, FileCollection classpath) {
-        return classpath.getFiles().stream()
-                .filter(f -> f.isFile() && f.getName().endsWith(".jar"))
-                .flatMap(f -> {
-                    try (JarFile jar = new JarFile(f)) {
-                        java.util.jar.Manifest jarManifest = jar.getManifest();
-                        if (jarManifest == null) {
-                            return Stream.empty();
-                        }
-
-                        List<String> classpathEntries =
-                                readManifestAttribute(jarManifest, Attributes.Name.CLASS_PATH.toString());
-
-                        if (classpathEntries.isEmpty()) {
-                            return Stream.of(f);
-                        }
-
-                        return Stream.concat(
-                                Stream.of(f), classpathEntries.stream().map(e -> new File(f.getParentFile(), e)));
-                    } catch (IOException e) {
-                        project.getLogger().warn("Failed to load manifest entry for jar {}", f, e);
-                        return Stream.empty();
-                    }
-                })
-                .collect(Collectors.toSet());
     }
 
     private static Optional<JarManifestModuleInfo> parseModuleInfo(@Nullable java.util.jar.Manifest jarManifest) {
