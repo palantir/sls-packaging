@@ -306,19 +306,14 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
             task.getJavaAgents().setFrom(javaAgentConfiguration);
-            task.getFullClasspath()
-                    .from(jarTask.get()
-                            .getOutputs()
-                            .getFiles()
-                            .plus(distributionExtension.getProductDependenciesConfig()));
+            FileCollection fullClasspath =
+                    jarTask.get().getOutputs().getFiles().plus(distributionExtension.getProductDependenciesConfig());
+            task.getFullClasspath().from(fullClasspath);
             task.getClasspath()
                     .from(
                             distributionExtension.getEnableManifestClasspath().get()
                                     ? manifestClassPathTask.get().getOutputs().getFiles()
-                                    : jarTask.get()
-                                            .getOutputs()
-                                            .getFiles()
-                                            .plus(distributionExtension.getProductDependenciesConfig()));
+                                    : fullClasspath);
         }));
 
         project.afterEvaluate(_proj -> distTar.configure(task -> {
