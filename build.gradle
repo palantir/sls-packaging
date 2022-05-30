@@ -1,7 +1,7 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
-        mavenCentral()
+        mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
+        gradlePluginPortal() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
     }
 
     dependencies {
@@ -29,7 +29,7 @@ allprojects {
     group 'com.palantir.sls-packaging'
 
     repositories {
-        mavenCentral()
+        mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
     }
 }
 
