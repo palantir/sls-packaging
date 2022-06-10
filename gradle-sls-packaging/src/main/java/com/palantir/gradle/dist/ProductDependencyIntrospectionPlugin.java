@@ -62,6 +62,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
         project.getExtensions()
                 .getExtraProperties()
                 .set("getMinimumProductVersion", new Closure<String>(project, project) {
+                    @SuppressWarnings("UnusedMethod") // groovy dynamic closure method
                     public String doCall(Object moduleVersion) {
                         List<String> strings = Splitter.on(':').splitToList(moduleVersion.toString());
                         Preconditions.checkState(
