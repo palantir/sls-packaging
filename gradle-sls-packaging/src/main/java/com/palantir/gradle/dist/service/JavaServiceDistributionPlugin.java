@@ -34,7 +34,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
 import org.gradle.api.InvalidUserCodeException;
@@ -78,19 +77,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply(DiagnosticsManifestPlugin.class);
         JavaServiceDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
-
-        // In baseline 3.52.0 we added this new plugin as a one-liner to add the --enable-preview flag wherever
-        // necessary (https://github.com/palantir/gradle-baseline/pull/1549). We're using the extraProperties thing to
-        // avoid taking a compile dependency on baseline.
-        project.getPlugins().withId("com.palantir.baseline-enable-preview-flag", _withId -> {
-            distributionExtension.defaultJvmOpts(project.provider(() -> {
-                Provider<Boolean> enablePreview = (Provider<Boolean>) project.getExtensions()
-                        .getExtraProperties()
-                        .getProperties()
-                        .get("enablePreview");
-                return enablePreview.get() ? Collections.singletonList("--enable-preview") : Collections.emptyList();
-            }));
-        });
 
         Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
         Configuration javaAgentConfiguration = project.getConfigurations().create("javaAgent");
