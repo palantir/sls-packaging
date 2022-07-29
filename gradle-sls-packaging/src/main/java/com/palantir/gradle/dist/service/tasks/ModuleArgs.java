@@ -84,7 +84,7 @@ final class ModuleArgs {
                 .collect(Collectors.toMap(
                         Entry::getKey,
                         Entry::getValue,
-                        (left, right) -> {
+                        (_left, _right) -> {
                             throw new UnsupportedOperationException();
                         },
                         LinkedHashMap::new));
