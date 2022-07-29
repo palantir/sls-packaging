@@ -1225,6 +1225,38 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualOpts.get(compilerPairIndex - 1) == "--add-opens"
     }
 
+    def 'applies --enable-preview based on Baseline-Enable-Preview manifest attribute found in classpath jars'() {
+        Manifest manifest = new Manifest()
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
+        manifest.getMainAttributes().putValue('Baseline-Enable-Preview', '17')
+        File testJar = new File(getProjectDir(),"test.jar");
+        testJar.withOutputStream { fos ->
+            new JarOutputStream(fos, manifest).close()
+        }
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualOpts = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'),
+                LaunchConfigTask.LaunchConfig)
+                .jvmOpts()
+
+        actualOpts.contains("--enable-preview")
+        println actualOpts
+    }
+
     def 'applies opens based on classpath manifests for manifest classpaths'() {
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
