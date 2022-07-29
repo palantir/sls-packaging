@@ -221,6 +221,14 @@ The `go-java-launcher` and `init.sh` launchers additionally append the list of J
 options typically override earlier options (although this behavior is undefined and may be JVM-specific); this allows
 users to override the hard-coded options.
 
+Any jar on the classpath that has the following attributes in its Jar manifest will automatically contribute JVM options:
+
+- `Add-Exports` produces `--add-exports ...=ALL-UNNAMED`
+- `Add-Opens` produces `--add-opens ...=ALL-UNNAMED`
+- `Baseline-Enable-Preview` produces `--enable-preview`
+
+_See the [ModuleArgs](gradle-sls-packaging/src/main/java/com/palantir/gradle/dist/service/tasks/ModuleArgs.java) class for specifics._
+
 #### Runtime environment variables
 
 Environment variables can be configured through the `env` blocks of `launcher-static.yml` and `launcher-custom.yml` as

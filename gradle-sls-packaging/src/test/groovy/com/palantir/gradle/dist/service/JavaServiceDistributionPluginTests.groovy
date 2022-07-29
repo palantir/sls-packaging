@@ -22,18 +22,16 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
-import org.gradle.testkit.runner.BuildResult
-
+import java.util.function.Consumer
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-import spock.lang.Unroll
-
 import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
-
-import java.util.zip.ZipOutputStream
+import spock.lang.Unroll
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     private static final OBJECT_MAPPER = new ObjectMapper(new YAMLFactory())
@@ -1187,13 +1185,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     def 'applies opens based on classpath manifests'() {
-        Manifest manifest = new Manifest()
-        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
-        manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
-        File testJar = new File(getProjectDir(),"test.jar");
-        testJar.withOutputStream { fos ->
-            new JarOutputStream(fos, manifest).close()
-        }
+        createEmptyJar("test.jar", { manifest ->
+            manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
+        })
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
@@ -1226,13 +1220,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     def 'applies --enable-preview based on Baseline-Enable-Preview manifest attribute found in classpath jars'() {
-        Manifest manifest = new Manifest()
-        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
-        manifest.getMainAttributes().putValue('Baseline-Enable-Preview', '17')
-        File testJar = new File(getProjectDir(),"test.jar");
-        testJar.withOutputStream { fos ->
-            new JarOutputStream(fos, manifest).close()
-        }
+        createEmptyJar("test.jar", { manifest ->
+            manifest.getMainAttributes().putValue('Baseline-Enable-Preview', '14')
+        })
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
@@ -1240,7 +1230,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
             tasks.jar.archiveBaseName = "internal"
             distribution {
-                javaVersion 17
+                javaVersion 14
             }""".stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
@@ -1254,7 +1244,58 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .jvmOpts()
 
         actualOpts.contains("--enable-preview")
-        println actualOpts
+    }
+
+    def 'Gives clear errors if Baseline-Enable-Preview manifest attributes conflict'() {
+        createEmptyJar("test.jar", { manifest ->
+            manifest.getMainAttributes().putValue('Baseline-Enable-Preview', '17')
+        })
+        createEmptyJar("other.jar", { manifest ->
+            manifest.getMainAttributes().putValue('Baseline-Enable-Preview', '19')
+        })
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+                implementation files("other.jar")
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        BuildResult result = runTasksAndFail(':createLaunchConfig')
+
+        then:
+        result.output.contains("Unable to add '--enable-preview' because classpath jars have embedded " +
+                "Baseline-Enable-Preview attribute with different versions:")
+        result.output.contains("17=[test.jar]")
+        result.output.contains("19=[other.jar]")
+    }
+
+    def 'Gives clear errors if Baseline-Enable-Preview version doesn\'t match runtime java version'() {
+        createEmptyJar("test.jar", { manifest ->
+            manifest.getMainAttributes().putValue('Baseline-Enable-Preview', '19')
+        })
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies {
+                implementation files("test.jar")
+            }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        BuildResult result = runTasksAndFail(':createLaunchConfig')
+
+        then:
+        result.output.contains("Runtime java version (14) must match version from embedded Baseline-Enable-Preview attribute (19) from:\n" +
+                "[test.jar]")
     }
 
     def 'applies opens based on classpath manifests for manifest classpaths'() {
@@ -1362,6 +1403,17 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         fileExists("dist/service-name-0.0.1/service/bin/go-java-launcher-${goJavaLauncherVersion}/service/bin")
         fileExists("dist/service-name-0.0.1/service/bin/go-init-${goJavaLauncherVersion}/service/bin")
+    }
+
+    private void createEmptyJar(String filename, Consumer<Manifest> manifestInitializer) {
+        File testJar = new File(getProjectDir(), filename);
+
+        Manifest manifest = new Manifest()
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
+        manifestInitializer.accept(manifest);
+        testJar.withOutputStream {fos ->
+            new JarOutputStream(fos, manifest).close()
+        }
     }
 
     private static createUntarBuildFile(File buildFile) {

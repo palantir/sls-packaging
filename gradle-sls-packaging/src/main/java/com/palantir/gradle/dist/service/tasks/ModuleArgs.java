@@ -109,12 +109,11 @@ final class ModuleArgs {
 
     private static Stream<String> enablePreview(
             JavaVersion javaVersion, Map<File, JarManifestModuleInfo> parsedJarManifests) {
-        Map<JavaVersion, Collection<File>> enablePreviewFromJar = parsedJarManifests.entrySet().stream()
+        Map<String, Collection<String>> enablePreviewFromJar = parsedJarManifests.entrySet().stream()
                 .filter(entry -> entry.getValue().enablePreview().isPresent())
                 .collect(Multimaps.toMultimap(
-                        entry -> JavaVersion.toVersion(
-                                entry.getValue().enablePreview().get()),
-                        Entry::getKey,
+                        entry -> entry.getValue().enablePreview().get(),
+                        entry -> entry.getKey().getName(),
                         () -> MultimapBuilder.hashKeys().arrayListValues().build()))
                 .asMap();
 
@@ -125,9 +124,9 @@ final class ModuleArgs {
         }
 
         if (enablePreviewFromJar.size() == 1) {
-            JavaVersion enablePreviewVersion = Iterables.getOnlyElement(enablePreviewFromJar.keySet());
+            String enablePreviewVersion = Iterables.getOnlyElement(enablePreviewFromJar.keySet());
             Preconditions.checkState(
-                    enablePreviewVersion.equals(javaVersion),
+                    enablePreviewVersion.equals(javaVersion.toString()),
                     "Runtime java version (" + javaVersion + ") must match version from embedded "
                             + JarManifestModuleInfo.ENABLE_PREVIEW_ATTRIBUTE + " attribute (" + enablePreviewVersion
                             + ") from:\n" + Iterables.getOnlyElement(enablePreviewFromJar.values()));
