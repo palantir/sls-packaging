@@ -56,6 +56,9 @@ public abstract class LaunchConfigTask extends DefaultTask {
             "-XX:NumberOfGCLogFiles=10",
             "-Xloggc:var/log/gc-%t-%p.log",
             "-verbose:gc");
+
+    private static final ImmutableList<String> java11Options = ImmutableList.of("-XX:TieredStopAtLevel=1");
+
     private static final ImmutableList<String> java14PlusOptions =
             ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
     private static final ImmutableList<String> java15Options =
@@ -191,6 +194,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
+                        .addAllJvmOpts(javaVersion.get().isJava11() ? java11Options : ImmutableList.of())
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
                                         ? java14PlusOptions
