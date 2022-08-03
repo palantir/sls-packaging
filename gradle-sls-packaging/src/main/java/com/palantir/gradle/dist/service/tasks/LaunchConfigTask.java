@@ -192,7 +192,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
-                        // Java 11u6 and later have potential memory leak issues when using the C2
+                        // Java 11.0.16 introduced a potential memory leak issues when using the C2
                         // compiler
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("11")) == 0
