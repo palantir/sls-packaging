@@ -27,6 +27,7 @@ import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.LibraryElements;
+import org.gradle.api.attributes.Usage;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class DiagnosticsManifestPlugin implements Plugin<Project> {
@@ -138,6 +139,13 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
             conf.setVisible(false);
+
+            // We must specify the appropriate usage attribute (java-runtime) so that the consumer can match the proper
+            // variant without ambiguity. This ambiguity issue arose while upgrading from gradle 7.3.X to gradle 7.5
+            // upgrade, as (from my understanding) changes in variant attribute matching were introduced in gradle 7.4
+            // https://app.circleci.com/pipelines/github/palantir/sls-packaging/2073/workflows/f5ca9398-f5f0-43b3-b3e2-0eabf1d62b88/jobs/15792
+            conf.getAttributes()
+                    .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, "java-runtime"));
         });
 
         project.getDependencies().add(consumable.getName(), project);
