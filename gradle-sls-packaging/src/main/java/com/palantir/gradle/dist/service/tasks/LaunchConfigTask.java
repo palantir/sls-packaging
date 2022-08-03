@@ -61,6 +61,7 @@ public abstract class LaunchConfigTask extends DefaultTask {
     private static final ImmutableList<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
+    private static final ImmutableList<String> disableC2 = ImmutableList.of("-XX:TieredStopAtLevel=1");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -191,6 +192,12 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(javaAgentArgs())
                         .addAllJvmOpts(alwaysOnJvmOptions)
                         .addAllJvmOpts(addJava8GcLogging.get() ? java8gcLoggingOptions : ImmutableList.of())
+                        // Java 11.0.16 introduced a potential memory leak issues when using the C2
+                        // compiler
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("11")) == 0
+                                        ? disableC2
+                                        : ImmutableList.of())
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("14")) >= 0
                                         ? java14PlusOptions
