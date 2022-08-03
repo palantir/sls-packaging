@@ -18,13 +18,9 @@ package com.palantir.gradle.dist;
 
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.AttributeDisambiguationRule;
-import org.gradle.api.attributes.MultipleCandidatesDetails;
 import org.gradle.api.attributes.Usage;
 import org.gradle.util.GradleVersion;
 
@@ -50,27 +46,5 @@ public class SlsBaseDistPlugin implements Plugin<Project> {
         // Make it export a custom usage, to allow resolving it via variant-aware resolution.
         slsConf.getAttributes()
                 .attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, SLS_DIST_USAGE));
-
-        project.getDependencies()
-                .getAttributesSchema()
-                .attribute(Usage.USAGE_ATTRIBUTE, strategy -> strategy.getDisambiguationRules()
-                        .add(SlsDisambiguationRule.class));
-    }
-
-    /**
-     * Still support old consumers which don't declare a required usage, such as gradle-docker's docker configuration.
-     */
-    static final class SlsDisambiguationRule implements AttributeDisambiguationRule<Usage> {
-        @Override
-        public void execute(MultipleCandidatesDetails<Usage> details) {
-            if (details.getConsumerValue() == null) {
-                List<Usage> slsDistMatches = details.getCandidateValues().stream()
-                        .filter(it -> it.getName().equals(SLS_DIST_USAGE))
-                        .collect(Collectors.toList());
-                if (slsDistMatches.size() == 1) {
-                    details.closestMatch(slsDistMatches.get(0));
-                }
-            }
-        }
     }
 }
