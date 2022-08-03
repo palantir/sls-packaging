@@ -406,7 +406,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
-                '-XX:NativeMemoryTracking=summary',
                 '-XX:FlightRecorderOptions=stackdepth=256',
                 '-XX:+UseParallelGC',
                 '-Xmx4M',
@@ -431,7 +430,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
-                '-XX:NativeMemoryTracking=summary',
                 '-XX:FlightRecorderOptions=stackdepth=256',
                 '-Xmx4M',
                 '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -470,7 +468,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=20',
-                '-XX:NativeMemoryTracking=summary',
                 '-XX:FlightRecorderOptions=stackdepth=256',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
