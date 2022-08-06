@@ -1,0 +1,16 @@
+type: improvement
+improvement:
+  description: |-
+    Improve the overall fidelity of JFR profiles and reduce safepoint sampling bias
+
+    Note due to https://bugs.openjdk.org/browse/JDK-8201516 there may still
+    be potentially small incorrect attribution, but overall this tradeoff is
+    worth the sampling bias impact.
+
+    See references:
+    * http://hirt.se/blog/?p=609
+    * https://docs.oracle.com/javacomponents/jmc-5-5/jfr-runtime-guide/about.htm#JFRRT111
+    * https://psy-lob-saw.blogspot.com/2016/02/why-most-sampling-java-profilers-are.html
+    * https://jpbempel.github.io/2022/06/22/debug-non-safepoints.html
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1376
