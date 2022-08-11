@@ -1,0 +1,8 @@
+type: fix
+fix:
+  description: |-
+    [JDK-8291665] Disable Hotspot C2 split if blocks
+
+    See https://bugs.openjdk.org/browse/JDK-8291665?focusedCommentId=14517134&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-14517134
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1381
