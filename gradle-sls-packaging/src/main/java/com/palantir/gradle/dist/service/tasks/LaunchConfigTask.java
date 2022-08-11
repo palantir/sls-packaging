@@ -62,8 +62,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
     // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
-    private static final ImmutableList<String> jdk11DisableC2Compile =
-            ImmutableList.of("-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord");
+    private static final ImmutableList<String> jdk11DisableC2Compile = ImmutableList.of(
+            "-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord", "-XX:-SplitIfBlocks");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
