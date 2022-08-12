@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Gradle wrapper is updated to latest version `7.5`
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1371
