@@ -101,12 +101,12 @@ final class ModuleArgs {
             Map<File, JarManifestModuleInfo> parsedJarManifests, JavaVersion runtimeJavaVersion) {
 
         AtomicBoolean enablePreview = new AtomicBoolean(false);
-        Map<File, String> problemJars = new LinkedHashMap<>();
+        Map<File, JavaVersion> problemJars = new LinkedHashMap<>();
 
         parsedJarManifests.forEach((jar, info) -> {
             if (info.enablePreview().isPresent()) {
-                String enablePreviewJavaVersion = info.enablePreview().get();
-                if (enablePreviewJavaVersion.equals(runtimeJavaVersion.getMajorVersion())) {
+                JavaVersion enablePreviewJavaVersion = info.enablePreview().get();
+                if (enablePreviewJavaVersion.equals(runtimeJavaVersion)) {
                     enablePreview.set(true);
                 } else {
                     problemJars.put(jar, enablePreviewJavaVersion);
@@ -147,7 +147,7 @@ final class ModuleArgs {
          * version that must be used, e.g. "17". (Code compiled with --enable-preview must run on the same major java
          * version).
          */
-        Optional<String> enablePreview();
+        Optional<JavaVersion> enablePreview();
 
         default boolean isEmpty() {
             return exports().isEmpty() && opens().isEmpty() && enablePreview().isEmpty();
@@ -172,7 +172,8 @@ final class ModuleArgs {
                     .<JarManifestModuleInfo>map(manifest -> builder()
                             .exports(readListAttribute(manifest, ADD_EXPORTS_ATTRIBUTE))
                             .opens(readListAttribute(manifest, ADD_OPENS_ATTRIBUTE))
-                            .enablePreview(readOptionalAttribute(manifest, ENABLE_PREVIEW_ATTRIBUTE))
+                            .enablePreview(readOptionalAttribute(manifest, ENABLE_PREVIEW_ATTRIBUTE)
+                                    .map(JavaVersion::toVersion))
                             .build())
                     .filter(JarManifestModuleInfo::isPresent);
         }
