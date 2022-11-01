@@ -1,0 +1,8 @@
+type: improvement
+improvement:
+  description: |-
+    Disable C2 compiler for Java 11
+
+    Disable the C2 compiler using the -XX:TieredStopAtLevel=1 flag. This prevents a potential memory leak issue https://bugs.openjdk.org/browse/JDK-8291665
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1370

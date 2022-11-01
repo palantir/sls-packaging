@@ -47,10 +47,6 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         repositories {
           mavenCentral()
         }
- 
-        dependencies {
-          implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
-        }
         """.stripIndent()
         addResource("src/main/resources/sls-manifest", "diagnostics.json",
                 '[{"type": "foo.v1", "docs" : "This does something", "safe" : false}]')

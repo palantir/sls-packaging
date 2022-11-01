@@ -1,0 +1,8 @@
+type: fix
+fix:
+  description: |-
+    Disable C2 compilation for problematic structure in JDK 11.0.16
+
+    See https://bugs.openjdk.org/browse/JDK-8291665
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1372
