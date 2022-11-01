@@ -16,25 +16,19 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Multimaps;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.JavaVersion;
@@ -60,88 +54,78 @@ final class ModuleArgs {
 
     static ImmutableList<String> collectClasspathArgs(
             Project project, JavaVersion javaVersion, FileCollection classpath) {
-        // --add-exports is unnecessary prior to java 16
-        if (javaVersion.compareTo(JavaVersion.toVersion("16")) < 0) {
-            return ImmutableList.of();
+
+        Map<File, JarManifestModuleInfo> parsedJarManifests = new LinkedHashMap<>();
+        for (File file : classpath.getFiles()) {
+            if (file.getName().endsWith(".jar") && file.isFile()) {
+                Optional<JarManifestModuleInfo> parsedModuleInfo = JarManifestModuleInfo.fromJar(project, file);
+                project.getLogger().debug("Jar '{}' produced manifest info: {}", file, parsedModuleInfo);
+                if (parsedModuleInfo.isPresent()) {
+                    parsedJarManifests.put(file, parsedModuleInfo.get());
+                }
+            } else {
+                project.getLogger().info("File {} wasn't a JAR or file", file);
+            }
         }
 
-        Map<File, JarManifestModuleInfo> parsedJarManifests = classpath.getFiles().stream()
-                .<Entry<File, JarManifestModuleInfo>>map(file -> {
-                    try {
-                        if (file.getName().endsWith(".jar") && file.isFile()) {
-                            Optional<JarManifestModuleInfo> parsedModuleInfo = JarManifestModuleInfo.fromJar(file);
-                            project.getLogger().debug("Jar '{}' produced manifest info: {}", file, parsedModuleInfo);
-                            return Maps.immutableEntry(file, parsedModuleInfo.orElse(null));
-                        } else {
-                            project.getLogger().info("File {} wasn't a JAR or file", file);
-                        }
-                    } catch (IOException e) {
-                        project.getLogger().warn("Failed to check jar {} for manifest attributes", file, e);
-                    }
-                    return Maps.immutableEntry(file, null);
-                })
-                .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(
-                        Entry::getKey,
-                        Entry::getValue,
-                        (_left, _right) -> {
-                            throw new UnsupportedOperationException();
-                        },
-                        LinkedHashMap::new));
-
-        Collection<JarManifestModuleInfo> classpathInfo = parsedJarManifests.values();
-        Stream<String> exports = Stream.concat(
-                        DEFAULT_EXPORTS.stream(), classpathInfo.stream().flatMap(info -> info.exports().stream()))
-                .distinct()
-                .sorted()
-                .flatMap(ModuleArgs::addExportArg);
-        Stream<String> opens = classpathInfo.stream()
-                .flatMap(info -> info.opens().stream())
-                .distinct()
-                .sorted()
-                .flatMap(ModuleArgs::addOpensArg);
-        Stream<String> enablePreview = enablePreview(javaVersion, parsedJarManifests);
-
-        return Stream.of(exports, opens, enablePreview)
+        return Stream.of(
+                        exportsArgs(parsedJarManifests.values(), javaVersion),
+                        opensArgs(parsedJarManifests.values()),
+                        enablePreviewArg(parsedJarManifests, javaVersion))
                 .flatMap(Function.identity())
                 .collect(ImmutableList.toImmutableList());
     }
 
-    private static Stream<String> enablePreview(
-            JavaVersion javaVersion, Map<File, JarManifestModuleInfo> parsedJarManifests) {
-        Map<String, Collection<String>> enablePreviewFromJar = parsedJarManifests.entrySet().stream()
-                .filter(entry -> entry.getValue().enablePreview().isPresent())
-                .collect(Multimaps.toMultimap(
-                        entry -> entry.getValue().enablePreview().get(),
-                        entry -> entry.getKey().getName(),
-                        () -> MultimapBuilder.hashKeys().arrayListValues().build()))
-                .asMap();
+    private static Stream<String> exportsArgs(
+            Collection<JarManifestModuleInfo> classpathInfo, JavaVersion javaVersion) {
+        // --add-exports is unnecessary prior to java 16
+        if (javaVersion.compareTo(JavaVersion.toVersion("16")) < 0) {
+            return Stream.empty();
+        }
 
-        if (enablePreviewFromJar.size() > 1) {
+        return Stream.concat(DEFAULT_EXPORTS.stream(), classpathInfo.stream().flatMap(info -> info.exports().stream()))
+                .distinct()
+                .sorted()
+                .flatMap(modulePackagePair -> Stream.of("--add-exports", modulePackagePair + "=ALL-UNNAMED"));
+    }
+
+    private static Stream<String> opensArgs(Collection<JarManifestModuleInfo> classpathInfo) {
+        return classpathInfo.stream()
+                .flatMap(info -> info.opens().stream())
+                .distinct()
+                .sorted()
+                .flatMap(modulePackagePair -> Stream.of("--add-opens", modulePackagePair + "=ALL-UNNAMED"));
+    }
+
+    private static Stream<String> enablePreviewArg(
+            Map<File, JarManifestModuleInfo> parsedJarManifests, JavaVersion runtimeJavaVersion) {
+
+        AtomicBoolean enablePreview = new AtomicBoolean(false);
+        Map<File, String> problemJars = new LinkedHashMap<>();
+
+        parsedJarManifests.forEach((jar, info) -> {
+            if (info.enablePreview().isPresent()) {
+                String enablePreviewJavaVersion = info.enablePreview().get();
+                if (enablePreviewJavaVersion.equals(runtimeJavaVersion.getMajorVersion())) {
+                    enablePreview.set(true);
+                } else {
+                    problemJars.put(jar, enablePreviewJavaVersion);
+                }
+            }
+        });
+
+        if (!problemJars.isEmpty()) {
             throw new RuntimeException("Unable to add '--enable-preview' because classpath jars have embedded "
-                    + JarManifestModuleInfo.ENABLE_PREVIEW_ATTRIBUTE + " attribute with different versions:\n"
-                    + enablePreviewFromJar);
+                    + JarManifestModuleInfo.ENABLE_PREVIEW_ATTRIBUTE + " attribute with different versions compared "
+                    + "to the runtime version " + runtimeJavaVersion.getMajorVersion() + ":\n"
+                    + problemJars);
         }
 
-        if (enablePreviewFromJar.size() == 1) {
-            String enablePreviewVersion = Iterables.getOnlyElement(enablePreviewFromJar.keySet());
-            Preconditions.checkState(
-                    enablePreviewVersion.equals(javaVersion.toString()),
-                    "Runtime java version (" + javaVersion + ") must match version from embedded "
-                            + JarManifestModuleInfo.ENABLE_PREVIEW_ATTRIBUTE + " attribute (" + enablePreviewVersion
-                            + ") from:\n" + Iterables.getOnlyElement(enablePreviewFromJar.values()));
+        if (enablePreview.get()) {
             return Stream.of("--enable-preview");
+        } else {
+            return Stream.empty();
         }
-
-        return Stream.empty();
-    }
-
-    private static Stream<String> addExportArg(String modulePackagePair) {
-        return Stream.of("--add-exports", modulePackagePair + "=ALL-UNNAMED");
-    }
-
-    private static Stream<String> addOpensArg(String modulePackagePair) {
-        return Stream.of("--add-opens", modulePackagePair + "=ALL-UNNAMED");
     }
 
     private ModuleArgs() {}
@@ -159,9 +143,10 @@ final class ModuleArgs {
         ImmutableList<String> opens();
 
         /**
-         * Signifies that {@code --enable-preview} should be added at runtime AND the specific java runtime version
-         * that must be used. (Code compiled with --enable-preview must run on _exactly_ the same java version).
-         * */
+         * Signifies that {@code --enable-preview} should be added at runtime AND the specific major java runtime
+         * version that must be used, e.g. "17". (Code compiled with --enable-preview must run on the same major java
+         * version).
+         */
         Optional<String> enablePreview();
 
         default boolean isEmpty() {
@@ -172,10 +157,13 @@ final class ModuleArgs {
             return !isEmpty();
         }
 
-        static Optional<JarManifestModuleInfo> fromJar(File file) throws IOException {
+        static Optional<JarManifestModuleInfo> fromJar(Project project, File file) {
             try (JarFile jar = new JarFile(file)) {
                 java.util.jar.Manifest maybeJarManifest = jar.getManifest();
                 return JarManifestModuleInfo.fromJarManifest(maybeJarManifest);
+            } catch (IOException e) {
+                project.getLogger().warn("Failed to check jar {} for manifest attributes", file, e);
+                return Optional.empty();
             }
         }
 
