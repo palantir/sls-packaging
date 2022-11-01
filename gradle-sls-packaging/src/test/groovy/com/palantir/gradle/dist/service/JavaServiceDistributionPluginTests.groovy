@@ -1270,9 +1270,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         result.output.contains("Unable to add '--enable-preview' because classpath jars have embedded " +
-                "Baseline-Enable-Preview attribute with different versions:")
-        result.output.contains("17=[test.jar]")
-        result.output.contains("19=[other.jar]")
+                "Baseline-Enable-Preview attribute with different versions compared to the runtime version 14:")
+        result.output.contains("/test.jar=17")
+        result.output.contains("/other.jar=19")
     }
 
     def 'Gives clear errors if Baseline-Enable-Preview version doesn\'t match runtime java version'() {
@@ -1294,8 +1294,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         BuildResult result = runTasksAndFail(':createLaunchConfig')
 
         then:
-        result.output.contains("Runtime java version (14) must match version from embedded Baseline-Enable-Preview attribute (19) from:\n" +
-                "[test.jar]")
+        result.output.contains("Unable to add '--enable-preview' because classpath jars have embedded " +
+                "Baseline-Enable-Preview attribute with different versions compared to the runtime version 14:")
+        result.output.contains("/test.jar=19")
     }
 
     def 'applies opens based on classpath manifests for manifest classpaths'() {
