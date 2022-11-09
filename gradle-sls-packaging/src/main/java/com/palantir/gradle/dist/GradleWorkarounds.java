@@ -17,12 +17,26 @@
 package com.palantir.gradle.dist;
 
 import java.lang.reflect.Proxy;
+import java.util.Map;
 import org.gradle.api.DomainObjectCollection;
 import org.gradle.api.GradleException;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.provider.ListProperty;
 
 @SuppressWarnings("UnstableApiUsage")
-final class GradleWorkarounds {
+public final class GradleWorkarounds {
+
+    /**
+     * Add the project as a dependency while explicitly declare the configuration to depend on to avoid resolution
+     * failures due to ambiguous variants. See https://github.com/palantir/sls-packaging/pull/1272 for more details.
+     */
+    public static void addExplicitProjectDependencyToConfiguration(Configuration consumable, Project project) {
+        Map<String, String> projectDependency =
+                Map.of("path", project.getPath(), "configuration", consumable.getName());
+        project.getDependencies()
+                .add(consumable.getName(), project.getDependencies().project(projectDependency));
+    }
 
     /**
      * Allow a {@link ListProperty} to be used with {@link DomainObjectCollection#addAllLater}.

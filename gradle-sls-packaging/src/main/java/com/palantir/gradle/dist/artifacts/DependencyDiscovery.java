@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-import java.util.Map;
+import com.palantir.gradle.dist.GradleWorkarounds;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
@@ -50,11 +50,7 @@ public final class DependencyDiscovery {
             conf.setVisible(false);
         });
 
-        // Explicitly declare the configuration to depend on to avoid resolution failures due to ambiguous variants.
-        Map<String, String> projectDependency =
-                Map.of("path", project.getPath(), "configuration", consumable.getName());
-        project.getDependencies()
-                .add(consumable.getName(), project.getDependencies().project(projectDependency));
+        GradleWorkarounds.addExplicitProjectDependencyToConfiguration(consumable, project);
 
         return consumable;
     }

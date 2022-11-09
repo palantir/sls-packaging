@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.palantir.gradle.dist.GradleWorkarounds;
 import com.palantir.gradle.dist.artifacts.ExtractFileFromJar;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
@@ -140,7 +141,8 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             conf.setVisible(false);
         });
 
-        project.getDependencies().add(consumable.getName(), project);
+        GradleWorkarounds.addExplicitProjectDependencyToConfiguration(consumable, project);
+
         return consumable;
     }
 }
