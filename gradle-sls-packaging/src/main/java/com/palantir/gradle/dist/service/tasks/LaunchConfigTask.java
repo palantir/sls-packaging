@@ -73,6 +73,9 @@ public abstract class LaunchConfigTask extends DefaultTask {
             // Set DNS cache TTL to 20s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
             "-Dsun.net.inetaddr.ttl=20",
+            "-XX:+UnlockDiagnosticVMOptions",
+            // Disable AES-CTR intrinsics due to corruption bug https://bugs.openjdk.org/browse/JDK-8292158
+            "-XX:-UseAESCTRIntrinsics",
             "-XX:NativeMemoryTracking=summary",
             // Increase default JFR stack depth beyond the default (conservative) 64 frames.
             // This can be overridden by user-provided options.
