@@ -1,0 +1,8 @@
+type: fix
+fix:
+  description: |-
+    Disable AES-CTR intrinsics due to corruption bug JDK-8292158
+
+    See https://bugs.openjdk.org/browse/JDK-8292158 where AES-CTR streams may be corrupted on AVX-512 CPUs.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1411
