@@ -225,10 +225,10 @@ public abstract class LaunchConfigTask extends DefaultTask {
                                         : ImmutableList.of())
                         // https://bugs.openjdk.org/browse/JDK-8281181 stopped respecting cpu.shares for
                         // processor count. UseContainerCpuShares can be enabled for the time being, however it
-                        // is deprecated in jdk19 and expired in jdk21: https://bugs.openjdk.org/browse/JDK-8282684
+                        // is deprecated in jdk19 and obsoleted in jdk20: https://bugs.openjdk.org/browse/JDK-8282684
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("11")) >= 0
-                                                && javaVersion.get().compareTo(JavaVersion.toVersion("20")) <= 0
+                                                && javaVersion.get().compareTo(JavaVersion.toVersion("19")) <= 0
                                         ? forceUseContainerCpuShares
                                         : ImmutableList.of())
                         .addAllJvmOpts(
