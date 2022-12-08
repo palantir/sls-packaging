@@ -64,8 +64,10 @@ public abstract class LaunchConfigTask extends DefaultTask {
     // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
     private static final ImmutableList<String> jdk11DisableC2Compile =
             ImmutableList.of("-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord");
+    // UseContainerCpuShares was added in a patch release, thus IgnoreUnrecognizedVMOptions is required to avoid
+    // breaking distributions running with older JDKs.
     private static final ImmutableList<String> forceUseContainerCpuShares =
-            ImmutableList.of("-XX:+UseContainerCpuShares");
+            ImmutableList.of("-XX:+IgnoreUnrecognizedVMOptions", "-XX:+UseContainerCpuShares");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
