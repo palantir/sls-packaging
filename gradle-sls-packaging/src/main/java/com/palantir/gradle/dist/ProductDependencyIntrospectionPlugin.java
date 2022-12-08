@@ -16,10 +16,10 @@
 
 package com.palantir.gradle.dist;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
 import groovy.lang.Closure;
 import java.io.File;
@@ -66,8 +66,9 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                     public String doCall(Object moduleVersion) {
                         List<String> strings = Splitter.on(':').splitToList(moduleVersion.toString());
                         Preconditions.checkState(
-                                strings.size() == 2, "Expected 'group:name', found: %s", moduleVersion.toString());
-
+                                strings.size() == 2,
+                                "Expected 'group:name'",
+                                SafeArg.of("moduleVersion", moduleVersion.toString()));
                         return getMinimumProductVersion(project, strings.get(0), strings.get(1));
                     }
                 });
@@ -77,8 +78,8 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
         Optional<List<ProductDependency>> dependenciesOpt = getAllProductDependencies(project);
         Preconditions.checkState(
                 dependenciesOpt.isPresent(),
-                "%s does not exist. Run ./gradlew --write-locks to generate it.",
-                ProductDependencyLockFile.LOCK_FILE);
+                ProductDependencyLockFile.LOCK_FILE + " does not exist. Run ./gradlew --write-locks to generate it.");
+
         List<ProductDependency> dependencies = dependenciesOpt.get();
 
         Optional<ProductDependency> dependency = dependencies.stream()
