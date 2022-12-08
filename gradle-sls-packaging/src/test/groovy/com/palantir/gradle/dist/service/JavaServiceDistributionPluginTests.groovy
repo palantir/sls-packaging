@@ -464,35 +464,35 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
-            .mainClass("test.Test")
-            .serviceName("service-name")
-            .javaHome("foo")
-            .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
-            .jvmOpts([
-                '-XX:+CrashOnOutOfMemoryError',
-                '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
-                '-Dsun.net.inetaddr.ttl=20',
-                '-XX:+UnlockDiagnosticVMOptions',
-                '-XX:-UseAESCTRIntrinsics',
-                '-XX:NativeMemoryTracking=summary',
-                '-XX:FlightRecorderOptions=stackdepth=256',
-                "-XX:+PrintGCDateStamps",
-                "-XX:+PrintGCDetails",
-                "-XX:-TraceClassUnloading",
-                "-XX:+UseGCLogFileRotation",
-                "-XX:GCLogFileSize=10M",
-                "-XX:NumberOfGCLogFiles=10",
-                "-Xloggc:var/log/gc-%t-%p.log",
-                "-verbose:gc",
-                "-XX:-UseBiasedLocking",
-                '-XX:+UseParallelGC',
-                '-Xmx4M',
-                '-Djavax.net.ssl.trustStore=truststore.jks'])
-            .dirs(["var/data/tmp"])
-            .env(["MALLOC_ARENA_MAX": '4'])
-            .build()
+                .mainClass("test.Test")
+                .serviceName("service-name")
+                .javaHome("foo")
+                .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:+UnlockDiagnosticVMOptions',
+                        '-XX:-UseAESCTRIntrinsics',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        "-XX:+PrintGCDateStamps",
+                        "-XX:+PrintGCDetails",
+                        "-XX:-TraceClassUnloading",
+                        "-XX:+UseGCLogFileRotation",
+                        "-XX:GCLogFileSize=10M",
+                        "-XX:NumberOfGCLogFiles=10",
+                        "-Xloggc:var/log/gc-%t-%p.log",
+                        "-verbose:gc",
+                        "-XX:-UseBiasedLocking",
+                        '-XX:+UseParallelGC',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .dirs(["var/data/tmp"])
+                .env(["MALLOC_ARENA_MAX": '4'])
+                .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
         expectedStaticConfig == actualStaticConfig
@@ -518,7 +518,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts().containsAll([
                 "-XX:+UseShenandoahGC",
                 "-XX:+ExplicitGCInvokesConcurrent",
-                "-XX:+ClassUnloadingWithConcurrentMark"
+                "-XX:+ClassUnloadingWithConcurrentMark",
+                "-XX:+UseContainerCpuShares",
         ])
     }
 
