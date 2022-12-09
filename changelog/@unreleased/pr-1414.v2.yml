@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Enable 'UseContainerCpuShares' for java distributions
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1414

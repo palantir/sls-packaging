@@ -518,7 +518,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts().containsAll([
                 "-XX:+UseShenandoahGC",
                 "-XX:+ExplicitGCInvokesConcurrent",
-                "-XX:+ClassUnloadingWithConcurrentMark"
+                "-XX:+ClassUnloadingWithConcurrentMark",
+                "-XX:+UseContainerCpuShares",
         ])
     }
 
