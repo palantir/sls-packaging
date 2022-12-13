@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: Stop automatically adding `-XX:+UseContainerCpuShares` (introduced
+    in sls-packaging 7.25.0) to allow for a more conservative rollout.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1416
