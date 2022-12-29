@@ -1,0 +1,13 @@
+type: improvement
+improvement:
+  description: |-
+    Use Async JVM Unified Logging on JDK 17+
+
+    Avoid fflush from Unified JVM Logging (e.g. GC logs), see:
+
+    https://aws.amazon.com/blogs/developer/asynchronous-logging-corretto-17/
+    https://bugs.openjdk.org/browse/JDK-8291898
+    https://bugs.openjdk.org/browse/JDK-8229517
+    https://github.com/openjdk/jdk/commit/41185d38f21e448370433f7e4f1633777cab6170
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1374

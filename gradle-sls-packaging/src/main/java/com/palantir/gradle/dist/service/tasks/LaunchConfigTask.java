@@ -60,6 +60,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
             ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
     private static final ImmutableList<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
+    private static final ImmutableList<String> java17PlusOptions = ImmutableList.of(
+            "-Xlog:async"); // remove if/when async is default, see https://bugs.openjdk.org/browse/JDK-8291898
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
     // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
     private static final ImmutableList<String> jdk11DisableC2Compile =
@@ -214,6 +216,10 @@ public abstract class LaunchConfigTask extends DefaultTask {
                         .addAllJvmOpts(
                                 javaVersion.get().compareTo(JavaVersion.toVersion("15")) == 0
                                         ? java15Options
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.get().compareTo(JavaVersion.toVersion("17")) >= 0
+                                        ? java17PlusOptions
                                         : ImmutableList.of())
                         // Biased locking is disabled on java 15+ https://openjdk.java.net/jeps/374
                         // We disable biased locking on all releases in order to reduce safepoint time,
