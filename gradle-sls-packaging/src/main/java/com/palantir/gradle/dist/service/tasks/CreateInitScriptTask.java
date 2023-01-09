@@ -16,42 +16,4 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
-import com.palantir.gradle.dist.service.util.EmitFiles;
-import java.io.IOException;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
-
-public class CreateInitScriptTask extends DefaultTask {
-    private final Property<String> serviceName = getProject().getObjects().property(String.class);
-    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
-
-    public CreateInitScriptTask() {
-        outputFile.set(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));
-    }
-
-    @Input
-    public final Property<String> getServiceName() {
-        return serviceName;
-    }
-
-    @OutputFile
-    public final RegularFileProperty getOutputFile() {
-        return outputFile;
-    }
-
-    @TaskAction
-    final void createInitScript() throws IOException {
-        EmitFiles.replaceVars(
-                        JavaServiceDistributionPlugin.class.getResourceAsStream("/init.sh"),
-                        getOutputFile().get().getAsFile().toPath(),
-                        ImmutableMap.of("@serviceName@", serviceName.get()))
-                .toFile()
-                .setExecutable(true);
-    }
-}
+public abstract class CreateInitScriptTask extends CreateInitScriptTaskImpl {}
