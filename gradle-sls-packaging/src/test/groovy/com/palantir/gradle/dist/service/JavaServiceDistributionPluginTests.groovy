@@ -21,18 +21,17 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
+import com.palantir.gradle.dist.service.tasks.LaunchConfig
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Assert
+import spock.lang.Unroll
 
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-import spock.lang.Unroll
-
 import java.util.zip.ZipFile
-import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Assert
-
 import java.util.zip.ZipOutputStream
 
 class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
@@ -842,7 +841,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
         // verify launcher YAML files
-        LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
+        LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
@@ -850,7 +849,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
         launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
-        LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
+        LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
@@ -989,13 +988,13 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         startScript.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
         // verify launcher YAML files
-        LaunchConfigTask.LaunchConfig launcherCheck = OBJECT_MAPPER.readValue(
+        LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
         launcherCheck.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
-        LaunchConfigTask.LaunchConfig launcherStatic = OBJECT_MAPPER.readValue(
+        LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
                 LaunchConfigTask.LaunchConfig.class)
 
