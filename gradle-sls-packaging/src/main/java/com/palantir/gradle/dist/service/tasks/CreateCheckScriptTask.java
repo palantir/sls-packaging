@@ -16,54 +16,8 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
-import com.palantir.gradle.dist.service.util.EmitFiles;
-import java.io.IOException;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
-
-public class CreateCheckScriptTask extends DefaultTask {
-    private final Property<String> serviceName = getProject().getObjects().property(String.class);
-    private final ListProperty<String> checkArgs = getProject().getObjects().listProperty(String.class);
-    private final RegularFileProperty outputFile = getProject().getObjects().fileProperty();
-
+public abstract class CreateCheckScriptTask extends CreateCheckScriptTaskImpl {
     public CreateCheckScriptTask() {
-        outputFile.set(getProject().getLayout().getBuildDirectory().file("monitoring/check.sh"));
-    }
-
-    @Input
-    public final Property<String> getServiceName() {
-        return serviceName;
-    }
-
-    @Input
-    public final ListProperty<String> getCheckArgs() {
-        return checkArgs;
-    }
-
-    @OutputFile
-    public final RegularFileProperty getOutputFile() {
-        return outputFile;
-    }
-
-    @TaskAction
-    final void createInitScript() throws IOException {
-        if (!checkArgs.get().isEmpty()) {
-            EmitFiles.replaceVars(
-                            JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
-                            getOutputFile().get().getAsFile().toPath(),
-                            ImmutableMap.of(
-                                    "@serviceName@", serviceName.get(),
-                                    "@checkArgs@", Joiner.on(" ").join(checkArgs.get())))
-                    .toFile()
-                    .setExecutable(true);
-        }
+        getOutputFile().set(getProject().getLayout().getBuildDirectory().file("monitoring/check.sh"));
     }
 }

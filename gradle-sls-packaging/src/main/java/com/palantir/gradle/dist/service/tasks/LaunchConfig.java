@@ -45,7 +45,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.immutables.value.Value;
 
 @AutoParallelizable
-public abstract class LaunchConfig {
+public final class LaunchConfig {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
     private static final ImmutableList<String> java8gcLoggingOptions = ImmutableList.of(
             "-XX:+PrintGCDateStamps",
@@ -287,4 +287,6 @@ public abstract class LaunchConfig {
 
         final class Builder extends ImmutableLaunchConfigInfo.Builder {}
     }
+
+    private LaunchConfig() {}
 }

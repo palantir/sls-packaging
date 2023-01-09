@@ -26,10 +26,12 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public final class EmitFiles {
-    public static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) throws IOException {
+    public static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) {
         String text;
         try (Reader reader = new InputStreamReader(src, StandardCharsets.UTF_8)) {
             text = CharStreams.toString(reader);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read template", e);
         }
 
         for (Map.Entry<String, String> entry : vars.entrySet()) {
@@ -40,7 +42,11 @@ public final class EmitFiles {
         dest.getParent().toFile().mkdirs();
 
         // write content
-        return Files.write(dest, text.getBytes(StandardCharsets.UTF_8));
+        try {
+            return Files.write(dest, text.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write templated file", e);
+        }
     }
 
     private EmitFiles() {}

@@ -16,33 +16,44 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 
 @AutoParallelizable
-public final class CreateInitScript {
+public final class CreateCheckScript {
     interface Params {
         @Input
         Property<String> getServiceName();
+
+        @Input
+        ListProperty<String> getCheckArgs();
 
         @OutputFile
         RegularFileProperty getOutputFile();
     }
 
     static void action(Params params) {
-        EmitFiles.replaceVars(
-                        JavaServiceDistributionPlugin.class.getResourceAsStream("/init.sh"),
-                        params.getOutputFile().get().getAsFile().toPath(),
-                        ImmutableMap.of("@serviceName@", params.getServiceName().get()))
-                .toFile()
-                .setExecutable(true);
+        if (!params.getCheckArgs().get().isEmpty()) {
+            EmitFiles.replaceVars(
+                            JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
+                            params.getOutputFile().get().getAsFile().toPath(),
+                            ImmutableMap.of(
+                                    "@serviceName@", params.getServiceName().get(),
+                                    "@checkArgs@",
+                                            Joiner.on(" ")
+                                                    .join(params.getCheckArgs().get())))
+                    .toFile()
+                    .setExecutable(true);
+        }
     }
 
-    private CreateInitScript() {}
+    private CreateCheckScript() {}
 }
