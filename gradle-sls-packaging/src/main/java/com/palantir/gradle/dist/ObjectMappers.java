@@ -19,7 +19,7 @@ package com.palantir.gradle.dist;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
@@ -31,7 +31,7 @@ import org.gradle.api.GradleException;
 public final class ObjectMappers {
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
+            .setPropertyNamingStrategy(PropertyNamingStrategies.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .registerModule(new GuavaModule());
