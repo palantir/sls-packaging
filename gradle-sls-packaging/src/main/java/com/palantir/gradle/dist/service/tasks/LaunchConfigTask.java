@@ -84,6 +84,11 @@ public abstract class LaunchConfigTask extends DefaultTask {
             // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
             "-XX:UseAVX=2",
             "-XX:NativeMemoryTracking=summary",
+            // Improve the overall fidelity of JFR profiles and reduce sampling bias,
+            // see http://hirt.se/blog/?p=609 & https://jpbempel.github.io/2022/06/22/debug-non-safepoints.html
+            // Per https://bugs.openjdk.org/browse/JDK-8201516 may still be potentially incorrect attribution.
+            "-XX:+UnlockDiagnosticVMOptions",
+            "-XX:+DebugNonSafepoints",
             // Increase default JFR stack depth beyond the default (conservative) 64 frames.
             // This can be overridden by user-provided options.
             // See sls-packaging#1230
