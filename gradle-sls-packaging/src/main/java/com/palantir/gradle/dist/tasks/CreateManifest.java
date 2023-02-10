@@ -18,19 +18,15 @@ package com.palantir.gradle.dist.tasks;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
-import com.palantir.gradle.dist.BaseDistributionExtension;
+import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.ProductDependency;
-import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.SlsManifest;
-import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
-import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -42,26 +38,22 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.gradle.StartParameter;
 import org.gradle.api.GradleException;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
-import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskProvider;
-import org.gradle.language.base.plugins.LifecycleBasePlugin;
 
+@AutoParallelizable
 final class CreateManifest {
     private static final Logger logger = Logging.getLogger(CreateManifest.class);
 
@@ -90,19 +82,25 @@ final class CreateManifest {
         @Input
         Property<String> getProjectVersion();
 
-        /**
-         * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
-         * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
-         */
-        @InputFile
-        @org.gradle.api.tasks.Optional
-        RegularFileProperty getLockfileIfExists();
+        default Provider<RegularFile> getLockfile() {
+            return getProjectDir().map(projectDir -> projectDir.file(ProductDependencyLockFile.LOCK_FILE));
+        }
+
+        default boolean lockfileExists() {
+            return getLockfile().get().getAsFile().exists();
+        }
 
         @Input
         Property<Boolean> getShouldWriteLocks();
 
         @Internal
         Property<String> getTaskName();
+
+        @Internal
+        DirectoryProperty getRootDir();
+
+        @Internal
+        DirectoryProperty getProjectDir();
     }
 
     static void action(Params params) {
@@ -119,28 +117,32 @@ final class CreateManifest {
         if (productDependencies.isEmpty()) {
             requireAbsentLockfile(params);
         } else {
-            ensureLockfileIsUpToDate(productDependencies);
+            ensureLockfileIsUpToDate(params, productDependencies);
         }
 
-        ObjectMappers.jsonMapper.writeValue(
-                getManifestFile().getAsFile().get(),
-                SlsManifest.builder()
-                        .manifestVersion("1.0")
-                        .productType(getProductType().get())
-                        .productGroup(getServiceGroup().get())
-                        .productName(getServiceName().get())
-                        .productVersion(getProjectVersion())
-                        .putAllExtensions(getManifestExtensions().get())
-                        .putExtensions("product-dependencies", productDependencies)
-                        .build());
+        try {
+            ObjectMappers.jsonMapper.writeValue(
+                    params.getManifestFile().getAsFile().get(),
+                    SlsManifest.builder()
+                            .manifestVersion("1.0")
+                            .productType(params.getProductType().get())
+                            .productGroup(params.getServiceGroup().get())
+                            .productName(params.getServiceName().get())
+                            .productVersion(params.getProjectVersion().get())
+                            .putAllExtensions(params.getManifestExtensions().get())
+                            .putExtensions("product-dependencies", productDependencies)
+                            .build());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write json for manifest", e);
+        }
     }
 
     private static void requireAbsentLockfile(Params params) {
-        File lockfile = getLockfile();
-
-        if (!lockfile.exists()) {
+        if (!params.lockfileExists()) {
             return;
         }
+
+        File lockfile = params.getLockfile().get().getAsFile();
 
         if (params.getShouldWriteLocks().get()) {
             lockfile.delete();
@@ -152,64 +154,62 @@ final class CreateManifest {
         }
     }
 
-    private File getLockfile() {
-        return getProject().file(ProductDependencyLockFile.LOCK_FILE);
-    }
+    private static void ensureLockfileIsUpToDate(Params params, List<ProductDependency> productDeps) {
+        File lockfile = params.getLockfile().get().getAsFile();
+        Path relativePath = params.getRootDir().getAsFile().get().toPath().relativize(lockfile.toPath());
 
-    public static boolean shouldWriteLocks(Project project) {
-        String taskName = project.getPath().equals(":")
-                ? ":writeProductDependenciesLocks"
-                : project.getPath() + ":writeProductDependenciesLocks";
-        Gradle gradle = project.getGradle();
-        return gradle.getStartParameter().isWriteDependencyLocks()
-                || gradle.getTaskGraph().hasTask(taskName);
-    }
-
-    private static void ensureLockfileIsUpToDate(Params params, List<ProductDependency> productDeps)
-            throws IOException {
-        File lockfile = getLockfile();
-        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, params.getInRepoProductIds().get());
-        boolean lockfileExists = lockfile.exists();
 
         if (params.getShouldWriteLocks().get()) {
-            Files.writeString(lockfile.toPath(), upToDateContents);
+            try {
+                Files.writeString(lockfile.toPath(), upToDateContents);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write lockfile " + relativePath, e);
+            }
 
-            if (!lockfileExists) {
+            if (!params.lockfileExists()) {
                 logger.lifecycle("Created {}\n\t{}", relativePath, upToDateContents.replaceAll("\n", "\n\t"));
             } else {
                 logger.lifecycle("Updated {}", relativePath);
             }
         } else {
-            if (!lockfileExists) {
+            if (!params.lockfileExists()) {
                 throw new GradleException(String.format(
                         "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
                         relativePath, params.getTaskName().get()));
             } else {
-                String fromDisk = Files.readString(lockfile.toPath());
-                Preconditions.checkState(
-                        fromDisk.equals(upToDateContents),
-                        "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
-                        relativePath,
-                        getName(),
-                        diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
+                try {
+                    String fromDisk = Files.readString(lockfile.toPath());
+
+                    Preconditions.checkState(
+                            fromDisk.equals(upToDateContents),
+                            "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
+                            relativePath,
+                            params.getTaskName(),
+                            diff(params, lockfile, upToDateContents)
+                                    .map(s -> ":\n" + s)
+                                    .orElse(""));
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to read lockfile " + relativePath, e);
+                }
             }
         }
     }
 
     /** Provide a rich diff so the user understands what change will be made before they run --write-locks. */
-    private Optional<String> diff(File existing, String upToDateContents) {
+    private static Optional<String> diff(Params params, File existing, String upToDateContents) {
         try {
             File tempFile = Files.createTempFile("product-dependencies", "lock").toFile();
             Files.writeString(tempFile.toPath(), upToDateContents);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            getProject().exec(spec -> {
-                spec.commandLine("diff", "-u", existing.getAbsolutePath(), tempFile.getAbsolutePath());
-                spec.setStandardOutput(baos);
-                spec.setIgnoreExitValue(true);
-            });
+
+            //            params.getExecOperations().exec(spec -> {
+            //                spec.commandLine("diff", "-u", existing.getAbsolutePath(), tempFile.getAbsolutePath());
+            //                spec.setStandardOutput(baos);
+            //                spec.setIgnoreExitValue(true);
+            //            });
             return Optional.of(
                     Streams.stream(Splitter.on("\n").split(new String(baos.toByteArray(), StandardCharsets.UTF_8)))
                             .skip(2)
@@ -229,58 +229,5 @@ final class CreateManifest {
         }
     }
 
-    public static TaskProvider<CreateManifest> createManifestTask(Project project, BaseDistributionExtension ext) {
-        TaskProvider<ResolveProductDependenciesTask> resolveProductDependenciesTask =
-                ProductDependencies.registerProductDependencyTasks(project, ext);
-
-        TaskProvider<CreateManifest> createManifest = project.getTasks()
-                .register("createManifest", CreateManifest.class, task -> {
-                    task.getServiceName().set(ext.getDistributionServiceName());
-                    task.getServiceGroup().set(ext.getDistributionServiceGroup());
-                    task.getProductType().set(ext.getProductType());
-                    task.getManifestFile().set(new File(project.getBuildDir(), "/deployment/manifest.yml"));
-                    task.getProductDependenciesFile()
-                            .set(resolveProductDependenciesTask.flatMap(
-                                    ResolveProductDependenciesTask::getManifestFile));
-                    task.getManifestExtensions().set(ext.getManifestExtensions());
-                    task.getInRepoProductIds()
-                            .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
-                                            project.getRootProject())
-                                    .keySet()));
-
-                    // Ensure we re-run task to write locks
-                    task.getOutputs().upToDateWhen(new Spec<Task>() {
-                        @Override
-                        public boolean isSatisfiedBy(Task _task) {
-                            return !shouldWriteLocks(project);
-                        }
-                    });
-
-                    task.dependsOn(resolveProductDependenciesTask);
-                });
-
-        project.getPluginManager().withPlugin("lifecycle-base", _p -> {
-            project.getTasks()
-                    .named(LifecycleBasePlugin.CHECK_TASK_NAME)
-                    .configure(task -> task.dependsOn(createManifest));
-        });
-
-        project.getTasks()
-                .register("writeProductDependenciesLocks", WriteProductDependenciesLocksMarkerTask.class, task -> {
-                    task.dependsOn(createManifest);
-                });
-
-        // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
-        // We can't do this at configuration time because it would mess up gradle-consistent-versions.
-        StartParameter startParam = project.getGradle().getStartParameter();
-        if (startParam.isWriteDependencyLocks() && !startParam.getTaskNames().contains("createManifest")) {
-            List<String> taskNames = ImmutableList.<String>builder()
-                    .addAll(startParam.getTaskNames())
-                    .add("createManifest")
-                    .build();
-            startParam.setTaskNames(taskNames);
-        }
-
-        return createManifest;
-    }
+    private CreateManifest() {}
 }
