@@ -78,8 +78,11 @@ public final class LaunchConfig {
             // AWS-managed systems that modify DNS records on failover.
             "-Dsun.net.inetaddr.ttl=20",
             "-XX:+UnlockDiagnosticVMOptions",
-            // Disable AES-CTR intrinsics due to corruption bug https://bugs.openjdk.org/browse/JDK-8292158
-            "-XX:-UseAESCTRIntrinsics",
+            // Disable AVX-512 intrinsics due to AES/CTR corruption bug in https://bugs.openjdk.org/browse/JDK-8292158
+            "-XX:+IgnoreUnrecognizedVMOptions",
+            // UseAVX is not recognized on some platforms (arm), so we must include 'IgnoreUnrecognizedVMOptions'.
+            // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
+            "-XX:UseAVX=2",
             "-XX:NativeMemoryTracking=summary",
             // Increase default JFR stack depth beyond the default (conservative) 64 frames.
             // This can be overridden by user-provided options.
