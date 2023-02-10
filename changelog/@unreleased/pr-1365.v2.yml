@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: '`createLaunchConfig` task automatically adds the `--enable-preview`
+    flag based on the `Baseline-Enable-Preview` jar manifest attribute'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1365
