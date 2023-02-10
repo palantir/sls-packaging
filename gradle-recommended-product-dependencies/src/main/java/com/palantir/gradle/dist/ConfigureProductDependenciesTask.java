@@ -27,6 +27,7 @@ import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.bundling.Jar;
 
@@ -52,12 +53,19 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
                 .configure(jar -> {
                     Preconditions.checkState(
                             !jar.getState().getExecuted(), "Attempted to configure jar task after it was executed");
-                    jar.getManifest().from(createManifest(getProject(), productDependencies.get()));
+                    jar.getManifest()
+                            .from(createManifest(
+                                    getProject(), getProductDependencies().get()));
                 });
     }
 
     public final void setProductDependencies(Provider<Set<ProductDependency>> productDependencies) {
-        this.productDependencies.set(productDependencies);
+        getProductDependencies().set(productDependencies);
+    }
+
+    @Input
+    final SetProperty<ProductDependency> getProductDependencies() {
+        return productDependencies;
     }
 
     /** Eagerly creates a manifest containing <b>only</b> the recommended product dependencies. */

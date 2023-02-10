@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: Annotate ConfigureProductDependenciesTask inputs to ensure task dependencies
+    are set as expected
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1417
