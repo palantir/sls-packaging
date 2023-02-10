@@ -393,7 +393,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
+        def expectedStaticConfig = LaunchConfigTask.LaunchConfigInfo.builder()
             .mainClass("test.Test")
             .serviceName("service-name")
             .javaHome("foo")
@@ -421,7 +421,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
 
-        def expectedCheckConfig = LaunchConfigTask.LaunchConfig.builder()
+        def expectedCheckConfig = LaunchConfigTask.LaunchConfigInfo.builder()
             .mainClass(actualStaticConfig.mainClass())
             .serviceName(actualStaticConfig.serviceName())
             .javaHome(actualStaticConfig.javaHome())
@@ -464,7 +464,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = LaunchConfigTask.LaunchConfig.builder()
+        def expectedStaticConfig = LaunchConfigTask.LaunchConfigInfo.builder()
             .mainClass("test.Test")
             .serviceName("service-name")
             .javaHome("foo")
@@ -846,7 +846,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // verify launcher YAML files
         LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
-                LaunchConfigTask.LaunchConfig.class)
+                LaunchConfigTask.LaunchConfigInfo.class)
 
         launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
@@ -854,7 +854,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfigTask.LaunchConfig.class)
+                LaunchConfigTask.LaunchConfigInfo.class)
 
         launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
@@ -993,13 +993,13 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // verify launcher YAML files
         LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
-                LaunchConfigTask.LaunchConfig.class)
+                LaunchConfigTask.LaunchConfigInfo.class)
 
         launcherCheck.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
         LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfigTask.LaunchConfig.class)
+                LaunchConfigTask.LaunchConfigInfo.class)
 
         launcherStatic.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
     }
