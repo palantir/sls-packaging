@@ -16,4 +16,9 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-public abstract class LaunchConfigTask extends LaunchConfigTaskImpl {}
+public abstract class LaunchConfigTask extends LaunchConfigTaskImpl {
+    public LaunchConfigTask() {
+        getStaticLauncher().set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
+        getCheckLauncher().set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-check.yml"));
+    }
+}
