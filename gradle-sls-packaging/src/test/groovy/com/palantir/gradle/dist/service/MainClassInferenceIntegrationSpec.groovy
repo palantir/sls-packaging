@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.GradleIntegrationSpec
-import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
+import com.palantir.gradle.dist.service.tasks.LaunchConfig
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 
 class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
@@ -69,7 +69,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.mainClass() == "test.Test"
     }
 
@@ -110,7 +110,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigTask.LaunchConfig)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.mainClass() == "test.Test"
     }
 
