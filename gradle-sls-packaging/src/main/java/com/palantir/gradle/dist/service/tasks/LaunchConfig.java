@@ -192,7 +192,7 @@ public final class LaunchConfig {
                                         ? forceUseContainerCpuShares
                                         : ImmutableList.of())
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
-                        .addAllJvmOpts(params.getDefaultJvmOpts().get())
+                        .addAllJvmOpts(params.getGcJvmOptions().get())
                         .addAllJvmOpts(params.getDefaultJvmOpts().get())
                         .putAllEnv(defaultEnvironment)
                         .putAllEnv(params.getEnv().get())
