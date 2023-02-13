@@ -87,7 +87,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
                                 "diagnostics",
                                 mergeDiagnosticsTask
                                         .flatMap(MergeDiagnosticsJsonTask::getOutputJsonFile)
-                                        .map(file -> Diagnostics.parse(project, file.getAsFile())));
+                                        .map(file -> Diagnostics.parse(file.getAsFile())));
             });
             project.getTasks().named("createManifest", CreateManifestTask.class).configure(createManifestTask -> {
                 createManifestTask.dependsOn(mergeDiagnosticsJson);

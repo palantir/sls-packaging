@@ -21,34 +21,24 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.palantir.gradle.dist.ObjectMappers;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import org.gradle.api.GradleException;
-import org.gradle.api.Project;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class Diagnostics {
-    private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
     private static final String EXAMPLE =
             "[{\"type\":\"foo.v1\", \"docs\":\"...\"}, \"{\"type\":\"bar.v1\", " + "\"docs\":\"...\"}]";
 
-    public static List<ObjectNode> parse(Project proj, File file) {
-        Path relativePath = proj.getRootDir().toPath().relativize(file.toPath());
+    public static List<ObjectNode> parse(File file) {
         String string = null;
         try {
-            string = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim();
-            List<ObjectNode> value =
-                    ObjectMappers.jsonMapper.readValue(string, new TypeReference<List<ObjectNode>>() {});
-            log.info("Deserialized '{}': '{}'", relativePath, value);
-            return value;
+            string = Files.readString(file.toPath()).trim();
+            return ObjectMappers.jsonMapper.readValue(string, new TypeReference<>() {});
         } catch (IOException e) {
             throw new GradleException(
                     String.format(
                             "Failed to deserialize '%s', expecting something like '%s' but was '%s'",
-                            relativePath, EXAMPLE, string),
+                            file.getAbsolutePath(), EXAMPLE, string),
                     e);
         }
     }

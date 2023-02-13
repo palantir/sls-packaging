@@ -27,8 +27,9 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.immutables.value.Value;
 
 /**
@@ -40,6 +41,7 @@ import org.immutables.value.Value;
  * plugin <a href="https://github.com/palantir/gradle-baseline/pull/1944">gradle-baseline#1944</a>.
  */
 final class ModuleArgs {
+    private static final Logger log = Logging.getLogger(ModuleArgs.class);
 
     private static final String ADD_EXPORTS_ATTRIBUTE = "Add-Exports";
     private static final String ADD_OPENS_ATTRIBUTE = "Add-Opens";
@@ -53,8 +55,7 @@ final class ModuleArgs {
     // that we aren't aware of.
     private static final ImmutableList<String> DEFAULT_EXPORTS = ImmutableList.of("java.management/sun.management");
 
-    static ImmutableList<String> collectClasspathArgs(
-            Project project, JavaVersion javaVersion, FileCollection classpath) {
+    static ImmutableList<String> collectClasspathArgs(JavaVersion javaVersion, FileCollection classpath) {
         // --add-exports is unnecessary prior to java 16
         if (javaVersion.compareTo(JavaVersion.toVersion("16")) < 0) {
             return ImmutableList.of();
@@ -67,16 +68,15 @@ final class ModuleArgs {
                             try (JarFile jar = new JarFile(file)) {
                                 java.util.jar.Manifest maybeJarManifest = jar.getManifest();
                                 Optional<JarManifestModuleInfo> parsedModuleInfo = parseModuleInfo(maybeJarManifest);
-                                project.getLogger()
-                                        .debug("Jar '{}' produced manifest info: {}", file, parsedModuleInfo);
+                                log.debug("Jar '{}' produced manifest info: {}", file, parsedModuleInfo);
                                 return parsedModuleInfo.orElse(null);
                             }
                         } else {
-                            project.getLogger().info("File {} wasn't a JAR or file", file);
+                            log.info("File {} wasn't a JAR or file", file);
                         }
                         return null;
                     } catch (IOException e) {
-                        project.getLogger().warn("Failed to check jar {} for manifest attributes", file, e);
+                        log.warn("Failed to check jar {} for manifest attributes", file, e);
                         return null;
                     }
                 })
