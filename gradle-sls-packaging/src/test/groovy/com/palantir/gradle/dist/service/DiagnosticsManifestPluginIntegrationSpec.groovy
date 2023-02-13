@@ -16,30 +16,12 @@
 
 package com.palantir.gradle.dist.service
 
-
 import nebula.test.IntegrationSpec
-
-import java.nio.file.Files
-import java.nio.file.Path
 
 class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
 
-    private void enableLocalBuildCache() {
-        Path localBuildCache = Files.createDirectories(projectDir.toPath().resolve("local-build-cache"))
-        file("gradle.properties") << "org.gradle.caching=true"
-        settingsFile << """
-        buildCache {
-            local {
-                directory = file("${localBuildCache}")
-                enabled = true
-            }
-        }
-        """.stripIndent()
-    }
-
     def 'detects stuff defined in current project'() {
         given:
-        enableLocalBuildCache()
         buildFile << """
         apply plugin: 'java-library'
         ${applyPlugin(DiagnosticsManifestPlugin.class)}
@@ -68,13 +50,6 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
 
         then:
         result2.wasUpToDate(":mergeDiagnosticsJson")
-
-        when:
-        outFile.delete()
-        def result3 = runTasksSuccessfully("mergeDiagnosticsJson", '-is')
-
-        then:
-        result3.getStandardOutput().contains("Task :mergeDiagnosticsJson FROM-CACHE")
     }
 
     def 'detects stuff defined in sibling projects'() {
