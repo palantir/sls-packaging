@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: '`mergeDiagnosticJson` is no longer build cacheable, as it spends 100x
+    more time accessing the cache than just running the task'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1436
