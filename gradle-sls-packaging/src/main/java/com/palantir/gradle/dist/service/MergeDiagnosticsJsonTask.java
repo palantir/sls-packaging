@@ -16,7 +16,4 @@
 
 package com.palantir.gradle.dist.service;
 
-import org.gradle.api.tasks.CacheableTask;
-
-@CacheableTask
 public abstract class MergeDiagnosticsJsonTask extends MergeDiagnosticsJsonTaskImpl {}
