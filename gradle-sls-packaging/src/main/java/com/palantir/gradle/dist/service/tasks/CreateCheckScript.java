@@ -43,7 +43,7 @@ public final class CreateCheckScript {
     static void action(Params params) {
         if (!params.getCheckArgs().get().isEmpty()) {
             EmitFiles.replaceVars(
-                            JavaServiceDistributionPlugin.class.getResourceAsStream("/check.sh"),
+                            JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/check.sh"),
                             params.getOutputFile().get().getAsFile().toPath(),
                             ImmutableMap.of(
                                     "@serviceName@", params.getServiceName().get(),

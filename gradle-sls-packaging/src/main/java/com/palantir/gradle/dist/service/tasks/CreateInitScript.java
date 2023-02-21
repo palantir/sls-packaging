@@ -37,7 +37,7 @@ public final class CreateInitScript {
 
     static void action(Params params) {
         EmitFiles.replaceVars(
-                        JavaServiceDistributionPlugin.class.getResourceAsStream("/init.sh"),
+                        JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/init.sh"),
                         params.getOutputFile().get().getAsFile().toPath(),
                         ImmutableMap.of("@serviceName@", params.getServiceName().get()))
                 .toFile()
