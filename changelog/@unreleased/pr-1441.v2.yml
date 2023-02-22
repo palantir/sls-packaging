@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: Moved the init and check scripts to a resource subdirectory less likely
+    to collide with other Gradle plugins.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1441
