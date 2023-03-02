@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.artifacts.ExtractFileFromJar;
-import com.palantir.gradle.dist.artifacts.SelectSingleFile;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -38,7 +37,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     static final String mergeDiagnosticsJson = "mergeDiagnosticsJson";
 
     private static final String FILE_TO_EXTRACT = "sls-manifest/diagnostics.json";
-    private static final String MY_ATTRIBUTE = "extracted-" + FILE_TO_EXTRACT;
+    private static final String DIAGNOSTICS = "sls-diagnostics";
 
     /**
      * This plugin uses a few slightly 'advanced' gradle features:
@@ -58,18 +57,17 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     @Override
     @SuppressWarnings("RawTypes")
     public void apply(Project project) {
-        configureExternalDependencyTransform(project);
-        configureProjectDependencyTransform(project);
+        configureDiagnosticsTransform(project);
 
         Configuration consumableRuntimeConfiguration = createConsumableRuntimeConfiguration(project);
         ArtifactView attributeSpecificArtifactView = consumableRuntimeConfiguration
                 .getIncoming()
                 .artifactView(v -> {
-                    v.getAttributes().attribute(artifactType, MY_ATTRIBUTE);
+                    v.getAttributes().attribute(artifactType, DIAGNOSTICS);
                     v.getAttributes()
                             .attribute(
                                     LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                                    project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
+                                    project.getObjects().named(LibraryElements.class, DIAGNOSTICS));
                 });
 
         TaskProvider<MergeDiagnosticsJsonTask> mergeDiagnosticsTask = project.getTasks()
@@ -95,13 +93,15 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
         });
     }
 
-    private static void configureExternalDependencyTransform(Project project) {
+    private static void configureDiagnosticsTransform(Project project) {
         project.getDependencies().registerTransform(ExtractFileFromJar.class, details -> {
             details.getParameters().getPathToExtract().set(FILE_TO_EXTRACT);
 
             details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JAR_TYPE);
-            details.getTo().attribute(artifactType, MY_ATTRIBUTE);
+            details.getTo().attribute(artifactType, DIAGNOSTICS);
 
+            // It's not strictly necessary to define a mapping for the 'org.gradle.libraryelements' attribute,
+            // but it looks a bit weird for something to still be marked as a 'jar' when it's clearly not.
             details.getFrom()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
@@ -109,25 +109,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             details.getTo()
                     .attribute(
                             LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
-        });
-    }
-
-    private static void configureProjectDependencyTransform(Project project) {
-        project.getDependencies().registerTransform(SelectSingleFile.class, details -> {
-            details.getParameters().getPathToExtract().set(FILE_TO_EXTRACT);
-
-            details.getFrom().attribute(artifactType, ArtifactTypeDefinition.JVM_RESOURCES_DIRECTORY);
-            details.getTo().attribute(artifactType, MY_ATTRIBUTE);
-
-            details.getFrom()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, LibraryElements.RESOURCES));
-            details.getTo()
-                    .attribute(
-                            LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                            project.getObjects().named(LibraryElements.class, MY_ATTRIBUTE));
+                            project.getObjects().named(LibraryElements.class, DIAGNOSTICS));
         });
     }
 
