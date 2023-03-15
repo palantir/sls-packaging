@@ -63,6 +63,7 @@ public final class LaunchConfig {
 
     private static final ImmutableList<String> java17PlusOptions = ImmutableList.of(
             "-XX:+UseStringDeduplication"); // only enable on JDK 17+ due to https://bugs.openjdk.org/browse/JDK-8277981
+
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
     // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
     private static final ImmutableList<String> jdk11DisableC2Compile =
