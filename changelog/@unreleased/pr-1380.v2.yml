@@ -1,0 +1,19 @@
+type: improvement
+improvement:
+  description: |-
+    Enable String Deduplication on JDK 17+
+
+    G1 and Shenandoah GC support string deduplication as of JDK 17
+    * https://openjdk.java.net/jeps/192
+    * https://bugs.openjdk.org/browse/JDK-8264718
+
+    Only enable on JDK 17+ due to fix
+    https://bugs.openjdk.org/browse/JDK-8277981
+
+    JDK 18+ enable string deduplication for SerialGC, ParallalGC, and ZGC.
+    https://malloc.se/blog/zgc-jdk18
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1380
+  - https://openjdk.java.net/jeps/192
+  - https://bugs.openjdk.org/browse/JDK-8264718
+  - https://malloc.se/blog/zgc-jdk18
