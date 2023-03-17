@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: This reverts commit 902de8d0c0d68098fc7fb5f5932c9cbc0a3a8e6a.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1452
