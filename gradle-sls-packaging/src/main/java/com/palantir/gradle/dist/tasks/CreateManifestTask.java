@@ -27,6 +27,8 @@ import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
+import com.palantir.gradle.dist.SchemaMigration;
+import com.palantir.gradle.dist.SchemaVersionLockFile;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
@@ -101,6 +103,20 @@ public abstract class CreateManifestTask extends DefaultTask {
         return null;
     }
 
+    /**
+     * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
+     * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
+     */
+    @InputFile
+    @org.gradle.api.tasks.Optional
+    final File getSchemaLockfileIfExists() {
+        File file = getSchemaLockfile();
+        if (file.exists()) {
+            return file;
+        }
+        return null;
+    }
+
     @TaskAction
     final void createManifest() throws IOException {
         validateProjectVersion();
@@ -114,9 +130,16 @@ public abstract class CreateManifestTask extends DefaultTask {
 
         List<ProductDependency> productDependencies = productDependencyManifest.productDependencies();
         if (productDependencies.isEmpty()) {
-            requireAbsentLockfile();
+            requireAbsentLockfile(getLockfile());
         } else {
             ensureLockfileIsUpToDate(productDependencies);
+        }
+
+        List<SchemaMigration> schemaMigrations = getSchemaMigrations();
+        if (schemaMigrations == null || schemaMigrations.isEmpty()) {
+            requireAbsentLockfile(getSchemaLockfile());
+        } else {
+            ensureSchemaLockfileIsUpToDate(schemaMigrations);
         }
 
         ObjectMappers.jsonMapper.writeValue(
@@ -132,8 +155,17 @@ public abstract class CreateManifestTask extends DefaultTask {
                         .build());
     }
 
-    private void requireAbsentLockfile() {
-        File lockfile = getLockfile();
+    private List<SchemaMigration> getSchemaMigrations() {
+        Object raw = getManifestExtensions().get().get("schema-migrations");
+        if (raw == null) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        List<Object> list = (List<Object>) raw;
+        return list.stream().map(SchemaMigration::fromObject).collect(ImmutableList.toImmutableList());
+    }
+
+    private void requireAbsentLockfile(File lockfile) {
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
         if (!lockfile.exists()) {
@@ -165,9 +197,13 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
         File lockfile = getLockfile();
-        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, getInRepoProductIds().get());
+        ensureFileIsUpToDate(lockfile, upToDateContents);
+    }
+
+    private void ensureFileIsUpToDate(File lockfile, String upToDateContents) throws IOException {
+        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         boolean lockfileExists = lockfile.exists();
 
         if (shouldWriteLocks(getProject())) {
@@ -215,6 +251,16 @@ public abstract class CreateManifestTask extends DefaultTask {
             getLogger().debug("Unable to provide diff", e);
             return Optional.empty();
         }
+    }
+
+    private File getSchemaLockfile() {
+        return getProject().file(SchemaVersionLockFile.LOCK_FILE);
+    }
+
+    private void ensureSchemaLockfileIsUpToDate(List<SchemaMigration> schemaMigrations) throws IOException {
+        File lockfile = getSchemaLockfile();
+        String upToDateContents = SchemaVersionLockFile.asString(schemaMigrations);
+        ensureFileIsUpToDate(lockfile, upToDateContents);
     }
 
     private void validateProjectVersion() {
