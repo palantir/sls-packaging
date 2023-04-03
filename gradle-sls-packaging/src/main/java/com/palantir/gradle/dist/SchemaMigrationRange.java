@@ -20,16 +20,21 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 public interface SchemaMigrationRange {
-    @Value.Parameter
     String type();
 
-    @Value.Parameter
     int firstVersion();
 
-    @Value.Parameter
     int lastVersion();
 
     default String getString() {
         return String.format("%s [%d, %d]", type(), firstVersion(), lastVersion());
+    }
+
+    static SchemaMigrationRange of(String type, int firstVersion, int lastVersion) {
+        return ImmutableSchemaMigrationRange.builder()
+                .type(type)
+                .firstVersion(firstVersion)
+                .lastVersion(lastVersion)
+                .build();
     }
 }

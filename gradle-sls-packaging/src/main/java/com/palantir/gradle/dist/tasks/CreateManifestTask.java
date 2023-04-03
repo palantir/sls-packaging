@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -160,9 +161,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         if (raw == null) {
             return null;
         }
-        @SuppressWarnings("unchecked")
-        List<Object> list = (List<Object>) raw;
-        return list.stream().map(SchemaMigration::fromObject).collect(ImmutableList.toImmutableList());
+        return ObjectMappers.jsonMapper.convertValue(raw, new TypeReference<>() {});
     }
 
     private void requireAbsentLockfile(File lockfile) {

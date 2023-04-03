@@ -37,7 +37,7 @@ public class SchemaVersionLockFileTest {
     @Test
     void testSingle() {
         List<SchemaMigration> migrations = new ArrayList<>();
-        migrations.add(ImmutableSchemaMigration.of("online", 100));
+        migrations.add(SchemaMigration.of("online", 100));
         String str = SchemaVersionLockFile.asString(migrations);
         Assertions.assertEquals(SchemaVersionLockFile.HEADER + "online [100, 100]\n", str);
     }
@@ -46,7 +46,7 @@ public class SchemaVersionLockFileTest {
     void testContiguousRange() {
         List<SchemaMigration> migrations = new ArrayList<>();
         for (int i = 100; i < 110; i++) {
-            migrations.add(ImmutableSchemaMigration.of("online", i));
+            migrations.add(SchemaMigration.of("online", i));
         }
         String str = SchemaVersionLockFile.asString(migrations);
         Assertions.assertEquals(SchemaVersionLockFile.HEADER + "online [100, 109]\n", str);
@@ -55,8 +55,8 @@ public class SchemaVersionLockFileTest {
     @Test
     void testGap() {
         List<SchemaMigration> migrations = new ArrayList<>();
-        migrations.add(ImmutableSchemaMigration.of("online", 100));
-        migrations.add(ImmutableSchemaMigration.of("online", 102));
+        migrations.add(SchemaMigration.of("online", 100));
+        migrations.add(SchemaMigration.of("online", 102));
         String str = SchemaVersionLockFile.asString(migrations);
         Assertions.assertEquals(SchemaVersionLockFile.HEADER + "online [100, 100]\nonline [102, 102]\n", str);
     }
@@ -64,18 +64,16 @@ public class SchemaVersionLockFileTest {
     @Test
     void testMultipleRanges() {
         List<SchemaMigration> migrations = new ArrayList<>();
-        int ver = 100;
-        for (int i = 0; i < 10; i++, ver++) {
-            migrations.add(ImmutableSchemaMigration.of("online", ver));
-        }
-        for (int i = 0; i < 10; i++, ver++) {
-            migrations.add(ImmutableSchemaMigration.of("offline", ver));
-        }
-        for (int i = 0; i < 10; i++, ver++) {
-            migrations.add(ImmutableSchemaMigration.of("online", ver));
-        }
+        migrations.add(SchemaMigration.of("online", 100));
+        migrations.add(SchemaMigration.of("online", 101));
+        migrations.add(SchemaMigration.of("offline", 102));
+        migrations.add(SchemaMigration.of("offline", 103));
+        migrations.add(SchemaMigration.of("online", 104));
+        migrations.add(SchemaMigration.of("offline", 105));
         String str = SchemaVersionLockFile.asString(migrations);
         Assertions.assertEquals(
-                SchemaVersionLockFile.HEADER + "online [100, 109]\noffline [110, 119]\nonline [120, 129]\n", str);
+                SchemaVersionLockFile.HEADER
+                        + "online [100, 101]\noffline [102, 103]\nonline [104, 104]\noffline [105, 105]\n",
+                str);
     }
 }

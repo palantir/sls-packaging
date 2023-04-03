@@ -34,21 +34,21 @@ public final class SchemaVersionLockFile {
         SchemaMigration firstOfRange = sorted.get(0);
         SchemaMigration lastOfRange = firstOfRange;
         for (int i = 1; i < sorted.size(); i++) {
-            SchemaMigration cur = sorted.get(i);
+            SchemaMigration currentMigration = sorted.get(i);
             Preconditions.checkArgument(
-                    cur.fromVersion() != lastOfRange.fromVersion(),
+                    currentMigration.fromVersion() != lastOfRange.fromVersion(),
                     "Multiple migrations with the same from version are not allowed");
-            if (cur.type().equals(lastOfRange.type()) && cur.fromVersion() == lastOfRange.fromVersion() + 1) {
-                lastOfRange = cur;
+            if (currentMigration.type().equals(lastOfRange.type())
+                    && currentMigration.fromVersion() == lastOfRange.fromVersion() + 1) {
+                lastOfRange = currentMigration;
             } else {
-                ranges.add(ImmutableSchemaMigrationRange.of(
+                ranges.add(SchemaMigrationRange.of(
                         firstOfRange.type(), firstOfRange.fromVersion(), lastOfRange.fromVersion()));
-                firstOfRange = cur;
-                lastOfRange = cur;
+                firstOfRange = currentMigration;
+                lastOfRange = currentMigration;
             }
         }
-        ranges.add(ImmutableSchemaMigrationRange.of(
-                firstOfRange.type(), firstOfRange.fromVersion(), lastOfRange.fromVersion()));
+        ranges.add(SchemaMigrationRange.of(firstOfRange.type(), firstOfRange.fromVersion(), lastOfRange.fromVersion()));
 
         return ranges.stream().map(SchemaMigrationRange::getString).collect(Collectors.joining("\n", HEADER, "\n"));
     }

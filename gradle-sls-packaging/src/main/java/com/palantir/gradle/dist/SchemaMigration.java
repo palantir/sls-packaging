@@ -16,31 +16,34 @@
 
 package com.palantir.gradle.dist;
 
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.Comparator;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@JsonDeserialize(as = ImmutableSchemaMigration.class)
+@JsonSerialize(as = ImmutableSchemaMigration.class)
 public interface SchemaMigration extends Comparable<SchemaMigration> {
-    @Value.Parameter
+
+    Comparator<SchemaMigration> COMPARATOR = Comparator.comparing(SchemaMigration::fromVersion, Integer::compareTo)
+            .thenComparing(SchemaMigration::type, String::compareTo);
+
     String type();
 
-    @Value.Parameter
+    @JsonProperty("from")
     int fromVersion();
 
     @Override
     default int compareTo(SchemaMigration other) {
-        int cmp = Integer.compare(fromVersion(), other.fromVersion());
-        if (cmp != 0) {
-            return cmp;
-        }
-        return type().compareTo(other.type());
+        return COMPARATOR.compare(this, other);
     }
 
-    static SchemaMigration fromObject(Object obj) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) obj;
-        String type = (String) map.get("type");
-        int fromVersion = (int) map.get("from");
-        return ImmutableSchemaMigration.of(type, fromVersion);
+    static SchemaMigration of(String type, int fromVersion) {
+        return ImmutableSchemaMigration.builder()
+                .type(type)
+                .fromVersion(fromVersion)
+                .build();
     }
 }
