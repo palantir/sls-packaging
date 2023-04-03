@@ -258,7 +258,7 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     private void ensureSchemaLockfileIsUpToDate(List<SchemaMigration> schemaMigrations) throws IOException {
         File lockfile = getSchemaLockfile();
-        String upToDateContents = SchemaVersionLockFile.asString(schemaMigrations);
+        String upToDateContents = SchemaVersionLockFile.of(schemaMigrations).asString();
         ensureFileIsUpToDate(lockfile, upToDateContents);
     }
 

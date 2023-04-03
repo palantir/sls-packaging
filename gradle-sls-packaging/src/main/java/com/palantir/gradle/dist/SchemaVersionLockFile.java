@@ -20,21 +20,29 @@ import com.palantir.logsafe.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.immutables.value.Value;
 
-public final class SchemaVersionLockFile {
+@Value.Immutable
+public interface SchemaVersionLockFile {
 
-    public static final String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
-    public static final String LOCK_FILE = "schema-versions.lock";
+    String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
+    String LOCK_FILE = "schema-versions.lock";
 
-    public static String asString(List<SchemaMigration> schemaMigrations) {
-        Preconditions.checkArgument(!schemaMigrations.isEmpty(), "Migrations must not be empty");
-        List<SchemaMigration> sorted = schemaMigrations.stream().sorted().collect(Collectors.toList());
+    List<SchemaMigration> getSchemaMigrations();
+
+    @Value.Check
+    default void check() {
+        Preconditions.checkArgument(!getSchemaMigrations().isEmpty(), "Migrations must not be empty");
+    }
+
+    default String asString() {
+        List<SchemaMigration> sortedMigrations =
+                getSchemaMigrations().stream().sorted().collect(Collectors.toList());
 
         List<SchemaMigrationRange> ranges = new ArrayList<>();
-        SchemaMigration firstOfRange = sorted.get(0);
+        SchemaMigration firstOfRange = sortedMigrations.get(0);
         SchemaMigration lastOfRange = firstOfRange;
-        for (int i = 1; i < sorted.size(); i++) {
-            SchemaMigration currentMigration = sorted.get(i);
+        for (SchemaMigration currentMigration : sortedMigrations.subList(1, sortedMigrations.size())) {
             Preconditions.checkArgument(
                     currentMigration.fromVersion() != lastOfRange.fromVersion(),
                     "Multiple migrations with the same from version are not allowed");
@@ -53,5 +61,9 @@ public final class SchemaVersionLockFile {
         return ranges.stream().map(SchemaMigrationRange::getString).collect(Collectors.joining("\n", HEADER, "\n"));
     }
 
-    private SchemaVersionLockFile() {}
+    static SchemaVersionLockFile of(List<SchemaMigration> schemaMigrations) {
+        return ImmutableSchemaVersionLockFile.builder()
+                .schemaMigrations(schemaMigrations)
+                .build();
+    }
 }

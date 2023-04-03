@@ -27,7 +27,7 @@ public class SchemaVersionLockFileTest {
     @Test
     void testEmpty() {
         try {
-            SchemaVersionLockFile.asString(ImmutableList.of());
+            SchemaVersionLockFile.of(ImmutableList.of());
             Assertions.fail();
         } catch (SafeIllegalArgumentException e) {
             // expected
@@ -38,7 +38,7 @@ public class SchemaVersionLockFileTest {
     void testSingle() {
         List<SchemaMigration> migrations = new ArrayList<>();
         migrations.add(SchemaMigration.of("online", 100));
-        String str = SchemaVersionLockFile.asString(migrations);
+        String str = SchemaVersionLockFile.of(migrations).asString();
         Assertions.assertEquals(SchemaVersionLockFile.HEADER + "online [100, 100]\n", str);
     }
 
@@ -48,7 +48,7 @@ public class SchemaVersionLockFileTest {
         for (int i = 100; i < 110; i++) {
             migrations.add(SchemaMigration.of("online", i));
         }
-        String str = SchemaVersionLockFile.asString(migrations);
+        String str = SchemaVersionLockFile.of(migrations).asString();
         Assertions.assertEquals(SchemaVersionLockFile.HEADER + "online [100, 109]\n", str);
     }
 
@@ -57,7 +57,7 @@ public class SchemaVersionLockFileTest {
         List<SchemaMigration> migrations = new ArrayList<>();
         migrations.add(SchemaMigration.of("online", 100));
         migrations.add(SchemaMigration.of("online", 102));
-        String str = SchemaVersionLockFile.asString(migrations);
+        String str = SchemaVersionLockFile.of(migrations).asString();
         Assertions.assertEquals(SchemaVersionLockFile.HEADER + "online [100, 100]\nonline [102, 102]\n", str);
     }
 
@@ -70,7 +70,7 @@ public class SchemaVersionLockFileTest {
         migrations.add(SchemaMigration.of("offline", 103));
         migrations.add(SchemaMigration.of("online", 104));
         migrations.add(SchemaMigration.of("offline", 105));
-        String str = SchemaVersionLockFile.asString(migrations);
+        String str = SchemaVersionLockFile.of(migrations).asString();
         Assertions.assertEquals(
                 SchemaVersionLockFile.HEADER
                         + "online [100, 101]\noffline [102, 103]\nonline [104, 104]\noffline [105, 105]\n",
