@@ -133,6 +133,18 @@ dependencies {
 }
 ```
 
+### Schema versions
+
+sls-packaging also maintains a lockfile, `schema-versions.lock`, which should be checked in to Git.
+This file is an accurate reflection of the schema versions specified in the manifest.
+The file can be used to easily determine what schema versions are supported by a particular version of the code.
+Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it.
+
+```
+# Run ./gradlew --write-locks to regenerate this file
+online [100, 101]
+```
+
 ## Packaging plugins
 
 _These plugins require at least Gradle 4.10._
