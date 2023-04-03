@@ -137,7 +137,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
 
         List<SchemaMigration> schemaMigrations = getSchemaMigrations();
-        if (schemaMigrations == null || schemaMigrations.isEmpty()) {
+        if (schemaMigrations.isEmpty()) {
             requireAbsentLockfile(getSchemaLockfile());
         } else {
             ensureSchemaLockfileIsUpToDate(schemaMigrations);
@@ -159,7 +159,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     private List<SchemaMigration> getSchemaMigrations() {
         Object raw = getManifestExtensions().get().get("schema-migrations");
         if (raw == null) {
-            return null;
+            return ImmutableList.of();
         }
         return ObjectMappers.jsonMapper.convertValue(raw, new TypeReference<>() {});
     }
