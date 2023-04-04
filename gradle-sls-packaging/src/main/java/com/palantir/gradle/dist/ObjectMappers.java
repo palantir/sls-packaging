@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
 import java.io.File;
@@ -30,6 +31,13 @@ import org.gradle.api.GradleException;
 
 public final class ObjectMappers {
     public static final ObjectMapper jsonMapper = new ObjectMapper()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setPropertyNamingStrategy(PropertyNamingStrategies.KEBAB_CASE)
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .registerModule(new GuavaModule());
+
+    private static final ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategies.KEBAB_CASE)
             .enable(SerializationFeature.INDENT_OUTPUT)
@@ -58,6 +66,22 @@ public final class ObjectMappers {
             return jsonMapper.readValue(file, RecommendedProductDependencies.class);
         } catch (IOException e) {
             throw new GradleException("Unable to read RecommendedProductDependencies: " + file, e);
+        }
+    }
+
+    public static String writeSchemaVersionsAsString(SchemaVersionLockFile lockFile) {
+        try {
+            return ymlMapper.writeValueAsString(lockFile);
+        } catch (IOException e) {
+            throw new GradleException("Unable to write SchemaVersionLockFile", e);
+        }
+    }
+
+    public static SchemaVersionLockFile readSchemaVersionsFromString(String input) {
+        try {
+            return ymlMapper.readValue(input, SchemaVersionLockFile.class);
+        } catch (IOException e) {
+            throw new GradleException("Unable to read SchemaVersionLockFile", e);
         }
     }
 

@@ -16,19 +16,19 @@
 
 package com.palantir.gradle.dist;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@JsonDeserialize(as = ImmutableSchemaMigrationRange.class)
+@JsonSerialize(as = ImmutableSchemaMigrationRange.class)
 public interface SchemaMigrationRange {
     String type();
 
     int firstVersion();
 
     int lastVersion();
-
-    default String getString() {
-        return String.format("%s [%d, %d]", type(), firstVersion(), lastVersion());
-    }
 
     static SchemaMigrationRange of(String type, int firstVersion, int lastVersion) {
         return ImmutableSchemaMigrationRange.builder()

@@ -141,8 +141,12 @@ The file can be used to easily determine what schema versions are supported by a
 Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it.
 
 ```
-# Run ./gradlew --write-locks to regenerate this file
-online [100, 101]
+---
+comment: "Run ./gradlew --write-locks to regenerate this file"
+schemaMigrationRanges:
+- type: "online"
+  firstVersion: 100
+  lastVersion: 101
 ```
 
 ## Packaging plugins

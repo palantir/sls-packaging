@@ -52,8 +52,12 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         file('schema-versions.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
-        offline [52, 52]
+        ---
+        comment: "Run ./gradlew --write-locks to regenerate this file"
+        schemaMigrationRanges:
+        - type: "offline"
+          firstVersion: 52
+          lastVersion: 52
         """.stripIndent()
 
         when:
@@ -84,8 +88,12 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         file('schema-versions.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
-        offline [53, 53]
+        ---
+        comment: "Run ./gradlew --write-locks to regenerate this file"
+        schemaMigrationRanges:
+        - type: "offline"
+          firstVersion: 53
+          lastVersion: 53
         """.stripIndent()
 
         runTasksSuccessfully('createManifest') // ensure task is run once
@@ -106,8 +114,12 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         file('schema-versions.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
-        offline [53, 53]
+        ---
+        comment: "Run ./gradlew --write-locks to regenerate this file"
+        schemaMigrationRanges:
+        - type: "offline"
+          firstVersion: 53
+          lastVersion: 53
         """.stripIndent()
 
         runTasksSuccessfully('createManifest') // ensure task is run once
@@ -134,8 +146,12 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         then:
         buildResult.wasExecuted(':createManifest')
         file('schema-versions.lock').text == """\
-        # Run ./gradlew --write-locks to regenerate this file
-        offline [53, 53]
+        ---
+        comment: "Run ./gradlew --write-locks to regenerate this file"
+        schemaMigrationRanges:
+        - type: "offline"
+          firstVersion: 53
+          lastVersion: 53
         """.stripIndent()
 
         where:

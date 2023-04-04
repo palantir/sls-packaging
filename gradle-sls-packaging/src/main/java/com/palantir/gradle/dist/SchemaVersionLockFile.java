@@ -16,6 +16,8 @@
 
 package com.palantir.gradle.dist;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.palantir.logsafe.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,21 +25,24 @@ import java.util.stream.Collectors;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@JsonDeserialize(as = ImmutableSchemaVersionLockFile.class)
+@JsonSerialize(as = ImmutableSchemaVersionLockFile.class)
 public interface SchemaVersionLockFile {
 
-    String HEADER = "# Run ./gradlew --write-locks to regenerate this file\n";
+    String COMMENT = "Run ./gradlew --write-locks to regenerate this file";
     String LOCK_FILE = "schema-versions.lock";
 
-    List<SchemaMigration> getSchemaMigrations();
-
-    @Value.Check
-    default void check() {
-        Preconditions.checkArgument(!getSchemaMigrations().isEmpty(), "Migrations must not be empty");
+    @Value.Default
+    default String getComment() {
+        return COMMENT;
     }
 
-    default String asString() {
+    List<SchemaMigrationRange> getSchemaMigrationRanges();
+
+    static SchemaVersionLockFile of(List<SchemaMigration> schemaMigrations) {
+        Preconditions.checkArgument(!schemaMigrations.isEmpty(), "Migrations must not be empty");
         List<SchemaMigration> sortedMigrations =
-                getSchemaMigrations().stream().sorted().collect(Collectors.toList());
+                schemaMigrations.stream().sorted().collect(Collectors.toList());
 
         List<SchemaMigrationRange> ranges = new ArrayList<>();
         SchemaMigration firstOfRange = sortedMigrations.get(0);
@@ -58,12 +63,8 @@ public interface SchemaVersionLockFile {
         }
         ranges.add(SchemaMigrationRange.of(firstOfRange.type(), firstOfRange.fromVersion(), lastOfRange.fromVersion()));
 
-        return ranges.stream().map(SchemaMigrationRange::getString).collect(Collectors.joining("\n", HEADER, "\n"));
-    }
-
-    static SchemaVersionLockFile of(List<SchemaMigration> schemaMigrations) {
         return ImmutableSchemaVersionLockFile.builder()
-                .schemaMigrations(schemaMigrations)
+                .schemaMigrationRanges(ranges)
                 .build();
     }
 }
