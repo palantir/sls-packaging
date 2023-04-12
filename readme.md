@@ -143,10 +143,12 @@ Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`
 ```
 ---
 comment: "Run ./gradlew --write-locks to regenerate this file"
-schemaMigrationRanges:
+schemaMigrations:
 - type: "online"
-  firstVersion: 100
-  lastVersion: 101
+  from: 100
+- type: "online"
+  from: 101
+version: 1
 ```
 
 ## Packaging plugins

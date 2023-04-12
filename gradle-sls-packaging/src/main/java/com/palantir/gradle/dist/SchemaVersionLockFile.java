@@ -19,7 +19,6 @@ package com.palantir.gradle.dist;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.palantir.logsafe.Preconditions;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.immutables.value.Value;
@@ -31,40 +30,27 @@ public interface SchemaVersionLockFile {
 
     String COMMENT = "Run ./gradlew --write-locks to regenerate this file";
     String LOCK_FILE = "schema-versions.lock";
+    int VERSION = 1;
 
     @Value.Default
     default String getComment() {
         return COMMENT;
     }
 
-    List<SchemaMigrationRange> getSchemaMigrationRanges();
+    List<SchemaMigration> getSchemaMigrations();
+
+    @Value.Default
+    default int getVersion() {
+        return VERSION;
+    }
 
     static SchemaVersionLockFile of(List<SchemaMigration> schemaMigrations) {
         Preconditions.checkArgument(!schemaMigrations.isEmpty(), "Migrations must not be empty");
         List<SchemaMigration> sortedMigrations =
                 schemaMigrations.stream().sorted().collect(Collectors.toList());
 
-        List<SchemaMigrationRange> ranges = new ArrayList<>();
-        SchemaMigration firstOfRange = sortedMigrations.get(0);
-        SchemaMigration lastOfRange = firstOfRange;
-        for (SchemaMigration currentMigration : sortedMigrations.subList(1, sortedMigrations.size())) {
-            Preconditions.checkArgument(
-                    currentMigration.fromVersion() != lastOfRange.fromVersion(),
-                    "Multiple migrations with the same from version are not allowed");
-            if (currentMigration.type().equals(lastOfRange.type())
-                    && currentMigration.fromVersion() == lastOfRange.fromVersion() + 1) {
-                lastOfRange = currentMigration;
-            } else {
-                ranges.add(SchemaMigrationRange.of(
-                        firstOfRange.type(), firstOfRange.fromVersion(), lastOfRange.fromVersion()));
-                firstOfRange = currentMigration;
-                lastOfRange = currentMigration;
-            }
-        }
-        ranges.add(SchemaMigrationRange.of(firstOfRange.type(), firstOfRange.fromVersion(), lastOfRange.fromVersion()));
-
         return ImmutableSchemaVersionLockFile.builder()
-                .schemaMigrationRanges(ranges)
+                .schemaMigrations(sortedMigrations)
                 .build();
     }
 }

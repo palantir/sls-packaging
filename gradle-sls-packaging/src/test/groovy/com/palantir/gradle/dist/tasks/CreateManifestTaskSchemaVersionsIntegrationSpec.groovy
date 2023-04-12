@@ -54,10 +54,10 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         file('schema-versions.lock').text = """\
         ---
         comment: "Run ./gradlew --write-locks to regenerate this file"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "offline"
-          firstVersion: 52
-          lastVersion: 52
+          from: 52
+        version: 1
         """.stripIndent()
 
         when:
@@ -90,10 +90,10 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         file('schema-versions.lock').text = """\
         ---
         comment: "Run ./gradlew --write-locks to regenerate this file"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "offline"
-          firstVersion: 53
-          lastVersion: 53
+          from: 53
+        version: 1
         """.stripIndent()
 
         runTasksSuccessfully('createManifest') // ensure task is run once
@@ -116,10 +116,10 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         file('schema-versions.lock').text = """\
         ---
         comment: "Run ./gradlew --write-locks to regenerate this file"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "offline"
-          firstVersion: 53
-          lastVersion: 53
+          from: 53
+        version: 1
         """.stripIndent()
 
         runTasksSuccessfully('createManifest') // ensure task is run once
@@ -148,10 +148,10 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         file('schema-versions.lock').text == """\
         ---
         comment: "Run ./gradlew --write-locks to regenerate this file"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "offline"
-          firstVersion: 53
-          lastVersion: 53
+          from: 53
+        version: 1
         """.stripIndent()
 
         where:

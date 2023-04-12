@@ -38,10 +38,10 @@ public class SchemaVersionLockFileTest extends Specification {
         str == """\
         ---
         comment: "${SchemaVersionLockFile.COMMENT}"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "online"
-          firstVersion: 100
-          lastVersion: 100
+          from: 100
+        version: 1
         """.stripIndent()
     }
 
@@ -58,10 +58,14 @@ public class SchemaVersionLockFileTest extends Specification {
         str == """\
         ---
         comment: "${SchemaVersionLockFile.COMMENT}"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "online"
-          firstVersion: 100
-          lastVersion: 102
+          from: 100
+        - type: "online"
+          from: 101
+        - type: "online"
+          from: 102
+        version: 1
         """.stripIndent()
     }
 
@@ -77,13 +81,12 @@ public class SchemaVersionLockFileTest extends Specification {
         str == """\
         ---
         comment: "${SchemaVersionLockFile.COMMENT}"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "online"
-          firstVersion: 100
-          lastVersion: 100
+          from: 100
         - type: "online"
-          firstVersion: 102
-          lastVersion: 102
+          from: 102
+        version: 1
         """.stripIndent()
     }
 
@@ -103,19 +106,20 @@ public class SchemaVersionLockFileTest extends Specification {
         str == """\
         ---
         comment: "${SchemaVersionLockFile.COMMENT}"
-        schemaMigrationRanges:
+        schemaMigrations:
         - type: "online"
-          firstVersion: 100
-          lastVersion: 101
-        - type: "offline"
-          firstVersion: 102
-          lastVersion: 103
+          from: 100
         - type: "online"
-          firstVersion: 104
-          lastVersion: 104
+          from: 101
         - type: "offline"
-          firstVersion: 105
-          lastVersion: 105
+          from: 102
+        - type: "offline"
+          from: 103
+        - type: "online"
+          from: 104
+        - type: "offline"
+          from: 105
+        version: 1
         """.stripIndent()
     }
 
