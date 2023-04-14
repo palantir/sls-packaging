@@ -155,7 +155,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         where:
-        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
+        writeLocksTask << ['--write-locks', 'writeSchemaVersionLocks', 'wSVL']
     }
 
     def "check depends on createManifest"() {

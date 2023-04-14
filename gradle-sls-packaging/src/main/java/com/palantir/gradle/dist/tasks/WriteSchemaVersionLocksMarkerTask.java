@@ -20,17 +20,17 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
-public class WriteProductDependenciesLocksMarkerTask extends DefaultTask {
+public class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
     @TaskAction
     public final void checkWriteLocksShouldBeRunning() {
-        // Check that our task name matcher for writeProductDependenciesLocks is actually matching up the Gradle one;
+        // Check that our task name matcher for writeSchemaVersionLocks is actually matching up the Gradle one;
         // if this task is running but we didn't actually write locks, error out.
         if (!CreateManifestTask.shouldWriteLocks(
-                getProject(), CreateManifestTask.WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME)) {
-            throw new GradleException("This `writeProductDependenciesLocks` marker task has been run, but the "
-                    + "product-dependencies.lock files did not actually get written out at configuration time. Either "
+                getProject(), CreateManifestTask.WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME)) {
+            throw new GradleException("This `writeSchemaVersionLocks` marker task has been run, but the "
+                    + "schema-versions.lock files did not actually get written out at configuration time. Either "
                     + "there is another task dependency on this task, which is not supported "
-                    + "(`writeProductDependenciesLocks` must be run as a gradle task from the command line - not as a "
+                    + "(`writeSchemaVersionLocks` must be run as a gradle task from the command line - not as a "
                     + "dependent task), or this is a bug and should be reported to the owners of the "
                     + "gradle-sls-packaging plugin.");
         }
