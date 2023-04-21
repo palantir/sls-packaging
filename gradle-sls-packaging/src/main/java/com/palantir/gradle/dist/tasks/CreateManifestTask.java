@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -27,6 +28,8 @@ import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.ProductDependencyLockFile;
 import com.palantir.gradle.dist.ProductId;
 import com.palantir.gradle.dist.ProductType;
+import com.palantir.gradle.dist.SchemaMigration;
+import com.palantir.gradle.dist.SchemaVersionLockFile;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
@@ -61,6 +64,9 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 
 public abstract class CreateManifestTask extends DefaultTask {
+    public static final String WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME = "writeProductDependenciesLocks";
+    public static final String WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME = "writeSchemaVersionLocks";
+
     @Input
     abstract SetProperty<ProductId> getInRepoProductIds();
 
@@ -94,7 +100,21 @@ public abstract class CreateManifestTask extends DefaultTask {
     @InputFile
     @org.gradle.api.tasks.Optional
     final File getLockfileIfExists() {
-        File file = getLockfile();
+        File file = getProductDependenciesLockfile();
+        if (file.exists()) {
+            return file;
+        }
+        return null;
+    }
+
+    /**
+     * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
+     * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
+     */
+    @InputFile
+    @org.gradle.api.tasks.Optional
+    final File getSchemaLockfileIfExists() {
+        File file = getSchemaVersionLockfile();
         if (file.exists()) {
             return file;
         }
@@ -114,9 +134,16 @@ public abstract class CreateManifestTask extends DefaultTask {
 
         List<ProductDependency> productDependencies = productDependencyManifest.productDependencies();
         if (productDependencies.isEmpty()) {
-            requireAbsentLockfile();
+            requireAbsentLockfile(WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME, getProductDependenciesLockfile());
         } else {
-            ensureLockfileIsUpToDate(productDependencies);
+            ensurePdepsLockfileIsUpToDate(productDependencies);
+        }
+
+        List<SchemaMigration> schemaMigrations = getSchemaMigrations();
+        if (schemaMigrations.isEmpty()) {
+            requireAbsentLockfile(WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME, getSchemaVersionLockfile());
+        } else {
+            ensureSchemaLockfileIsUpToDate(schemaMigrations);
         }
 
         ObjectMappers.jsonMapper.writeValue(
@@ -132,15 +159,22 @@ public abstract class CreateManifestTask extends DefaultTask {
                         .build());
     }
 
-    private void requireAbsentLockfile() {
-        File lockfile = getLockfile();
+    private List<SchemaMigration> getSchemaMigrations() {
+        Object raw = getManifestExtensions().get().get("schema-migrations");
+        if (raw == null) {
+            return ImmutableList.of();
+        }
+        return ObjectMappers.jsonMapper.convertValue(raw, new TypeReference<>() {});
+    }
+
+    private void requireAbsentLockfile(String writeLocksTaskName, File lockfile) {
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
         if (!lockfile.exists()) {
             return;
         }
 
-        if (shouldWriteLocks(getProject())) {
+        if (shouldWriteLocks(getProject(), writeLocksTaskName)) {
             lockfile.delete();
             getLogger().lifecycle("Deleted {}", relativePath);
         } else {
@@ -150,27 +184,31 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
-    private File getLockfile() {
+    private File getProductDependenciesLockfile() {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
 
-    public static boolean shouldWriteLocks(Project project) {
-        String taskName = project.getPath().equals(":")
-                ? ":writeProductDependenciesLocks"
-                : project.getPath() + ":writeProductDependenciesLocks";
+    public static boolean shouldWriteLocks(Project project, String writeLocksTaskName) {
+        String taskName =
+                project.getPath().equals(":") ? ":" + writeLocksTaskName : project.getPath() + ":" + writeLocksTaskName;
         Gradle gradle = project.getGradle();
         return gradle.getStartParameter().isWriteDependencyLocks()
                 || gradle.getTaskGraph().hasTask(taskName);
     }
 
-    private void ensureLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
-        File lockfile = getLockfile();
-        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
+    private void ensurePdepsLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
+        File lockfile = getProductDependenciesLockfile();
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, getInRepoProductIds().get());
+        ensureFileIsUpToDate(WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME, lockfile, upToDateContents);
+    }
+
+    private void ensureFileIsUpToDate(String writeLocksTaskName, File lockfile, String upToDateContents)
+            throws IOException {
+        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         boolean lockfileExists = lockfile.exists();
 
-        if (shouldWriteLocks(getProject())) {
+        if (shouldWriteLocks(getProject(), writeLocksTaskName)) {
             Files.writeString(lockfile.toPath(), upToDateContents);
 
             if (!lockfileExists) {
@@ -217,6 +255,16 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
+    private File getSchemaVersionLockfile() {
+        return getProject().file(SchemaVersionLockFile.LOCK_FILE);
+    }
+
+    private void ensureSchemaLockfileIsUpToDate(List<SchemaMigration> schemaMigrations) throws IOException {
+        File lockfile = getSchemaVersionLockfile();
+        String upToDateContents = ObjectMappers.writeSchemaVersionsAsString(SchemaVersionLockFile.of(schemaMigrations));
+        ensureFileIsUpToDate(WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME, lockfile, upToDateContents);
+    }
+
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
         Preconditions.checkArgument(
@@ -254,7 +302,8 @@ public abstract class CreateManifestTask extends DefaultTask {
                     task.getOutputs().upToDateWhen(new Spec<Task>() {
                         @Override
                         public boolean isSatisfiedBy(Task _task) {
-                            return !shouldWriteLocks(project);
+                            return !(shouldWriteLocks(project, WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME)
+                                    || shouldWriteLocks(project, WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME));
                         }
                     });
 
@@ -268,7 +317,14 @@ public abstract class CreateManifestTask extends DefaultTask {
         });
 
         project.getTasks()
-                .register("writeProductDependenciesLocks", WriteProductDependenciesLocksMarkerTask.class, task -> {
+                .register(
+                        WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME,
+                        WriteProductDependenciesLocksMarkerTask.class,
+                        task -> {
+                            task.dependsOn(createManifest);
+                        });
+        project.getTasks()
+                .register(WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME, WriteSchemaVersionLocksMarkerTask.class, task -> {
                     task.dependsOn(createManifest);
                 });
 

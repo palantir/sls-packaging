@@ -44,6 +44,10 @@ subprojects {
     tasks.withType(JavaCompile) {
         options.compilerArgs += ['-Werror', '-Xlint:deprecation']
     }
+
+    tasks.named("eclipse") {
+        dependsOn "pluginUnderTestMetadata"
+    }
 }
 
 javaVersions {

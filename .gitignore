@@ -4,6 +4,7 @@
 .classpath
 .checkstyle
 .settings
+.factorypath
 .node
 build
 bin
