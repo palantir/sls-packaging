@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Throw SafeRuntimeException instead of GradleException in ObjectMappers
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1467
