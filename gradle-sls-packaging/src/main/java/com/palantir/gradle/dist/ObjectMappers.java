@@ -24,10 +24,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
+import com.palantir.logsafe.SafeArg;
+import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import org.gradle.api.GradleException;
 
 public final class ObjectMappers {
     public static final ObjectMapper jsonMapper = new ObjectMapper()
@@ -49,7 +50,7 @@ public final class ObjectMappers {
             Files.createDirectories(outputFile.toPath().getParent());
             jsonMapper.writeValue(outputFile, pdm);
         } catch (IOException e) {
-            throw new GradleException("Unable to write ProductDependencyManifest file", e);
+            throw new SafeRuntimeException("Unable to write ProductDependencyManifest file", e);
         }
     }
 
@@ -57,7 +58,7 @@ public final class ObjectMappers {
         try {
             return jsonMapper.readValue(file, ProductDependencyManifest.class);
         } catch (IOException e) {
-            throw new GradleException("Unable to read ProductDependencyManifest: " + file, e);
+            throw new SafeRuntimeException("Unable to read ProductDependencyManifest", e, SafeArg.of("file", file));
         }
     }
 
@@ -65,7 +66,8 @@ public final class ObjectMappers {
         try {
             return jsonMapper.readValue(file, RecommendedProductDependencies.class);
         } catch (IOException e) {
-            throw new GradleException("Unable to read RecommendedProductDependencies: " + file, e);
+            throw new SafeRuntimeException(
+                    "Unable to read RecommendedProductDependencies", e, SafeArg.of("file", file));
         }
     }
 
@@ -73,7 +75,7 @@ public final class ObjectMappers {
         try {
             return ymlMapper.writeValueAsString(lockFile);
         } catch (IOException e) {
-            throw new GradleException("Unable to write SchemaVersionLockFile", e);
+            throw new SafeRuntimeException("Unable to write SchemaVersionLockFile", e);
         }
     }
 
@@ -81,7 +83,7 @@ public final class ObjectMappers {
         try {
             return ymlMapper.readValue(input, SchemaVersionLockFile.class);
         } catch (IOException e) {
-            throw new GradleException("Unable to read SchemaVersionLockFile", e);
+            throw new SafeRuntimeException("Unable to read SchemaVersionLockFile", e);
         }
     }
 
