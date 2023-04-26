@@ -1,0 +1,10 @@
+apply plugin: 'com.palantir.external-publish-jar'
+apply plugin: 'org.inferred.processors'
+
+dependencies {
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.palantir.safe-logging:preconditions'
+
+    compileOnly 'org.immutables:value::annotations'
+    annotationProcessor 'org.immutables:value'
+}
