@@ -12,6 +12,7 @@ dependencies {
 
     api gradleApi()
     api project(':gradle-recommended-product-dependencies')
+    api project(':gradle-sls-packaging-api')
     api 'com.google.guava:guava'
     api 'com.fasterxml.jackson.core:jackson-databind'
     api 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'

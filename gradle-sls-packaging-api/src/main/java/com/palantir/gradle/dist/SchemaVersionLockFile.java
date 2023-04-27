@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.palantir.logsafe.Preconditions;
@@ -37,6 +38,7 @@ public interface SchemaVersionLockFile {
         return COMMENT;
     }
 
+    @JsonProperty("schemaMigrations")
     List<SchemaMigration> getSchemaMigrations();
 
     @Value.Default

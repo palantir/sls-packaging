@@ -37,12 +37,7 @@ public final class ObjectMappers {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .registerModule(new GuavaModule());
 
-    private static final ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory())
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setPropertyNamingStrategy(PropertyNamingStrategies.KEBAB_CASE)
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .registerModule(new GuavaModule());
+    private static final ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory()).registerModule(new GuavaModule());
 
     public static void writeProductDependencyManifest(ProductDependencyManifest pdm, File outputFile) {
         try {
