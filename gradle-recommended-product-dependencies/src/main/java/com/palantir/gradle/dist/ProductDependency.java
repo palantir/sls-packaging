@@ -100,7 +100,9 @@ public final class ProductDependency implements Serializable {
                     maximum.compare(minimum.get()) >= 0,
                     "Minimum version is greater than maximum version",
                     SafeArg.of("minimumVersion", minimumVersion),
-                    SafeArg.of("maximumVersion", maximumVersion));
+                    SafeArg.of("maximumVersion", maximumVersion),
+                    SafeArg.of("productGroup", productGroup),
+                    SafeArg.of("productName", productName));
         }
 
         // Minimum can be unset here if the minimumVersion is a non-orderable SLS version, e.g. "1.0.0.dirty"
@@ -109,7 +111,9 @@ public final class ProductDependency implements Serializable {
                     VersionComparator.INSTANCE.compare(recommended.get(), minimum.get()) >= 0,
                     "Recommended version is not greater than minimum version",
                     SafeArg.of("recommendedVersion", recommendedVersion),
-                    SafeArg.of("minimumVersion", minimumVersion));
+                    SafeArg.of("minimumVersion", minimumVersion),
+                    SafeArg.of("productGroup", productGroup),
+                    SafeArg.of("productName", productName));
         }
 
         if (recommended.isPresent()) {
@@ -117,7 +121,9 @@ public final class ProductDependency implements Serializable {
                     maximum.compare(recommended.get()) >= 0,
                     "Recommended version is greater than maximum version",
                     SafeArg.of("recommendedVersion", recommendedVersion),
-                    SafeArg.of("maximumVersion", maximumVersion));
+                    SafeArg.of("maximumVersion", maximumVersion),
+                    SafeArg.of("productGroup", productGroup),
+                    SafeArg.of("productName", productName));
         }
     }
 

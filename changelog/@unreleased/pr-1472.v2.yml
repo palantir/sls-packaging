@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: When failing to create a `ProductDependency` due to invalid versions,
+    specify in the error message which depended-on product is involved.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1472
