@@ -268,7 +268,10 @@ public abstract class CreateManifestTask extends DefaultTask {
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
         Preconditions.checkArgument(
-                SlsVersion.check(stringVersion), "Project version must be a valid SLS version: %s", stringVersion);
+                SlsVersion.check(stringVersion),
+                "Project version must be a valid SLS version: %s. "
+                        + "Please ensure there's at least one git tag on the repo (e.g. 0.0.0)",
+                stringVersion);
         if (!OrderableSlsVersion.check(stringVersion)) {
             getProject()
                     .getLogger()
