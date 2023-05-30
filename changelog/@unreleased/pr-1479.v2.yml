@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Clarify error message with recommended next steps
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1479
