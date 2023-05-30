@@ -43,6 +43,22 @@ class CreateManifestTaskTest extends ProjectSpec {
 
         then:
         Exception exception = thrown()
-        exception.message.contains("Project version must be a valid SLS version: 1.0.0foo")
+        exception.message.contains("Project version must be a valid SLS version: 1.0.0foo. " +
+                "Please ensure there's at least one git tag on the repo (e.g. 0.0.0)")
+    }
+
+    def 'Cannot create CreateManifestTask when product.version is a commit hash'() {
+        given:
+        Project project = ProjectBuilder.builder().build()
+        project.version = "7895812"
+        CreateManifestTask task = project.tasks.create("m", CreateManifestTask)
+
+        when:
+        task.createManifest()
+
+        then:
+        Exception exception = thrown()
+        exception.message.contains("Project version must be a valid SLS version: 7895812. " +
+                "Please ensure there's at least one git tag on the repo (e.g. 0.0.0)")
     }
 }
