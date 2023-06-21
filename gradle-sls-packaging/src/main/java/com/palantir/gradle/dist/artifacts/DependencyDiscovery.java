@@ -50,11 +50,18 @@ public final class DependencyDiscovery {
             conf.setVisible(false);
         });
 
-        // Explicitly declare the configuration to depend on to avoid resolution failures due to ambiguous variants.
-        Map<String, String> projectDependency =
-                Map.of("path", project.getPath(), "configuration", consumable.getName());
-        project.getDependencies()
-                .add(consumable.getName(), project.getDependencies().project(projectDependency));
+        // Use behavior before https://github.com/palantir/sls-packaging/pull/1272
+        if (project.hasProperty("USE_OLD_PDEP_RESOLUTION")) {
+            project.getLogger().lifecycle("Using old pdep resolution");
+            project.getDependencies().add(consumable.getName(), project);
+        } else {
+            project.getLogger().lifecycle("Using new pdep resolution");
+            // Explicitly declare the configuration to depend on to avoid resolution failures due to ambiguous variants.
+            Map<String, String> projectDependency =
+                    Map.of("path", project.getPath(), "configuration", consumable.getName());
+            project.getDependencies()
+                    .add(consumable.getName(), project.getDependencies().project(projectDependency));
+        }
 
         return consumable;
     }

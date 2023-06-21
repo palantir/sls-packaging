@@ -76,8 +76,14 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
 
     @TaskAction
     public final void resolve() throws IOException {
+        Multimap<ProductId, ProductDependency> discoveredPdeps = discoverProductDependencies();
+        getProject()
+                .getLogger()
+                .info(">>> Declared pdeps: {}", getProductDependencies().get());
+        getProject().getLogger().info(">>> Discovered pdeps: {}", discoveredPdeps);
+
         Map<ProductId, ProductDependency> allProductDependencies =
-                computeDependencies(getProductDependencies().get(), discoverProductDependencies());
+                computeDependencies(getProductDependencies().get(), discoveredPdeps);
 
         ObjectMappers.writeProductDependencyManifest(
                 ProductDependencyManifest.of(allProductDependencies.values().stream()

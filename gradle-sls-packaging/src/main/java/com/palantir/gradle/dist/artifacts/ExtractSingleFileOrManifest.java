@@ -16,15 +16,18 @@
 
 package com.palantir.gradle.dist.artifacts;
 
+import com.palantir.gradle.dist.ObjectMappers;
+import com.palantir.gradle.dist.RecommendedProductDependencies;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
@@ -32,9 +35,13 @@ import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@CacheableTransform
+// @CacheableTransform
 public abstract class ExtractSingleFileOrManifest implements TransformAction<FileAndManifestExtractParameter> {
+    private static final Logger log = LoggerFactory.getLogger(ExtractSingleFileOrManifest.class);
+
     @PathSensitive(PathSensitivity.NAME_ONLY)
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInputArtifact();
@@ -52,7 +59,10 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
                     String newFileName = com.google.common.io.Files.getNameWithoutExtension(jarFile.getName()) + "-"
                             + pathToExtract.replaceAll("/", "-");
                     File outputFile = outputs.file(newFileName);
-                    Files.copy(is, outputFile.toPath());
+
+                    String value = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    Files.write(outputFile.toPath(), value.getBytes(StandardCharsets.UTF_8));
+                    logPdeps(jarFile.toString(), value);
                 }
                 return;
             }
@@ -62,9 +72,28 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
             if (value.isPresent()) {
                 File outputFile = outputs.file("manifest.json");
                 Files.write(outputFile.toPath(), value.get().getBytes(StandardCharsets.UTF_8));
+                logPdeps(jarFile.toString(), value.get());
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
         }
+    }
+
+    private void logPdeps(String source, String value) {
+        try {
+            RecommendedProductDependencies recommendedProductDependencies =
+                    ObjectMappers.jsonMapper.readValue(value, RecommendedProductDependencies.class);
+            logPdeps(source, recommendedProductDependencies);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read pdeps file", e);
+        }
+    }
+
+    private void logPdeps(String source, RecommendedProductDependencies productDependencies) {
+        List<String> pdeps = productDependencies.recommendedProductDependencies().stream()
+                .map(pdep -> String.format(
+                        "%s:%s:%s", pdep.getProductGroup(), pdep.getProductName(), pdep.getMinimumVersion()))
+                .collect(Collectors.toList());
+        log.info(">>> Extracted pdeps from jar {}: {}", source, pdeps);
     }
 }

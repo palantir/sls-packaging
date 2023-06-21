@@ -24,6 +24,7 @@ import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
 import com.palantir.gradle.dist.artifacts.ExtractSingleFileOrManifest;
 import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
+import java.util.UUID;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
@@ -48,6 +49,7 @@ public final class ProductDependencies {
                 project, ExtractSingleFileOrManifest.class, PRODUCT_DEPENDENCIES, params -> {
                     params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                     params.getKeyToExtract().set(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY);
+                    params.getRandomStringToBustCache().set(UUID.randomUUID().toString());
                 });
 
         DependencyDiscovery.configureResourceTransform(

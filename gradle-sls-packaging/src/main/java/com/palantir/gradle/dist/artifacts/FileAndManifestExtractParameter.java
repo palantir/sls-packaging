@@ -26,4 +26,7 @@ public interface FileAndManifestExtractParameter extends TransformParameters {
 
     @Input
     Property<String> getKeyToExtract();
+
+    @Input
+    Property<String> getRandomStringToBustCache();
 }
