@@ -54,6 +54,9 @@ public final class DependencyDiscovery {
         if (project.hasProperty("USE_OLD_PDEP_RESOLUTION")) {
             project.getLogger().lifecycle("Using old pdep resolution");
             project.getDependencies().add(consumable.getName(), project);
+        } else if (project.hasProperty("SKIP_DEPENDENCY")) {
+            project.getLogger().lifecycle("Skipping adding pdep as dependency");
+            return consumable;
         } else {
             project.getLogger().lifecycle("Using new pdep resolution");
             // Explicitly declare the configuration to depend on to avoid resolution failures due to ambiguous variants.
