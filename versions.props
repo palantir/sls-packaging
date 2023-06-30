@@ -1,6 +1,6 @@
 com.fasterxml.jackson.*:* = 2.15.2
 com.fasterxml.jackson.core:jackson-databind = 2.15.2
-com.google.guava:guava = 32.1.0-jre
+com.google.guava:guava = 32.1.1-jre
 com.palantir.gradle.auto-parallelizable:* = 1.4.0
 com.palantir.gradle.consistentversions:gradle-consistent-versions = 1.27.0
 com.palantir.safe-logging:* = 3.5.0
