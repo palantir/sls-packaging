@@ -89,10 +89,24 @@ public interface GcProfile extends Serializable {
         }
     }
 
+    // Match the MaxGCPauseMillis case
+    @SuppressWarnings("AbbreviationAsWordInName")
     class Hybrid implements GcProfile {
+        // We use 500ms by default, up from the JDK default value of 200ms. Using G1, eden space is dynamically
+        // chosen based on the amount of memory which can be collected within the pause time target.
+        // Higher pause target values allow for more eden space, resulting in more stable old generation
+        // in high-garbage or low-gc-thread scenarios. In the happy case, increasing the pause target increases
+        // both throughput and latency. In degenerate cases, a low target can cause the garbage collector to
+        // thrash and reduce throughput while increasing latency.
+        private int maxGCPauseMillis = 500;
+
         @Override
         public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
-            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA");
+            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA", "-XX:MaxGCPauseMillis=" + maxGCPauseMillis);
+        }
+
+        public final void maxGCPauseMillis(int value) {
+            this.maxGCPauseMillis = value;
         }
     }
 
