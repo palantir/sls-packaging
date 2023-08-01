@@ -1022,7 +1022,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/com/test/Test.class').exists()
     }
 
-    def 'adds gc profile jvm settings'() {
+    def 'adds initiatingOccupancyFraction gc profile jvm settings'() {
         given:
         buildFile << '''
             plugins {
@@ -1057,6 +1057,41 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
     }
 
+    def 'adds maxGCPauseMillis gc profile jvm settings'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+
+            repositories {
+                jcenter()
+                mavenCentral()
+            }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                gc 'hybrid', {
+                    maxGCPauseMillis 1234
+                }
+            }
+        '''.stripIndent()
+
+        createUntarTask(buildFile)
+
+        when:
+        runTasks(':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', '-XX:MaxGCPauseMillis=1234'])
+    }
+
     def 'gc profile null configuration closure'() {
         given:
         buildFile << '''
@@ -1087,7 +1122,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
-        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA'])
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', "-XX:MaxGCPauseMillis=500"])
     }
 
     def 'applies java agents'() {
