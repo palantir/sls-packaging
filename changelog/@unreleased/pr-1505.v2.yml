@@ -1,5 +1,13 @@
 type: improvement
 improvement:
-  description: Increase G1 default pause target from 200ms to 500ms
+  description: |-
+    Increase G1 default pause target from 200ms to 500ms
+
+    The G1 pause target can be modified thusly:
+    ```groovy
+    gc 'hybrid', {
+        maxGCPauseMillis 250
+    }
+    ```
   links:
   - https://github.com/palantir/sls-packaging/pull/1505
