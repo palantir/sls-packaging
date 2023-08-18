@@ -53,6 +53,12 @@ final class DistTarTask {
                 t.setFileMode(0755);
             });
 
+            distributionExtension.getJdks().get().forEach((javaVersion, jdk) -> {
+                root.from(jdk, t -> {
+                    t.into("service/jdk" + javaVersion.getMajorVersion());
+                });
+            });
+
             root.into("service/lib", t -> {
                 t.from(jarTask);
                 t.from(project.getConfigurations().named("runtimeClasspath"));

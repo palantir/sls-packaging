@@ -23,6 +23,8 @@ import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -48,6 +50,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> defaultJvmOpts;
     private final ListProperty<String> excludeFromVar;
     private final MapProperty<String, String> env;
+    private final MapProperty<JavaVersion, Object> jdks;
 
     private final ObjectFactory objectFactory;
 
@@ -63,7 +66,16 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
                 .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
 
+        jdks = objectFactory.mapProperty(JavaVersion.class, Object.class).empty();
+
         javaHome = objectFactory.property(String.class).value(javaVersion.map(javaVersionValue -> {
+            Optional<Object> possibleIncludedJdk =
+                    Optional.ofNullable(jdks.getting(javaVersionValue).getOrNull());
+
+            if (possibleIncludedJdk.isPresent()) {
+                return "service/jdk" + javaVersionValue.getMajorVersion();
+            }
+
             boolean javaVersionLessThanOrEqualTo8 = javaVersionValue.compareTo(JavaVersion.VERSION_1_8) <= 0;
             if (javaVersionLessThanOrEqualTo8) {
                 return "";
@@ -85,7 +97,13 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
 
-        env = objectFactory.mapProperty(String.class, String.class).empty();
+        env = objectFactory.mapProperty(String.class, String.class);
+        env.putAll(project.provider(() -> {
+            return jdks.get().entrySet().stream()
+                    .collect(Collectors.toMap(
+                            entry -> "$JAVA_" + entry.getKey().getMajorVersion() + "_HOME",
+                            entry -> "service/jdk" + entry.getKey().getMajorVersion()));
+        }));
         setProductType(ProductType.SERVICE_V1);
     }
 
@@ -211,6 +229,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
     public final void setEnv(Map<String, String> env) {
         this.env.set(env);
+    }
+
+    public final MapProperty<JavaVersion, Object> getJdks() {
+        return jdks;
     }
 
     public final Provider<GcProfile> getGc() {
