@@ -82,7 +82,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         if ("true" == System.getenv("CI")) {
             "${rootDir}/service/bin/init.sh start".execute([], rootDir).waitFor() == 0
 
-            def startupLog = new File(rootDir, "var/logs/output.log")
+            def startupLog = new File(rootDir, "var/logs/startup.log")
             startupLog.text.contains "Hello"
             startupLog.text.contains "JAVA_17_HOME=service/myService-1.0.0-jdks/jdk17"
         }
