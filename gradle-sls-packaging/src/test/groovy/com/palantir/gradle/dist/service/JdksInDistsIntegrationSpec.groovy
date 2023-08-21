@@ -77,14 +77,50 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
 
         def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
         launcherStatic.contains 'javaHome: "service/myService-1.0.0-jdks/jdk17"'
+        launcherStatic.contains '  JAVA_17_HOME: "service/myService-1.0.0-jdks/jdk17"'
 
         // Only contains a linux amd64 JDK, will only run on CI
-        if ("true" == System.getenv("CI")) {
-            "${rootDir}/service/bin/init.sh start".execute([], rootDir).waitFor() == 0
+        if ("true" != System.getenv("CI")) {
+            return
+        }
 
-            def startupLog = new File(rootDir, "var/logs/startup.log")
-            startupLog.text.contains "Hello"
-            startupLog.text.contains "JAVA_17_HOME=service/myService-1.0.0-jdks/jdk17"
+        "${rootDir}/service/bin/init.sh start".execute([], rootDir).waitFor() == 0
+
+        def startupLog = new File(rootDir, "var/logs/startup.log")
+        startupLog.text.contains 'Hello'
+        startupLog.text.contains 'JAVA_17_HOME=service/myService-1.0.0-jdks/jdk17'
+    }
+
+    def 'multiple jdks can exist in the dist'() {
+        // language=gradle
+        buildFile << '''
+            distribution {
+                javaVersion JavaVersion.VERSION_17
+                jdks.put(JavaVersion.VERSION_11, fileTree('build/fake-jdk'))
+                jdks.put(JavaVersion.VERSION_13, fileTree('build/fake-jdk'))
+                jdks.put(JavaVersion.VERSION_17, fileTree('build/fake-jdk'))
+            }
+        '''.stripIndent(true)
+
+        when:
+        runTasksSuccessfully('distTar')
+
+        then:
+        def rootDir = extractDist()
+
+        def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
+        launcherStatic.contains 'javaHome: "service/myService-1.0.0-jdks/jdk17"'
+
+        for (version in [11, 13, 17]) {
+            def jdkDir = new File(rootDir, "service/myService-1.0.0-jdks/jdk" + version)
+            assert jdkDir.exists()
+
+            def releaseFileText = new File(jdkDir, "release").text
+
+            assert releaseFileText.contains('its a jdk trust me')
+
+            def envVarLine = "  JAVA_${version}_HOME: \"service/myService-1.0.0-jdks/jdk${version}\""
+            assert launcherStatic.contains(envVarLine)
         }
     }
 

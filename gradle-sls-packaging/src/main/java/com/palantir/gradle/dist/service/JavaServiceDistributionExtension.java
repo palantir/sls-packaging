@@ -101,7 +101,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         env.putAll(project.provider(() -> {
             return jdks.get().entrySet().stream()
                     .collect(Collectors.toMap(
-                            entry -> "$JAVA_" + entry.getKey().getMajorVersion() + "_HOME",
+                            entry -> "JAVA_" + entry.getKey().getMajorVersion() + "_HOME",
                             entry -> jdkPathInDist(entry.getKey())));
         }));
         setProductType(ProductType.SERVICE_V1);
