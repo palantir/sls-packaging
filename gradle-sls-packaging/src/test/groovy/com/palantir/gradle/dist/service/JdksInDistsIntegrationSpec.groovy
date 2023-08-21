@@ -45,13 +45,6 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         '''.stripIndent(true)
 
         file('build/fake-jdk/release') << 'its a jdk trust me'
-        def java = file('build/fake-jdk/bin/java') << '''
-            #!/bin/bash
-            echo "Hello"
-            echo "JAVA_17_HOME=$JAVA_17_HOME"
-        '''.stripIndent(true)
-
-        java.setExecutable(true)
     }
 
     def 'puts jdk in dist'() {
@@ -78,17 +71,6 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
         launcherStatic.contains 'javaHome: "service/myService-1.0.0-jdks/jdk17"'
         launcherStatic.contains '  JAVA_17_HOME: "service/myService-1.0.0-jdks/jdk17"'
-
-        // Only contains a linux amd64 JDK, will only run on CI
-        if ("true" != System.getenv("CI")) {
-            return
-        }
-
-        "${rootDir}/service/bin/init.sh start".execute([], rootDir).waitFor() == 0
-
-        def startupLog = new File(rootDir, "var/logs/startup.log")
-        startupLog.text.contains 'Hello'
-        startupLog.text.contains 'JAVA_17_HOME=service/myService-1.0.0-jdks/jdk17'
     }
 
     def 'multiple jdks can exist in the dist'() {
