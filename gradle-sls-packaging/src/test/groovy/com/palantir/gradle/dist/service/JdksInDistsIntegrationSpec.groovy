@@ -72,7 +72,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
 
         then:
         def rootDir = extractDist()
-        def jdkDir = new File(rootDir, "service/jdk17")
+        def jdkDir = new File(rootDir, "service/myService-1.0.0-jdks/jdk17")
         jdkDir.exists()
 
         def releaseFileText = new File(jdkDir, "release").text

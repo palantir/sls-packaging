@@ -55,7 +55,7 @@ final class DistTarTask {
 
             distributionExtension.getJdks().get().forEach((javaVersion, jdk) -> {
                 root.from(jdk, t -> {
-                    t.into("service/jdk" + javaVersion.getMajorVersion());
+                    t.into(distributionExtension.jdkPathInDist(javaVersion));
                 });
             });
 
