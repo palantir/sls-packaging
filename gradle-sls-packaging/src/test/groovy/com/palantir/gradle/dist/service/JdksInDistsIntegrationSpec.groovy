@@ -23,11 +23,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
             apply plugin: 'com.palantir.sls-java-service-distribution'
 
             repositories {
-                maven {
-                    url 'https://artifactory.palantir.build/artifactory/release-jar'
-                    metadataSources { mavenPom(); ignoreGradleMetadataRedirection() }
-                }
-                mavenLocal()
+                mavenCentral()
             }
             
             group 'group'
