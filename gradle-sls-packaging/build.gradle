@@ -31,6 +31,7 @@ dependencies {
     testImplementation 'com.netflix.nebula:nebula-test'
     testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.rauschig:jarchivelib'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
