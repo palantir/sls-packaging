@@ -106,6 +106,30 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         }
     }
 
+    def 'does not force value of jdks at configuration time'() {
+        // language=gradle
+        buildFile << '''
+            distribution {
+                javaVersion JavaVersion.VERSION_17
+                jdks.putAll(provider {
+                    println('hello ' + state.isConfiguring())
+                    if (state.isConfiguring()) {
+                        throw new RuntimeException("Should not be called when configuring")
+                    }
+                    return Map.of(JavaVersion.VERSION_17, fileTree('build/fake-jdk'))
+                })
+            }
+            
+            tasks.getByName('distTar')
+        '''.stripIndent(true)
+
+        when:
+        runTasksSuccessfully('distTar')
+
+        then:
+        1 == 1
+    }
+
     private File extractDist() {
         def slsTgz = new File(projectDir, "build/distributions/myService-1.0.0.sls.tgz")
         def extracted = new File(slsTgz.getParent(), "extracted")

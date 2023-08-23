@@ -16,7 +16,9 @@
 
 package com.palantir.gradle.dist.service;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.provider.Provider;
@@ -53,10 +55,12 @@ final class DistTarTask {
                 t.setFileMode(0755);
             });
 
-            distributionExtension.getJdks().get().forEach((javaVersion, jdk) -> {
-                root.from(jdk, t -> {
-                    t.into(distributionExtension.jdkPathInDist(javaVersion));
-                });
+            Arrays.stream(JavaVersion.values()).forEach(javaVersion -> {
+                root.from(
+                        distributionExtension.getJdks().getting(javaVersion).orElse(project.provider(project::files)),
+                        t -> {
+                            t.into(distributionExtension.jdkPathInDist(javaVersion));
+                        });
             });
 
             root.into("service/lib", t -> {
