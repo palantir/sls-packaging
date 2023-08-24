@@ -35,7 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
@@ -329,7 +329,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             JavaServiceDistributionExtension distributionExtension) {
 
         return distributionExtension.getEnv().zip(distributionExtension.getJdks(), (userConfiguredEnv, jdks) -> {
-            Map<String, String> actualEnv = new HashMap<>(userConfiguredEnv);
+            Map<String, String> actualEnv = new LinkedHashMap<>(userConfiguredEnv);
 
             jdks.keySet().stream().sorted().forEach(javaVersion -> {
                 actualEnv.put(
