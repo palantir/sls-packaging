@@ -24,7 +24,6 @@ import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -98,10 +97,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         excludeFromVar.addAll("log", "run");
 
         env = objectFactory.mapProperty(String.class, String.class);
-        env.putAll(jdks.map(jdksValue -> jdksValue.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> "JAVA_" + entry.getKey().getMajorVersion() + "_HOME",
-                        entry -> jdkPathInDist(entry.getKey())))));
         setProductType(ProductType.SERVICE_V1);
     }
 

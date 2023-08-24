@@ -133,7 +133,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
             }
             
             // Quite a lot of internal plugins/build.gradles unfortunately get the distTar task non-lazily. An internal
-            // piece of infra sets the jks property by resolving a configuration, which cannot happen at configuration
+            // piece of infra sets the jdks property by resolving a configuration, which cannot happen at configuration
             // time.
             tasks.getByName('distTar')
         '''.stripIndent(true)
@@ -147,6 +147,30 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         // A way of fixing this tests seems to open up the possibility of making extra unnecessary JDK repos - ensure
         // this does not happen.
         !new File(rootDir, "service/myService-1.0.0-jdks/jdk11").exists()
+    }
+
+    def 'even a user clearing env does not get rid of JAVA_XX_HOME env vars'() {
+        // language=gradle
+        buildFile << '''
+            distribution {
+                javaVersion JavaVersion.VERSION_17
+                jdks.put(JavaVersion.VERSION_17, fileTree('build/fake-jdk'))
+                jdks.put(JavaVersion.VERSION_11, fileTree('build/fake-jdk'))
+                
+                env.empty()
+            }
+        '''.stripIndent(true)
+
+        when:
+        runTasksSuccessfully('distTar')
+
+        then:
+        def rootDir = extractDist()
+
+        def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
+
+        launcherStatic.contains 'JAVA_11_HOME: "service/myService-1.0.0-jdks/jdk11"'
+        launcherStatic.contains 'JAVA_17_HOME: "service/myService-1.0.0-jdks/jdk17"'
     }
 
     private File extractDist() {
