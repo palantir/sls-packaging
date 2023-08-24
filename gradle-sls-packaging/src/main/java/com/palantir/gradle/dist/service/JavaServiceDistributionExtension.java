@@ -98,12 +98,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         excludeFromVar.addAll("log", "run");
 
         env = objectFactory.mapProperty(String.class, String.class);
-        env.putAll(project.provider(() -> {
-            return jdks.get().entrySet().stream()
-                    .collect(Collectors.toMap(
-                            entry -> "JAVA_" + entry.getKey().getMajorVersion() + "_HOME",
-                            entry -> jdkPathInDist(entry.getKey())));
-        }));
+        env.putAll(jdks.map(jdksValue -> jdksValue.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> "JAVA_" + entry.getKey().getMajorVersion() + "_HOME",
+                        entry -> jdkPathInDist(entry.getKey())))));
         setProductType(ProductType.SERVICE_V1);
     }
 
