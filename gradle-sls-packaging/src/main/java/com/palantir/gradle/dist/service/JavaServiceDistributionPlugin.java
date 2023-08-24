@@ -331,7 +331,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         return distributionExtension.getEnv().zip(distributionExtension.getJdks(), (userConfiguredEnv, jdks) -> {
             Map<String, String> actualEnv = new HashMap<>(userConfiguredEnv);
 
-            jdks.forEach((javaVersion, _ignored) -> {
+            jdks.keySet().stream().sorted().forEach(javaVersion -> {
                 actualEnv.put(
                         "JAVA_" + javaVersion.getMajorVersion() + "_HOME",
                         distributionExtension.jdkPathInDist(javaVersion));
