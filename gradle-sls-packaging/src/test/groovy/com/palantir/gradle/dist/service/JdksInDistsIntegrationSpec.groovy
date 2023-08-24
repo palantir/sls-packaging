@@ -106,7 +106,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         }
     }
 
-    def 'does not force value of jdks at configuration time'() {
+    def 'does not force value of jdks at configuration time when task is evaluated'() {
         // language=gradle
         buildFile << '''
             distribution {
@@ -120,6 +120,9 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
                 })
             }
             
+            // Quite a lot of internal plugins/build.gradles unfortunately get the distTar task non-lazily. An internal
+            // piece of infra sets the jks property by resolving a configuration, which cannot happen at configuration
+            // time.
             tasks.getByName('distTar')
         '''.stripIndent(true)
 
@@ -127,7 +130,11 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         runTasksSuccessfully('distTar')
 
         then:
-        1 == 1
+        def rootDir = extractDist()
+
+        // A way of fixing this tests seems to open up the possibility of making extra unnecessary JDK repos - ensure
+        // this does not happen.
+        !new File(rootDir, "service/myService-1.0.0-jdks/jdk11").exists()
     }
 
     private File extractDist() {
