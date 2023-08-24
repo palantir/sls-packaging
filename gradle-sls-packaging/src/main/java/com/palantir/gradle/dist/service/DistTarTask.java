@@ -16,7 +16,9 @@
 
 package com.palantir.gradle.dist.service;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.provider.Provider;
@@ -51,6 +53,21 @@ final class DistTarTask {
             root.from("service/bin", t -> {
                 t.into("service/bin");
                 t.setFileMode(0755);
+            });
+
+            // We do this trick of iterating through every java version and making a from with a lazy value to be lazy
+            // enough to handle the case where another plugin has set the value of the jdks property based on the result
+            // of resolving a configuration. Unfortunately, lots of our internal plugins/build.gradle force the value
+            // of the distTar task at configuration time, so this would cause a Configuration to resolved at
+            // configuration time (which is disallowed) with the naive getting the value from the property and looping
+            // over it. Reading the code below, you might be concerned that it would create empty directories for unset
+            // java versions, but Gradle does not appear to do this for empty file collections.
+            Arrays.stream(JavaVersion.values()).forEach(javaVersion -> {
+                root.from(
+                        distributionExtension.getJdks().getting(javaVersion).orElse(project.provider(project::files)),
+                        t -> {
+                            t.into(distributionExtension.jdkPathInDist(javaVersion));
+                        });
             });
 
             root.into("service/lib", t -> {

@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
 import org.gradle.api.InvalidUserCodeException;
@@ -222,7 +224,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getJavaVersion().set(distributionExtension.getJavaVersion());
-                    task.getEnv().set(distributionExtension.getEnv());
+                    task.getEnv().set(userConfiguredEnvWithJdkEnvVars(distributionExtension));
                 });
 
         TaskProvider<CreateInitScriptTask> initScript = project.getTasks()
@@ -321,6 +323,22 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
+    }
+
+    private static Provider<Map<String, String>> userConfiguredEnvWithJdkEnvVars(
+            JavaServiceDistributionExtension distributionExtension) {
+
+        return distributionExtension.getEnv().zip(distributionExtension.getJdks(), (userConfiguredEnv, jdks) -> {
+            Map<String, String> actualEnv = new LinkedHashMap<>(userConfiguredEnv);
+
+            jdks.keySet().stream().sorted().forEach(javaVersion -> {
+                actualEnv.put(
+                        "JAVA_" + javaVersion.getMajorVersion() + "_HOME",
+                        distributionExtension.jdkPathInDist(javaVersion));
+            });
+
+            return Collections.unmodifiableMap(actualEnv);
+        });
     }
 
     private static void replaceManifestClasspath(Path windowsScript, String manifestClassPathArchiveFileName)

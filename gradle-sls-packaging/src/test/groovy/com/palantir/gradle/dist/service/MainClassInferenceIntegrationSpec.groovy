@@ -34,7 +34,6 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
             }
             
             repositories {
-                jcenter()
                 mavenCentral()
             }
 

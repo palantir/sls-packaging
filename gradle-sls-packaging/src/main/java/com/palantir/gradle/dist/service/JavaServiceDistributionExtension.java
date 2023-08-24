@@ -23,6 +23,7 @@ import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -48,6 +49,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> defaultJvmOpts;
     private final ListProperty<String> excludeFromVar;
     private final MapProperty<String, String> env;
+    private final MapProperty<JavaVersion, Object> jdks;
 
     private final ObjectFactory objectFactory;
 
@@ -63,7 +65,16 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
                 .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
 
+        jdks = objectFactory.mapProperty(JavaVersion.class, Object.class).empty();
+
         javaHome = objectFactory.property(String.class).value(javaVersion.map(javaVersionValue -> {
+            Optional<Object> possibleIncludedJdk =
+                    Optional.ofNullable(jdks.getting(javaVersionValue).getOrNull());
+
+            if (possibleIncludedJdk.isPresent()) {
+                return jdkPathInDist(javaVersionValue);
+            }
+
             boolean javaVersionLessThanOrEqualTo8 = javaVersionValue.compareTo(JavaVersion.VERSION_1_8) <= 0;
             if (javaVersionLessThanOrEqualTo8) {
                 return "";
@@ -85,7 +96,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         excludeFromVar = objectFactory.listProperty(String.class);
         excludeFromVar.addAll("log", "run");
 
-        env = objectFactory.mapProperty(String.class, String.class).empty();
+        env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
     }
 
@@ -213,6 +224,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.env.set(env);
     }
 
+    public final MapProperty<JavaVersion, Object> getJdks() {
+        return jdks;
+    }
+
     public final Provider<GcProfile> getGc() {
         return gc;
     }
@@ -248,5 +263,21 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
             return new GcProfile.Hybrid();
         }
         return new GcProfile.Throughput();
+    }
+
+    final String jdkPathInDist(JavaVersion javaVersionValue) {
+        // We put the JDK in a directory that contains the name and version of service. This is because in our cloud
+        // environments (and some customer environments), there is a third party security scanning tool that will report
+        // vulnerabilities in the JDK by printing a path, but does not display symlinks. This means it's hard to tell
+        // from a scan report which service is actually vulnerable, as our internal deployment infra uses symlinks,
+        // and you end up with a report like so:
+        //      Path: /opt/palantir/services/.24710105/service/jdk17
+        // rather than more useful:
+        //      Path: /opt/palantir/services/.24710105/service/multipass-2.1.3-jdks/jdk17
+        // which is implemented below.
+
+        return String.format(
+                "service/%s-%s-jdks/jdk%s",
+                getDistributionServiceName().get(), project.getVersion(), javaVersionValue.getMajorVersion());
     }
 }

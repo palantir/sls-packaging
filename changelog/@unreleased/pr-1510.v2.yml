@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Add `jdks` property to `distribution` extension to help include JDKs
+    into dists.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1510

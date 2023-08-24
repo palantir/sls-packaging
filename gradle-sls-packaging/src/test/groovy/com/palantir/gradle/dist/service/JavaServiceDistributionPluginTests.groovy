@@ -179,7 +179,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
 
@@ -219,7 +218,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
 
@@ -599,7 +597,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
             distribution {
@@ -633,7 +630,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
             version '0.0.1'
@@ -678,7 +674,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
             version '0.0.1'
@@ -797,7 +792,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 args "hello"
             }
             repositories {
-                jcenter()
                 mavenCentral()
             }
             dependencies {
@@ -813,7 +807,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java-library'
             }
             repositories {
-                jcenter()
                 mavenCentral()
             }
             dependencies {
@@ -932,7 +925,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 enableManifestClasspath true
             }
             repositories {
-                jcenter()
                 mavenCentral()
             }
             dependencies {
@@ -948,7 +940,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'java-library'
             }
             repositories {
-                jcenter()
                 mavenCentral()
             }
             dependencies {
@@ -1031,7 +1022,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
 
@@ -1066,7 +1056,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
 
@@ -1101,7 +1090,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
 
@@ -1385,7 +1373,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             project.group = 'service-group'
 
             repositories {
-                jcenter()
                 mavenCentral()
             }
 
