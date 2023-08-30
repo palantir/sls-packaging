@@ -265,7 +265,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         return new GcProfile.Throughput();
     }
 
-    final String jdkPathInDist(JavaVersion javaVersionValue) {
+    public final String jdkPathInDist(JavaVersion javaVersionValue) {
         // We put the JDK in a directory that contains the name and version of service. This is because in our cloud
         // environments (and some customer environments), there is a third party security scanning tool that will report
         // vulnerabilities in the JDK by printing a path, but does not display symlinks. This means it's hard to tell
