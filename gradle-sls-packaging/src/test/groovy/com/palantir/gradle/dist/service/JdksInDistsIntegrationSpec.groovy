@@ -73,7 +73,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
 
         then:
         def rootDir = extractDist()
-        def jdkDir = new File(rootDir, "service/myService-1.0.0-jdks/jdk17")
+        def jdkDir = new File(rootDir, "service/myService-jdks/jdk17")
         jdkDir.exists()
 
         def releaseFileText = new File(jdkDir, "release").text
@@ -81,8 +81,8 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         releaseFileText.contains 'its a jdk trust me'
 
         def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
-        launcherStatic.contains 'javaHome: "service/myService-1.0.0-jdks/jdk17"'
-        launcherStatic.contains '  JAVA_17_HOME: "service/myService-1.0.0-jdks/jdk17"'
+        launcherStatic.contains 'javaHome: "service/myService-jdks/jdk17"'
+        launcherStatic.contains '  JAVA_17_HOME: "service/myService-jdks/jdk17"'
     }
 
     def 'multiple jdks can exist in the dist'() {
@@ -103,17 +103,17 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         def rootDir = extractDist()
 
         def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
-        launcherStatic.contains 'javaHome: "service/myService-1.0.0-jdks/jdk17"'
+        launcherStatic.contains 'javaHome: "service/myService-jdks/jdk17"'
 
         for (version in [11, 13, 17]) {
-            def jdkDir = new File(rootDir, "service/myService-1.0.0-jdks/jdk" + version)
+            def jdkDir = new File(rootDir, "service/myService-jdks/jdk" + version)
             assert jdkDir.exists()
 
             def releaseFileText = new File(jdkDir, "release").text
 
             assert releaseFileText.contains('its a jdk trust me')
 
-            def envVarLine = "  JAVA_${version}_HOME: \"service/myService-1.0.0-jdks/jdk${version}\""
+            def envVarLine = "  JAVA_${version}_HOME: \"service/myService-jdks/jdk${version}\""
             assert launcherStatic.contains(envVarLine)
         }
     }
@@ -146,7 +146,7 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
 
         // A way of fixing this tests seems to open up the possibility of making extra unnecessary JDK repos - ensure
         // this does not happen.
-        !new File(rootDir, "service/myService-1.0.0-jdks/jdk11").exists()
+        !new File(rootDir, "service/myService-jdks/jdk11").exists()
     }
 
     def 'even a user clearing env does not get rid of JAVA_XX_HOME env vars'() {
@@ -169,8 +169,8 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
 
         def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
 
-        launcherStatic.contains 'JAVA_11_HOME: "service/myService-1.0.0-jdks/jdk11"'
-        launcherStatic.contains 'JAVA_17_HOME: "service/myService-1.0.0-jdks/jdk17"'
+        launcherStatic.contains 'JAVA_11_HOME: "service/myService-jdks/jdk11"'
+        launcherStatic.contains 'JAVA_17_HOME: "service/myService-jdks/jdk17"'
     }
 
     private File extractDist() {
