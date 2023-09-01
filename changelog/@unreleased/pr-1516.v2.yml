@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Remove version from JDK path when JDKs are included in dists.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1516

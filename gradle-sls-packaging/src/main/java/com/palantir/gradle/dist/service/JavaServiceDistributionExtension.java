@@ -265,7 +265,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         return new GcProfile.Throughput();
     }
 
-    final String jdkPathInDist(JavaVersion javaVersionValue) {
+    public final String jdkPathInDist(JavaVersion javaVersionValue) {
         // We put the JDK in a directory that contains the name and version of service. This is because in our cloud
         // environments (and some customer environments), there is a third party security scanning tool that will report
         // vulnerabilities in the JDK by printing a path, but does not display symlinks. This means it's hard to tell
@@ -273,11 +273,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         // and you end up with a report like so:
         //      Path: /opt/palantir/services/.24710105/service/jdk17
         // rather than more useful:
-        //      Path: /opt/palantir/services/.24710105/service/multipass-2.1.3-jdks/jdk17
+        //      Path: /opt/palantir/services/.24710105/service/multipass-jdks/jdk17
         // which is implemented below.
 
         return String.format(
-                "service/%s-%s-jdks/jdk%s",
-                getDistributionServiceName().get(), project.getVersion(), javaVersionValue.getMajorVersion());
+                "service/%s-jdks/jdk%s", getDistributionServiceName().get(), javaVersionValue.getMajorVersion());
     }
 }
