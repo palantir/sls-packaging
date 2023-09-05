@@ -227,8 +227,9 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getBundledJdks()
                             .set(distributionExtension
                                     .getJdks()
-                                    .map(javaVersionObjectMap ->
-                                            javaVersionObjectMap.containsKey(distributionExtension.getJavaVersion())));
+                                    .map(javaVersionObjectMap -> javaVersionObjectMap.containsKey(distributionExtension
+                                            .getJavaVersion()
+                                            .get())));
                     task.getEnv().set(userConfiguredEnvWithJdkEnvVars(distributionExtension));
                 });
 
