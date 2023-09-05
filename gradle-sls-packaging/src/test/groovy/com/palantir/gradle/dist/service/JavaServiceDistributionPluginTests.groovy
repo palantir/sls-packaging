@@ -378,6 +378,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
+                javaVersion 11
                 javaHome 'foo'
                 args 'myArg1', 'myArg2'
                 checkArgs 'myCheckArg1', 'myCheckArg2'
@@ -391,59 +392,147 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def expectedStaticConfig = LaunchConfig.LaunchConfigInfo.builder()
-            .mainClass("test.Test")
-            .serviceName("service-name")
-            .javaHome("foo")
-            .args(["myArg1", "myArg2"])
-            .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
-            .jvmOpts([
-                '-XX:+CrashOnOutOfMemoryError',
-                '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
-                '-Dsun.net.inetaddr.ttl=20',
-                '-XX:+UnlockDiagnosticVMOptions',
-                '-XX:+IgnoreUnrecognizedVMOptions',
-                '-XX:UseAVX=2',
-                '-XX:NativeMemoryTracking=summary',
-                '-XX:FlightRecorderOptions=stackdepth=256',
-                '-XX:+UseParallelGC',
-                '-Xmx4M',
-                '-Djavax.net.ssl.trustStore=truststore.jks'])
-            .env(LaunchConfig.defaultEnvironment + [
-                "key1": "val1",
-                "key2": "val2"])
-            .dirs(["var/data/tmp"])
-            .build()
+                .mainClass("test.Test")
+                .serviceName("service-name")
+                .javaHome("foo")
+                .args(["myArg1", "myArg2"])
+                .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:+UnlockDiagnosticVMOptions',
+                        '-XX:+IgnoreUnrecognizedVMOptions',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-XX:UseAVX=2',
+                        '-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord',
+                        '-XX:-UseBiasedLocking',
+                        '-XX:+IgnoreUnrecognizedVMOptions',
+                        '-XX:+UseContainerCpuShares',
+                        '-XX:+UseParallelGC',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .env(LaunchConfig.defaultEnvironment + [
+                        "key1": "val1",
+                        "key2": "val2"])
+                .dirs(["var/data/tmp"])
+                .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
 
         def expectedCheckConfig = LaunchConfig.LaunchConfigInfo.builder()
-            .mainClass(actualStaticConfig.mainClass())
-            .serviceName(actualStaticConfig.serviceName())
-            .javaHome(actualStaticConfig.javaHome())
-            .args(["myCheckArg1", "myCheckArg2"])
-            .classpath(actualStaticConfig.classpath())
-            .jvmOpts([
-                '-XX:+CrashOnOutOfMemoryError',
-                '-Djava.io.tmpdir=var/data/tmp',
-                '-XX:ErrorFile=var/log/hs_err_pid%p.log',
-                '-XX:HeapDumpPath=var/log',
-                '-Dsun.net.inetaddr.ttl=20',
-                '-XX:+UnlockDiagnosticVMOptions',
-                '-XX:+IgnoreUnrecognizedVMOptions',
-                '-XX:UseAVX=2',
-                '-XX:NativeMemoryTracking=summary',
-                '-XX:FlightRecorderOptions=stackdepth=256',
-                '-Xmx4M',
-                '-Djavax.net.ssl.trustStore=truststore.jks'])
-            .env(LaunchConfig.defaultEnvironment)
-            .dirs(actualStaticConfig.dirs())
-            .build()
+                .mainClass(actualStaticConfig.mainClass())
+                .serviceName(actualStaticConfig.serviceName())
+                .javaHome(actualStaticConfig.javaHome())
+                .args(["myCheckArg1", "myCheckArg2"])
+                .classpath(actualStaticConfig.classpath())
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:+UnlockDiagnosticVMOptions',
+                        '-XX:+IgnoreUnrecognizedVMOptions',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-XX:UseAVX=2',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .env(LaunchConfig.defaultEnvironment)
+                .dirs(actualStaticConfig.dirs())
+                .build()
 
         def actualCheckConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfig.LaunchConfigInfo)
         expectedCheckConfig == actualCheckConfig
+        expectedStaticConfig == actualStaticConfig
+    }
+
+
+    def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml with bundled jdk'() {
+        given:
+        createUntarBuildFile(buildFile)
+
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 11
+                jdks.put(JavaVersion.VERSION_11, fileTree('build/fake-jdk'))
+                javaHome 'foo'
+                args 'myArg1', 'myArg2'
+                checkArgs 'myCheckArg1', 'myCheckArg2'
+                env "key1": "val1",
+                    "key2": "val2"
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def expectedStaticConfig = LaunchConfig.LaunchConfigInfo.builder()
+                .mainClass("test.Test")
+                .serviceName("service-name")
+                .javaHome("foo")
+                .args(["myArg1", "myArg2"])
+                .classpath(['service/lib/internal-0.0.1.jar', 'service/lib/external.jar'])
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:+UnlockDiagnosticVMOptions',
+                        '-XX:+IgnoreUnrecognizedVMOptions',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord',
+                        '-XX:-UseBiasedLocking',
+                        '-XX:+IgnoreUnrecognizedVMOptions',
+                        '-XX:+UseContainerCpuShares',
+                        '-XX:+UseParallelGC',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .env(LaunchConfig.defaultEnvironment + [
+                        "key1": "val1",
+                        "key2": "val2",
+                        "JAVA_11_HOME": "service/service-name-jdks/jdk11"])
+                .dirs(["var/data/tmp"])
+                .build()
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+
+        def expectedCheckConfig = LaunchConfig.LaunchConfigInfo.builder()
+                .mainClass(actualStaticConfig.mainClass())
+                .serviceName(actualStaticConfig.serviceName())
+                .javaHome(actualStaticConfig.javaHome())
+                .args(["myCheckArg1", "myCheckArg2"])
+                .classpath(actualStaticConfig.classpath())
+                .jvmOpts([
+                        '-XX:+CrashOnOutOfMemoryError',
+                        '-Djava.io.tmpdir=var/data/tmp',
+                        '-XX:ErrorFile=var/log/hs_err_pid%p.log',
+                        '-XX:HeapDumpPath=var/log',
+                        '-Dsun.net.inetaddr.ttl=20',
+                        '-XX:+UnlockDiagnosticVMOptions',
+                        '-XX:+IgnoreUnrecognizedVMOptions',
+                        '-XX:NativeMemoryTracking=summary',
+                        '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-Xmx4M',
+                        '-Djavax.net.ssl.trustStore=truststore.jks'])
+                .env(LaunchConfig.defaultEnvironment)
+                .dirs(actualStaticConfig.dirs())
+                .build()
+
+        def actualCheckConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfig.LaunchConfigInfo)
+        expectedCheckConfig == actualCheckConfig
+        expectedStaticConfig == actualStaticConfig
     }
 
     def 'produce distribution with java 8 gc logging'() {
@@ -474,7 +563,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-Dsun.net.inetaddr.ttl=20',
                 '-XX:+UnlockDiagnosticVMOptions',
                 '-XX:+IgnoreUnrecognizedVMOptions',
-                '-XX:UseAVX=2',
                 '-XX:NativeMemoryTracking=summary',
                 '-XX:FlightRecorderOptions=stackdepth=256',
                 "-XX:+PrintGCDateStamps",
