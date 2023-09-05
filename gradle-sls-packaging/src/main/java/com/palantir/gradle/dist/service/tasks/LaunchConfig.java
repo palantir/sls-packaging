@@ -154,15 +154,7 @@ public final class LaunchConfig {
 
     static void action(Params params) {
         JavaVersion javaVersion = params.getJavaVersion().get();
-
-        // When a specific jdk is provided, we can assume a modern versions including the
-        // bugfix for JDK-8292158. Only Java versions 11-19 were impacted by this bug, so
-        // we don't need to worry about newer releases.
-        List<String> avxOptions = !params.getBundledJdks().get()
-                        && javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
-                        && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
-                ? disableAvx512
-                : ImmutableList.of();
+        List<String> avxOptions = getAvxOptions(params);
 
         writeConfig(
                 LaunchConfigInfo.builder()
@@ -227,6 +219,18 @@ public final class LaunchConfig {
                         .env(defaultEnvironment)
                         .build(),
                 params.getCheckLauncher().get().getAsFile());
+    }
+
+    // When a specific jdk is provided, we can assume a modern versions including the
+    // bugfix for JDK-8292158. Only Java versions 11-19 were impacted by this bug, so
+    // we don't need to worry about newer releases.
+    private static List<String> getAvxOptions(Params params) {
+        JavaVersion javaVersion = params.getJavaVersion().get();
+        return !params.getBundledJdks().get()
+                        && javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
+                        && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
+                ? disableAvx512
+                : ImmutableList.of();
     }
 
     private static void writeConfig(LaunchConfigInfo config, File scriptFile) {
