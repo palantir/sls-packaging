@@ -224,7 +224,11 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getAddJava8GcLogging().set(distributionExtension.getAddJava8GcLogging());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getJavaVersion().set(distributionExtension.getJavaVersion());
-                    task.getJdks().set(distributionExtension.getJdks());
+                    task.getBundledJdks()
+                            .set(distributionExtension
+                                    .getJdks()
+                                    .map(javaVersionObjectMap ->
+                                            javaVersionObjectMap.containsKey(distributionExtension.getJavaVersion())));
                     task.getEnv().set(userConfiguredEnvWithJdkEnvVars(distributionExtension));
                 });
 

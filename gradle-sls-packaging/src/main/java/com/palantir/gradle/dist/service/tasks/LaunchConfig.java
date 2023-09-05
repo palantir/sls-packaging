@@ -116,7 +116,7 @@ public final class LaunchConfig {
         Property<JavaVersion> getJavaVersion();
 
         @Input
-        MapProperty<JavaVersion, Object> getJdks();
+        Property<Boolean> getBundledJdks();
 
         @Input
         ListProperty<String> getArgs();
@@ -199,7 +199,7 @@ public final class LaunchConfig {
                                 // When a specific jdk is provided, we can assume a modern versions including the
                                 // bugfix for JDK-8292158. Only Java versions 11-19 were impacted by this bug, so
                                 // we don't need to worry about newer releases.
-                                !params.getJdks().getting(javaVersion).isPresent()
+                                !params.getBundledJdks().get()
                                                 && javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
                                                 && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
                                         ? disableAvx512
