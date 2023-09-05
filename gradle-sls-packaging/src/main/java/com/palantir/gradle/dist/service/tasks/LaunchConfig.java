@@ -78,16 +78,17 @@ public final class LaunchConfig {
             // AWS-managed systems that modify DNS records on failover.
             "-Dsun.net.inetaddr.ttl=20",
             "-XX:+UnlockDiagnosticVMOptions",
-            // Disable AVX-512 intrinsics due to AES/CTR corruption bug in https://bugs.openjdk.org/browse/JDK-8292158
             "-XX:+IgnoreUnrecognizedVMOptions",
-            // UseAVX is not recognized on some platforms (arm), so we must include 'IgnoreUnrecognizedVMOptions'.
-            // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
-            "-XX:UseAVX=2",
             "-XX:NativeMemoryTracking=summary",
             // Increase default JFR stack depth beyond the default (conservative) 64 frames.
             // This can be overridden by user-provided options.
             // See sls-packaging#1230
             "-XX:FlightRecorderOptions=stackdepth=256");
+
+    // Disable AVX-512 intrinsics due to AES/CTR corruption bug in https://bugs.openjdk.org/browse/JDK-8292158
+    // UseAVX is not recognized on some platforms (arm), so we must include 'IgnoreUnrecognizedVMOptions' above.
+    // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
+    private static final ImmutableList<String> disableAvx512 = ImmutableList.of("-XX:UseAVX=2");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
@@ -113,6 +114,9 @@ public final class LaunchConfig {
 
         @Input
         Property<JavaVersion> getJavaVersion();
+
+        @Input
+        MapProperty<JavaVersion, Object> getJdks();
 
         @Input
         ListProperty<String> getArgs();
@@ -190,6 +194,15 @@ public final class LaunchConfig {
                                 javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
                                                 && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
                                         ? forceUseContainerCpuShares
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                // When a specific jdk is provided, we can assume a modern versions including the
+                                // bugfix for JDK-8292158. Only Java versions 11-19 were impacted by this bug, so
+                                // we don't need to worry about newer releases.
+                                !params.getJdks().getting(javaVersion).isPresent()
+                                                && javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
+                                                && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
+                                        ? disableAvx512
                                         : ImmutableList.of())
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
                         .addAllJvmOpts(params.getGcJvmOptions().get())
