@@ -491,7 +491,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:+IgnoreUnrecognizedVMOptions',
                         '-XX:NativeMemoryTracking=summary',
                         '-XX:FlightRecorderOptions=stackdepth=256',
-                        '-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord',
                         '-XX:-UseBiasedLocking',
                         '-XX:+IgnoreUnrecognizedVMOptions',
                         '-XX:+UseContainerCpuShares',
