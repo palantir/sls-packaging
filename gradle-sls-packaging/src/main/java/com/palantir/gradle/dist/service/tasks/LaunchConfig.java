@@ -168,9 +168,10 @@ public final class LaunchConfig {
                         .addAllJvmOpts(avxOptions)
                         .addAllJvmOpts(params.getAddJava8GcLogging().get() ? java8gcLoggingOptions : ImmutableList.of())
                         // Java 11.0.16 introduced a potential memory leak issues when using the C2
-                        // compiler
+                        // compiler, resolved in 11.0.16.1
                         .addAllJvmOpts(
                                 javaVersion.compareTo(JavaVersion.toVersion("11")) == 0
+                                                && !params.getBundledJdks().get()
                                         ? jdk11DisableC2Compile
                                         : ImmutableList.of())
                         .addAllJvmOpts(
