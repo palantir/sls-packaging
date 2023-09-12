@@ -49,6 +49,16 @@ public interface GcProfile extends Serializable {
 
         @Override
         public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            // JDK-21+ uses generational ZGC as the response-time optimized garbage collector.
+            if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
+                return ImmutableList.of(
+                        "-XX:+UseZGC",
+                        // https://openjdk.org/jeps/439
+                        "-XX:+ZGenerational",
+                        // "forces concurrent cycle instead of Full GC on System.gc()"
+                        "-XX:+ExplicitGCInvokesConcurrent");
+            }
+
             // The CMS garbage collector was removed in Java 14: https://openjdk.java.net/jeps/363. Users are free to
             // use it up until this release.
             if (javaVersion.compareTo(JavaVersion.toVersion("14")) >= 0) {

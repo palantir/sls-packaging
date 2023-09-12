@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: JDK-21+ response-time gc profile uses generational zgc
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1520

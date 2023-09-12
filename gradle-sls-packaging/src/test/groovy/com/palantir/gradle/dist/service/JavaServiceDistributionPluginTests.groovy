@@ -609,6 +609,29 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         ])
     }
 
+    def 'Uses generational zgc for jdk-21'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 21
+                gc 'response-time'
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts().containsAll([
+                "-XX:+UseZGC",
+                "-XX:+ZGenerational",
+                "-XX:+ExplicitGCInvokesConcurrent",
+        ])
+    }
 
     def 'produce distribution bundle that populates check.sh'() {
         given:
