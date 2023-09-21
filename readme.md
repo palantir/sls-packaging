@@ -239,6 +239,12 @@ The `go-java-launcher` and `init.sh` launchers additionally append the list of J
 options typically override earlier options (although this behavior is undefined and may be JVM-specific); this allows
 users to override the hard-coded options.
 
+#### JDK Inclusion
+
+The `distribution` extension provides a configuration point to add JDKs; internally, `gradle-sls-docker` discovers the  appropriate JDKs used in the service's associated container image then configures these JDKs to be included in the dist. There are more details in `gradle-sls-docker` readme.
+
+For each included JDK major version `X`, the `launcher-static.yml` run by [`go-java-launcher`](https://github.com/palantir/go-java-launcher) has the corresponding `JAVA_X_HOME` environment variable set to be a relative path to the JDK's location in the dist. The `javaHome` option is also set to the relative path in the same manner. There can only be one version of each JDK major version included in the dist.
+
 #### Runtime environment variables
 
 Environment variables can be configured through the `env` blocks of `launcher-static.yml` and `launcher-custom.yml` as
