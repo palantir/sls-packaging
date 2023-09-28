@@ -491,6 +491,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:+IgnoreUnrecognizedVMOptions',
                         '-XX:NativeMemoryTracking=summary',
                         '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-XX:UseAVX=2',
                         '-XX:-UseBiasedLocking',
                         '-XX:+IgnoreUnrecognizedVMOptions',
                         '-XX:+UseContainerCpuShares',
@@ -522,6 +523,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:+IgnoreUnrecognizedVMOptions',
                         '-XX:NativeMemoryTracking=summary',
                         '-XX:FlightRecorderOptions=stackdepth=256',
+                        '-XX:UseAVX=2',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
                 .env(LaunchConfig.defaultEnvironment)
@@ -564,6 +566,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 '-XX:+IgnoreUnrecognizedVMOptions',
                 '-XX:NativeMemoryTracking=summary',
                 '-XX:FlightRecorderOptions=stackdepth=256',
+                '-XX:UseAVX=2',
                 "-XX:+PrintGCDateStamps",
                 "-XX:+PrintGCDetails",
                 "-XX:-TraceClassUnloading",

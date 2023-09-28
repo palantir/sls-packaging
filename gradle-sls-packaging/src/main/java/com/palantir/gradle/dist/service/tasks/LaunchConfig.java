@@ -225,13 +225,13 @@ public final class LaunchConfig {
     // When a specific jdk is provided, we can assume a modern versions including the
     // bugfix for JDK-8292158. Only Java versions 11-19 were impacted by this bug, so
     // we don't need to worry about newer releases.
-    private static List<String> getAvxOptions(Params params) {
-        JavaVersion javaVersion = params.getJavaVersion().get();
-        return !params.getBundledJdks().get()
-                        && javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
-                        && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
-                ? disableAvx512
-                : ImmutableList.of();
+    // Update for Java 20-21:
+    // https://bugs.openjdk.org/browse/JDK-8317121
+    // https://mail.openjdk.org/pipermail/hotspot-compiler-dev/2023-September/068447.html
+    // AVX-512 is largely unreliable, so we're going to opt out entirely for the time
+    // being.
+    private static List<String> getAvxOptions(Params _params) {
+        return disableAvx512;
     }
 
     private static void writeConfig(LaunchConfigInfo config, File scriptFile) {
