@@ -636,6 +636,25 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         ])
     }
 
+    def 'jdk-21 uses default AVX level'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 21
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts().stream().noneMatch { it.contains("UseAVX") }
+    }
+
     def 'produce distribution bundle that populates check.sh'() {
         given:
         createUntarBuildFile(buildFile)
