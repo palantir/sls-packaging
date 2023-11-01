@@ -26,6 +26,7 @@ import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -230,7 +231,15 @@ public final class LaunchConfig {
     // https://mail.openjdk.org/pipermail/hotspot-compiler-dev/2023-September/068447.html
     // AVX-512 is largely unreliable, so we're going to opt out entirely for the time
     // being.
-    private static List<String> getAvxOptions(Params _params) {
+    // Update for the October 17, 2023 CPU hotfixes: The above issue has been resolved,
+    // we will allow avx-512 instructions initially only for jdk21+ to build confidence,
+    // and align rollout with the new jdk. Assuming this goes well, we may allow jdk17
+    // to use avx-512 instructions in a future sls-packaging release.
+    private static List<String> getAvxOptions(Params params) {
+        JavaVersion javaVersion = params.getJavaVersion().get();
+        if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
+            return Collections.emptyList();
+        }
         return disableAvx512;
     }
 
