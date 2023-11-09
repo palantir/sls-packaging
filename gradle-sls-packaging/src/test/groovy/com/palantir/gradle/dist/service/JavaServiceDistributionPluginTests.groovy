@@ -612,6 +612,26 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         ])
     }
 
+    def 'does not set UseContainerCpuShares when the opt-out flag is used'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 17
+                disableContainerCpuSharesWorkaround()
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        !actualStaticConfig.jvmOpts().contains('-XX:+UseContainerCpuShares')
+    }
+
     def 'Uses generational zgc for jdk-21'() {
         createUntarBuildFile(buildFile)
         buildFile << """

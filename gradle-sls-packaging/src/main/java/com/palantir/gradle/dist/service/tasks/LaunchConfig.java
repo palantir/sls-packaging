@@ -68,7 +68,7 @@ public final class LaunchConfig {
     // UseContainerCpuShares was added in a patch release, thus IgnoreUnrecognizedVMOptions is required to avoid
     // breaking distributions running with older JDKs.
     private static final ImmutableList<String> forceUseContainerCpuShares =
-            ImmutableList.of("-XX:+IgnoreUnrecognizedVMOptions", "-XX:+UseContainerCpuShares");
+            ImmutableList.of("-XX:+UseContainerCpuShares");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -146,6 +146,9 @@ public final class LaunchConfig {
         @InputFiles
         ConfigurableFileCollection getJavaAgents();
 
+        @Input
+        Property<Boolean> getDisableContainerCpuSharesWorkaround();
+
         @OutputFile
         RegularFileProperty getStaticLauncher();
 
@@ -191,14 +194,7 @@ public final class LaunchConfig {
                                 javaVersion.compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
                                         : ImmutableList.of())
-                        // https://bugs.openjdk.org/browse/JDK-8281181 stopped respecting cpu.shares for
-                        // processor count. UseContainerCpuShares can be enabled for the time being, however it
-                        // is deprecated in jdk19 and obsoleted in jdk20: https://bugs.openjdk.org/browse/JDK-8282684
-                        .addAllJvmOpts(
-                                javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
-                                                && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
-                                        ? forceUseContainerCpuShares
-                                        : ImmutableList.of())
+                        .addAllJvmOpts(getContainerCpuSharesOptions(params))
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
                         .addAllJvmOpts(params.getGcJvmOptions().get())
                         .addAllJvmOpts(params.getDefaultJvmOpts().get())
@@ -221,6 +217,21 @@ public final class LaunchConfig {
                         .env(defaultEnvironment)
                         .build(),
                 params.getCheckLauncher().get().getAsFile());
+    }
+
+    // https://bugs.openjdk.org/browse/JDK-8281181 stopped respecting cpu.shares for
+    // processor count. UseContainerCpuShares can be enabled for the time being, however it
+    // is deprecated in jdk19 and obsoleted in jdk20: https://bugs.openjdk.org/browse/JDK-8282684.
+    // This option is currently being phased out in favor of CPU shares detection within
+    // services while allowing applications to detect the host core count.
+    private static List<String> getContainerCpuSharesOptions(Params params) {
+        JavaVersion javaVersion = params.getJavaVersion().get();
+        if (javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
+                && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
+                && !params.getDisableContainerCpuSharesWorkaround().get()) {
+            return forceUseContainerCpuShares;
+        }
+        return ImmutableList.of();
     }
 
     // When a specific jdk is provided, we can assume a modern versions including the

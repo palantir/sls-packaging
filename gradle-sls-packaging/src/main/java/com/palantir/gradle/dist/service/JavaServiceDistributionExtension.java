@@ -51,6 +51,12 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final MapProperty<String, String> env;
     private final MapProperty<JavaVersion, Object> jdks;
 
+    /**
+     * This option opts out of the {@code -XX:+UseContainerCpuShares} option introduced when the jdk defaults changed
+     * in a patch release.
+     */
+    private final Property<Boolean> disableContainerCpuSharesWorkaround;
+
     private final ObjectFactory objectFactory;
 
     // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before migrating to Gradle 8.
@@ -98,6 +104,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
         env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
+        disableContainerCpuSharesWorkaround =
+                objectFactory.property(Boolean.class).convention(Boolean.FALSE);
     }
 
     public final Provider<JavaVersion> getJavaVersion() {
@@ -278,5 +286,17 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
         return String.format(
                 "service/%s-jdks/jdk%s", getDistributionServiceName().get(), javaVersionValue.getMajorVersion());
+    }
+
+    public final Property<Boolean> getDisableContainerCpuSharesWorkaround() {
+        return disableContainerCpuSharesWorkaround;
+    }
+
+    public final void setDisableContainerCpuSharesWorkaround(boolean value) {
+        disableContainerCpuSharesWorkaround.set(value);
+    }
+
+    public final void disableContainerCpuSharesWorkaround() {
+        setDisableContainerCpuSharesWorkaround(true);
     }
 }

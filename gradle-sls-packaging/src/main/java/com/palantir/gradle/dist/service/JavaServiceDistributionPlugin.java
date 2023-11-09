@@ -231,6 +231,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                             .getJavaVersion()
                                             .get())));
                     task.getEnv().set(userConfiguredEnvWithJdkEnvVars(distributionExtension));
+                    task.getDisableContainerCpuSharesWorkaround()
+                            .set(distributionExtension.getDisableContainerCpuSharesWorkaround());
                 });
 
         TaskProvider<CreateInitScriptTask> initScript = project.getTasks()
