@@ -64,10 +64,6 @@ public final class LaunchConfig {
     // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
     private static final ImmutableList<String> jdk11DisableC2Compile =
             ImmutableList.of("-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord");
-    // UseContainerCpuShares was added in a patch release, thus IgnoreUnrecognizedVMOptions is required to avoid
-    // breaking distributions running with older JDKs.
-    private static final ImmutableList<String> forceUseContainerCpuShares =
-            ImmutableList.of("-XX:+IgnoreUnrecognizedVMOptions", "-XX:+UseContainerCpuShares");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -189,14 +185,6 @@ public final class LaunchConfig {
                         .addAllJvmOpts(
                                 javaVersion.compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
-                                        : ImmutableList.of())
-                        // https://bugs.openjdk.org/browse/JDK-8281181 stopped respecting cpu.shares for
-                        // processor count. UseContainerCpuShares can be enabled for the time being, however it
-                        // is deprecated in jdk19 and obsoleted in jdk20: https://bugs.openjdk.org/browse/JDK-8282684
-                        .addAllJvmOpts(
-                                javaVersion.compareTo(JavaVersion.toVersion("11")) >= 0
-                                                && javaVersion.compareTo(JavaVersion.toVersion("19")) <= 0
-                                        ? forceUseContainerCpuShares
                                         : ImmutableList.of())
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
                         .addAllJvmOpts(params.getGcJvmOptions().get())

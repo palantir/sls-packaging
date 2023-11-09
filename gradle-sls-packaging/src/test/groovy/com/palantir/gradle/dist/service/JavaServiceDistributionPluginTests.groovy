@@ -410,8 +410,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:UseAVX=2',
                         '-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord',
                         '-XX:-UseBiasedLocking',
-                        '-XX:+IgnoreUnrecognizedVMOptions',
-                        '-XX:+UseContainerCpuShares',
                         '-XX:+UseParallelGC',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -493,8 +491,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:FlightRecorderOptions=stackdepth=256',
                         '-XX:UseAVX=2',
                         '-XX:-UseBiasedLocking',
-                        '-XX:+IgnoreUnrecognizedVMOptions',
-                        '-XX:+UseContainerCpuShares',
                         '-XX:+UseParallelGC',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
@@ -608,7 +604,6 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-XX:+UseShenandoahGC",
                 "-XX:+ExplicitGCInvokesConcurrent",
                 "-XX:+ClassUnloadingWithConcurrentMark",
-                "-XX:+UseContainerCpuShares",
         ])
     }
 
