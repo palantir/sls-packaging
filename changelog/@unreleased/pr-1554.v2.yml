@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Set `enableManifestClasspath = true` by default for Java services.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1554
