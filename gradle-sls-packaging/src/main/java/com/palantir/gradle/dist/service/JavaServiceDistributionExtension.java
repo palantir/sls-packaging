@@ -84,7 +84,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         }));
 
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
-        enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
+        enableManifestClasspath = objectFactory.property(Boolean.class).value(true);
 
         gc = objectFactory
                 .property(GcProfile.class)
