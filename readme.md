@@ -380,12 +380,13 @@ recommendedProductDependencies {
         minimumVersion = rootProject.version
         maximumVersion = "${rootProject.version.tokenize('.')[0].toInteger()}.x.x"
         recommendedVersion = rootProject.version
-        optional = false
     }
 }
 ```
 
 The recommended product dependencies will be serialized into the jar manifest of the jar that the project produces. The SLS distribution and asset plugins will inspect the manifest of all jars in the server or asset and extract the recommended product dependencies.
+
+Marking a product dependency as optional in recommendedProductDependencies [is not currently supported](https://github.com/palantir/sls-packaging/issues/1208).
 
 ## License
 
