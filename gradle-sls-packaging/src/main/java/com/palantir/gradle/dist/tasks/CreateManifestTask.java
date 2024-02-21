@@ -21,21 +21,26 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
-import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.ObjectMappers;
-import com.palantir.gradle.dist.ProductDependency;
-import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
-import com.palantir.gradle.dist.ProductDependencyLockFile;
-import com.palantir.gradle.dist.ProductId;
-import com.palantir.gradle.dist.ProductType;
-import com.palantir.gradle.dist.SchemaMigration;
-import com.palantir.gradle.dist.SchemaVersionLockFile;
-import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.gradle.dist.*;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
+import com.palantir.gradle.failurereports.exceptions.ExceptionWithSuggestion;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
+import org.gradle.StartParameter;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.invocation.Gradle;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.SetProperty;
+import org.gradle.api.specs.Spec;
+import org.gradle.api.tasks.*;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -45,23 +50,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.gradle.StartParameter;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.invocation.Gradle;
-import org.gradle.api.provider.MapProperty;
-import org.gradle.api.provider.Property;
-import org.gradle.api.provider.SetProperty;
-import org.gradle.api.specs.Spec;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskProvider;
-import org.gradle.language.base.plugins.LifecycleBasePlugin;
 
 public abstract class CreateManifestTask extends DefaultTask {
     public static final String WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME = "writeProductDependenciesLocks";
@@ -178,9 +166,9 @@ public abstract class CreateManifestTask extends DefaultTask {
             lockfile.delete();
             getLogger().lifecycle("Deleted {}", relativePath);
         } else {
-            throw new GradleException(String.format(
-                    "%s must not exist, please run `./gradlew %s --write-locks` to delete it",
-                    relativePath, getName()));
+            throw new ExceptionWithSuggestion(
+                    String.format("%s must not exist, please run `%s` to delete it", relativePath, getSuggestedFix()),
+                    getSuggestedFix());
         }
     }
 
@@ -218,17 +206,24 @@ public abstract class CreateManifestTask extends DefaultTask {
             }
         } else {
             if (!lockfileExists) {
-                throw new GradleException(String.format(
-                        "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
-                        relativePath, getName()));
+                throw new ExceptionWithSuggestion(
+                        String.format(
+                                "%s does not exist, please run `%s` and commit the resultant file",
+                                relativePath, getSuggestedFix()),
+                        getSuggestedFix());
             } else {
                 String fromDisk = Files.readString(lockfile.toPath());
-                Preconditions.checkState(
-                        fromDisk.equals(upToDateContents),
-                        "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
-                        relativePath,
-                        getName(),
-                        diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
+                if (!fromDisk.equals(upToDateContents)) {
+                    throw new ExceptionWithSuggestion(
+                            String.format(
+                                    "%s is out of date, please run `%s` to update it%s",
+                                    relativePath,
+                                    getSuggestedFix(),
+                                    diff(lockfile, upToDateContents)
+                                            .map(s -> ":\n" + s)
+                                            .orElse("")),
+                            getSuggestedFix());
+                }
             }
         }
     }
@@ -343,5 +338,9 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
 
         return createManifest;
+    }
+
+    private String getSuggestedFix() {
+        return String.format("./gradlew %s --write-locks", getName());
     }
 }
