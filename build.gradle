@@ -34,7 +34,7 @@ allprojects {
     group 'com.palantir.sls-packaging'
 
     repositories {
-        mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() }
+        mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
     }
 }
 
