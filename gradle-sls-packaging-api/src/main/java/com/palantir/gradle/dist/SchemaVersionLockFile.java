@@ -29,7 +29,7 @@ import org.immutables.value.Value;
 @JsonSerialize(as = ImmutableSchemaVersionLockFile.class)
 public interface SchemaVersionLockFile {
 
-    String COMMENT = "Run ./gradlew --write-locks to regenerate this file";
+    String COMMENT = "Run ./gradlew writeSchemaVersionLocks to regenerate this file";
     String LOCK_FILE = "schema-versions.lock";
     int VERSION = 1;
 

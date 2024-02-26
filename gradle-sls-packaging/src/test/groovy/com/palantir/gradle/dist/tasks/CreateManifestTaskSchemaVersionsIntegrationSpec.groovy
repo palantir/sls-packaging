@@ -53,7 +53,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         file('schema-versions.lock').text = """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 52
@@ -89,7 +89,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         file('schema-versions.lock').text = """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 53
@@ -115,7 +115,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         file('schema-versions.lock').text = """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 53
@@ -147,7 +147,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         buildResult.wasExecuted(':createManifest')
         file('schema-versions.lock').text == """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 53

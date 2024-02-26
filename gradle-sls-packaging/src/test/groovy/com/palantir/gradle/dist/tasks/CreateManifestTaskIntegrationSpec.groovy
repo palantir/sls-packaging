@@ -46,7 +46,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         file('product-dependencies.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group:name2 (2.0.0, 2.x.x)
         """.stripIndent()
 
@@ -78,7 +78,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         file('product-dependencies.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
         """.stripIndent()
 
@@ -100,7 +100,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         file('product-dependencies.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
         """.stripIndent()
 
@@ -159,7 +159,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent())
 
         file('product-dependencies.lock', barDir).text = """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.group:foo-service (\$projectVersion, 1.x.x)
         """.stripIndent()
 
@@ -194,7 +194,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         then:
         buildResult.wasExecuted(':createManifest')
         file('product-dependencies.lock').text == """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
         """.stripIndent()
 
