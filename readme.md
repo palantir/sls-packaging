@@ -80,7 +80,7 @@ distribution {
 sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it. e.g.
 
 ```
-# Run ./gradlew --write-locks to regenerate this file
+# Run ./gradlew writeProductDependenciesLocks to regenerate this file
 com.palantir.auth:auth-service (1.2.0, 1.6.x)
 com.palantir.storage:storage-service (3.56.0, 3.x.x)
 com.palantir.email:email-service (1.200.3, 2.x.x) optional
@@ -142,7 +142,7 @@ Run **`./gradlew --write-locks`** or **`./gradlew writeSchemaVersionLocks`** to 
 
 ```
 ---
-comment: "Run ./gradlew --write-locks to regenerate this file"
+comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
 schemaMigrations:
 - type: "online"
   from: 100
