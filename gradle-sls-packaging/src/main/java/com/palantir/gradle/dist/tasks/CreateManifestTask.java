@@ -34,6 +34,7 @@ import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
+import com.palantir.gradle.failurereports.exceptions.ExceptionWithSuggestion;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -47,7 +48,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
@@ -178,9 +178,9 @@ public abstract class CreateManifestTask extends DefaultTask {
             lockfile.delete();
             getLogger().lifecycle("Deleted {}", relativePath);
         } else {
-            throw new GradleException(String.format(
-                    "%s must not exist, please run `./gradlew %s --write-locks` to delete it",
-                    relativePath, getName()));
+            throw new ExceptionWithSuggestion(
+                    String.format("%s must not exist, please run `%s` to delete it", relativePath, getSuggestedFix()),
+                    getSuggestedFix());
         }
     }
 
@@ -218,17 +218,24 @@ public abstract class CreateManifestTask extends DefaultTask {
             }
         } else {
             if (!lockfileExists) {
-                throw new GradleException(String.format(
-                        "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
-                        relativePath, getName()));
+                throw new ExceptionWithSuggestion(
+                        String.format(
+                                "%s does not exist, please run `%s` and commit the resultant file",
+                                relativePath, getSuggestedFix()),
+                        getSuggestedFix());
             } else {
                 String fromDisk = Files.readString(lockfile.toPath());
-                Preconditions.checkState(
-                        fromDisk.equals(upToDateContents),
-                        "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
-                        relativePath,
-                        getName(),
-                        diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
+                if (!fromDisk.equals(upToDateContents)) {
+                    throw new ExceptionWithSuggestion(
+                            String.format(
+                                    "%s is out of date, please run `%s` to update it%s",
+                                    relativePath,
+                                    getSuggestedFix(),
+                                    diff(lockfile, upToDateContents)
+                                            .map(s -> ":\n" + s)
+                                            .orElse("")),
+                            getSuggestedFix());
+                }
             }
         }
     }
@@ -343,5 +350,9 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
 
         return createManifest;
+    }
+
+    private String getSuggestedFix() {
+        return String.format("./gradlew %s --write-locks", getName());
     }
 }

@@ -10,6 +10,7 @@ org.immutables:value = 2.10.1
 org.junit.jupiter:* = 5.10.2
 org.junit.vintage:* = 5.10.2
 org.rauschig:jarchivelib = 1.2.0
+com.palantir.gradle.failure-reports:* = 1.2.0
 
 com.netflix.nebula:nebula-test = 10.0.0
 junit:junit = 4.13.2
