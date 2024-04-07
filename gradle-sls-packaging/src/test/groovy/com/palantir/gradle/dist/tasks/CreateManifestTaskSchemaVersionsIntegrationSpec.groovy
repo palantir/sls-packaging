@@ -65,7 +65,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         then:
         buildResult.getStandardError().contains(
-                "schema-versions.lock is out of date, please run `./gradlew createManifest --write-locks` to update it")
+                "schema-versions.lock is out of date, please run `./gradlew writeSchemaVersionLocks` to update it")
     }
 
     def 'fails if unexpected lockfile exists'() {

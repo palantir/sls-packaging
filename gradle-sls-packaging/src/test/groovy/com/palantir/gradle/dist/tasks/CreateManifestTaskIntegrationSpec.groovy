@@ -55,7 +55,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         buildResult.getStandardError().contains(
-                "product-dependencies.lock is out of date, please run `./gradlew createManifest --write-locks` to update it")
+                "product-dependencies.lock is out of date, please run `./gradlew writeProductDependenciesLocks` to update it")
     }
 
     def 'fails if unexpected lockfile exists'() {
