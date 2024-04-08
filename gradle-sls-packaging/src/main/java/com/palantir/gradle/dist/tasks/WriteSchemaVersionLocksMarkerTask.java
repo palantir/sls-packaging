@@ -21,12 +21,14 @@ import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
 public class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
+
+    public static final String NAME = "writeSchemaVersionLocks";
+
     @TaskAction
     public final void checkWriteLocksShouldBeRunning() {
         // Check that our task name matcher for writeSchemaVersionLocks is actually matching up the Gradle one;
         // if this task is running but we didn't actually write locks, error out.
-        if (!CreateManifestTask.shouldWriteLocks(
-                getProject(), CreateManifestTask.WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME)) {
+        if (!CreateManifestTask.shouldWriteLocks(getProject(), NAME)) {
             throw new GradleException("This `writeSchemaVersionLocks` marker task has been run, but the "
                     + "schema-versions.lock files did not actually get written out at configuration time. Either "
                     + "there is another task dependency on this task, which is not supported "
