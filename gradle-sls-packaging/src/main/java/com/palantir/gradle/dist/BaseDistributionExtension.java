@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -56,6 +57,7 @@ public class BaseDistributionExtension {
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
+    private final RegularFileProperty configurationYml;
     private final String projectName;
     private Configuration productDependenciesConfig;
 
@@ -75,6 +77,8 @@ public class BaseDistributionExtension {
 
         manifestExtensions =
                 project.getObjects().mapProperty(String.class, Object.class).empty();
+
+        configurationYml = project.getObjects().fileProperty().fileValue(project.file("deployment/configuration.yml"));
 
         projectName = project.getName();
     }
@@ -245,6 +249,10 @@ public class BaseDistributionExtension {
 
     public final void setManifestExtensions(Map<String, Object> extensions) {
         manifestExtensions.set(extensions);
+    }
+
+    public final RegularFileProperty getConfigurationYml() {
+        return configurationYml;
     }
 
     public final Configuration getProductDependenciesConfig() {

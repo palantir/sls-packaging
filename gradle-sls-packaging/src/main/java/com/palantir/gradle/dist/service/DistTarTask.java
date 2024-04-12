@@ -101,9 +101,18 @@ final class DistTarTask {
             });
 
             root.into("deployment", t -> {
+                // We exclude configuration.yml from the general "deployment" importer, as it is special cased and
+                // handled separately below.
+                t.exclude("configuration.yml");
                 t.from("deployment");
                 t.from(project.getLayout().getBuildDirectory().dir("deployment"));
                 t.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE);
+            });
+
+            root.into("deployment", t -> {
+                // Import configuration.yml from the where it is declared in the extension, allowing tasks to
+                // generate it and have dependent tasks (like this distTar) get the correct task deps.
+                t.from(distributionExtension.getConfigurationYml()).rename(_ignored -> "configuration.yml");
             });
         });
     }
