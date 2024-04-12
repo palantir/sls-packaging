@@ -30,7 +30,7 @@ class ProductDependencyLockFileTest extends Specification {
 
         then:
         ProductDependencyLockFile.asString(sample, [] as Set<ProductId>) == """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
         """.stripIndent()
@@ -44,7 +44,7 @@ class ProductDependencyLockFileTest extends Specification {
         )
         then:
         result == '''\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.product:foo ($projectVersion, 1.x.x)
         '''.stripIndent()
     }
@@ -52,7 +52,7 @@ class ProductDependencyLockFileTest extends Specification {
     def 'deserialize'() {
         when:
         List<ProductDependency> result = ProductDependencyLockFile.fromString("""\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x)
         com.palantir.product:foo (1.20.0, 1.x.x) optional
         """.stripIndent(), "0.0.0")

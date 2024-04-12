@@ -21,6 +21,7 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+    implementation 'com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions'
 
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'

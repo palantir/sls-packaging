@@ -53,7 +53,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         file('schema-versions.lock').text = """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 52
@@ -65,7 +65,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         then:
         buildResult.getStandardError().contains(
-                "schema-versions.lock is out of date, please run `./gradlew createManifest --write-locks` to update it")
+                "schema-versions.lock is out of date, please run `./gradlew writeSchemaVersionLocks` to update it")
     }
 
     def 'fails if unexpected lockfile exists'() {
@@ -89,7 +89,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         file('schema-versions.lock').text = """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 53
@@ -115,7 +115,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         file('schema-versions.lock').text = """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 53
@@ -147,7 +147,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         buildResult.wasExecuted(':createManifest')
         file('schema-versions.lock').text == """\
         ---
-        comment: "Run ./gradlew --write-locks to regenerate this file"
+        comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
         schemaMigrations:
         - type: "offline"
           from: 53

@@ -25,7 +25,7 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         buildFile << 'apply plugin: com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin'
 
         file("product-dependencies.lock").text = '''\
-            # Run ./gradlew --write-locks to regenerate this file
+            # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent()
         def mavenRepo = generateMavenRepo('com.palantir.product:test:1.0.0')
@@ -52,12 +52,12 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
 
     def "merges product dependency constraints from different projects"() {
         file("a/product-dependencies.lock").text = '''\
-            # Run ./gradlew --write-locks to regenerate this file
+            # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent()
 
         file("b/product-dependencies.lock").text = '''\
-            # Run ./gradlew --write-locks to regenerate this file
+            # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.2.0, 1.6.x)
         '''.stripIndent()
 

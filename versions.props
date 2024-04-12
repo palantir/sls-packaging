@@ -1,16 +1,17 @@
 com.fasterxml.jackson.*:* = 2.15.3
 com.fasterxml.jackson.core:jackson-databind = 2.15.3
-com.google.guava:guava = 33.0.0-jre
+com.google.guava:guava = 33.1.0-jre
 com.palantir.gradle.auto-parallelizable:* = 1.4.0
 com.palantir.gradle.consistentversions:gradle-consistent-versions = 1.27.0
 com.palantir.safe-logging:* = 3.7.0
 com.palantir.sls.versions:sls-versions = 1.5.0
 org.apache.commons:commons-lang3 = 3.14.0
-org.immutables:value = 2.10.0
+org.immutables:value = 2.10.1
 org.junit.jupiter:* = 5.10.2
 org.junit.vintage:* = 5.10.2
 org.rauschig:jarchivelib = 1.2.0
+com.palantir.gradle.failure-reports:* = 1.2.0
 
 com.netflix.nebula:nebula-test = 10.0.0
 junit:junit = 4.13.2
-org.awaitility:awaitility = 4.2.0
+org.awaitility:awaitility = 4.2.1

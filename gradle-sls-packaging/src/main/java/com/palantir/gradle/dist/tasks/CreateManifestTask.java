@@ -34,6 +34,7 @@ import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
+import com.palantir.gradle.failurereports.exceptions.ExceptionWithSuggestion;
 import com.palantir.sls.versions.OrderableSlsVersion;
 import com.palantir.sls.versions.SlsVersion;
 import java.io.ByteArrayOutputStream;
@@ -47,7 +48,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
@@ -64,8 +64,6 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 
 public abstract class CreateManifestTask extends DefaultTask {
-    public static final String WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME = "writeProductDependenciesLocks";
-    public static final String WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME = "writeSchemaVersionLocks";
 
     @Input
     abstract SetProperty<ProductId> getInRepoProductIds();
@@ -134,14 +132,14 @@ public abstract class CreateManifestTask extends DefaultTask {
 
         List<ProductDependency> productDependencies = productDependencyManifest.productDependencies();
         if (productDependencies.isEmpty()) {
-            requireAbsentLockfile(WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME, getProductDependenciesLockfile());
+            requireAbsentLockfile(WriteProductDependenciesLocksMarkerTask.NAME, getProductDependenciesLockfile());
         } else {
             ensurePdepsLockfileIsUpToDate(productDependencies);
         }
 
         List<SchemaMigration> schemaMigrations = getSchemaMigrations();
         if (schemaMigrations.isEmpty()) {
-            requireAbsentLockfile(WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME, getSchemaVersionLockfile());
+            requireAbsentLockfile(WriteSchemaVersionLocksMarkerTask.NAME, getSchemaVersionLockfile());
         } else {
             ensureSchemaLockfileIsUpToDate(schemaMigrations);
         }
@@ -178,9 +176,11 @@ public abstract class CreateManifestTask extends DefaultTask {
             lockfile.delete();
             getLogger().lifecycle("Deleted {}", relativePath);
         } else {
-            throw new GradleException(String.format(
-                    "%s must not exist, please run `./gradlew %s --write-locks` to delete it",
-                    relativePath, getName()));
+            throw new ExceptionWithSuggestion(
+                    String.format(
+                            "%s must not exist, please run `%s` to delete it",
+                            relativePath, getSuggestedFix(writeLocksTaskName)),
+                    getSuggestedFix(writeLocksTaskName));
         }
     }
 
@@ -200,7 +200,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         File lockfile = getProductDependenciesLockfile();
         String upToDateContents = ProductDependencyLockFile.asString(
                 productDeps, getInRepoProductIds().get());
-        ensureFileIsUpToDate(WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME, lockfile, upToDateContents);
+        ensureFileIsUpToDate(WriteProductDependenciesLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 
     private void ensureFileIsUpToDate(String writeLocksTaskName, File lockfile, String upToDateContents)
@@ -218,17 +218,24 @@ public abstract class CreateManifestTask extends DefaultTask {
             }
         } else {
             if (!lockfileExists) {
-                throw new GradleException(String.format(
-                        "%s does not exist, please run `./gradlew %s --write-locks` and commit the resultant file",
-                        relativePath, getName()));
+                throw new ExceptionWithSuggestion(
+                        String.format(
+                                "%s does not exist, please run `%s` and commit the resultant file",
+                                relativePath, getSuggestedFix(writeLocksTaskName)),
+                        getSuggestedFix(writeLocksTaskName));
             } else {
                 String fromDisk = Files.readString(lockfile.toPath());
-                Preconditions.checkState(
-                        fromDisk.equals(upToDateContents),
-                        "%s is out of date, please run `./gradlew %s --write-locks` to update it%s",
-                        relativePath,
-                        getName(),
-                        diff(lockfile, upToDateContents).map(s -> ":\n" + s).orElse(""));
+                if (!fromDisk.equals(upToDateContents)) {
+                    throw new ExceptionWithSuggestion(
+                            String.format(
+                                    "%s is out of date, please run `%s` to update it%s",
+                                    relativePath,
+                                    getSuggestedFix(writeLocksTaskName),
+                                    diff(lockfile, upToDateContents)
+                                            .map(s -> ":\n" + s)
+                                            .orElse("")),
+                            getSuggestedFix(writeLocksTaskName));
+                }
             }
         }
     }
@@ -262,7 +269,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     private void ensureSchemaLockfileIsUpToDate(List<SchemaMigration> schemaMigrations) throws IOException {
         File lockfile = getSchemaVersionLockfile();
         String upToDateContents = ObjectMappers.writeSchemaVersionsAsString(SchemaVersionLockFile.of(schemaMigrations));
-        ensureFileIsUpToDate(WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME, lockfile, upToDateContents);
+        ensureFileIsUpToDate(WriteSchemaVersionLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 
     private void validateProjectVersion() {
@@ -305,8 +312,8 @@ public abstract class CreateManifestTask extends DefaultTask {
                     task.getOutputs().upToDateWhen(new Spec<Task>() {
                         @Override
                         public boolean isSatisfiedBy(Task _task) {
-                            return !(shouldWriteLocks(project, WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME)
-                                    || shouldWriteLocks(project, WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME));
+                            return !(shouldWriteLocks(project, WriteProductDependenciesLocksMarkerTask.NAME)
+                                    || shouldWriteLocks(project, WriteSchemaVersionLocksMarkerTask.NAME));
                         }
                     });
 
@@ -321,13 +328,13 @@ public abstract class CreateManifestTask extends DefaultTask {
 
         project.getTasks()
                 .register(
-                        WRITE_PRODUCT_DEPENDENCIES_LOCKS_TASK_NAME,
+                        WriteProductDependenciesLocksMarkerTask.NAME,
                         WriteProductDependenciesLocksMarkerTask.class,
                         task -> {
                             task.dependsOn(createManifest);
                         });
         project.getTasks()
-                .register(WRITE_SCHEMA_VERSION_LOCKS_TASK_NAME, WriteSchemaVersionLocksMarkerTask.class, task -> {
+                .register(WriteSchemaVersionLocksMarkerTask.NAME, WriteSchemaVersionLocksMarkerTask.class, task -> {
                     task.dependsOn(createManifest);
                 });
 
@@ -343,5 +350,9 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
 
         return createManifest;
+    }
+
+    private String getSuggestedFix(String writeLocksTaskName) {
+        return String.format("./gradlew %s", writeLocksTaskName);
     }
 }

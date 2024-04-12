@@ -111,7 +111,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
             }
         """.stripIndent()
         file('product-dependencies.lock').text = """\
-        # Run ./gradlew --write-locks to regenerate this file
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 2.0.0)
         group2:name2 (1.0.0, 2.x.x)
         """.stripIndent()
