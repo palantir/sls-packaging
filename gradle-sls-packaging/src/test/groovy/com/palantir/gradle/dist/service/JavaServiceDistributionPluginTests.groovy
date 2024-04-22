@@ -358,6 +358,34 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualConfiguration == deploymentConfiguration
     }
 
+    def 'allows another task to produce configuration.yml'() {
+        given:
+        createUntarBuildFile(buildFile)
+        debug = true
+
+        // language=Gradle
+        buildFile << '''
+            task createConfigurationYml {
+                outputs.file('build/some-place/configuration-but-called-something-else.yml')
+                
+                doFirst {
+                    file('build/some-place/configuration-but-called-something-else.yml').text = 'custom: yml'
+                }
+            }
+
+            distribution {
+                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
+            }
+        '''.stripIndent(true)
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        String actualConfiguration = new File(projectDir, 'dist/service-name-0.0.1/deployment/configuration.yml').text
+        actualConfiguration == 'custom: yml'
+    }
+
     def 'produce distribution bundle with start script that passes default JVM options'() {
         given:
         createUntarBuildFile(buildFile)
