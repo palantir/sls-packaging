@@ -366,10 +366,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // language=Gradle
         buildFile << '''
             task createConfigurationYml {
-                outputs.file('build/some-place/configuration-but-called-something-else.yml')
+                outputs.file('build/some-place/configuration.yml')
                 
                 doFirst {
-                    file('build/some-place/configuration-but-called-something-else.yml').text = 'custom: yml'
+                    file('build/some-place/configuration.yml').text = 'custom: yml'
                 }
             }
 
