@@ -386,6 +386,33 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualConfiguration == 'custom: yml'
     }
 
+    def 'errors out if the custom configuration.yml location is not a file called configuration.yml'() {
+        given:
+        createUntarBuildFile(buildFile)
+        debug = true
+
+        // language=Gradle
+        buildFile << '''
+            task createConfigurationYml {
+                outputs.file('build/some-place/something-else.yml')
+                
+                doFirst {
+                    file('build/some-place/something-else.yml').text = 'custom: yml'
+                }
+            }
+
+            distribution {
+                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
+            }
+        '''.stripIndent(true)
+
+        when:
+        def output = runTasksAndFail(':build', ':distTar', ':untar').output
+
+        then:
+        output.contains('must be called configuration.yml')
+    }
+
     def 'produce distribution bundle with start script that passes default JVM options'() {
         given:
         createUntarBuildFile(buildFile)
