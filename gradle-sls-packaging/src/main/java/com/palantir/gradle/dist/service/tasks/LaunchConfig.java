@@ -71,9 +71,10 @@ public final class LaunchConfig {
             "-Djava.io.tmpdir=var/data/tmp",
             "-XX:ErrorFile=var/log/hs_err_pid%p.log",
             "-XX:HeapDumpPath=var/log",
-            // Set DNS cache TTL to 20s to account for systems such as RDS and other
+            // Set DNS cache TTL to 10s to account for systems such as RDS and other
             // AWS-managed systems that modify DNS records on failover.
-            "-Dsun.net.inetaddr.ttl=20",
+            // We use a 10 second value matching the default negative cache ttl.
+            "-Dsun.net.inetaddr.ttl=10",
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:+IgnoreUnrecognizedVMOptions",
             "-XX:NativeMemoryTracking=summary",
