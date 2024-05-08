@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Make input/output methods public on CreateManifestTask
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1641
