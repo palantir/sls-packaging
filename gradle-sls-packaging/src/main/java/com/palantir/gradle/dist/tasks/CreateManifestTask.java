@@ -66,25 +66,25 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 public abstract class CreateManifestTask extends DefaultTask {
 
     @Input
-    abstract SetProperty<ProductId> getInRepoProductIds();
+    public abstract SetProperty<ProductId> getInRepoProductIds();
 
     @Input
-    abstract Property<String> getServiceName();
+    public abstract Property<String> getServiceName();
 
     @Input
-    abstract Property<String> getServiceGroup();
+    public abstract Property<String> getServiceGroup();
 
     @Input
-    abstract Property<ProductType> getProductType();
+    public abstract Property<ProductType> getProductType();
 
     @Input
-    abstract MapProperty<String, Object> getManifestExtensions();
+    public abstract MapProperty<String, Object> getManifestExtensions();
 
     @InputFile
-    abstract RegularFileProperty getProductDependenciesFile();
+    public abstract RegularFileProperty getProductDependenciesFile();
 
     @OutputFile
-    abstract RegularFileProperty getManifestFile();
+    public abstract RegularFileProperty getManifestFile();
 
     @Input
     final String getProjectVersion() {
