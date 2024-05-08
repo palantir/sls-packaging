@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Bump the minimum required gradle version to handle mr-jars
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1642
