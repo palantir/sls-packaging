@@ -50,6 +50,8 @@ class JavaServiceDistributionExtensionTest extends Specification {
 
             env 'a': 'b'
             env 'c': 'd'
+
+            manifestExtensions 'foo': 'bar'
         }
 
         then:
@@ -58,6 +60,9 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.defaultJvmOpts.get() == ['a', 'b', 'c', 'd']
         ext.excludeFromVar.get() == ['log', 'run', 'a', 'b', 'c', 'd']
         ext.env.get() == ['a': 'b', 'c': 'd']
+        // defaults should be present
+        ext.manifestExtensions.get().get('require-individual-addressability') == true
+        ext.manifestExtensions.get().get('foo') == 'bar'
     }
 
     def 'collection setters replace existing data'() {
@@ -86,6 +91,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.defaultJvmOpts.get() == ['c', 'd']
         ext.excludeFromVar.get() == ['c', 'd']
         ext.env.get() == ['foo': 'bar']
+        ext.manifestExtensions.get() == ['foo': 'bar']
     }
 
     def 'sensible defaults' () {

@@ -18,6 +18,7 @@ package com.palantir.gradle.dist;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
@@ -48,6 +49,9 @@ public class BaseDistributionExtension {
             + "(:(?<classifier>[^:@?]*))?"
             + "(@(?<type>[^:@?]*))?");
 
+    private static final ImmutableMap<String, Object> DEFAULT_MANIFEST_EXTENSIONS =
+            ImmutableMap.of("require-individual-addressability", true);
+
     private final Project project;
     private final Property<String> serviceGroup;
     private final Property<String> serviceName;
@@ -76,7 +80,7 @@ public class BaseDistributionExtension {
         serviceName.set(project.provider(project::getName));
 
         manifestExtensions =
-                project.getObjects().mapProperty(String.class, Object.class).empty();
+                project.getObjects().mapProperty(String.class, Object.class).value(DEFAULT_MANIFEST_EXTENSIONS);
 
         configurationYml = project.getObjects().fileProperty().fileValue(project.file("deployment/configuration.yml"));
 

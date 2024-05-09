@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: sls-packaging sets the individual-addressability extension default
+    value to `true` when not otherwise specified
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1643
