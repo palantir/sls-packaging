@@ -17,9 +17,9 @@
 package com.palantir.gradle.dist.tasks;
 
 import com.palantir.gradle.dist.BaseDistributionExtension;
+import com.palantir.gradle.dist.DeploymentDirInclusion;
 import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
-import java.io.File;
 import java.io.IOException;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -55,8 +55,8 @@ public abstract class ConfigTarTask extends Tar {
                     "Creates a compressed, gzipped tar file that contains the sls configuration files for the product");
             task.setCompression(Compression.GZIP);
 
-            task.from(new File(project.getProjectDir(), "deployment"));
-            task.from(new File(project.getBuildDir(), "deployment"));
+            DeploymentDirInclusion.includeFromDeploymentDirs(project.getLayout(), ext, task, _ignored -> {});
+
             task.getDestinationDirectory()
                     .set(project.getLayout().getBuildDirectory().dir("distributions"));
             task.getArchiveBaseName().set(ext.getDistributionServiceName());

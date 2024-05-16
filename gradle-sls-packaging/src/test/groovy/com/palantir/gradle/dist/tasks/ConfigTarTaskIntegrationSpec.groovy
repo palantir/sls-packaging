@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
-
+import com.google.common.base.Throwables
 import nebula.test.IntegrationSpec
 
 class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
@@ -72,6 +72,59 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         files.contains('deployment')
         def manifest = new File(projectDir, 'dist/foo-asset-0.0.1/deployment/manifest.yml').text
         manifest.contains('asset.v1')
+    }
+
+    def 'configTar task support configuration.ymls being generated to a non-standard location'() {
+        setup:
+        createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
+
+        // language=Gradle
+        buildFile << '''
+            task createConfigurationYml {
+                outputs.file('build/some-place/configuration.yml')
+                
+                doFirst {
+                    file('build/some-place/configuration.yml').text = 'custom: yml'
+                }
+            }
+
+            distribution {
+                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
+            }
+        '''.stripIndent(true)
+
+        when:
+        runTasksSuccessfully(':configTar', ':untar')
+
+        then:
+        def configuration = new File(projectDir, 'dist/foo-asset-0.0.1/deployment/configuration.yml').text
+        configuration.contains('custom: yml')
+    }
+
+    def 'errors out if the custom configuration.yml location is not a file called configuration.yml'() {
+        setup:
+        createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
+
+        // language=Gradle
+        buildFile << '''
+            task createConfigurationYml {
+                outputs.file('build/some-place/something-else.yml')
+                
+                doFirst {
+                    file('build/some-place/something-else.yml').text = 'custom: yml'
+                }
+            }
+
+            distribution {
+                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
+            }
+        '''.stripIndent(true)
+
+        when:
+        def failureMessage = Throwables.getRootCause(runTasksWithFailure(':configTar', ':untar').failure).message
+
+        then:
+        failureMessage.contains('must be called configuration.yml')
     }
 
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {
