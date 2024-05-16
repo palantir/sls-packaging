@@ -19,7 +19,6 @@ package com.palantir.gradle.dist.tasks;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
-import groovy.lang.Closure;
 import java.io.File;
 import java.io.IOException;
 import org.gradle.api.Action;
@@ -30,17 +29,10 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
 
-public class ConfigTarTask extends Tar {
+public abstract class ConfigTarTask extends Tar {
     @Override
     public final AbstractCopyTask from(Object... sourcePaths) {
         return this.from(sourcePaths, _ignored -> {});
-    }
-
-    @Override
-    @SuppressWarnings({"RawTypes", "deprecation"})
-    public final AbstractCopyTask from(Object sourcePath, Closure closure) {
-        // TODO(fwindheuser): Replace usage of 'ClosureBackedAction' before moving to Gradle 8.
-        return this.from(sourcePath, new org.gradle.util.ClosureBackedAction<>(closure));
     }
 
     @Override
