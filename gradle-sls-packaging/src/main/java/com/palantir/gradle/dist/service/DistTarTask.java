@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.palantir.gradle.dist.DeploymentDirInclusion;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.gradle.api.JavaVersion;
@@ -100,35 +101,11 @@ final class DistTarTask {
                 t.setFileMode(0755);
             });
 
-            root.into("deployment", t -> {
-                // We exclude configuration.yml from the general "deployment" importer, as it is special cased and
-                // handled separately below.
-                t.exclude("configuration.yml");
-                t.from("deployment");
-                t.from(project.getLayout().getBuildDirectory().dir("deployment"));
-                t.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE);
-            });
-
-            root.into("deployment", t -> {
-                // Import configuration.yml from the where it is declared in the extension, allowing tasks to
-                // generate it and have dependent tasks (like this distTar) get the correct task deps.
-                t.from(distributionExtension.getConfigurationYml().map(file -> {
-                    // We enforce the file is called configuration.yml. Unfortunately, there is an internal
-                    // piece of code that deduplicates files in gradle-sls-docker. This deduplication is done
-                    // using this copyspec. Were we to just call `.rename()` on this copyspec arm (to allow plugin
-                    // devs to output their generated configuration.ymls to some file not called configuration.yml) this
-                    // rename happens after the renames in the file deduplication code. Unfortunately, it was very hard
-                    // to disentangle the file deduplication from using this copyspec and maintain build performance
-                    // - instead we choose to simply check that the `configuration.yml` is called the right thing
-                    // so it doesn't need to be renamed here.
-                    if (file.getAsFile().getName().equals("configuration.yml")) {
-                        return file;
-                    }
-
-                    throw new IllegalStateException("The file set to be the value of getConfigurationYml() "
-                            + "must be called configuration.yml. Instead, it was called " + file.getAsFile());
-                }));
-            });
+            DeploymentDirInclusion.includeFromDeploymentDirs(
+                    project.getLayout(),
+                    distributionExtension,
+                    root,
+                    t -> t.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE));
         });
     }
 
