@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: '`ConfigTarTask` supports custom `configuration.yml` location'
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1646
