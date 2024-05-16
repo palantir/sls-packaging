@@ -27,4 +27,7 @@ public enum ProductType {
 
     @JsonProperty("asset.v1")
     ASSET_V1,
+
+    @JsonProperty("helm-chart.v1")
+    HELM_CHART_V1,
 }
