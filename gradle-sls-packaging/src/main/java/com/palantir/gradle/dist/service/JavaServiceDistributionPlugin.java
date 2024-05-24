@@ -78,7 +78,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply("java");
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
         project.getPluginManager().apply(DiagnosticsManifestPlugin.class);
-        project.getPluginManager().apply(ArtifactsManifestPlugin.class);
         JavaServiceDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
 
