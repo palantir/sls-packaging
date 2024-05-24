@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Explicitly list main container image in artifacts extension
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1649
