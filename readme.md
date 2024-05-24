@@ -133,6 +133,23 @@ dependencies {
 }
 ```
 
+### Container Images
+
+You can specify container images that your product requires using the `artifacts` declaration on the `distribution`
+extension. For example, if a container could be pulled from `registry.example.io/foo/bar:v1.3.0`, you could add the
+following to the `distribution` extension:
+
+```gradle
+distribution {
+   artifact {
+        type = 'oci'
+        uri = 'registry.example.io/foo/bar:v1.3.0'
+    }
+}
+```
+
+The result will be embedded in the `deployment/manifest.yml` file.
+
 ### Schema versions
 
 sls-packaging also maintains a lockfile, `schema-versions.lock`, which should be checked in to Git.
