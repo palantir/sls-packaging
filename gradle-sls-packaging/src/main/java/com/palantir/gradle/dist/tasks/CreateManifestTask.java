@@ -46,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
@@ -53,7 +54,6 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -85,7 +85,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     public abstract MapProperty<String, Object> getManifestExtensions();
 
     @Input
-    public abstract ListProperty<ArtifactLocator> getArtifacts();
+    public abstract SetProperty<ArtifactLocator> getArtifacts();
 
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
@@ -144,7 +144,7 @@ public abstract class CreateManifestTask extends DefaultTask {
             ensurePdepsLockfileIsUpToDate(productDependencies);
         }
 
-        List<ArtifactLocator> artifacts = getArtifacts().get();
+        Set<ArtifactLocator> artifacts = getArtifacts().get();
 
         List<SchemaMigration> schemaMigrations = getSchemaMigrations();
         if (schemaMigrations.isEmpty()) {

@@ -60,7 +60,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
-    private final ListProperty<ArtifactLocator> artifacts;
+    private final SetProperty<ArtifactLocator> artifacts;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
@@ -77,7 +77,7 @@ public class BaseDistributionExtension {
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
-        artifacts = project.getObjects().listProperty(ArtifactLocator.class);
+        artifacts = project.getObjects().setProperty(ArtifactLocator.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
@@ -134,7 +134,7 @@ public class BaseDistributionExtension {
         this.productType.set(productType);
     }
 
-    public final ListProperty<ArtifactLocator> getArtifacts() {
+    public final SetProperty<ArtifactLocator> getArtifacts() {
         return artifacts;
     }
 

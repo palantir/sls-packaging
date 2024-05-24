@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
 import com.palantir.gradle.dist.tasks.GetDefaultImageTask;
+import java.io.File;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
@@ -26,7 +27,13 @@ public final class ArtifactsManifestPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getPlugins().withId("com.palantir.sls-docker", _plugin -> {
-            project.getTasks().register(GetDefaultImageTask.GET_DEFAULT_IMAGE_TASK_NAME, GetDefaultImageTask.class);
+            project.getTasks()
+                    .register(GetDefaultImageTask.GET_DEFAULT_IMAGE_TASK_NAME, GetDefaultImageTask.class, task -> {
+                        task.getServiceName().set(project.getName());
+                        task.getServiceGroup().set(project.getGroup().toString());
+                        task.getDefaultImages()
+                                .set(new File(project.getBuildDir(), "/deployment/default-artifact.yml"));
+                    });
             project.getTasks()
                     .named(
                             CreateManifestTask.CREATE_MANIFEST_TASK_NAME,
