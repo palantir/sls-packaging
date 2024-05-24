@@ -143,6 +143,21 @@ public class BaseDistributionExtension {
         artifacts.add(artifactLocator);
     }
 
+    /** Lazily configures and adds a {@link ArtifactLocator}. */
+    public final void artifact(@DelegatesTo(ArtifactLocator.class) Closure<ArtifactLocator> closure) {
+        artifacts.add(providerFactory.provider(() -> {
+            ArtifactLocator artifactLocator = new ArtifactLocator();
+            try {
+                project.configure(artifactLocator, closure);
+                artifactLocator.isValid();
+            } catch (Exception e) {
+                throw new SafeRuntimeException(
+                        "Error validating artifact declared from project", e, SafeArg.of("projectName", projectName));
+            }
+            return artifactLocator;
+        }));
+    }
+
     /**
      * The product dependencies of this distribution.
      *

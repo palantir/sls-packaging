@@ -164,4 +164,20 @@ class BaseDistributionExtensionTest extends Specification {
         then:
         noExceptionThrown()
     }
+
+    def "artifacts from closure fail with invalid URI"() {
+
+        when:
+        def ext = new BaseDistributionExtension(project)
+        ext.artifact {
+            type = 'oci'
+            uri = '#######'
+        }
+        ext.getArtifacts().get()
+
+        then:
+        def ex = thrown(SafeRuntimeException)
+        ex.cause != null
+        ex.cause.message.contains("uri is not valid")
+    }
 }

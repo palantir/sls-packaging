@@ -16,12 +16,40 @@
 
 package com.palantir.gradle.dist.artifacts;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
+import java.io.Serializable;
+import java.net.URI;
 import java.util.Objects;
 
-public final class ArtifactLocator {
-    private final String type;
-    private final String uri;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public final class ArtifactLocator implements Serializable {
+
+    @JsonProperty("type")
+    private String type;
+
+    @JsonProperty("uri")
+    private String uri;
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public ArtifactLocator() {}
 
     public ArtifactLocator(String type, String uri) {
         this.type = type;
@@ -48,5 +76,15 @@ public final class ArtifactLocator {
     public void isValid() {
         Preconditions.checkNotNull(type, "type must be specified");
         Preconditions.checkNotNull(uri, "uri must be specified");
+        uriIsValid(uri);
+    }
+
+    public static void uriIsValid(String uri) {
+        try {
+            // Throws IllegalArgumentException if URI does not conform to RFC 2396
+            URI.create(uri);
+        } catch (IllegalArgumentException e) {
+            throw new SafeIllegalArgumentException("uri is not valid", e);
+        }
     }
 }
