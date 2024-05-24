@@ -31,6 +31,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.SchemaMigration;
 import com.palantir.gradle.dist.SchemaVersionLockFile;
 import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.gradle.dist.artifacts.ArtifactLocator;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
@@ -52,6 +53,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
@@ -64,6 +66,8 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 
 public abstract class CreateManifestTask extends DefaultTask {
+
+    public static final String CREATE_MANIFEST_TASK_NAME = "createManifest";
 
     @Input
     public abstract SetProperty<ProductId> getInRepoProductIds();
@@ -79,6 +83,9 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     @Input
     public abstract MapProperty<String, Object> getManifestExtensions();
+
+    @Input
+    public abstract ListProperty<ArtifactLocator> getArtifacts();
 
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
@@ -137,6 +144,8 @@ public abstract class CreateManifestTask extends DefaultTask {
             ensurePdepsLockfileIsUpToDate(productDependencies);
         }
 
+        List<ArtifactLocator> artifacts = getArtifacts().get();
+
         List<SchemaMigration> schemaMigrations = getSchemaMigrations();
         if (schemaMigrations.isEmpty()) {
             requireAbsentLockfile(WriteSchemaVersionLocksMarkerTask.NAME, getSchemaVersionLockfile());
@@ -154,6 +163,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                         .productVersion(getProjectVersion())
                         .putAllExtensions(getManifestExtensions().get())
                         .putExtensions("product-dependencies", productDependencies)
+                        .putExtensions("artifacts", artifacts)
                         .build());
     }
 
@@ -294,7 +304,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                 ProductDependencies.registerProductDependencyTasks(project, ext);
 
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
-                .register("createManifest", CreateManifestTask.class, task -> {
+                .register(CREATE_MANIFEST_TASK_NAME, CreateManifestTask.class, task -> {
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
@@ -303,6 +313,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                             .set(resolveProductDependenciesTask.flatMap(
                                     ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
+                    task.getArtifacts().set(ext.getArtifacts());
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())
@@ -341,10 +352,10 @@ public abstract class CreateManifestTask extends DefaultTask {
         // We want `./gradlew --write-locks` to magically fix up the product-dependencies.lock file
         // We can't do this at configuration time because it would mess up gradle-consistent-versions.
         StartParameter startParam = project.getGradle().getStartParameter();
-        if (startParam.isWriteDependencyLocks() && !startParam.getTaskNames().contains("createManifest")) {
+        if (startParam.isWriteDependencyLocks() && !startParam.getTaskNames().contains(CREATE_MANIFEST_TASK_NAME)) {
             List<String> taskNames = ImmutableList.<String>builder()
                     .addAll(startParam.getTaskNames())
-                    .add("createManifest")
+                    .add(CREATE_MANIFEST_TASK_NAME)
                     .build();
             startParam.setTaskNames(taskNames);
         }

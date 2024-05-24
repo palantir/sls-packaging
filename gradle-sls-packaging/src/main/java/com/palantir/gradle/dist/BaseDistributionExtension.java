@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.palantir.gradle.dist.artifacts.ArtifactLocator;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
@@ -59,6 +60,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
+    private final ListProperty<ArtifactLocator> artifacts;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
@@ -75,6 +77,7 @@ public class BaseDistributionExtension {
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
+        artifacts = project.getObjects().listProperty(ArtifactLocator.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
@@ -129,6 +132,15 @@ public class BaseDistributionExtension {
 
     public final void setProductType(ProductType productType) {
         this.productType.set(productType);
+    }
+
+    public final ListProperty<ArtifactLocator> getArtifacts() {
+        return artifacts;
+    }
+
+    public final void artifact(ArtifactLocator artifactLocator) {
+        artifactLocator.isValid();
+        artifacts.add(artifactLocator);
     }
 
     /**
