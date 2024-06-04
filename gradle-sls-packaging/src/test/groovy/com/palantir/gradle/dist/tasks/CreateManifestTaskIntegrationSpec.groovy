@@ -23,6 +23,13 @@ import spock.lang.Unroll
 
 class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
+    private static String ARTIFACT = """
+    artifact {
+        type = "oci"
+        uri = "registry.example.io/foo/bar:v1.3.0"
+    }
+    """.stripIndent()
+
     def setup() {
         buildFile << """
             apply plugin: 'com.palantir.sls-java-service-distribution'
@@ -200,6 +207,27 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         where:
         writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
+    }
+
+    def 'write artifacts to manifest'() {
+        buildFile << """
+        distribution {
+            ${ARTIFACT}
+        }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted('createManifest')
+        def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
+        manifest.get("extensions").get("artifacts") == [
+                [
+                        "type": "oci",
+                        "uri" : "registry.example.io/foo/bar:v1.3.0"
+                ]
+        ]
     }
 
     def "check depends on createManifest"() {

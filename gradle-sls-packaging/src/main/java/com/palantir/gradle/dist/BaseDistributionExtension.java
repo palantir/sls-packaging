@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import org.gradle.api.Action;
+import org.gradle.api.DomainObjectSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.RegularFileProperty;
@@ -60,7 +62,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
-    private final SetProperty<ArtifactLocator> artifacts;
+    private final DomainObjectSet<ArtifactLocator> artifacts;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
@@ -77,7 +79,8 @@ public class BaseDistributionExtension {
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
-        artifacts = project.getObjects().setProperty(ArtifactLocator.class);
+        artifacts = project.getObjects().domainObjectSet(ArtifactLocator.class);
+        artifacts.whenObjectAdded(ArtifactLocator::isValid);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
@@ -134,28 +137,21 @@ public class BaseDistributionExtension {
         this.productType.set(productType);
     }
 
-    public final SetProperty<ArtifactLocator> getArtifacts() {
+    public final DomainObjectSet<ArtifactLocator> getArtifacts() {
         return artifacts;
-    }
-
-    public final void artifact(ArtifactLocator artifactLocator) {
-        artifactLocator.isValid();
-        artifacts.add(artifactLocator);
     }
 
     /** Lazily configures and adds a {@link ArtifactLocator}. */
     public final void artifact(@DelegatesTo(ArtifactLocator.class) Closure<ArtifactLocator> closure) {
-        artifacts.add(providerFactory.provider(() -> {
-            ArtifactLocator artifactLocator = new ArtifactLocator();
-            try {
-                project.configure(artifactLocator, closure);
-                artifactLocator.isValid();
-            } catch (Exception e) {
-                throw new SafeRuntimeException(
-                        "Error validating artifact declared from project", e, SafeArg.of("projectName", projectName));
-            }
-            return artifactLocator;
-        }));
+        ArtifactLocator artifactLocator = project.getObjects().newInstance(ArtifactLocator.class);
+        project.configure(artifactLocator, closure);
+        artifacts.add(artifactLocator);
+    }
+
+    public final void artifact(Action<ArtifactLocator> action) {
+        ArtifactLocator artifactLocator = project.getObjects().newInstance(ArtifactLocator.class);
+        action.execute(artifactLocator);
+        artifacts.add(artifactLocator);
     }
 
     /**

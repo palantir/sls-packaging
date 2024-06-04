@@ -135,9 +135,10 @@ dependencies {
 
 ### Container Images
 
-You can specify container images that your product requires using the `artifacts` declaration on the `distribution`
+You can specify container images that your product requires using the `artifact` declaration on the `distribution`
 extension. For example, if a container could be pulled from `registry.example.io/foo/bar:v1.3.0`, you could add the
-following to the `distribution` extension:
+following to the `distribution` extension. The entry should contain the URI for the artifact in the `uri` field and
+should always contain `'oci'` (the only currently supported type) in the `type` field:
 
 ```gradle
 distribution {
@@ -148,7 +149,31 @@ distribution {
 }
 ```
 
-The result will be embedded in the `deployment/manifest.yml` file.
+The result will be embedded in the `deployment/manifest.yml` file. The file will look something like this:
+
+```json
+{
+  "manifest-version" : "1.0",
+  "product-type" : "service.v1",
+  "product-group" : "com.example.foo",
+  "product-name" : "bar",
+  "product-version" : "1.1.0",
+  "extensions" : {
+    "product-dependencies" : [ {
+      "product-group" : "com.example",
+      "product-name" : "dependency",
+      "minimum-version" : "1.0.0",
+      "recommended-version" : "1.0.0",
+      "maximum-version" : "1.x.x",
+      "optional" : false
+    } ],
+    "artifacts" : [ {
+       "type": "oci",
+       "uri": "registry.example.io/foo/bar:v1.1.0"
+    } ]
+  }
+}
+```
 
 ### Schema versions
 

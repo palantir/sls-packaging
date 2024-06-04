@@ -31,7 +31,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.SchemaMigration;
 import com.palantir.gradle.dist.SchemaVersionLockFile;
 import com.palantir.gradle.dist.SlsManifest;
-import com.palantir.gradle.dist.artifacts.ArtifactLocator;
+import com.palantir.gradle.dist.artifacts.JsonArtifactLocator;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesTask;
@@ -46,7 +46,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
@@ -85,7 +84,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     public abstract MapProperty<String, Object> getManifestExtensions();
 
     @Input
-    public abstract SetProperty<ArtifactLocator> getArtifacts();
+    public abstract SetProperty<JsonArtifactLocator> getArtifacts();
 
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
@@ -144,14 +143,14 @@ public abstract class CreateManifestTask extends DefaultTask {
             ensurePdepsLockfileIsUpToDate(productDependencies);
         }
 
-        Set<ArtifactLocator> artifacts = getArtifacts().get();
-
         List<SchemaMigration> schemaMigrations = getSchemaMigrations();
         if (schemaMigrations.isEmpty()) {
             requireAbsentLockfile(WriteSchemaVersionLocksMarkerTask.NAME, getSchemaVersionLockfile());
         } else {
             ensureSchemaLockfileIsUpToDate(schemaMigrations);
         }
+
+        validateEmptyArtifactsExtension();
 
         ObjectMappers.jsonMapper.writeValue(
                 getManifestFile().getAsFile().get(),
@@ -163,8 +162,17 @@ public abstract class CreateManifestTask extends DefaultTask {
                         .productVersion(getProjectVersion())
                         .putAllExtensions(getManifestExtensions().get())
                         .putExtensions("product-dependencies", productDependencies)
-                        .putExtensions("artifacts", artifacts)
+                        .putExtensions("artifacts", getArtifacts().get())
                         .build());
+    }
+
+    private void validateEmptyArtifactsExtension() {
+        Preconditions.checkArgument(
+                !getManifestExtensions().get().containsKey("artifacts"),
+                "Artifacts "
+                        + "specified directly the using the manifest-extensions block in the 'distributions' "
+                        + "extension will be overwritten! Please use the 'artifact' closure in the 'distributions' "
+                        + "extension to add artifacts instead.");
     }
 
     private List<SchemaMigration> getSchemaMigrations() {
@@ -313,7 +321,10 @@ public abstract class CreateManifestTask extends DefaultTask {
                             .set(resolveProductDependenciesTask.flatMap(
                                     ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
-                    task.getArtifacts().set(ext.getArtifacts());
+                    ext.getArtifacts().forEach(artifactLocator -> task.getArtifacts()
+                            .add(new JsonArtifactLocator(
+                                    artifactLocator.getType().get(),
+                                    artifactLocator.getUri().get())));
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())

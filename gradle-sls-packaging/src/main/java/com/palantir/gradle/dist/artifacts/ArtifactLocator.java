@@ -16,70 +16,26 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
-import java.io.Serializable;
 import java.net.URI;
-import java.util.Objects;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public final class ArtifactLocator implements Serializable {
+public interface ArtifactLocator {
+    @Input
+    Property<String> getType();
 
-    @JsonProperty("type")
-    private String type;
+    @Input
+    Property<String> getUri();
 
-    @JsonProperty("uri")
-    private String uri;
-
-    public String getType() {
-        return type;
+    default void isValid() {
+        Preconditions.checkNotNull(getType().get(), "type must be specified");
+        Preconditions.checkNotNull(getUri().get(), "uri must be specified");
+        uriIsValid(getUri().get());
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    public ArtifactLocator() {}
-
-    public ArtifactLocator(String type, String uri) {
-        this.type = type;
-        this.uri = uri;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof ArtifactLocator)) {
-            return false;
-        }
-        ArtifactLocator artifactLocator = (ArtifactLocator) other;
-        return Objects.equals(type, artifactLocator.type) && Objects.equals(uri, artifactLocator.uri);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, uri);
-    }
-
-    public void isValid() {
-        Preconditions.checkNotNull(type, "type must be specified");
-        Preconditions.checkNotNull(uri, "uri must be specified");
-        uriIsValid(uri);
-    }
-
-    public static void uriIsValid(String uri) {
+    private static void uriIsValid(String uri) {
         try {
             // Throws IllegalArgumentException if URI does not conform to RFC 2396
             URI.create(uri);
