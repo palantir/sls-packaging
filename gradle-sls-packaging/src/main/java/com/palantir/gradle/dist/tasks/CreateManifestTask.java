@@ -31,6 +31,7 @@ import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.SchemaMigration;
 import com.palantir.gradle.dist.SchemaVersionLockFile;
 import com.palantir.gradle.dist.SlsManifest;
+import com.palantir.gradle.dist.artifacts.ArtifactLocator;
 import com.palantir.gradle.dist.artifacts.JsonArtifactLocator;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.gradle.dist.pdeps.ProductDependencyManifest;
@@ -84,7 +85,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     public abstract MapProperty<String, Object> getManifestExtensions();
 
     @Input
-    public abstract SetProperty<JsonArtifactLocator> getArtifacts();
+    public abstract SetProperty<ArtifactLocator> getArtifacts();
 
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
@@ -162,16 +163,19 @@ public abstract class CreateManifestTask extends DefaultTask {
                         .productVersion(getProjectVersion())
                         .putAllExtensions(getManifestExtensions().get())
                         .putExtensions("product-dependencies", productDependencies)
-                        .putExtensions("artifacts", getArtifacts().get())
+                        .putExtensions(
+                                "artifacts",
+                                getArtifacts().get().stream()
+                                        .map(JsonArtifactLocator::from)
+                                        .collect(Collectors.toList()))
                         .build());
     }
 
     private void validateEmptyArtifactsExtension() {
         Preconditions.checkArgument(
                 !getManifestExtensions().get().containsKey("artifacts"),
-                "Artifacts "
-                        + "specified directly the using the manifest-extensions block in the 'distributions' "
-                        + "extension will be overwritten! Please use the 'artifact' closure in the 'distributions' "
+                "Specifying artifacts directly the using the manifest-extensions block in the 'distributions' "
+                        + "extension is not allowed. Please use the 'artifact' closure in the 'distributions' "
                         + "extension to add artifacts instead.");
     }
 
@@ -321,10 +325,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                             .set(resolveProductDependenciesTask.flatMap(
                                     ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
-                    ext.getArtifacts().forEach(artifactLocator -> task.getArtifacts()
-                            .add(new JsonArtifactLocator(
-                                    artifactLocator.getType().get(),
-                                    artifactLocator.getUri().get())));
+                    task.getArtifacts().addAll(ext.getArtifacts());
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())

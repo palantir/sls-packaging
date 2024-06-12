@@ -18,16 +18,16 @@ package com.palantir.gradle.dist.artifacts;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public final class JsonArtifactLocator implements Serializable {
+public final class JsonArtifactLocator {
 
     @JsonProperty("type")
+    @SuppressWarnings("unused")
     private String type;
 
     @JsonProperty("uri")
+    @SuppressWarnings("unused")
     private String uri;
 
     public JsonArtifactLocator(String type, String uri) {
@@ -35,20 +35,8 @@ public final class JsonArtifactLocator implements Serializable {
         this.uri = uri;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof JsonArtifactLocator)) {
-            return false;
-        }
-        JsonArtifactLocator artifactLocator = (JsonArtifactLocator) other;
-        return Objects.equals(type, artifactLocator.type) && Objects.equals(uri, artifactLocator.uri);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, uri);
+    public static JsonArtifactLocator from(ArtifactLocator artifactLocator) {
+        return new JsonArtifactLocator(
+                artifactLocator.getType().get(), artifactLocator.getUri().get());
     }
 }

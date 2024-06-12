@@ -23,13 +23,6 @@ import spock.lang.Unroll
 
 class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
-    private static String ARTIFACT = """
-    artifact {
-        type = "oci"
-        uri = "registry.example.io/foo/bar:v1.3.0"
-    }
-    """.stripIndent()
-
     def setup() {
         buildFile << """
             apply plugin: 'com.palantir.sls-java-service-distribution'
@@ -212,7 +205,10 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
     def 'write artifacts to manifest'() {
         buildFile << """
         distribution {
-            ${ARTIFACT}
+            artifact {
+                type = "oci"
+                uri = "registry.example.io/foo/bar:v1.3.0"
+            }
         }
         """.stripIndent()
 
