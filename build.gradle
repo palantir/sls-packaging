@@ -32,7 +32,7 @@ apply plugin: 'com.palantir.jdks.latest'
 allprojects {
     apply plugin: 'com.palantir.java-format'
     apply plugin: 'com.palantir.jakarta-package-alignment'
-    version "9.9.9"
+    version System.env.CIRCLE_TAG ?: gitVersion()
     group 'com.palantir.sls-packaging'
 
     repositories {
