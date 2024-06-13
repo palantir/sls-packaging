@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.palantir.gradle.dist.artifacts.ArtifactLocator;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
@@ -30,6 +31,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import org.gradle.api.Action;
+import org.gradle.api.DomainObjectSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.RegularFileProperty;
@@ -59,6 +62,7 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
+    private final DomainObjectSet<ArtifactLocator> artifacts;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
@@ -75,6 +79,8 @@ public class BaseDistributionExtension {
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
+        artifacts = project.getObjects().domainObjectSet(ArtifactLocator.class);
+        artifacts.whenObjectAdded(ArtifactLocator::isValid);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
@@ -129,6 +135,23 @@ public class BaseDistributionExtension {
 
     public final void setProductType(ProductType productType) {
         this.productType.set(productType);
+    }
+
+    public final DomainObjectSet<ArtifactLocator> getArtifacts() {
+        return artifacts;
+    }
+
+    /** Lazily configures and adds a {@link ArtifactLocator}. */
+    public final void artifact(@DelegatesTo(ArtifactLocator.class) Closure<ArtifactLocator> closure) {
+        ArtifactLocator artifactLocator = project.getObjects().newInstance(ArtifactLocator.class);
+        project.configure(artifactLocator, closure);
+        artifacts.add(artifactLocator);
+    }
+
+    public final void artifact(Action<ArtifactLocator> action) {
+        ArtifactLocator artifactLocator = project.getObjects().newInstance(ArtifactLocator.class);
+        action.execute(artifactLocator);
+        artifacts.add(artifactLocator);
     }
 
     /**

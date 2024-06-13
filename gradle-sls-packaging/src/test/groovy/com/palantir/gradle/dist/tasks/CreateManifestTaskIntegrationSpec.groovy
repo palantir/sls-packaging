@@ -202,6 +202,30 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
     }
 
+    def 'write artifacts to manifest'() {
+        buildFile << """
+        distribution {
+            artifact {
+                type = "oci"
+                uri = "registry.example.io/foo/bar:v1.3.0"
+            }
+        }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted('createManifest')
+        def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
+        manifest.get("extensions").get("artifacts") == [
+                [
+                        "type": "oci",
+                        "uri" : "registry.example.io/foo/bar:v1.3.0"
+                ]
+        ]
+    }
+
     def "check depends on createManifest"() {
         when:
         def result = runTasks(':check')
