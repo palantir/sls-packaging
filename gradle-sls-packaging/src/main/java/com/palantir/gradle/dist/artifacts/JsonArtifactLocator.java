@@ -16,27 +16,47 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.immutables.value.Value;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public final class JsonArtifactLocator {
+@Value.Immutable
+@JsonDeserialize(as = ImmutableJsonArtifactLocator.class)
+@JsonSerialize(as = ImmutableJsonArtifactLocator.class)
+public interface JsonArtifactLocator {
 
-    @JsonProperty("type")
-    @SuppressWarnings("unused")
-    private String type;
+    String URI_IS_NOT_VALID_PREAMBLE = "uri is not valid: ";
 
-    @JsonProperty("uri")
-    @SuppressWarnings("unused")
-    private String uri;
+    String type();
 
-    public JsonArtifactLocator(String type, String uri) {
-        this.type = type;
-        this.uri = uri;
+    String uri();
+
+    @Value.Check
+    default void isValid() {
+        try {
+            // Throws IllegalArgumentException if URI does not conform to RFC 2396
+            URI.create(uri());
+        } catch (IllegalArgumentException e) {
+            if (!(e.getCause() instanceof URISyntaxException)) {
+                throw new IllegalArgumentException("uri is invalid for some other reason", e);
+            }
+
+            URISyntaxException cause = (URISyntaxException) e.getCause();
+            int problemIndex = cause.getIndex();
+            String highlight =
+                    String.format(" %s^%s", "-".repeat(problemIndex), "-".repeat(uri().length() - (problemIndex + 1)));
+            throw new IllegalArgumentException(
+                    String.format("%s\n'%s'\n%s", URI_IS_NOT_VALID_PREAMBLE, uri(), highlight), e);
+        }
     }
 
-    public static JsonArtifactLocator from(ArtifactLocator artifactLocator) {
-        return new JsonArtifactLocator(
-                artifactLocator.getType().get(), artifactLocator.getUri().get());
+    static JsonArtifactLocator from(ArtifactLocator artifactLocator) {
+        return from(artifactLocator.getType().get(), artifactLocator.getUri().get());
+    }
+
+    static JsonArtifactLocator from(String type, String uri) {
+        return ImmutableJsonArtifactLocator.builder().type(type).uri(uri).build();
     }
 }

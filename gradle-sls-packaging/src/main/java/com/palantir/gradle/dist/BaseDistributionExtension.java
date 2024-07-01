@@ -80,7 +80,6 @@ public class BaseDistributionExtension {
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
         artifacts = project.getObjects().domainObjectSet(ArtifactLocator.class);
-        artifacts.configureEach(ArtifactLocator::isValid);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
