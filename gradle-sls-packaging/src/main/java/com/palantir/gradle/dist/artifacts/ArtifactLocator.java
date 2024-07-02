@@ -16,9 +16,6 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-import com.google.common.base.Preconditions;
-import com.palantir.logsafe.exceptions.SafeIllegalArgumentException;
-import java.net.URI;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 
@@ -28,19 +25,4 @@ public interface ArtifactLocator {
 
     @Input
     Property<String> getUri();
-
-    default void isValid() {
-        Preconditions.checkNotNull(getType().get(), "type must be specified");
-        Preconditions.checkNotNull(getUri().get(), "uri must be specified");
-        uriIsValid(getUri().get());
-    }
-
-    private static void uriIsValid(String uri) {
-        try {
-            // Throws IllegalArgumentException if URI does not conform to RFC 2396
-            URI.create(uri);
-        } catch (IllegalArgumentException e) {
-            throw new SafeIllegalArgumentException("uri is not valid", e);
-        }
-    }
 }

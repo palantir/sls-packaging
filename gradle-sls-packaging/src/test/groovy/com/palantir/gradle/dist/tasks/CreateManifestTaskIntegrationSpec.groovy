@@ -16,7 +16,10 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.palantir.gradle.dist.ObjectMappers
+import com.palantir.gradle.dist.SlsManifest
+import com.palantir.gradle.dist.artifacts.JsonArtifactLocator
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesIntegrationSpec
 import nebula.test.IntegrationSpec
 import spock.lang.Unroll
@@ -217,13 +220,75 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         buildResult.wasExecuted('createManifest')
-        def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml').text, Map)
-        manifest.get("extensions").get("artifacts") == [
-                [
-                        "type": "oci",
-                        "uri" : "registry.example.io/foo/bar:v1.3.0"
-                ]
-        ]
+        readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
+    }
+
+    def 'fails if invalid'() {
+        buildFile << """
+        distribution {
+            artifact {
+                type = "oci"
+                uri = "registry.example[.io/foo/bar:v1.3.0"
+            }
+        }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksWithFailure('createManifest')
+
+        then:
+        buildResult.failure.cause.cause.message.contains("uri is not valid")
+    }
+
+    def "write artifacts to manifest from task output"() {
+        given:
+        buildFile << """
+            
+            import org.gradle.api.file.RegularFileProperty
+            import org.gradle.api.provider.Provider
+            import org.gradle.api.tasks.OutputFile
+            import org.gradle.api.tasks.TaskAction
+            import java.nio.file.Files
+            
+            abstract class SomeTask extends DefaultTask {
+                @OutputFile
+                abstract RegularFileProperty getOutput();
+                
+                final Provider<String> artifactUri() {
+                  return getOutput().getAsFile().map { 
+                    return Files.readString(it.toPath())
+                  }
+                }
+                
+                @TaskAction
+                final void action() throws Exception {
+                    Files.writeString(getOutput().getAsFile().get().toPath(), "registry.example.io/foo/bar:v1.3.0")
+                }
+            }
+            
+            def artifactOutput = tasks.register('produceArtifactUrl', SomeTask.class) {
+                output.fileValue(file("build/artifact-url"))
+            }
+            
+            distribution {
+                artifact {
+                    type = "oci"
+                    uri = artifactOutput.flatMap { it.output }.map { Files.readString(it.getAsFile().toPath())}
+                }
+            }
+        """.stripIndent()
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+        println buildResult.standardOutput
+
+        then:
+        readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
+    }
+
+    private List<JsonArtifactLocator> readArtifactsExtension() {
+        def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml').text, SlsManifest)
+        ObjectMappers.jsonMapper.convertValue(manifest.extensions().get("artifacts"), new TypeReference<List<JsonArtifactLocator>>() {})
     }
 
     def "check depends on createManifest"() {
