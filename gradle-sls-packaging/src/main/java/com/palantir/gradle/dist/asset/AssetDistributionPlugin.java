@@ -16,12 +16,12 @@
 
 package com.palantir.gradle.dist.asset;
 
+import com.palantir.gradle.dist.DeploymentDirInclusion;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
-import java.io.File;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -81,13 +81,10 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             String archiveRootDir = String.format(
                     "%s-%s", distributionExtension.getDistributionServiceName().get(), p.getVersion());
 
-            task.from(
-                    new File(project.getProjectDir(), "deployment"),
-                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
-
-            task.from(
-                    new File(project.getBuildDir(), "deployment"),
-                    t -> t.into(new File(String.format("%s/deployment", archiveRootDir))));
+            task.into(archiveRootDir, root -> {
+                DeploymentDirInclusion.includeFromDeploymentDirs(
+                        project.getLayout(), distributionExtension, root, _ignored -> {});
+            });
 
             distributionExtension
                     .getAssets()
