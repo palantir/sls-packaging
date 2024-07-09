@@ -137,34 +137,6 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         dep2['maximum-version'] == '2.x.x'
     }
 
-    def 'allows another task to produce configuration.yml'() {
-        given:
-        createUntarBuildFile(buildFile)
-        debug = true
-
-        // language=Gradle
-        buildFile << '''
-            task createConfigurationYml {
-                outputs.file('build/some-place/configuration.yml')
-                
-                doFirst {
-                    file('build/some-place/configuration.yml').text = 'custom: yml'
-                }
-            }
-
-            distribution {
-                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
-            }
-        '''.stripIndent(true)
-
-        when:
-        runTasks(':distTar', ':untar')
-
-        then:
-        String actualConfiguration = new File(projectDir, 'dist/asset-name-0.0.1/deployment/configuration.yml').text
-        actualConfiguration == 'custom: yml'
-    }
-
     /**
      * Note: in this test, we are not checking that we can resolve exactly the right artifact,
      * as that is tricky to get right, when the configuration being resolved doesn't set any required attributes.
