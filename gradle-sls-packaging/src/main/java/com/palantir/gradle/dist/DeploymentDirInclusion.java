@@ -63,8 +63,6 @@ public final class DeploymentDirInclusion {
             // `build/deployment/configuration.yml`.
             t.from(projectLayout.getBuildDirectory().file("deployment/configuration.yml"));
         });
-
-        root.int
     }
 
     private DeploymentDirInclusion() {}
