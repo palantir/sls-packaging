@@ -19,6 +19,7 @@ package com.palantir.gradle.dist;
 import org.gradle.api.Action;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.ProjectLayout;
+import org.gradle.api.file.RegularFile;
 
 public final class DeploymentDirInclusion {
 
@@ -41,6 +42,30 @@ public final class DeploymentDirInclusion {
             // Import configuration.yml from the where it is declared in the extension, allowing tasks to
             // generate it and have dependent tasks (like this distTar) get the correct task deps.
             t.from(distributionExtension.getConfigurationYml().map(file -> {
+                // This is a bit of hack to "fall back" to a `build/deployment/configuration.yml` if the
+                // `deployment/configuration.yml` does not exist. This can happen when there's a templating setup
+                // that pre-exists the being able to configuration.yml on the extension and it outputs to
+                // `build/deployment/configuration.yml`.
+                if (!file.getAsFile().exists()) {
+                    RegularFile buildConfiguration = projectLayout
+                            .getBuildDirectory()
+                            .file("deployment/configuration.yml")
+                            .get();
+
+                    if (buildConfiguration.getAsFile().exists()) {
+                        return buildConfiguration;
+                    }
+
+                    throw new RuntimeException(
+                            "No configuration.yml found for product. SLS distributions require a configuration.yml. "
+                                    + "There are two reasons this could happen:\n"
+                                    + "* You have not added a static `deployment/configuration.yml`\n"
+                                    + "* There's a task that generates the configuration.yml that did not before run "
+                                    + "this task. You should ideally use the internal `sls-configuration-templating` "
+                                    + "plugin rather than rolling your own templating task (or manually set up the "
+                                    + "task dependency).");
+                }
+
                 // We enforce the file is called configuration.yml. Unfortunately, there is an internal
                 // piece of code that deduplicates files in gradle-sls-docker. This deduplication is done
                 // using this copyspec. Were we to just call `.rename()` on this copyspec arm (to allow plugin
