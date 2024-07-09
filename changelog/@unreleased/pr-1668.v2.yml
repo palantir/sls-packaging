@@ -1,0 +1,7 @@
+type: fix
+fix:
+  description: assets can also have custom configuration.yml locations and the asset
+    plugin will fall back to `build/deployment/configuration.yml` if the `deployment/configuration.yml`
+    does not exist.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1668
