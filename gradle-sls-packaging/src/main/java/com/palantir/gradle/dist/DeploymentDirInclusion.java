@@ -56,6 +56,12 @@ public final class DeploymentDirInclusion {
                 throw new IllegalStateException("The file set to be the value of getConfigurationYml() "
                         + "must be called configuration.yml. Instead, it was called " + file.getAsFile());
             }));
+
+            // This is a bit of hack to "fall back" to a `build/deployment/configuration.yml` if the
+            // `deployment/configuration.yml` does not exist. This can happen when there's a templating setup
+            // that pre-exists the being able to configuration.yml on the extension and it outputs to
+            // `build/deployment/configuration.yml`.
+            t.from(projectLayout.getBuildDirectory().file("deployment/configuration.yml"));
         });
     }
 
