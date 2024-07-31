@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Override the JNA temporary directory to point to var/data/tmp
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1673
