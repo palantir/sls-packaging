@@ -89,7 +89,7 @@ com.palantir.foo:foo-service ($projectVersion, 1.x.x)
 
 _The `$projectVersion` string is a placeholder that will appear if your repo publishes multiple services, and one of them depends on another.  The actual manifest will contain a concrete version._
 
-The suffix `optional` will be added for `optional = true` in the `productDependency` declaration. All dependencies are required by default. 
+The suffix `optional` will be added for `optional = true` in the `productDependency` declaration. All dependencies are required by default.
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
 `productDependency` block - this will be merged with any constraints detected from other jars.
@@ -208,7 +208,7 @@ Apply the plugin using standard Gradle convention:
 Additionally, declare the version of [go-java-launcher](https://github.com/palantir/go-java-launcher) to use:
 
 ```
-# Add to 'versions.props' 
+# Add to 'versions.props'
 com.palantir.launching:* = 1.18.0
 ```
 
@@ -263,7 +263,7 @@ And the complete list of configurable properties:
  * (optional) `javaHome` a fixed override for the `JAVA_HOME` environment variable that will
    be applied when `init.sh` is run. When your `targetCompatibility` is Java 8 or less, this value will be blank. For
    Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
- * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default for Java 14 and lower), `hybrid` (default for Java 15 and higher) and `response-time`. Additionally, there is also `dangerous-no-profile` which does not apply any additional JVM flags and allows you to fully configure any GC settings through JVM options (not recommended for normal usage!). 
+ * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default for Java 14 and lower), `hybrid` (default for Java 15 and higher) and `response-time`. Additionally, there is also `dangerous-no-profile` which does not apply any additional JVM flags and allows you to fully configure any GC settings through JVM options (not recommended for normal usage!).
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
 
 #### JVM Options
@@ -275,6 +275,8 @@ concatenating the following list of hard-coded *required options* and the list o
 Hard-coded required JVM options:
 - `-Djava.io.tmpdir=var/data/tmp`: Allocates temporary files inside the application installation folder rather than on
   `/tmp`; the latter is often space-constrained on cloud hosts.
+- `-Djna.tmpdir=var/data/tmp`: Allocates temporary JNA files inside the application installation folder rather than on
+  `${USER}/.cache`; the latter is often space-constrained on cloud hosts and filling it up can result in users not being able to login.
 
 The `go-java-launcher` and `init.sh` launchers additionally append the list of JVM options specified in the
 `var/conf/launcher-custom.yml` [configuration file](https://github.com/palantir/go-java-launcher). Note that later
