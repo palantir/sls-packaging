@@ -69,6 +69,7 @@ public final class LaunchConfig {
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
             "-Djava.io.tmpdir=var/data/tmp",
+            "-Djna.tmpdir=var/data/tmp",
             "-XX:ErrorFile=var/log/hs_err_pid%p.log",
             "-XX:HeapDumpPath=var/log",
             // Set DNS cache TTL to 10s to account for systems such as RDS and other

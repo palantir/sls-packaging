@@ -367,14 +367,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             task createConfigurationYml {
                 outputs.file('build/some-place/configuration.yml')
-                
+
                 doFirst {
                     file('build/some-place/configuration.yml').text = 'custom: yml'
                 }
             }
 
             distribution {
-                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
+                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile })
             }
         '''.stripIndent(true)
 
@@ -395,14 +395,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         buildFile << '''
             task createConfigurationYml {
                 outputs.file('build/some-place/something-else.yml')
-                
+
                 doFirst {
                     file('build/some-place/something-else.yml').text = 'custom: yml'
                 }
             }
 
             distribution {
-                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile }) 
+                configurationYml.fileProvider(tasks.named('createConfigurationYml').map { it.outputs.files.singleFile })
             }
         '''.stripIndent(true)
 
@@ -455,6 +455,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .jvmOpts([
                         '-XX:+CrashOnOutOfMemoryError',
                         '-Djava.io.tmpdir=var/data/tmp',
+                        '-Djna.tmpdir=var/data/tmp',
                         '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                         '-XX:HeapDumpPath=var/log',
                         '-Dsun.net.inetaddr.ttl=10',
@@ -485,6 +486,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .jvmOpts([
                         '-XX:+CrashOnOutOfMemoryError',
                         '-Djava.io.tmpdir=var/data/tmp',
+                        '-Djna.tmpdir=var/data/tmp',
                         '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                         '-XX:HeapDumpPath=var/log',
                         '-Dsun.net.inetaddr.ttl=10',
@@ -537,6 +539,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .jvmOpts([
                         '-XX:+CrashOnOutOfMemoryError',
                         '-Djava.io.tmpdir=var/data/tmp',
+                        '-Djna.tmpdir=var/data/tmp',
                         '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                         '-XX:HeapDumpPath=var/log',
                         '-Dsun.net.inetaddr.ttl=10',
@@ -567,6 +570,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .jvmOpts([
                         '-XX:+CrashOnOutOfMemoryError',
                         '-Djava.io.tmpdir=var/data/tmp',
+                        '-Djna.tmpdir=var/data/tmp',
                         '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                         '-XX:HeapDumpPath=var/log',
                         '-Dsun.net.inetaddr.ttl=10',
@@ -610,6 +614,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             .jvmOpts([
                 '-XX:+CrashOnOutOfMemoryError',
                 '-Djava.io.tmpdir=var/data/tmp',
+                '-Djna.tmpdir=var/data/tmp',
                 '-XX:ErrorFile=var/log/hs_err_pid%p.log',
                 '-XX:HeapDumpPath=var/log',
                 '-Dsun.net.inetaddr.ttl=10',
@@ -1516,11 +1521,11 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
             id 'com.palantir.sls-java-service-distribution'
         }
-        
+
         repositories {
             mavenCentral()
         }
-        
+
         version '0.0.1'
         distribution {
             serviceName 'service-name'
