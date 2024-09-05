@@ -12,6 +12,6 @@ org.junit.vintage:* = 5.11.0
 org.rauschig:jarchivelib = 1.2.0
 com.palantir.gradle.failure-reports:* = 1.2.0
 
-com.netflix.nebula:nebula-test = 10.0.0
+com.netflix.nebula:nebula-test = 10.6.1
 junit:junit = 4.13.2
 org.awaitility:awaitility = 4.2.2
