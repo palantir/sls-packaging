@@ -32,8 +32,8 @@ import org.gradle.api.tasks.SourceSet;
 @SuppressWarnings("deprecation")
 public final class MainClassResolver {
     public static String resolveMainClass(Project project) {
-        SourceSet main = project.getConvention()
-                .getPlugin(org.gradle.api.plugins.JavaPluginConvention.class)
+        SourceSet main = project.getExtensions()
+                .getByType(org.gradle.api.plugins.JavaPluginExtension.class)
                 .getSourceSets()
                 .getByName("main");
         Set<Path> javaFilesWithMainMethods = main.getAllSource().getSrcDirs().stream()
