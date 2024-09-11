@@ -72,8 +72,8 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
     // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before migrating to Gradle 8.
     @SuppressWarnings("deprecation")
     private static Manifest createManifest(Project project, Set<ProductDependency> recommendedProductDependencies) {
-        org.gradle.api.plugins.JavaPluginConvention javaConvention =
-                project.getConvention().getPlugin(org.gradle.api.plugins.JavaPluginConvention.class);
+        org.gradle.api.plugins.JavaPluginExtension javaConvention =
+                project.getExtensions().getByType(org.gradle.api.plugins.JavaPluginExtension.class);
         return javaConvention.manifest(manifest -> {
             String recommendedProductDeps;
             try {

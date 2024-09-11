@@ -197,8 +197,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.dependsOn(manifestClassPathTask);
 
             // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before moving to Gradle 8.
-            org.gradle.api.plugins.JavaPluginConvention javaPlugin =
-                    project.getConvention().findPlugin(org.gradle.api.plugins.JavaPluginConvention.class);
+            org.gradle.api.plugins.JavaPluginExtension javaPlugin =
+                    project.getExtensions().getByType(org.gradle.api.plugins.JavaPluginExtension.class);
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {

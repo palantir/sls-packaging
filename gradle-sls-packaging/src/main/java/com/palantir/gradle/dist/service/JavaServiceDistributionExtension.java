@@ -60,8 +60,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         super(project);
         this.project = project;
         objectFactory = project.getObjects();
-        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() -> project.getConvention()
-                .getPlugin(org.gradle.api.plugins.JavaPluginConvention.class)
+        javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() -> project.getExtensions()
+                .getByType(org.gradle.api.plugins.JavaPluginExtension.class)
                 .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
 
