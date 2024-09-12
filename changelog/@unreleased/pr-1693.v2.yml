@@ -1,0 +1,7 @@
+type: fix
+fix:
+  description: Do not use the remote build cache for `mergeDiagnosticJson`; it takes
+    far longer than just doing the operation locally. Avoids spamming output with
+    "Requesting from remote build cache" too.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1693
