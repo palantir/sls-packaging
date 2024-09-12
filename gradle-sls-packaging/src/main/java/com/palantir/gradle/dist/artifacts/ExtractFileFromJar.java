@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
@@ -30,10 +29,12 @@ import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.work.DisableCachingByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@CacheableTransform
+@DisableCachingByDefault(
+        because = "Extracting a single file from a zip is much faster than making network requests to the build cache")
 public abstract class ExtractFileFromJar implements TransformAction<FileExtractParameter> {
     private static final Logger log = LoggerFactory.getLogger(ExtractFileFromJar.class);
 
