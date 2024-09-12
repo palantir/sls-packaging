@@ -32,6 +32,9 @@ import org.gradle.api.tasks.PathSensitivity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// Do *not* make this class cacheable using @CacheableTransform. It's far, far faster to just extract a single
+// file from a zip than to make network requrest to the remote build cache.
+// See https://github.com/palantir/sls-packaging/pull/1693
 public abstract class ExtractFileFromJar implements TransformAction<FileExtractParameter> {
     private static final Logger log = LoggerFactory.getLogger(ExtractFileFromJar.class);
 
