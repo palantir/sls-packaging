@@ -34,3 +34,6 @@ fileeditor
 out/
 
 **/generated_src/
+
+# Gradle JDKs setup
+!gradle/*
