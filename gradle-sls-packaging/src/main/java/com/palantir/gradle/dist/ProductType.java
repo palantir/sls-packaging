@@ -30,4 +30,7 @@ public enum ProductType {
 
     @JsonProperty("helm-chart.v1")
     HELM_CHART_V1,
+
+    @JsonProperty("foundry-product.v1")
+    FOUNDRY_PRODUCT_V1,
 }
