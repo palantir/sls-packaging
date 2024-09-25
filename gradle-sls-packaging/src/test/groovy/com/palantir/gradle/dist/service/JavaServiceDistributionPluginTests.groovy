@@ -1336,7 +1336,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     }
 
     def 'gc profile null configuration closure on java 21'() {
-        // We set a different different default MaxGCPauseMillis in JDK-21 than older JDKs.
+        // We do not declare MaxGCPauseMillis in JDK-21 unless a value is explicitly configured.
         given:
         buildFile << '''
             plugins {
