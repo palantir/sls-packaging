@@ -1366,7 +1366,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
-        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', "-XX:MaxGCPauseMillis=200"])
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA'])
+        actualStaticConfig.jvmOpts().stream().noneMatch { it.contains("MaxGCPauseMillis") }
     }
 
     def 'applies java agents'() {
