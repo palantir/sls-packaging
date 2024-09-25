@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalInt;
 import org.gradle.api.JavaVersion;
 
 public interface GcProfile extends Serializable {
@@ -108,15 +109,30 @@ public interface GcProfile extends Serializable {
         // in high-garbage or low-gc-thread scenarios. In the happy case, increasing the pause target increases
         // both throughput and latency. In degenerate cases, a low target can cause the garbage collector to
         // thrash and reduce throughput while increasing latency.
-        private int maxGCPauseMillis = 500;
+        private static final int LEGACY_MAX_GC_PAUSE_MILLIS = 500;
+        private static final int JAVA_21_PLUS_MAX_GC_PAUSE_MILLIS = 200;
+
+        private OptionalInt maxGCPauseMillis = OptionalInt.empty();
 
         @Override
-        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
-            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA", "-XX:MaxGCPauseMillis=" + maxGCPauseMillis);
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            return ImmutableList.of(
+                    "-XX:+UseG1GC", "-XX:+UseNUMA", "-XX:MaxGCPauseMillis=" + getMaxGCPauseMillis(javaVersion));
+        }
+
+        private int getMaxGCPauseMillis(JavaVersion javaVersion) {
+            if (maxGCPauseMillis.isPresent()) {
+                return maxGCPauseMillis.getAsInt();
+            }
+            if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
+                return JAVA_21_PLUS_MAX_GC_PAUSE_MILLIS;
+            } else {
+                return LEGACY_MAX_GC_PAUSE_MILLIS;
+            }
         }
 
         public final void maxGCPauseMillis(int value) {
-            this.maxGCPauseMillis = value;
+            this.maxGCPauseMillis = OptionalInt.of(value);
         }
     }
 

@@ -1300,6 +1300,75 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', "-XX:MaxGCPauseMillis=500"])
     }
 
+    def 'adds maxGCPauseMillis gc profile jvm settings on java 21'() {
+        given:
+        buildFile << '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                javaVersion 21
+                gc 'hybrid', {
+                    maxGCPauseMillis 1234
+                }
+            }
+        '''.stripIndent()
+
+        createUntarTask(buildFile)
+
+        when:
+        runTasks(':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', '-XX:MaxGCPauseMillis=1234'])
+    }
+
+    def 'gc profile null configuration closure on java 21'() {
+        // We set a different different default MaxGCPauseMillis in JDK-21 than older JDKs.
+        given:
+        buildFile << '''
+            plugins {
+                id 'java'
+                id 'com.palantir.sls-java-service-distribution'
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                javaVersion 21
+                gc 'hybrid'
+            }
+        '''.stripIndent()
+
+        createUntarTask(buildFile)
+
+        when:
+        runTasks(':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', "-XX:MaxGCPauseMillis=200"])
+    }
+
     def 'applies java agents'() {
         createUntarBuildFile(buildFile)
         buildFile << """
