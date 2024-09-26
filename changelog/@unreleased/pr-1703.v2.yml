@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Added the `FOUNDRY_PRODUCT_V1` `ProductType`.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1703
