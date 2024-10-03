@@ -36,20 +36,22 @@ dependencies {
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
-pluginBundle {
+gradlePlugin {
     website = 'https://github.com/palantir/sls-packaging'
     vcsUrl = 'https://github.com/palantir/sls-packaging'
-    description = 'Creates a distributable package containing libraries and scripts necessary to easily deploy and run a Java project.'
-    tags = ['distribution', 'application']
 
     plugins {
         javaServiceDistributionPlugin {
             id = 'com.palantir.sls-java-service-distribution'
             displayName = 'Creates SLS Java services distributions'
+            tags.set(['distribution', 'application'])
+            implementationClass = 'com.palantir.gradle.dist.service.JavaServiceDistributionPlugin'
         }
         assetDistributionPlugin {
             id = 'com.palantir.sls-asset-distribution'
             displayName = 'Creates SLS asset distributions'
+            tags.set(['distribution', 'application'])
+            implementationClass= 'com.palantir.gradle.dist.asset.AssetDistributionPlugin'
         }
     }
 }
