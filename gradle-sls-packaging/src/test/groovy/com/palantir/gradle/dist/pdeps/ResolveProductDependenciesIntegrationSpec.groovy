@@ -36,6 +36,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     """.stripIndent()
 
     def setup() {
+        System.setProperty("ignoreDeprecations", "true")
         buildFile << """
         apply plugin: 'java'
         import ${ProductDependencies.class.getCanonicalName()}

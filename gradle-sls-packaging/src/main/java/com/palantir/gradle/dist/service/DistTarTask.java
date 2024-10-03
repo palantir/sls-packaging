@@ -27,6 +27,7 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 
+@SuppressWarnings("deprecation") // for the setFileMode calls
 final class DistTarTask {
     static final String SCRIPTS_DIST_LOCATION = "service/bin";
 
