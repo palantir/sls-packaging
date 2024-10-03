@@ -322,7 +322,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
                     task.getProductType().set(ext.getProductType());
                     task.getManifestFile()
-                            .set(project.getLayout().getBuildDirectory().file("/deployment/manifest.yml"));
+                            .set(project.getLayout().getBuildDirectory().file("deployment/manifest.yml"));
                     task.getProductDependenciesFile()
                             .set(resolveProductDependenciesTask.flatMap(
                                     ResolveProductDependenciesTask::getManifestFile));
