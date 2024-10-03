@@ -25,9 +25,10 @@ import nebula.test.dependencies.GradleDependencyGenerator
 
 class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpec {
     def setup() {
+        System.setProperty("ignoreDeprecations", "true")
         buildFile << """
         plugins {
-            id 'com.palantir.consistent-versions' version '2.0.0' apply false
+            id 'com.palantir.consistent-versions' version '2.25.0' apply false
         }
         apply plugin: 'java'
         apply plugin: 'com.palantir.recommended-product-dependencies'
