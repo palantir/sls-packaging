@@ -1048,7 +1048,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     mavenCentral()
                 }
                 dependencies {
-                    classpath 'com.palantir.gradle.docker:gradle-docker:0.27.0'
+                    classpath 'com.palantir.gradle.docker:gradle-docker:0.36.0'
                 }
             }
             apply plugin: 'com.palantir.docker-compose'
