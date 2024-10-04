@@ -18,6 +18,8 @@ package com.palantir.gradle.dist.pdeps
 
 import com.palantir.gradle.dist.BaseDistributionExtension
 import com.palantir.gradle.dist.ObjectMappers
+import spock.lang.Unroll
+
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.IntegrationSpec
@@ -60,7 +62,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         then:
         def manifest = ObjectMappers.readProductDependencyManifest(
-                file('build/product-dependencies/pdeps-manifest.json'))
+                file('build/resolved-pdeps/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -86,7 +88,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         then:
         !result.wasExecuted(':child:jar')
         def manifest = ObjectMappers.readProductDependencyManifest(
-                file('build/product-dependencies/pdeps-manifest.json'))
+                file('build/resolved-pdeps/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -117,7 +119,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         then:
         def manifest = ObjectMappers.readProductDependencyManifest(
-                file('build/product-dependencies/pdeps-manifest.json'))
+                file('build/resolved-pdeps/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
     }
 
@@ -148,7 +150,23 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         then:
         def manifest = ObjectMappers.readProductDependencyManifest(
-                file('build/product-dependencies/pdeps-manifest.json'))
+                file('build/resolved-pdeps/pdeps-manifest.json'))
         manifest.productDependencies().isEmpty()
+    }
+
+    def 'resolveProductDependencies and processResources work together'() {
+        // this is a strange setup that really shouldn't happen in a real repo - a project shouldn't be both an API
+        // jar and a distribution.  But in case it does happen we want to make sure there are no accidental
+        // connections between the tasks.
+        when:
+        //language=gradle
+        buildFile.text = '''
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.recommended-product-dependencies'
+            apply plugin: 'com.palantir.sls-asset-distribution'
+        '''.stripIndent()
+
+        then:
+        runTasksSuccessfully('resolveProductDependencies', 'processResources')
     }
 }

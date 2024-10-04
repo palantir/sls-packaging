@@ -38,7 +38,7 @@ public final class ProductDependencies {
 
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
-        Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
+        Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("resolved-pdeps");
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation

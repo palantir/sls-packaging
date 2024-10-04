@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: remove accidental connection between task outputs
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1709
