@@ -18,6 +18,8 @@ package com.palantir.gradle.dist.pdeps
 
 import com.palantir.gradle.dist.BaseDistributionExtension
 import com.palantir.gradle.dist.ObjectMappers
+import spock.lang.Unroll
+
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.IntegrationSpec
@@ -150,5 +152,21 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/product-dependencies/pdeps-manifest.json'))
         manifest.productDependencies().isEmpty()
+    }
+
+    def 'resolveProductDependencies and processResources work together under gradle8'() {
+        given:
+        //language=gradle
+        buildFile.text = '''
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.recommended-product-dependencies'
+            apply plugin: 'com.palantir.sls-asset-distribution'
+        '''.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('resolveProductDependencies', 'processResources')
+
+        then:
+        result.wasExecuted('compileRecommendedProductDependencies')
     }
 }
