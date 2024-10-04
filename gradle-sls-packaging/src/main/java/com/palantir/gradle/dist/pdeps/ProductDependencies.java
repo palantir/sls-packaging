@@ -38,7 +38,7 @@ public final class ProductDependencies {
 
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
-        Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("product-dependencies");
+        Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("resolved-pdeps");
 
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
@@ -56,32 +56,23 @@ public final class ProductDependencies {
                 });
 
         Provider<ArtifactView> discoveredDependencies = getDiscoveredDependencies(project, ext);
-        TaskProvider<ResolveProductDependenciesTask> resolveProductDependencies = project.getTasks()
-                .register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
-                    task.getServiceName().set(ext.getDistributionServiceName());
-                    task.getServiceGroup().set(ext.getDistributionServiceGroup());
+        return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
+            task.getServiceName().set(ext.getDistributionServiceName());
+            task.getServiceGroup().set(ext.getDistributionServiceGroup());
 
-                    task.getInRepoProductIds()
-                            .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
-                                            project.getRootProject())
+            task.getInRepoProductIds()
+                    .set(project.provider(
+                            () -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(project.getRootProject())
                                     .keySet()));
-                    task.getProductDependencies().set(ext.getAllProductDependencies());
-                    task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
-                    task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
+            task.getProductDependencies().set(ext.getAllProductDependencies());
+            task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
+            task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
 
-                    task.getProductDependenciesFiles().from(discoveredDependencies.map(pdeps -> pdeps.getArtifacts()
-                            .getArtifactFiles()));
+            task.getProductDependenciesFiles().from(discoveredDependencies.map(pdeps -> pdeps.getArtifacts()
+                    .getArtifactFiles()));
 
-                    task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
-                });
-
-        // the RecommendedProductDependenciesPlugin adds the entire build/product-dependencies directory as a source
-        // directory to the main sourceset's resources.  This makes gradle8 complain that processResources uses
-        // the output of resolveProductDependencies as an input, so need to declare it specifically.
-        project.getPluginManager().withPlugin("com.palantir.recommended-product-dependencies", _plugin -> {
-            project.getTasks().named("processResources").configure(task -> task.dependsOn(resolveProductDependencies));
+            task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
-        return resolveProductDependencies;
     }
 
     private static Provider<ArtifactView> getDiscoveredDependencies(
