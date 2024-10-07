@@ -46,12 +46,14 @@ gradlePlugin {
             displayName = 'Creates SLS Java services distributions'
             tags.set(['distribution', 'application'])
             implementationClass = 'com.palantir.gradle.dist.service.JavaServiceDistributionPlugin'
+            description = 'Creates a distributable package containing libraries and scripts necessary to easily deploy and run a Java project.'
         }
         assetDistributionPlugin {
             id = 'com.palantir.sls-asset-distribution'
             displayName = 'Creates SLS asset distributions'
             tags.set(['distribution', 'application'])
             implementationClass= 'com.palantir.gradle.dist.asset.AssetDistributionPlugin'
+            description = 'Creates a distributable package containing an SLS asset.'
         }
     }
 }

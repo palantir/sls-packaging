@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: fix publishing
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1712
