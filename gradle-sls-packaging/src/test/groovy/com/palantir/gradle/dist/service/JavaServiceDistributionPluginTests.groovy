@@ -1285,6 +1285,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 serviceName 'service-name'
                 mainClass 'test.Test'
+                javaVersion 17
                 gc 'hybrid'
             }
         '''.stripIndent()
