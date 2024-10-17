@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalInt;
 import org.gradle.api.JavaVersion;
 
 public interface GcProfile extends Serializable {
@@ -102,21 +103,42 @@ public interface GcProfile extends Serializable {
     // Match the MaxGCPauseMillis case
     @SuppressWarnings("AbbreviationAsWordInName")
     class Hybrid implements GcProfile {
-        // We use 500ms by default, up from the JDK default value of 200ms. Using G1, eden space is dynamically
-        // chosen based on the amount of memory which can be collected within the pause time target.
-        // Higher pause target values allow for more eden space, resulting in more stable old generation
-        // in high-garbage or low-gc-thread scenarios. In the happy case, increasing the pause target increases
-        // both throughput and latency. In degenerate cases, a low target can cause the garbage collector to
-        // thrash and reduce throughput while increasing latency.
-        private int maxGCPauseMillis = 500;
+        // For Java versions older than 21 we use 500ms by default, up from the JDK default value of 200ms for
+        // historical reasons. Java 21 builds seem to interact poorly with this value, causing frequent full
+        // GC cycles. The 500ms value was chosen at a time when GC thread counts were based on cpu shares
+        // rather than the underlying physical cores (prior to https://bugs.openjdk.org/browse/JDK-8281181),
+        // so services tended to thrash in GC to meet the 200ms threshold, promoting data too quickly to old gen.
+        // This is no longer the case, however we are leaving the Java 17 values where they've been, and making
+        // changes targeting Java 21 and beyond where we've observed significant improvements.
+        private static final int LEGACY_MAX_GC_PAUSE_MILLIS = 500;
+
+        private OptionalInt maxGCPauseMillis = OptionalInt.empty();
 
         @Override
-        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
-            return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA", "-XX:MaxGCPauseMillis=" + maxGCPauseMillis);
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            ImmutableList.Builder<String> builder = ImmutableList.<String>builderWithExpectedSize(3)
+                    .add("-XX:+UseG1GC")
+                    .add("-XX:+UseNUMA");
+            OptionalInt maxGCPauseMillisValue = getMaxGCPauseMillis(javaVersion);
+            if (maxGCPauseMillisValue.isPresent()) {
+                builder.add("-XX:MaxGCPauseMillis=" + maxGCPauseMillisValue.getAsInt());
+            }
+            return builder.build();
+        }
+
+        private OptionalInt getMaxGCPauseMillis(JavaVersion javaVersion) {
+            if (maxGCPauseMillis.isPresent()) {
+                return maxGCPauseMillis;
+            }
+            if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
+                return OptionalInt.empty();
+            } else {
+                return OptionalInt.of(LEGACY_MAX_GC_PAUSE_MILLIS);
+            }
         }
 
         public final void maxGCPauseMillis(int value) {
-            this.maxGCPauseMillis = value;
+            this.maxGCPauseMillis = OptionalInt.of(value);
         }
     }
 
