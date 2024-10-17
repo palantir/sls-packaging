@@ -54,7 +54,7 @@ subprojects {
 }
 
 javaVersions {
-    libraryTarget = 11
+    libraryTarget = 17
 }
 
 jdks {
