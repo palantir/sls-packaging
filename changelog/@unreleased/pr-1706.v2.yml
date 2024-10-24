@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Hybrid (G1) GC uses the defeault 200ms MaxGCPauseMillis on JDK-21+
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1706
