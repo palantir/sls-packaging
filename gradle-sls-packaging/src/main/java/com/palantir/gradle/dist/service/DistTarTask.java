@@ -27,7 +27,6 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 
-@SuppressWarnings("deprecation") // for the setFileMode calls
 final class DistTarTask {
     static final String SCRIPTS_DIST_LOCATION = "service/bin";
 
@@ -54,7 +53,7 @@ final class DistTarTask {
 
             root.from("service/bin", t -> {
                 t.into("service/bin");
-                t.setFileMode(0755);
+                t.filePermissions(filePerms -> filePerms.unix(0755));
             });
 
             // We do this trick of iterating through every java version and making a from with a lazy value to be lazy
@@ -89,17 +88,17 @@ final class DistTarTask {
 
             root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
-                t.setFileMode(0755);
+                t.filePermissions(filePerms -> filePerms.unix(0755));
             });
 
             root.into("service/monitoring/bin", t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("monitoring"));
-                t.setFileMode(0755);
+                t.filePermissions(filePerms -> filePerms.unix(0755));
             });
 
             root.into("service/lib/linux-x86-64", t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("libs/linux-x86-64"));
-                t.setFileMode(0755);
+                t.filePermissions(filePerms -> filePerms.unix(0755));
             });
 
             DeploymentDirInclusion.includeFromDeploymentDirs(
