@@ -45,6 +45,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
                 minimumVersion = '1.0.0'
                 maximumVersion = '1.x.x'
                 recommendedVersion = '1.2.3'
+                optional = true
             }
         }
         """.stripIndent()
@@ -62,6 +63,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.minimumVersion == "1.0.0"
         dep.maximumVersion == "1.x.x"
         dep.recommendedVersion == "1.2.3"
+        dep.optional
     }
 
     def 'Jar includes recommended product dependencies'() {

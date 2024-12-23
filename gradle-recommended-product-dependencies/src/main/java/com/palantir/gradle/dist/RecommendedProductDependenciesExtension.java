@@ -42,12 +42,6 @@ public class RecommendedProductDependenciesExtension {
         recommendedProductDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
             project.configure(dep, closure);
-            if (dep.getOptional()) {
-                throw new IllegalArgumentException(String.format(
-                        "Optional dependencies are not supported for recommended product "
-                                + "dependencies. Please remove optional for dependency %s",
-                        dep));
-            }
             dep.isValid();
             return dep;
         }));
