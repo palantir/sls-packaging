@@ -17,31 +17,39 @@
 package com.palantir.gradle.dist;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 public abstract class CompileRecommendedProductDependencies extends DefaultTask {
+
     static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Input
     abstract SetProperty<ProductDependency> getRecommendedProductDependencies();
 
-    @OutputFile
-    abstract RegularFileProperty getOutputFile();
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir();
 
     @TaskAction
     final void action() throws IOException {
-        Set<ProductDependency> value = getRecommendedProductDependencies().get();
+        File outputFile = getOutputDir()
+                .get()
+                .file(RecommendedProductDependenciesPlugin.RESOURCE_PATH)
+                .getAsFile();
+
+        outputFile.getParentFile().mkdirs();
+
         MAPPER.writeValue(
-                getOutputFile().getAsFile().get(),
+                outputFile,
                 RecommendedProductDependencies.builder()
-                        .addAllRecommendedProductDependencies(value)
+                        .addAllRecommendedProductDependencies(
+                                getRecommendedProductDependencies().get())
                         .build());
     }
 }
