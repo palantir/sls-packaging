@@ -18,16 +18,13 @@ package com.palantir.gradle.dist;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.file.Directory;
-import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
+
     public static final String RESOURCE_PATH =
             RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json";
 
@@ -55,13 +52,13 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
     }
 
     private void embedResource(Project project, RecommendedProductDependenciesExtension ext) {
-        Provider<Directory> dir = project.getLayout().getBuildDirectory().dir("product-dependencies");
-        TaskProvider<? extends Task> compilePdeps = project.getTasks()
+        TaskProvider<CompileRecommendedProductDependencies> compilePdeps = project.getTasks()
                 .register(
                         "compileRecommendedProductDependencies", CompileRecommendedProductDependencies.class, task -> {
                             task.getRecommendedProductDependencies()
                                     .set(ext.getRecommendedProductDependenciesProvider());
-                            task.getOutputFile().set(dir.map(directory -> directory.file(RESOURCE_PATH)));
+                            task.getOutputDir()
+                                    .set(project.getLayout().getBuildDirectory().dir("product-dependencies"));
                         });
 
         project.getTasks()
@@ -70,11 +67,8 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                         processResources -> processResources.dependsOn(compilePdeps));
 
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        sourceSets.getByName("main").resources(resources -> {
-            SourceDirectorySet sourceDir = project.getObjects()
-                    .sourceDirectorySet("product-dependencies", "Recommended product dependencies")
-                    .srcDir(dir);
-            resources.source(sourceDir);
+        sourceSets.named("main").configure(sourceSet -> {
+            sourceSet.getResources().srcDir(compilePdeps.map(CompileRecommendedProductDependencies::getOutputDir));
         });
     }
 }
