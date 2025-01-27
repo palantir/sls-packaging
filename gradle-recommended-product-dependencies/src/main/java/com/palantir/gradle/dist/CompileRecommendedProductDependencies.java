@@ -31,6 +31,9 @@ import org.gradle.api.tasks.TaskAction;
 
 public abstract class CompileRecommendedProductDependencies extends DefaultTask {
 
+
+    public static final String RESOURCE_PATH =
+            RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json";
     static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Input
@@ -46,7 +49,7 @@ public abstract class CompileRecommendedProductDependencies extends DefaultTask 
     public CompileRecommendedProductDependencies(Project project) {
         getOutputDirectory()
                 .convention(project.getLayout().getBuildDirectory().dir("product-dependencies"));
-        getOutputFile().convention(getOutputDirectory().file(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json"));
+        getOutputFile().convention(getOutputDirectory().file(RESOURCE_PATH));
     }
 
     @TaskAction
