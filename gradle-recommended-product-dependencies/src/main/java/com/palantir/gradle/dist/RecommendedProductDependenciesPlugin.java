@@ -25,6 +25,9 @@ import org.gradle.jvm.tasks.Jar;
 
 public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
+    public static final String RESOURCE_PATH =
+            RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json";
+
     @Override
     public final void apply(Project project) {
         RecommendedProductDependenciesExtension ext = project.getExtensions()

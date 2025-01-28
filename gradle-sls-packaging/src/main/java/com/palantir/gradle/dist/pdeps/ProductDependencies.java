@@ -17,9 +17,9 @@
 package com.palantir.gradle.dist.pdeps;
 
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.CompileRecommendedProductDependencies;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
+import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
 import com.palantir.gradle.dist.artifacts.ExtractSingleFileOrManifest;
 import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
@@ -46,13 +46,13 @@ public final class ProductDependencies {
 
         DependencyDiscovery.configureJarTransform(
                 project, ExtractSingleFileOrManifest.class, PRODUCT_DEPENDENCIES, params -> {
-                    params.getPathToExtract().set(CompileRecommendedProductDependencies.RESOURCE_PATH);
+                    params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                     params.getKeyToExtract().set(RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY);
                 });
 
         DependencyDiscovery.configureResourceTransform(
                 project, SelectSingleFile.class, PRODUCT_DEPENDENCIES, params -> {
-                    params.getPathToExtract().set(CompileRecommendedProductDependencies.RESOURCE_PATH);
+                    params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                 });
 
         Provider<ArtifactView> discoveredDependencies = getDiscoveredDependencies(project, ext);
