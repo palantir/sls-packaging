@@ -16,12 +16,9 @@
 
 package com.palantir.gradle.dist;
 
-import java.io.File;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.file.Directory;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
@@ -55,6 +52,8 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         TaskProvider<CompileRecommendedProductDependencies> compilePdeps = project.getTasks()
                 .register(
                         "compileRecommendedProductDependencies", CompileRecommendedProductDependencies.class, task -> {
+                            task.getOutputDirectory()
+                                    .set(project.getLayout().getBuildDirectory().dir("product-dependencies"));
                             task.getRecommendedProductDependencies()
                                     .set(ext.getRecommendedProductDependenciesProvider());
                         });
