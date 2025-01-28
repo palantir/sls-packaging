@@ -19,10 +19,12 @@ package com.palantir.gradle.dist;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
@@ -33,20 +35,25 @@ public abstract class CompileRecommendedProductDependencies extends DefaultTask 
     @Input
     abstract SetProperty<ProductDependency> getRecommendedProductDependencies();
 
+    /**
+     * Ensure that the sourcesJar task in {@link RecommendedProductDependenciesPlugin} includes {@code getProductDependenciesFile()}.
+     */
     @OutputDirectory
     abstract DirectoryProperty getOutputDir();
 
+    @Internal
+    public final File getProductDependenciesFile() {
+        return getOutputDir()
+                .file(RecommendedProductDependenciesPlugin.RESOURCE_PATH)
+                .get()
+                .getAsFile();
+    }
+
     @TaskAction
     final void action() throws IOException {
-        File outputFile = getOutputDir()
-                .get()
-                .file(RecommendedProductDependenciesPlugin.RESOURCE_PATH)
-                .getAsFile();
-
-        outputFile.getParentFile().mkdirs();
-
+        Files.createDirectories(getProductDependenciesFile().toPath().getParent());
         MAPPER.writeValue(
-                outputFile,
+                getProductDependenciesFile(),
                 RecommendedProductDependencies.builder()
                         .addAllRecommendedProductDependencies(
                                 getRecommendedProductDependencies().get())

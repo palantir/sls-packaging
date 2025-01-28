@@ -66,6 +66,39 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.optional
     }
 
+    def 'sourcesJar runs compileRecommendedProductDependencies'() {
+        //language=groovy
+        buildFile << """
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = '1.0.0'
+                    maximumVersion = '1.x.x'
+                    recommendedVersion = '1.2.3'
+                }
+            }
+
+            java {
+               withSourcesJar()
+            }
+        """.stripIndent()
+
+        file('src/main/java/Main.java') << '''
+                public class Main {
+                    public static void main(String[] args) { }
+                }
+            '''.stripIndent(true)
+
+        when:
+        def result = runTasksSuccessfully(':sourcesJar')
+
+        then:
+        result.wasExecuted("compileRecommendedProductDependencies")
+        fileExists("build/libs/${moduleName}-sources.jar")
+
+    }
+
     def 'Jar includes recommended product dependencies'() {
         buildFile << """
             recommendedProductDependencies {
