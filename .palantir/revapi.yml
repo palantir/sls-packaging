@@ -18,3 +18,8 @@ acceptedBreaks:
     - code: "java.field.removed"
       old: "field com.palantir.gradle.dist.RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_ATTRIBUTE"
       justification: "Reverting change"
+  "7.72.0":
+    com.palantir.sls-packaging:gradle-recommended-product-dependencies:
+    - code: "java.method.removed"
+      old: "method java.io.File com.palantir.gradle.dist.CompileRecommendedProductDependencies::getProductDependenciesFile()"
+      justification: "Changing a new API"
