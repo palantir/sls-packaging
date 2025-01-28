@@ -30,7 +30,6 @@ import org.gradle.api.tasks.TaskAction;
 
 public abstract class CompileRecommendedProductDependencies extends DefaultTask {
 
-
     public static final String RESOURCE_PATH =
             RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json";
     static final ObjectMapper MAPPER = new ObjectMapper();
@@ -42,12 +41,11 @@ public abstract class CompileRecommendedProductDependencies extends DefaultTask 
      * Ensure that the sourcesJar task in {@link RecommendedProductDependenciesPlugin} includes {@code getProductDependenciesFile()}.
      */
     @OutputDirectory
-    abstract DirectoryProperty getOutputDirectory();
-
+    abstract DirectoryProperty getOutputDir();
 
     @Internal
     public final File getProductDependenciesFile() {
-        return getOutputDirectory().file(RESOURCE_PATH).get().getAsFile();
+        return getOutputDir().file(RESOURCE_PATH).get().getAsFile();
     }
 
     @TaskAction

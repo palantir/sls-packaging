@@ -20,7 +20,6 @@ import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.CompileRecommendedProductDependencies;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
-import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
 import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
 import com.palantir.gradle.dist.artifacts.ExtractSingleFileOrManifest;
 import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;

@@ -52,10 +52,10 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         TaskProvider<CompileRecommendedProductDependencies> compilePdeps = project.getTasks()
                 .register(
                         "compileRecommendedProductDependencies", CompileRecommendedProductDependencies.class, task -> {
-                            task.getOutputDirectory()
-                                    .set(project.getLayout().getBuildDirectory().dir("product-dependencies"));
                             task.getRecommendedProductDependencies()
                                     .set(ext.getRecommendedProductDependenciesProvider());
+                            task.getOutputDir()
+                                    .set(project.getLayout().getBuildDirectory().dir("product-dependencies"));
                         });
 
         project.getTasks()
@@ -65,9 +65,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         sourceSets.named("main").configure(sourceSet -> {
-            sourceSet
-                    .getResources()
-                    .srcDir(compilePdeps.map(CompileRecommendedProductDependencies::getOutputDirectory));
+            sourceSet.getResources().srcDir(compilePdeps.map(CompileRecommendedProductDependencies::getOutputDir));
         });
     }
 }
