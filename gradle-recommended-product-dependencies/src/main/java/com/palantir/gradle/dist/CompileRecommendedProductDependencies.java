@@ -17,15 +17,15 @@
 package com.palantir.gradle.dist;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 public abstract class CompileRecommendedProductDependencies extends DefaultTask {
@@ -41,19 +41,15 @@ public abstract class CompileRecommendedProductDependencies extends DefaultTask 
     @OutputDirectory
     abstract DirectoryProperty getOutputDir();
 
-    @Internal
-    public final File getProductDependenciesFile() {
-        return getOutputDir()
-                .file(RecommendedProductDependenciesPlugin.RESOURCE_PATH)
-                .get()
-                .getAsFile();
+    @OutputFile
+    public final Provider<RegularFile> getOutputFile() {
+        return getOutputDir().file(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
     }
 
     @TaskAction
     final void action() throws IOException {
-        Files.createDirectories(getProductDependenciesFile().toPath().getParent());
         MAPPER.writeValue(
-                getProductDependenciesFile(),
+                getOutputFile().get().getAsFile(),
                 RecommendedProductDependencies.builder()
                         .addAllRecommendedProductDependencies(
                                 getRecommendedProductDependencies().get())
