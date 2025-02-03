@@ -79,7 +79,8 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                             .map(RegularFileProperty::getAsFile)
                             .map(Provider::get)
                             .map(File::getParentFile)
-                            .map(File::getParentFile));
+                            .map(File::getParentFile))
+                    .include(RESOURCE_PATH);
         });
     }
 }
