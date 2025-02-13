@@ -1556,7 +1556,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             dependencies { implementation files("${EXTERNAL_JAR}") }
             tasks.jar.archiveBaseName = "internal"
             distribution {
-                enableAlwaysPreTouch true
+                enableAlwaysPreTouch = true
             }""".stripIndent()
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 

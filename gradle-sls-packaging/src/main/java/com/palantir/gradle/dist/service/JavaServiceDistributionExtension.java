@@ -159,6 +159,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.enableAlwaysPreTouch.set(alwaysPreTouch);
     }
 
+    public final void setEnableAlwaysPreTouch(boolean alwaysPreTouch) {
+        this.enableAlwaysPreTouch.set(alwaysPreTouch);
+    }
+
     public final Provider<List<String>> getArgs() {
         return args;
     }

@@ -265,6 +265,7 @@ And the complete list of configurable properties:
    Java 9 or higher will default to `$JAVA_<majorversion>_HOME` ie for Java 11 this would be `$JAVA_11_HOME`.
  * (optional) `gc` override the default GC settings. Available GC settings: `throughput` (default for Java 14 and lower), `hybrid` (default for Java 15 and higher) and `response-time`. Additionally, there is also `dangerous-no-profile` which does not apply any additional JVM flags and allows you to fully configure any GC settings through JVM options (not recommended for normal usage!).
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
+ * (optional) `enableAlwaysPreTouch` adds the `-XX:+AlwaysPreTouch` JVM option.
 
 #### JVM Options
 
