@@ -1646,6 +1646,4 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         pb.environment().put("JAVA_HOME", System.getProperty("java.home"))
         pb.start().waitFor()
     }
-
 }
-
