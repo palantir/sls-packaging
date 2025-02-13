@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Add enableAlwaysPreTouch option
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1772
