@@ -89,6 +89,8 @@ public final class LaunchConfig {
     // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
     private static final ImmutableList<String> disableAvx512 = ImmutableList.of("-XX:UseAVX=2");
 
+    private static final ImmutableList<String> alwaysPreTouchOptions = ImmutableList.of("-XX:+AlwaysPreTouch");
+
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
     // See https://issues.apache.org/jira/browse/HADOOP-7154
@@ -116,6 +118,9 @@ public final class LaunchConfig {
 
         @Input
         Property<Boolean> getBundledJdks();
+
+        @Input
+        Property<Boolean> getAlwaysPreTouch();
 
         @Input
         ListProperty<String> getArgs();
@@ -191,6 +196,7 @@ public final class LaunchConfig {
                                         : ImmutableList.of())
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
                         .addAllJvmOpts(params.getGcJvmOptions().get())
+                        .addAllJvmOpts(params.getAlwaysPreTouch().get() ? alwaysPreTouchOptions : ImmutableList.of())
                         .addAllJvmOpts(params.getDefaultJvmOpts().get())
                         .putAllEnv(defaultEnvironment)
                         .putAllEnv(params.getEnv().get())

@@ -1550,6 +1550,27 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         fileExists("dist/service-name-0.0.1/service/bin/go-init-${goJavaLauncherVersion}/service/bin")
     }
 
+    def 'enableAlwaysPreTouch'() {
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                enableAlwaysPreTouch()
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts().containsAll([
+                "-XX:+AlwaysPreTouch",
+        ])
+    }
+
     private static createUntarBuildFile(File buildFile) {
         buildFile << '''
             plugins {
