@@ -225,7 +225,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getJavaVersion().set(distributionExtension.getJavaVersion());
                     task.getAlwaysPreTouch().set(distributionExtension.getAlwaysPreTouch());
-
                     task.getBundledJdks()
                             .set(distributionExtension
                                     .getJdks()
