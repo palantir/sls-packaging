@@ -105,7 +105,7 @@ class JavaServiceDistributionExtensionTest extends Specification {
         ext.getCheckArgs().get() == []
         ext.getDefaultJvmOpts().get() == []
         ext.getExcludeFromVar().get() == ['log', 'run']
-        ext.getEnableAlwaysPreTouch().get() == false
+        ext.getAlwaysPreTouch().get() == false
     }
 
     def 'correct java homes depending on java version' () {

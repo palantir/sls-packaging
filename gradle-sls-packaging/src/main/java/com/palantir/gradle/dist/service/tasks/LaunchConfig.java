@@ -120,7 +120,7 @@ public final class LaunchConfig {
         Property<Boolean> getBundledJdks();
 
         @Input
-        Property<Boolean> getEnableAlwaysPreTouch();
+        Property<Boolean> getAlwaysPreTouch();
 
         @Input
         ListProperty<String> getArgs();
@@ -196,8 +196,7 @@ public final class LaunchConfig {
                                         : ImmutableList.of())
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
                         .addAllJvmOpts(params.getGcJvmOptions().get())
-                        .addAllJvmOpts(
-                                params.getEnableAlwaysPreTouch().get() ? alwaysPreTouchOptions : ImmutableList.of())
+                        .addAllJvmOpts(params.getAlwaysPreTouch().get() ? alwaysPreTouchOptions : ImmutableList.of())
                         .addAllJvmOpts(params.getDefaultJvmOpts().get())
                         .putAllEnv(defaultEnvironment)
                         .putAllEnv(params.getEnv().get())

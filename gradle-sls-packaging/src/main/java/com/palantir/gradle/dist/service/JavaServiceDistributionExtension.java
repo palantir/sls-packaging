@@ -44,7 +44,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final Property<Boolean> addJava8GcLogging;
     private final Property<Boolean> enableManifestClasspath;
     private final Property<GcProfile> gc;
-    private final Property<Boolean> enableAlwaysPreTouch;
+    private final Property<Boolean> alwaysPreTouch;
     private final ListProperty<String> args;
     private final ListProperty<String> checkArgs;
     private final ListProperty<String> defaultJvmOpts;
@@ -91,7 +91,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
                 .property(GcProfile.class)
                 .value(javaVersion.map(JavaServiceDistributionExtension::getDefaultGcProfile));
 
-        enableAlwaysPreTouch = objectFactory.property(Boolean.class).value(false);
+        alwaysPreTouch = objectFactory.property(Boolean.class).value(false);
 
         args = objectFactory.listProperty(String.class).empty();
         checkArgs = objectFactory.listProperty(String.class).empty();
@@ -151,16 +151,12 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.enableManifestClasspath.set(newEnableManifestClasspath);
     }
 
-    public final Provider<Boolean> getEnableAlwaysPreTouch() {
-        return enableAlwaysPreTouch;
+    public final Provider<Boolean> getAlwaysPreTouch() {
+        return alwaysPreTouch;
     }
 
-    public final void enableAlwaysPreTouch(boolean alwaysPreTouch) {
-        this.enableAlwaysPreTouch.set(alwaysPreTouch);
-    }
-
-    public final void setEnableAlwaysPreTouch(boolean alwaysPreTouch) {
-        this.enableAlwaysPreTouch.set(alwaysPreTouch);
+    public final void enableAlwaysPreTouch() {
+        this.alwaysPreTouch.set(true);
     }
 
     public final Provider<List<String>> getArgs() {
