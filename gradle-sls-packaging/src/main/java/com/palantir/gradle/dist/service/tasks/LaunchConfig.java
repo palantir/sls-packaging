@@ -89,7 +89,8 @@ public final class LaunchConfig {
     // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
     private static final ImmutableList<String> disableAvx512 = ImmutableList.of("-XX:UseAVX=2");
 
-    private static final ImmutableList<String> alwaysPreTouchOptions = ImmutableList.of("-XX:+AlwaysPreTouch");
+    private static final ImmutableList<String> alwaysPreTouchOptions =
+            ImmutableList.of("-XX:+AlwaysPreTouch", "-XX:+UseTransparentHugePages");
 
     // Reduce memory usage for some versions of glibc.
     // Default value is 8 * CORES.
