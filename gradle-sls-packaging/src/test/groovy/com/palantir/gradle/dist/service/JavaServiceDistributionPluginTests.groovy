@@ -1568,6 +1568,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.jvmOpts().containsAll([
                 "-XX:+AlwaysPreTouch",
+                "-XX:+UseTransparentHugePages",
         ])
     }
 
