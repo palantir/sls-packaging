@@ -74,3 +74,7 @@ test {
 tasks.publish.dependsOn publishPlugins
 project.ext.'gradle.publish.key' = System.env["GRADLE_KEY"]
 project.ext.'gradle.publish.secret' = System.env["GRADLE_SECRET"]
+
+gradleTestUtils {
+    gradleVersions = ['7.6.4', '8.8', '8.12.1']
+}
