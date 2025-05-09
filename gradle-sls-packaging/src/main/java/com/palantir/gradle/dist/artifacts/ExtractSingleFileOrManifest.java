@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2021 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2025 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.util.Optional;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
-import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
@@ -32,8 +31,10 @@ import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.work.DisableCachingByDefault;
 
-@CacheableTransform
+@DisableCachingByDefault(
+        because = "Extracting a single file from a zip is much faster than making network requests to the build cache")
 public abstract class ExtractSingleFileOrManifest implements TransformAction<FileAndManifestExtractParameter> {
     @PathSensitive(PathSensitivity.NAME_ONLY)
     @InputArtifact
