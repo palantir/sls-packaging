@@ -179,7 +179,7 @@ public class BaseDistributionExtension {
                         + " 'group:name:version:classifier@type', where ':classifier' and '@type' are optional.",
                 mavenCoordVersionRange);
         String minVersion = matcher.group("version");
-        productDependencies.add(new ProductDependency(
+        productDependencies.add(ProductDependency.create(
                 matcher.group("group"),
                 matcher.group("name"),
                 minVersion,
@@ -202,7 +202,7 @@ public class BaseDistributionExtension {
             String minVersion,
             String maxVersion,
             String recommendedVersion) {
-        productDependencies.add(new ProductDependency(
+        productDependencies.add(ProductDependency.create(
                 dependencyGroup,
                 dependencyName,
                 minVersion,

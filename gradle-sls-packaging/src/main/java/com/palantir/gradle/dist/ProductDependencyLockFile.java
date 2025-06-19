@@ -39,7 +39,7 @@ public final class ProductDependencyLockFile {
                 .flatMap(line -> {
                     Matcher matcher = LOCK_PATTERN.matcher(line);
                     if (matcher.matches()) {
-                        return Stream.of(new ProductDependency(
+                        return Stream.of(ProductDependency.create(
                                 matcher.group("group"),
                                 matcher.group("name"),
                                 matcher.group("min").equals(PROJECT_VERSION) ? projectVersion : matcher.group("min"),

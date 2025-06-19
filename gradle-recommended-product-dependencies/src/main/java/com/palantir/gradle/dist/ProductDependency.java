@@ -52,6 +52,8 @@ public final class ProductDependency implements Serializable {
 
     public ProductDependency() {}
 
+    // isValid should not be ran as part of the constructor as this can cause issue with configuration cache, either use
+    // one of the `create` methods or run isValid manually
     public ProductDependency(
             String productGroup,
             String productName,
@@ -65,7 +67,6 @@ public final class ProductDependency implements Serializable {
         this.maximumVersion = maximumVersion;
         this.recommendedVersion = recommendedVersion;
         this.optional = optional;
-        isValid();
     }
 
     public ProductDependency(
@@ -75,6 +76,31 @@ public final class ProductDependency implements Serializable {
             String maximumVersion,
             String recommendedVersion) {
         this(productGroup, productName, minimumVersion, maximumVersion, recommendedVersion, false);
+    }
+
+    public static ProductDependency create(
+            String productGroup,
+            String productName,
+            String minimumVersion,
+            String maximumVersion,
+            String recommendedVersion,
+            boolean optional) {
+        ProductDependency dep = new ProductDependency(
+                productGroup, productName, minimumVersion, maximumVersion, recommendedVersion, optional);
+        dep.isValid();
+        return dep;
+    }
+
+    public static ProductDependency create(
+            String productGroup,
+            String productName,
+            String minimumVersion,
+            String maximumVersion,
+            String recommendedVersion) {
+        ProductDependency dep = new ProductDependency(
+                productGroup, productName, minimumVersion, maximumVersion, recommendedVersion, false);
+        dep.isValid();
+        return dep;
     }
 
     /**
