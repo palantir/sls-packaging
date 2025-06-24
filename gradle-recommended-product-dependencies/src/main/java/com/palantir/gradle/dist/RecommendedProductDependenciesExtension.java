@@ -42,7 +42,6 @@ public class RecommendedProductDependenciesExtension {
         recommendedProductDependencies.add(providerFactory.provider(() -> {
             ProductDependency dep = new ProductDependency();
             project.configure(dep, closure);
-            dep.isValid();
             return dep;
         }));
     }

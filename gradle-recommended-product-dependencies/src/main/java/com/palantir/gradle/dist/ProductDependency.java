@@ -65,7 +65,6 @@ public final class ProductDependency implements Serializable {
         this.maximumVersion = maximumVersion;
         this.recommendedVersion = recommendedVersion;
         this.optional = optional;
-        isValid();
     }
 
     public ProductDependency(

@@ -36,7 +36,19 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         project.getPluginManager().withPlugin("java", _plugin -> {
             embedResource(project, ext);
             configureManifest(project, ext);
+            validateProductDependencies(project, ext);
         });
+    }
+
+    private void validateProductDependencies(Project project, RecommendedProductDependenciesExtension ext) {
+        TaskProvider<ValidateProductDependenciesTask> validateProductDependenciesTask = project.getTasks()
+                .register(
+                        "validateProductDependencies",
+                        ValidateProductDependenciesTask.class,
+                        task -> task.getRecommendedProductDependencies()
+                                .set(ext.getRecommendedProductDependenciesProvider()));
+
+        project.getTasks().named("check").configure(task -> task.dependsOn(validateProductDependenciesTask));
     }
 
     private void configureManifest(Project project, RecommendedProductDependenciesExtension ext) {

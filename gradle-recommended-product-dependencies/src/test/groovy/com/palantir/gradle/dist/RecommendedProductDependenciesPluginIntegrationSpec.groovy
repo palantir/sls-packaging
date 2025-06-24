@@ -169,6 +169,27 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.maximumVersion == "1.x.x"
     }
 
+    def "Fails build for invalid recommended product dependency"() {
+        buildFile << """
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = '1.0.0'
+                    maximumVersion = '1.0.0' // Invalid: min == max
+                    recommendedVersion = '1.0.0'
+                }
+            }
+        """.stripIndent(true)
+
+        when:
+        def result = runTasksWithFailure(':check')
+
+        then:
+        result.failure != null
+        result.standardError.contains("minimumVersion and maximumVersion must be different")
+    }
+
     def readRecommendedProductDeps(File jarFile) {
         def zf = new ZipFile(jarFile)
         def resource = zf.getEntry("${RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY}/product-dependencies.json")
