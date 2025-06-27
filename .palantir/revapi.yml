@@ -23,3 +23,10 @@ acceptedBreaks:
     - code: "java.method.removed"
       old: "method java.io.File com.palantir.gradle.dist.CompileRecommendedProductDependencies::getProductDependenciesFile()"
       justification: "Changing a new API"
+  "7.76.0":
+    com.palantir.sls-packaging:gradle-recommended-product-dependencies:
+    - code: "java.class.removed"
+      old: "class com.palantir.gradle.dist.ConfigureProductDependenciesTask"
+      justification: "ConfigureProductDependenciesTask is not used externally so it\
+        \ is safe to delete, internally the logic has been moved to RecommendedProductDependenciesPlugin\
+        \ as this allows for configuration cache compatibiltiy"
