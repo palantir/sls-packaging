@@ -1,0 +1,13 @@
+type: improvement
+improvement:
+  description: |-
+    Remove `isValid` call in `ProductDependency` and removed `ConfigureProductDependenciesTask` for configuration cache compatibility
+
+    - Removed `isValid()` call from `ProductDependency` constructor to prevent configuration cache serialization issues during configuration time.
+    - Added `ValidateProductDependenciesTask` to perform validation of product dependencies during the execution phase, hooked into the `check` task.
+    - Completely removed `ConfigureProductDependenciesTask` and moved its manifest configuration logic into a `doFirst` action on the `Jar` task in `RecommendedProductDependenciesPlugin`.
+    - Captured the product dependencies `Provider` during configuration time to avoid serializing non-serializable objects like `Project`, ensuring lazy evaluation at execution time.
+    - Updated integration tests to use Gradle's configuration cache and added a test for invalid product dependency validation failure.
+    - Documented the removal of `ConfigureProductDependenciesTask` as a breaking change in RevAPI, noting it is safe as the task was not intended for external use.
+  links:
+  - https://github.com/palantir/sls-packaging/pull/1821
