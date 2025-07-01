@@ -1598,7 +1598,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks(':build', ':distTar', ':untar')
 
         then:
-        def externalJar = new File(projectDir, String.format('dist/service-name-0.0.1/service/maven/%s', Path.of(EXTERNAL_JAR).getFileName()))
+        def externalJar = new File(projectDir, "dist/service-name-0.0.1/service/maven/${Path.of(EXTERNAL_JAR).getFileName()}")
         externalJar.exists()
     }
 
