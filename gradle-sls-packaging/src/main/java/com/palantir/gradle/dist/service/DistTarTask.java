@@ -107,6 +107,8 @@ final class DistTarTask {
                     distributionExtension,
                     root,
                     t -> t.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE));
+
+            root.with(distributionExtension.getExtraFiles());
         });
     }
 

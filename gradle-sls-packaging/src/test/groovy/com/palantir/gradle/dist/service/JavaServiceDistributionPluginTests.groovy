@@ -27,6 +27,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
 import spock.lang.Unroll
 
+import java.nio.file.Path
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -1570,6 +1571,34 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-XX:+AlwaysPreTouch",
                 "-XX:+UseTransparentHugePages",
         ])
+    }
+
+    def 'produce distribution bundle that can bundle extra Jars'() {
+        given:
+        createUntarBuildFile(buildFile)
+
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 11
+                javaHome 'foo'
+                extraFiles {
+                    into('service/maven') {
+                      from(files("${EXTERNAL_JAR}"))
+                    }
+                }
+            }""".stripIndent()
+        file('src/main/java/test/Test.java') << """
+          package test;
+          public class Test {}
+        """
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        fileExists("dist/service-name-0.0.1/service/maven/${Path.of(EXTERNAL_JAR).getFileName()}")
     }
 
     private static createUntarBuildFile(File buildFile) {
