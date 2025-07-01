@@ -19,6 +19,8 @@ package com.palantir.gradle.dist.service;
 import com.palantir.gradle.dist.BaseDistributionExtension;
 import com.palantir.gradle.dist.ProductType;
 import com.palantir.gradle.dist.service.gc.GcProfile;
+import com.palantir.gradle.dist.service.gc.GcProfile.Hybrid;
+import com.palantir.gradle.dist.service.gc.GcProfile.Throughput;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
@@ -29,7 +31,9 @@ import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.file.CopySpec;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -51,6 +55,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final ListProperty<String> excludeFromVar;
     private final MapProperty<String, String> env;
     private final MapProperty<JavaVersion, Object> jdks;
+    private final CopySpec extraFiles;
 
     private final ObjectFactory objectFactory;
 
@@ -62,7 +67,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         this.project = project;
         objectFactory = project.getObjects();
         javaVersion = objectFactory.property(JavaVersion.class).value(project.provider(() -> project.getExtensions()
-                .getByType(org.gradle.api.plugins.JavaPluginExtension.class)
+                .getByType(JavaPluginExtension.class)
                 .getTargetCompatibility()));
         mainClass = objectFactory.property(String.class);
 
@@ -101,6 +106,15 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
         env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
+        extraFiles = project.copySpec();
+    }
+
+    public CopySpec getExtraFiles() {
+        return extraFiles;
+    }
+
+    public void extraFiles(Action<? super CopySpec> action) {
+        action.execute(extraFiles);
     }
 
     public final Provider<JavaVersion> getJavaVersion() {
@@ -271,9 +285,9 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private static GcProfile getDefaultGcProfile(JavaVersion javaVersion) {
         // For Java 15 and above, use hybrid as the default garbage collector
         if (javaVersion.compareTo(JavaVersion.toVersion("14")) > 0) {
-            return new GcProfile.Hybrid();
+            return new Hybrid();
         }
-        return new GcProfile.Throughput();
+        return new Throughput();
     }
 
     public final String jdkPathInDist(JavaVersion javaVersionValue) {

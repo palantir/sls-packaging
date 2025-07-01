@@ -40,6 +40,7 @@ final class DistTarTask {
         distTarTask.getArchiveBaseName().set(serviceName);
 
         Callable<String> archiveRootDir = () -> serviceName.get() + "-" + project.getVersion();
+        distTarTask.with(distributionExtension.getExtraFiles().into(archiveRootDir));
 
         distTarTask.into(archiveRootDir, root -> {
             root.from("var", t -> {
