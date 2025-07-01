@@ -109,11 +109,11 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         extraFiles = project.copySpec();
     }
 
-    public CopySpec getExtraFiles() {
+    public final CopySpec getExtraFiles() {
         return extraFiles;
     }
 
-    public void extraFiles(Action<? super CopySpec> action) {
+    public final void extraFiles(Action<? super CopySpec> action) {
         action.execute(extraFiles);
     }
 
