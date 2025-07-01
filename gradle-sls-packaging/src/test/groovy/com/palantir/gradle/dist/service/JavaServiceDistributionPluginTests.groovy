@@ -1589,7 +1589,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     }
                 }
             }""".stripIndent()
-        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+        file('src/main/java/test/Test.java') << """
+          package test;
+          public class Test {}
+        """
 
         when:
         runTasks(':build', ':distTar', ':untar')
