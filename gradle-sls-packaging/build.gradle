@@ -75,5 +75,5 @@ project.ext.'gradle.publish.key' = System.env["GRADLE_KEY"]
 project.ext.'gradle.publish.secret' = System.env["GRADLE_SECRET"]
 
 gradleTestUtils {
-    gradleVersions = ['8.14.2']
+    gradleVersions = ['8.14.3']
 }
