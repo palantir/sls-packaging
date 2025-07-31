@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,7 +38,23 @@ public final class MainClassResolver {
                 .getByType(org.gradle.api.plugins.JavaPluginExtension.class)
                 .getSourceSets()
                 .getByName("main");
-        Set<Path> javaFilesWithMainMethods = main.getAllSource().getSrcDirs().stream()
+
+        Set<File> sourceDirs = new HashSet<>(main.getAllSource().getSrcDirs());
+
+        File generatedDir = project.getBuildDir()
+                .toPath()
+                .resolve("generated")
+                .resolve("sources")
+                .toFile();
+        if (generatedDir.exists() && generatedDir.isDirectory()) {
+            // Add all subdirectories of generated sources (e.g., annotationProcessor/java/main, etc.)
+            File[] subDirs = generatedDir.listFiles(File::isDirectory);
+            if (subDirs != null) {
+                sourceDirs.addAll(Arrays.asList(subDirs));
+            }
+        }
+
+        Set<Path> javaFilesWithMainMethods = sourceDirs.stream()
                 .filter(File::exists)
                 .map(File::toPath)
                 .flatMap(sourceDir -> allJavaFilesIn(sourceDir)
