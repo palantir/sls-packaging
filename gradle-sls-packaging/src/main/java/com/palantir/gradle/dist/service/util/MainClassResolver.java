@@ -47,7 +47,6 @@ public final class MainClassResolver {
                 .resolve("sources")
                 .toFile();
         if (generatedDir.exists() && generatedDir.isDirectory()) {
-            // Add all subdirectories of generated sources (e.g., annotationProcessor/java/main, etc.)
             File[] subDirs = generatedDir.listFiles(File::isDirectory);
             if (subDirs != null) {
                 sourceDirs.addAll(Arrays.asList(subDirs));
