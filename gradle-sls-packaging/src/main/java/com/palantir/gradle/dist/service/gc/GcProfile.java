@@ -71,6 +71,7 @@ public interface GcProfile extends Serializable {
                         "-XX:+ClassUnloadingWithConcurrentMark",
                         "-XX:+UseNUMA");
             }
+
             return ImmutableList.of(
                     "-XX:+UseParNewGC",
                     "-XX:+UseConcMarkSweepGC",
@@ -111,7 +112,16 @@ public interface GcProfile extends Serializable {
         private int maxGCPauseMillis = 500;
 
         @Override
-        public final List<String> gcJvmOpts(JavaVersion _javaVersion) {
+        public final List<String> gcJvmOpts(JavaVersion javaVersion) {
+            if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
+                return ImmutableList.of(
+                        "-XX:+UseZGC",
+                        // https://openjdk.org/jeps/439
+                        "-XX:+ZGenerational",
+                        // "forces concurrent cycle instead of Full GC on System.gc()"
+                        "-XX:+ExplicitGCInvokesConcurrent");
+            }
+
             return ImmutableList.of("-XX:+UseG1GC", "-XX:+UseNUMA", "-XX:MaxGCPauseMillis=" + maxGCPauseMillis);
         }
 
