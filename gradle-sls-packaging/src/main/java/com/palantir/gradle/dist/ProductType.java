@@ -33,4 +33,7 @@ public enum ProductType {
 
     @JsonProperty("foundry-product.v1")
     FOUNDRY_PRODUCT_V1,
+
+    @JsonProperty("module.v1")
+    MODULE_V1,
 }
