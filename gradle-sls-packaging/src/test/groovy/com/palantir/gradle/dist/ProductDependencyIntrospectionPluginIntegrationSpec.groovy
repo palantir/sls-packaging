@@ -21,7 +21,10 @@ import nebula.test.dependencies.DependencyGraph
 import nebula.test.dependencies.GradleDependencyGenerator
 
 class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpec {
-    def "adds product dependency constraints to configuration"() {
+    def "#gradleVersionNumber: adds product dependency constraints to configuration"() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        
         buildFile << 'apply plugin: com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin'
 
         file("product-dependencies.lock").text = '''\
@@ -48,9 +51,14 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
 
         then:
         result.standardOutput.contains("com.palantir.product:test -> 1.0.0")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def "merges product dependency constraints from different projects"() {
+    def "#gradleVersionNumber: merges product dependency constraints from different projects"() {
+        setup:
+        gradleVersion = gradleVersionNumber
         file("a/product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.0.0, 1.x.x)
@@ -87,6 +95,9 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
 
         then:
         result.standardOutput.contains("com.palantir.product:test -> 1.2.0")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     File generateMavenRepo(String... graph) {

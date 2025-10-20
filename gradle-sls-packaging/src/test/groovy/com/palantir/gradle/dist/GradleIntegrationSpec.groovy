@@ -38,13 +38,6 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
         new File(projectDir, path).exists()
     }
 
-    GradleDependencyGenerator generateMavenRepo(String... graph) {
-        DependencyGraph dependencyGraph = new DependencyGraph(graph)
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
-        generator.generateTestMavenRepo()
-        return generator
-    }
-
     /** Just here to ensure we display the gradle warnings, if any. */
     @Override
     GradleRunner createRunner(String... tasks) {

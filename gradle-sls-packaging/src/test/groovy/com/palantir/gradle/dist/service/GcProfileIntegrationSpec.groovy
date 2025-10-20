@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.service.tasks
+package com.palantir.gradle.dist.service
 
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.service.gc.GcProfile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -62,8 +63,10 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
     }
 
     @Unroll
-    def 'successfully create a distribution using gc: #gc'() {
+    def '#gradleVersionNumber: successfully create a distribution using gc: #gc'() {
         setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         distribution {
             gc '${gc}'
@@ -83,7 +86,10 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         println file("touch-service-1.0.0/var/log/startup.log").text
 
         where:
-        gc << GcProfile.PROFILE_NAMES.keySet().toArray()
+        [gc, gradleVersionNumber] << [
+                GcProfile.PROFILE_NAMES.keySet().toArray(),
+                GradleTestVersions.GRADLE_VERSIONS
+        ].combinations()
     }
 
     int execWithExitCode(String... tasks) {

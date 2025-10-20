@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.tasks
 
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.ObjectMappers
 import com.palantir.gradle.dist.pdeps.ResolveProductDependenciesIntegrationSpec
 import nebula.test.IntegrationSpec
@@ -44,7 +45,9 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
     }
 
-    def 'fails if lockfile is not up to date'() {
+    def '#gradleVersionNumber: fails if lockfile is not up to date'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         distribution {
             ${SCHEMA}
@@ -66,9 +69,15 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         then:
         buildResult.getStandardError().contains(
                 "schema-versions.lock is out of date, please run `./gradlew writeSchemaVersionLocks` to update it")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if unexpected lockfile exists'() {
+    def '#gradleVersionNumber: fails if unexpected lockfile exists'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        
         runTasksSuccessfully('createManifest') // ensure task is run once
         def result = runTasksSuccessfully('createManifest')
         result.wasUpToDate(':createManifest')
@@ -78,9 +87,14 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksWithFailure('createManifest')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if lock file disappears'() {
+    def '#gradleVersionNumber: fails if lock file disappears'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         distribution {
             ${SCHEMA}
@@ -104,9 +118,14 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksWithFailure('createManifest')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if lockfile has changed contents'() {
+    def '#gradleVersionNumber: fails if lockfile has changed contents'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         distribution {
             ${SCHEMA}
@@ -130,10 +149,15 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksWithFailure('createManifest')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     @Unroll
-    def 'writes locks when #writeLocksTask is on the command line'() {
+    def '#gradleVersionNumber: writes locks when #writeLocksTask is on the command line'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         distribution {
             ${SCHEMA}
@@ -155,14 +179,21 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
         writeLocksTask << ['--write-locks', 'writeSchemaVersionLocks', 'wSVL']
     }
 
-    def "check depends on createManifest"() {
+    def "#gradleVersionNumber: check depends on createManifest"() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        
         when:
         def result = runTasks(':check')
 
         then:
         result.wasExecuted(":createManifest")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 }

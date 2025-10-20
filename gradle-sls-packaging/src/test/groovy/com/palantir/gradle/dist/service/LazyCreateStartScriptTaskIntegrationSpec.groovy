@@ -16,10 +16,14 @@
 
 package com.palantir.gradle.dist.service
 
+import com.palantir.gradle.dist.GradleTestVersions
 import nebula.test.IntegrationSpec
 
 class LazyCreateStartScriptTaskIntegrationSpec extends IntegrationSpec {
-    def 'correctly populates main class'() {
+    def '#gradleVersionNumber: correctly populates main class'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        
         when:
         buildFile << """
         import com.palantir.gradle.dist.service.tasks.LazyCreateStartScriptTask;
@@ -34,5 +38,8 @@ class LazyCreateStartScriptTaskIntegrationSpec extends IntegrationSpec {
         then:
         file('build/scripts/test-service').text.contains 'myMainClass'
         file('build/scripts/test-service.bat').text.contains 'myMainClass'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 }

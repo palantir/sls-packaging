@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.service.tasks.LaunchConfig
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 
@@ -41,8 +42,9 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
         '''.stripIndent()
     }
 
-    def 'infers main class correctly'() {
+    def '#gradleVersionNumber: infers main class correctly'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             dependencies {
                 implementation 'com.palantir.atlasdb:atlasdb-client:0.382.0'
@@ -70,10 +72,14 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.mainClass() == "test.Test"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails to infer main class if there are many'() {
+    def '#gradleVersionNumber: fails to infer main class if there are many'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             distribution {
                 serviceName 'service-name'
@@ -89,10 +95,14 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
         then:
         def error = thrown(UnexpectedBuildFailure)
         error.message.contains('Expecting to find exactly one main method, however we found 2')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'allows users to override main class if there are many'() {
+    def '#gradleVersionNumber: allows users to override main class if there are many'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             distribution {
                 serviceName 'service-name'
@@ -111,6 +121,9 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.mainClass() == "test.Test"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     def unTarTask(String serviceName) {
