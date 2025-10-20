@@ -1218,6 +1218,8 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 serviceName 'service-name'
                 mainClass 'test.Test'
+                // only available on JDKs < 14
+                javaVersion 11
                 gc 'response-time', {
                     initiatingOccupancyFraction 75
                 }
