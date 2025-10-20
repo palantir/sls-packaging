@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.gradle.StartParameter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -65,6 +66,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
+import org.gradle.process.ExecOperations;
 
 public abstract class CreateManifestTask extends DefaultTask {
 
@@ -98,6 +100,9 @@ public abstract class CreateManifestTask extends DefaultTask {
     final String getProjectVersion() {
         return getProject().getVersion().toString();
     }
+
+    @Inject
+    protected abstract ExecOperations getExecOperations();
 
     /**
      * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
@@ -270,15 +275,14 @@ public abstract class CreateManifestTask extends DefaultTask {
             Files.writeString(tempFile.toPath(), upToDateContents);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            getProject().exec(spec -> {
+            getExecOperations().exec(spec -> {
                 spec.commandLine("diff", "-u", existing.getAbsolutePath(), tempFile.getAbsolutePath());
                 spec.setStandardOutput(baos);
                 spec.setIgnoreExitValue(true);
             });
-            return Optional.of(
-                    Streams.stream(Splitter.on("\n").split(new String(baos.toByteArray(), StandardCharsets.UTF_8)))
-                            .skip(2)
-                            .collect(Collectors.joining("\n")));
+            return Optional.of(Streams.stream(Splitter.on("\n").split(baos.toString(StandardCharsets.UTF_8)))
+                    .skip(2)
+                    .collect(Collectors.joining("\n")));
         } catch (IOException e) {
             getLogger().debug("Unable to provide diff", e);
             return Optional.empty();
