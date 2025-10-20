@@ -18,8 +18,6 @@ package com.palantir.gradle.dist
 
 import com.google.common.collect.ImmutableList
 import nebula.test.IntegrationTestKitSpec
-import nebula.test.dependencies.DependencyGraph
-import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.multiproject.MultiProjectIntegrationHelper
 import org.gradle.testkit.runner.GradleRunner
 
@@ -36,13 +34,6 @@ class GradleIntegrationSpec extends IntegrationTestKitSpec {
 
     protected boolean fileExists(String path) {
         new File(projectDir, path).exists()
-    }
-
-    GradleDependencyGenerator generateMavenRepo(String... graph) {
-        DependencyGraph dependencyGraph = new DependencyGraph(graph)
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
-        generator.generateTestMavenRepo()
-        return generator
     }
 
     /** Just here to ensure we display the gradle warnings, if any. */

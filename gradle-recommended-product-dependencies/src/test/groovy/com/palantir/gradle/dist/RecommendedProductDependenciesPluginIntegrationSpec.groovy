@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist
 
-
 import com.google.common.collect.Iterables
 import java.util.zip.ZipFile
 import nebula.test.IntegrationSpec
@@ -36,7 +35,9 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
 
     }
 
-    def "Manifest includes recommended product dependencies"() {
+    def "#gradleVersionNumber: Manifest includes recommended product dependencies"() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         recommendedProductDependencies {
             productDependency {
@@ -64,9 +65,14 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.maximumVersion == "1.x.x"
         dep.recommendedVersion == "1.2.3"
         dep.optional
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'sourcesJar runs compileRecommendedProductDependencies'() {
+    def '#gradleVersionNumber: sourcesJar runs compileRecommendedProductDependencies'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         //language=groovy
         buildFile << """
             recommendedProductDependencies {
@@ -97,9 +103,13 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         result.wasExecuted("compileRecommendedProductDependencies")
         fileExists("build/libs/${moduleName}-sources.jar")
 
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'Jar includes recommended product dependencies'() {
+    def '#gradleVersionNumber: Jar includes recommended product dependencies'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             recommendedProductDependencies {
                 productDependency {
@@ -126,9 +136,14 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.minimumVersion == "1.0.0"
         dep.maximumVersion == "1.x.x"
         dep.recommendedVersion == "1.2.3"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def "Works with consistent-versions"() {
+    def "#gradleVersionNumber: Works with consistent-versions"() {
+        setup:
+        gradleVersion = gradleVersionNumber
         def repo = generateMavenRepo('group:name:1.0.0')
         buildFile << """
         apply plugin: 'com.palantir.consistent-versions'   
@@ -167,6 +182,9 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         dep.productName == "name"
         dep.minimumVersion == "1.0.0"
         dep.maximumVersion == "1.x.x"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     def readRecommendedProductDeps(File jarFile) {

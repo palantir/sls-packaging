@@ -18,13 +18,16 @@ package com.palantir.gradle.dist.asset
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.Versions
 import spock.lang.Ignore
 
 class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
-    def 'manifest file contains expected fields'() {
+    def '#gradleVersionNumber: manifest file contains expected fields'() {
         given:
+        gradleVersion = gradleVersionNumber
+
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
@@ -42,10 +45,15 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         manifest.contains('"product-name" : "asset-name"')
         manifest.contains('"product-version" : "0.0.1"')
         manifest.contains('"product-type" : "asset.v1"')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'asset dirs are copied correctly'() {
+    def '#gradleVersionNumber: asset dirs are copied correctly'() {
         given:
+        gradleVersion = gradleVersionNumber
+
         file("static/foo/bar") << "."
         file("static/baz/abc") << "."
         file("static/abc") << "overwritten file"
@@ -72,10 +80,15 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         def lines = file("dist/asset-name-0.0.1/asset/maven/abc").readLines()
         lines.size() == 1
         lines.get(0) == "overwritten file"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails when asset and service plugins are used'() {
+    def '#gradleVersionNumber: fails when asset and service plugins are used'() {
         given:
+        gradleVersion = gradleVersionNumber
+
         buildFile << '''
             plugins {
                 id 'com.palantir.sls-java-service-distribution'
@@ -88,10 +101,15 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
 
         then:
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'can specify service dependencies'() {
+    def '#gradleVersionNumber: can specify service dependencies'() {
         given:
+        gradleVersion = gradleVersionNumber
+
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
@@ -135,10 +153,15 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         dep2['product-name'] == 'name2'
         dep2['minimum-version'] == '1.0.0'
         dep2['maximum-version'] == '2.x.x'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'allows another task to produce configuration.yml'() {
+    def '#gradleVersionNumber: allows another task to produce configuration.yml'() {
         given:
+        gradleVersion = gradleVersionNumber
+
         createUntarBuildFile(buildFile)
         debug = true
 
@@ -163,10 +186,15 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         then:
         String actualConfiguration = new File(projectDir, 'dist/asset-name-0.0.1/deployment/configuration.yml').text
         actualConfiguration == 'custom: yml'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'falls back to build/deployment/configuration.yml'() {
+    def '#gradleVersionNumber: falls back to build/deployment/configuration.yml'() {
         given:
+        gradleVersion = gradleVersionNumber
+
         createUntarBuildFile(buildFile)
         debug = true
 
@@ -189,6 +217,9 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
         then:
         String actualConfiguration = new File(projectDir, 'dist/asset-name-0.0.1/deployment/configuration.yml').text
         actualConfiguration == 'buildDir: yml'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     /**

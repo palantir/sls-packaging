@@ -17,8 +17,8 @@
 package com.palantir.gradle.dist.pdeps
 
 import com.palantir.gradle.dist.BaseDistributionExtension
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.ObjectMappers
-import spock.lang.Unroll
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -49,8 +49,9 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         """.stripIndent(true)
     }
 
-    def 'consumes declared product dependencies'() {
+    def '#gradleVersionNumber: consumes declared product dependencies'() {
         setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             distribution {
                 ${PDEP}
@@ -64,10 +65,14 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/resolved-pdeps/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'discovers project dependencies without compilation'() {
+    def '#gradleVersionNumber: discovers project dependencies without compilation'() {
         given:
+        gradleVersion = gradleVersionNumber
         addSubproject('child', """
         apply plugin: 'java'
         apply plugin: 'com.palantir.recommended-product-dependencies'
@@ -90,10 +95,14 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/resolved-pdeps/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'discovers external dependencies'() {
+    def '#gradleVersionNumber: discovers external dependencies'() {
         given:
+        gradleVersion = gradleVersionNumber
         GradleDependencyGenerator generator = new GradleDependencyGenerator(
                 new DependencyGraph("a:a:1.0"), new File(projectDir, "build/testrepogen").toString())
         def mavenRepo = generator.generateTestMavenRepo()
@@ -121,10 +130,14 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/resolved-pdeps/pdeps-manifest.json'))
         !manifest.productDependencies().isEmpty()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'handles jars without manifest'() {
+    def '#gradleVersionNumber: handles jars without manifest'() {
         given:
+        gradleVersion = gradleVersionNumber
         GradleDependencyGenerator generator = new GradleDependencyGenerator(
                 new DependencyGraph(
                         "missingmanifest:missingmanifest:1.0"), new File(projectDir, "build/testrepogen").toString())
@@ -152,9 +165,15 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def manifest = ObjectMappers.readProductDependencyManifest(
                 file('build/resolved-pdeps/pdeps-manifest.json'))
         manifest.productDependencies().isEmpty()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'resolveProductDependencies and processResources work together'() {
+    def '#gradleVersionNumber: resolveProductDependencies and processResources work together'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        
         // this is a strange setup that really shouldn't happen in a real repo - a project shouldn't be both an API
         // jar and a distribution.  But in case it does happen we want to make sure there are no accidental
         // connections between the tasks.
@@ -168,5 +187,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksSuccessfully('resolveProductDependencies', 'processResources')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 }

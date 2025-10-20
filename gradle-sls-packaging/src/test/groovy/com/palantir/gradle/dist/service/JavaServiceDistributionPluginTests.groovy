@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.palantir.gradle.dist.GradleIntegrationSpec
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
 import com.palantir.gradle.dist.service.tasks.LaunchConfig
@@ -40,8 +41,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
     private static final String EXTERNAL_JAR = new File("src/test/resources/external.jar").getAbsolutePath();
 
-    def 'produce distribution bundle and check start, stop, restart, check behavior'() {
+    def '#gradleVersionNumber: produce distribution bundle and check start, stop, restart, check behavior'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
@@ -91,10 +93,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         execWithOutput('dist/service-name-0.0.1/service/monitoring/bin/check.sh').readLines().any {
             it ==~ /Checking health of 'service-name'\.\.\.\s+Healthy/
         }
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'packaging tasks re-run after version change'() {
+    def '#gradleVersionNumber: packaging tasks re-run after version change'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
@@ -127,10 +133,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'start') == 0
         execWithExitCode('dist/service-name-0.0.2/service/bin/init.sh', 'stop') == 0
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle and check var/log and var/run are excluded'() {
+    def '#gradleVersionNumber: produce distribution bundle and check var/log and var/run are excluded'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         createFile('var/log/service-name.log')
@@ -145,10 +155,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !fileExists('dist/service-name-0.0.1/var/log')
         !fileExists('dist/service-name-0.0.1/var/run')
         fileExists('dist/service-name-0.0.1/var/conf/service-name.yml')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle and check var/data/tmp is created and used for temporary files'() {
+    def '#gradleVersionNumber: produce distribution bundle and check var/data/tmp is created and used for temporary files'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         file('src/main/java/test/Test.java') << '''
         package test;
@@ -169,10 +183,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         sleep(1000)
         file('dist/service-name-0.0.1/var/data/tmp').listFiles().length == 1
         file('dist/service-name-0.0.1/var/data/tmp').listFiles()[0].text == "temp content"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle with custom exclude set'() {
+    def '#gradleVersionNumber: produce distribution bundle with custom exclude set'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'java'
@@ -208,10 +226,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !fileExists('dist/service-name-0.0.1/var/log')
         !fileExists('dist/service-name-0.0.1/var/data/database')
         fileExists('dist/service-name-0.0.1/var/conf/service-name.yml')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle with a non-string version object'() {
+    def '#gradleVersionNumber: produce distribution bundle with a non-string version object'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'java'
@@ -252,10 +274,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def manifest = OBJECT_MAPPER.readValue(file('dist/service-name-0.0.1/deployment/manifest.yml'), SlsManifest);
         manifest.productVersion() == "0.0.1"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'manifest file contains expected fields'() {
+    def '#gradleVersionNumber: manifest file contains expected fields'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         when:
@@ -269,10 +295,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         manifest.get("product-version") == "0.0.1"
         manifest.get("product-type") == "service.v1"
         manifest.get("extensions").get("foo") == ["bar": ["1", "2"]]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'can specify service dependencies'() {
+    def '#gradleVersionNumber: can specify service dependencies'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
@@ -315,10 +345,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         dep2['product-group'] == 'group2'
         dep2['product-name'] == 'name2'
         dep2['minimum-version'] == '1.0.0'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'cannot specify service dependencies with invalid versions, with closure constructor'() {
+    def '#gradleVersionNumber: cannot specify service dependencies with invalid versions, with closure constructor'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             distribution {
@@ -336,10 +370,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         result.output.contains("minimumVersion must be an SLS version")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle with files in deployment/'() {
+    def '#gradleVersionNumber: produce distribution bundle with files in deployment/'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         String deploymentConfiguration = 'log: service-name.log'
@@ -357,10 +395,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // check files in deployment/ copied successfully
         String actualConfiguration = new File(projectDir, 'dist/service-name-0.0.1/deployment/configuration.yml').text
         actualConfiguration == deploymentConfiguration
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'allows another task to produce configuration.yml'() {
+    def '#gradleVersionNumber: allows another task to produce configuration.yml'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         debug = true
 
@@ -385,10 +427,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         String actualConfiguration = new File(projectDir, 'dist/service-name-0.0.1/deployment/configuration.yml').text
         actualConfiguration == 'custom: yml'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'errors out if the custom configuration.yml location is not a file called configuration.yml'() {
+    def '#gradleVersionNumber: errors out if the custom configuration.yml location is not a file called configuration.yml'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         debug = true
 
@@ -412,10 +458,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         output.contains('must be called configuration.yml')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle with start script that passes default JVM options'() {
+    def '#gradleVersionNumber: produce distribution bundle with start script that passes default JVM options'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         when:
@@ -424,10 +474,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         String startScript = new File(projectDir, 'dist/service-name-0.0.1/service/bin/service-name').text
         startScript.contains('DEFAULT_JVM_OPTS=\'"-Xmx4M" "-Djavax.net.ssl.trustStore=truststore.jks"\'')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
+    def '#gradleVersionNumber: produce distribution bundle that populates launcher-static.yml and launcher-check.yml'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         buildFile << """
@@ -506,11 +560,15 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfig.LaunchConfigInfo)
         expectedCheckConfig == actualCheckConfig
         expectedStaticConfig == actualStaticConfig
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
 
-    def 'produce distribution bundle that populates launcher-static.yml and launcher-check.yml with bundled jdk'() {
+    def '#gradleVersionNumber: produce distribution bundle that populates launcher-static.yml and launcher-check.yml with bundled jdk'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         buildFile << """
@@ -590,9 +648,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfig.LaunchConfigInfo)
         expectedCheckConfig == actualCheckConfig
         expectedStaticConfig == actualStaticConfig
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution with java 8 gc logging'() {
+    def '#gradleVersionNumber: produce distribution with java 8 gc logging'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies { implementation files("${EXTERNAL_JAR}") }
@@ -642,9 +705,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         expectedStaticConfig == actualStaticConfig
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'respects java version'() {
+    def '#gradleVersionNumber: respects java version'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies { implementation files("${EXTERNAL_JAR}") }
@@ -666,9 +734,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-XX:+ExplicitGCInvokesConcurrent",
                 "-XX:+ClassUnloadingWithConcurrentMark",
         ])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'Uses generational zgc for jdk-21'() {
+    def '#gradleVersionNumber: Uses generational zgc for jdk-21'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies { implementation files("${EXTERNAL_JAR}") }
@@ -690,9 +763,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-XX:+ZGenerational",
                 "-XX:+ExplicitGCInvokesConcurrent",
         ])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'jdk-21 uses default AVX level'() {
+    def '#gradleVersionNumber: jdk-21 uses default AVX level'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies { implementation files("${EXTERNAL_JAR}") }
@@ -709,10 +787,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.jvmOpts().stream().noneMatch { it.contains("UseAVX") }
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle that populates check.sh'() {
+    def '#gradleVersionNumber: produce distribution bundle that populates check.sh'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << '''
             distribution {
@@ -725,10 +807,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         new File(projectDir, 'dist/service-name-0.0.1/service/monitoring/bin/check.sh').exists()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produces manifest-classpath jar and windows start script with no classpath length limitations'() {
+    def '#gradleVersionNumber: produces manifest-classpath jar and windows start script with no classpath length limitations'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         settingsFile << '''
         rootProject.name = 'root-project'
@@ -759,10 +845,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         zipManifest.contains('guava-19.0.jar')
         zipManifest.contains('root-project-manifest-classpath-0.0.1.jar')
         zipManifest.contains('root-project-0.0.1.jar')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'does not produce manifest-classpath jar when disabled in extension'() {
+    def '#gradleVersionNumber: does not produce manifest-classpath jar when disabled in extension'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         when:
@@ -774,10 +864,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         startScript.contains("-classpath \"%CLASSPATH%\"")
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/').listFiles()
                 .find({ it.name.endsWith("-manifest-classpath-0.1.jar") })
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'distTar artifact name is set during appropriate lifecycle events'() {
+    def '#gradleVersionNumber: distTar artifact name is set during appropriate lifecycle events'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'java'
@@ -807,10 +901,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         expect:
         runTasks(':tasks')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'exposes an artifact through the sls configuration'() {
+    def '#gradleVersionNumber: exposes an artifact through the sls configuration'() {
         given:
+        gradleVersion = gradleVersionNumber
         helper.addSubproject('parent', '''
             plugins {
                 id 'java'
@@ -851,10 +949,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
         new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'exposes an artifact via dependency with sls-dist usage'() {
+    def '#gradleVersionNumber: exposes an artifact via dependency with sls-dist usage'() {
         given:
+        gradleVersion = gradleVersionNumber
         helper.addSubproject('producer', '''
             plugins {
                 id 'java'
@@ -899,6 +1001,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         buildResult.task(':producer:distTar').outcome == TaskOutcome.SUCCESS
         new File(consumer,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     /**
@@ -910,7 +1015,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
      * However, here we only care about testing that it can resolve to <i>something</i>, for the sole purpose of
      * extracting the version the resolved component.
      */
-    def 'dist project can be resolved through plain dependency when GCV is applied'() {
+    def '#gradleVersionNumber: dist project can be resolved through plain dependency when GCV is applied'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             plugins {
                 id 'com.palantir.consistent-versions' version '${Versions.GRADLE_CONSISTENT_VERSIONS}'
@@ -947,10 +1054,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         expect:
         runTasks(':verify')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails when asset and service plugins are both applied'() {
+    def '#gradleVersionNumber: fails when asset and service plugins are both applied'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'com.palantir.sls-asset-distribution'
@@ -963,10 +1074,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         result.output.contains("The plugins 'com.palantir.sls-asset-distribution' and 'com.palantir.sls-java-service-distribution' cannot be used in the same Gradle project.")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
+    def '#gradleVersionNumber: uses the runtimeClasspath so api and implementation configurations work with java-library plugin'() {
         given:
+        gradleVersion = gradleVersionNumber
         def parent = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
@@ -1039,10 +1154,15 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
         launcherStatic.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     @Unroll
-    def 'docker can resolve inter-project product dependencies (#writeLocksTask)'() {
+    def '#gradleVersionNumber: docker can resolve inter-project product dependencies (#writeLocksTask)'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             buildscript {
                 repositories {
@@ -1095,10 +1215,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         where:
         writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks']
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'uses the runtimeClasspath in manifest jar'() {
+    def '#gradleVersionNumber: uses the runtimeClasspath in manifest jar'() {
         given:
+        gradleVersion = gradleVersionNumber
         def parent = helper.addSubproject('parent', '''
             plugins {
                 id 'java'
@@ -1180,10 +1302,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 LaunchConfig.LaunchConfigInfo.class)
 
         launcherStatic.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'project class files do not appear in output lib directory'() {
+    def '#gradleVersionNumber: project class files do not appear in output lib directory'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         file('src/main/java/test/Test.java') << '''
         package test;
@@ -1199,10 +1325,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         !new File(projectDir, 'dist/service-name-0.0.1/service/lib/com/test/Test.class').exists()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'adds initiatingOccupancyFraction gc profile jvm settings'() {
+    def '#gradleVersionNumber: adds initiatingOccupancyFraction gc profile jvm settings'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'java'
@@ -1235,10 +1365,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'adds maxGCPauseMillis gc profile jvm settings'() {
+    def '#gradleVersionNumber: adds maxGCPauseMillis gc profile jvm settings'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'java'
@@ -1269,10 +1403,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', '-XX:MaxGCPauseMillis=1234'])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'gc profile null configuration closure'() {
+    def '#gradleVersionNumber: gc profile null configuration closure'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
             plugins {
                 id 'java'
@@ -1301,9 +1439,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', "-XX:MaxGCPauseMillis=500"])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'applies java agents'() {
+    def '#gradleVersionNumber: applies java agents'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
@@ -1324,9 +1467,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
         actualStaticConfig.jvmOpts().contains("-javaagent:service/lib/agent/byte-buddy-agent-1.10.21.jar")
         fileExists('dist/service-name-0.0.1/service/lib/agent/byte-buddy-agent-1.10.21.jar')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails at build time when non-agent jars are provided as agents'() {
+    def '#gradleVersionNumber: fails at build time when non-agent jars are provided as agents'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies {
@@ -1344,9 +1492,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         result.output.contains('is not a java agent and contains no Premain-Class manifest entry')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'exports management packages on new javas'() {
+    def '#gradleVersionNumber: exports management packages on new javas'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies { implementation files("${EXTERNAL_JAR}") }
@@ -1366,9 +1519,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "--add-exports",
                 "java.management/sun.management=ALL-UNNAMED"
         ])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'applies exports based on classpath manifests'() {
+    def '#gradleVersionNumber: applies exports based on classpath manifests'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Exports', 'jdk.compiler/com.sun.tools.javac.file')
@@ -1405,9 +1563,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // Verify args are set in the correct order
         int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
         actualOpts.get(compilerPairIndex - 1) == "--add-exports"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'applies opens based on classpath manifests'() {
+    def '#gradleVersionNumber: applies opens based on classpath manifests'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
@@ -1444,9 +1607,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // Verify args are set in the correct order
         int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
         actualOpts.get(compilerPairIndex - 1) == "--add-opens"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'applies opens based on classpath manifests for manifest classpaths'() {
+    def '#gradleVersionNumber: applies opens based on classpath manifests for manifest classpaths'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
@@ -1484,9 +1652,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // Verify args are set in the correct order
         int compilerPairIndex = actualOpts.indexOf("jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
         actualOpts.get(compilerPairIndex - 1) == "--add-opens"
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'Handles jars with no manifest'() {
+    def '#gradleVersionNumber: Handles jars with no manifest'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         File testJar = new File(getProjectDir(),"test.jar");
         testJar.withOutputStream { fos ->
             new ZipOutputStream(fos).close()
@@ -1508,9 +1681,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         tasksWereSuccessful(result, ':build', ':distTar', ':untar')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'can resolve go-java-launcher binaries through GCV'() {
+    def '#gradleVersionNumber: can resolve go-java-launcher binaries through GCV'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         // Set a lower default version of go-java-launcher so we can verify that we pick up the higher version through
         // GCV
         file('gradle.properties') << """
@@ -1551,9 +1729,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         fileExists("dist/service-name-0.0.1/service/bin/go-java-launcher-${goJavaLauncherVersion}/service/bin")
         fileExists("dist/service-name-0.0.1/service/bin/go-init-${goJavaLauncherVersion}/service/bin")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'enableAlwaysPreTouch'() {
+    def '#gradleVersionNumber: enableAlwaysPreTouch'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
         buildFile << """
             dependencies { implementation files("${EXTERNAL_JAR}") }
@@ -1573,10 +1756,14 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 "-XX:+AlwaysPreTouch",
                 "-XX:+UseTransparentHugePages",
         ])
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'produce distribution bundle that can bundle extra Jars'() {
+    def '#gradleVersionNumber: produce distribution bundle that can bundle extra Jars'() {
         given:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile)
 
         buildFile << """
@@ -1601,6 +1788,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         fileExists("dist/service-name-0.0.1/service/maven/${Path.of(EXTERNAL_JAR).getFileName()}")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     private static createUntarBuildFile(File buildFile) {
