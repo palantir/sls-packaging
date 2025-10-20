@@ -27,7 +27,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         System.setProperty("ignoreDeprecations", "true")
         buildFile << """
         plugins {
-            id 'com.palantir.consistent-versions' version '2.25.0' apply false
+            id 'com.palantir.consistent-versions' version '3.3.0' apply false
         }
         apply plugin: 'java'
         apply plugin: 'com.palantir.recommended-product-dependencies'
