@@ -46,6 +46,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
@@ -196,9 +197,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
             task.dependsOn(manifestClassPathTask);
 
-            // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before moving to Gradle 8.
-            org.gradle.api.plugins.JavaPluginExtension javaPlugin =
-                    project.getExtensions().getByType(org.gradle.api.plugins.JavaPluginExtension.class);
+            JavaPluginExtension javaPlugin = project.getExtensions().getByType(JavaPluginExtension.class);
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
