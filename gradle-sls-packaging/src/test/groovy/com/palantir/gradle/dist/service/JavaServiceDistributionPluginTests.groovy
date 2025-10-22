@@ -210,7 +210,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 excludeFromVar 'data'
             }
 
-            sourceCompatibility = '1.7'
+            java {
+                sourceCompatibility = '1.7'
+            }
         '''.stripIndent()
 
         createUntarTask(buildFile)
@@ -263,7 +265,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 mainClass 'test.Test'
             }
 
-            sourceCompatibility = '1.7'
+            java {
+                sourceCompatibility = '1.7'
+            }
         '''.stripIndent()
 
         createUntarTask(buildFile)
@@ -840,7 +844,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 .find({ it.name.endsWith("-manifest-classpath-0.0.1.jar") })
         classpathJar.exists()
 
-        def zipManifest = readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace('\r\n ','')
+        def zipManifest = readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace('\r\n ', '')
         zipManifest.contains('Class-Path: ')
         zipManifest.contains('guava-19.0.jar')
         zipManifest.contains('root-project-manifest-classpath-0.0.1.jar')
@@ -948,7 +952,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         buildResult.task(':parent:distTar').outcome == TaskOutcome.SUCCESS
-        new File(childProject,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+        new File(childProject, 'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
 
         where:
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
@@ -1000,7 +1004,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         buildResult.task(':producer:distTar').outcome == TaskOutcome.SUCCESS
-        new File(consumer,'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
+        new File(consumer, 'build/exploded/my-service-0.0.1/deployment/manifest.yml').exists()
 
         where:
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
@@ -1129,7 +1133,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !libFiles.any { it.toString().equals('main') }
 
         // verify start scripts
-        List<String> startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name')
+        List<String> startScript = new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/service-name')
                 .text
                 .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
                 .split(':')
@@ -1214,8 +1218,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks("generateDockerCompose")
 
         where:
-        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks']
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+        [writeLocksTask, gradleVersionNumber] << [
+                ['--write-locks', 'writeProductDependenciesLocks'],
+                GradleTestVersions.GRADLE_VERSIONS
+        ].combinations()
     }
 
     def '#gradleVersionNumber: uses the runtimeClasspath in manifest jar'() {
@@ -1283,7 +1289,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         !manifestContents.contains('main')
 
         // verify start scripts
-        List<String> startScript = new File(projectDir,'parent/dist/service-name-0.0.1/service/bin/service-name')
+        List<String> startScript = new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/service-name')
                 .text
                 .find(/CLASSPATH=(.*)/) { match, classpath -> classpath }
                 .split(':')
@@ -1530,7 +1536,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Exports', 'jdk.compiler/com.sun.tools.javac.file')
-        File testJar = new File(getProjectDir(),"test.jar");
+        File testJar = new File(getProjectDir(), "test.jar");
         testJar.withOutputStream { fos ->
             new JarOutputStream(fos, manifest).close()
         }
@@ -1574,7 +1580,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
-        File testJar = new File(getProjectDir(),"test.jar");
+        File testJar = new File(getProjectDir(), "test.jar");
         testJar.withOutputStream { fos ->
             new JarOutputStream(fos, manifest).close()
         }
@@ -1618,7 +1624,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         Manifest manifest = new Manifest()
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0")
         manifest.getMainAttributes().putValue('Add-Opens', 'jdk.compiler/com.sun.tools.javac.file')
-        File testJar = new File(getProjectDir(),"test.jar");
+        File testJar = new File(getProjectDir(), "test.jar");
         testJar.withOutputStream { fos ->
             new JarOutputStream(fos, manifest).close()
         }
@@ -1660,7 +1666,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
     def '#gradleVersionNumber: Handles jars with no manifest'() {
         setup:
         gradleVersion = gradleVersionNumber
-        File testJar = new File(getProjectDir(),"test.jar");
+        File testJar = new File(getProjectDir(), "test.jar");
         testJar.withOutputStream { fos ->
             new ZipOutputStream(fos).close()
         }
@@ -1817,7 +1823,9 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 ]
             }
 
-            sourceCompatibility = '1.7'
+            java {
+                sourceCompatibility = '1.7'
+            }
         '''.stripIndent()
 
         createUntarTask(buildFile)
