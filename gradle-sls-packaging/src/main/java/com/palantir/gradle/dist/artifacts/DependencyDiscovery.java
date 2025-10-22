@@ -44,7 +44,6 @@ public final class DependencyDiscovery {
         String consumableConfigName = configurationName + "For" + StringUtils.capitalize(name);
         Configuration consumable = project.getConfigurations().create(consumableConfigName, conf -> {
             conf.extendsFrom(project.getConfigurations().getByName(configurationName));
-            conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
             conf.setVisible(false);
