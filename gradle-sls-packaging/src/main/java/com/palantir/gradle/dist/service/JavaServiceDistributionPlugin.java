@@ -24,7 +24,6 @@ import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
-import com.palantir.gradle.dist.service.tasks.LazyCreateStartScriptTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
@@ -51,6 +50,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.application.CreateStartScripts;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
@@ -158,14 +158,14 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                             distributionExtension.getEnableManifestClasspath().get());
                 });
 
-        TaskProvider<LazyCreateStartScriptTask> startScripts = project.getTasks()
-                .register("createStartScripts", LazyCreateStartScriptTask.class, task -> {
+        TaskProvider<CreateStartScripts> startScripts = project.getTasks()
+                .register("createStartScripts", CreateStartScripts.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates standard Java start scripts.");
                     task.setOutputDir(new File(project.getBuildDir(), "scripts"));
                     // Since we write out the name of this task's output (when it's enabled), we should depend on it
                     task.dependsOn(manifestClassPathTask);
-                    task.getLazyMainClassName().set(mainClassName);
+                    task.getMainClass().set(mainClassName);
 
                     if (distributionExtension.getEnableManifestClasspath().get()) {
                         task.doLast(new Action<Task>() {
