@@ -43,6 +43,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
@@ -314,8 +315,12 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
             task.getJavaAgents().setFrom(javaAgentConfiguration);
-            FileCollection fullClasspath =
-                    jarTask.get().getOutputs().getFiles().plus(distributionExtension.getProductDependenciesConfig());
+
+            ConfigurableFileCollection fullClasspath = project.getObjects()
+                    .fileCollection()
+                    .from(jarTask.get().getOutputs().getFiles())
+                    .from(project.getConfigurations().named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+
             task.getFullClasspath().from(fullClasspath);
             task.getClasspath()
                     .from(
