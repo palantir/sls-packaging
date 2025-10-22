@@ -21,13 +21,14 @@ import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
+import org.gradle.util.GradleVersion;
 
-@SuppressWarnings("deprecation") // for the setFileMode calls
 final class DistTarTask {
     static final String SCRIPTS_DIST_LOCATION = "service/bin";
 
@@ -54,7 +55,7 @@ final class DistTarTask {
 
             root.from("service/bin", t -> {
                 t.into("service/bin");
-                t.setFileMode(0755);
+                fileModeWorkaround(t, 0755);
             });
 
             // We do this trick of iterating through every java version and making a from with a lazy value to be lazy
@@ -89,17 +90,17 @@ final class DistTarTask {
 
             root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
-                t.setFileMode(0755);
+                fileModeWorkaround(t, 0755);
             });
 
             root.into("service/monitoring/bin", t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("monitoring"));
-                t.setFileMode(0755);
+                fileModeWorkaround(t, 0755);
             });
 
             root.into("service/lib/linux-x86-64", t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("libs/linux-x86-64"));
-                t.setFileMode(0755);
+                fileModeWorkaround(t, 0755);
             });
 
             DeploymentDirInclusion.includeFromDeploymentDirs(
@@ -110,6 +111,15 @@ final class DistTarTask {
 
             root.with(distributionExtension.getExtraFiles());
         });
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void fileModeWorkaround(CopySpec copySpec, int newFileMode) {
+        if (GradleVersion.current().compareTo(GradleVersion.version("8.3")) < 0) {
+            copySpec.setFileMode(newFileMode);
+        } else {
+            copySpec.filePermissions(permissions -> permissions.unix(newFileMode));
+        }
     }
 
     private DistTarTask() {}
