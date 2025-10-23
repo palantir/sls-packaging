@@ -19,7 +19,7 @@ package com.palantir.gradle.dist.pdeps
 import com.palantir.gradle.dist.BaseDistributionExtension
 import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.ObjectMappers
-import spock.lang.Unroll
+import com.palantir.gradle.dist.ProductDependency
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -45,15 +45,15 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         import ${BaseDistributionExtension.class.getCanonicalName()}
         
         def ext = project.extensions.create("distribution", BaseDistributionExtension, project)
-        ext.setProductDependenciesConfig(configurations.runtimeClasspath)
         ProductDependencies.registerProductDependencyTasks(project, ext);
         """.stripIndent()
     }
 
-    def '#gradleVersionNumber: consumes declared product dependencies'() {
+    def '#gradleVersionNumber: consumes declared product dependencies (method: #method)'() {
         setup:
         gradleVersion = gradleVersionNumber
         buildFile << """
+            ${method.getBody()}
             distribution {
                 ${PDEP}
             }
@@ -68,10 +68,13 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         !manifest.productDependencies().isEmpty()
 
         where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+        [gradleVersionNumber, method] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                DependencyMethod.values()
+        ].combinations()
     }
 
-    def '#gradleVersionNumber: discovers project dependencies without compilation'() {
+    def '#gradleVersionNumber: discovers project dependencies without compilation (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
         addSubproject('child', """
@@ -83,6 +86,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         }
         """.stripIndent())
         buildFile << """
+        ${method.getBody()}
         dependencies {
             implementation project('child')
         }
@@ -98,10 +102,13 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         !manifest.productDependencies().isEmpty()
 
         where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+        [gradleVersionNumber, method] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                DependencyMethod.values()
+        ].combinations()
     }
 
-    def '#gradleVersionNumber: discovers external dependencies'() {
+    def '#gradleVersionNumber: discovers external dependencies (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
         GradleDependencyGenerator generator = new GradleDependencyGenerator(
@@ -119,6 +126,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
             maven {url "file:///${mavenRepo.getAbsolutePath()}"}
         }
         
+        ${method.getBody()}
+        
         dependencies {
             implementation 'a:a:1.0'
         }
@@ -133,10 +142,13 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         !manifest.productDependencies().isEmpty()
 
         where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+        [gradleVersionNumber, method] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                DependencyMethod.values()
+        ].combinations()
     }
 
-    def '#gradleVersionNumber: handles jars without manifest'() {
+    def '#gradleVersionNumber: handles jars without manifest (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
         GradleDependencyGenerator generator = new GradleDependencyGenerator(
@@ -154,6 +166,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
             maven {url "file:///${mavenRepo.getAbsolutePath()}"}
         }
         
+        ${method.getBody()}
+        
         dependencies {
             implementation 'missingmanifest:missingmanifest:1.0'
         }
@@ -168,7 +182,82 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         manifest.productDependencies().isEmpty()
 
         where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+        [gradleVersionNumber, method] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                DependencyMethod.values()
+        ].combinations()
+    }
+
+    def "#gradleVersionNumber: can exclude discovered product dependencies by module (method: #method)"() {
+        given:
+        gradleVersion = gradleVersionNumber
+        def groupPdep = new ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0")
+        def group1Pdep = new ProductDependency("group1", "name1", "1.0.0", "1.3.x", "1.2.1")
+
+        GradleDependencyGenerator generator = new GradleDependencyGenerator(
+                new DependencyGraph("a:a:1.0"), new File(projectDir, "build/testrepogen").toString())
+        def mavenRepo = generator.generateTestMavenRepo()
+
+        // depends on group:name:[1.0.0, 1.x.x]:1.2.0
+        Files.copy(
+                ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream("/a-1.0.jar"),
+                new File(mavenRepo, "a/a/1.0/a-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+
+        buildFile << """
+            repositories {
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
+            }
+
+            ${method.getBody()}
+
+            dependencies {
+                implementation project('localApi')
+            }
+        """.stripIndent(true)
+
+        addSubproject("localApi", """
+            repositories {
+                maven {url "file:///${mavenRepo.getAbsolutePath()}"}
+            }
+            
+            apply plugin: 'java'
+            apply plugin: 'com.palantir.recommended-product-dependencies'
+            
+            dependencies {
+                implementation 'a:a:1.0'
+            }
+            
+            recommendedProductDependencies {
+                ${PDEP}
+            }
+        """.stripIndent(true))
+
+        when: 'we try to resolve product dependencies *without* excludes'
+        runTasksSuccessfully(':resolveProductDependencies')
+
+        then: 'we get both product dependencies'
+        def manifest = ObjectMappers.readProductDependencyManifest(
+                file('build/resolved-pdeps/pdeps-manifest.json'))
+
+        manifest.productDependencies().toSet() == [groupPdep, group1Pdep] as Set
+        when: 'we exclude `a:a` and try to resolve product dependencies'
+        buildFile << """
+            configurations {
+                productDependencyDiscovery {
+                    exclude group: 'a', module: 'a'
+                }
+            } 
+        """.stripIndent(true)
+        runTasksSuccessfully(':resolveProductDependencies')
+
+        then: '`group:name` is no longer a product dependency (brought in from `a:a`)'
+        def manifestAfterExcludes = ObjectMappers.readProductDependencyManifest(
+                file('build/resolved-pdeps/pdeps-manifest.json'))
+        manifestAfterExcludes.productDependencies().toSet() == [group1Pdep] as Set
+
+        where:
+        [gradleVersionNumber, method] << [GradleTestVersions.GRADLE_VERSIONS, DependencyMethod.values()].combinations()
     }
 
     def '#gradleVersionNumber: resolveProductDependencies and processResources work together'() {
@@ -191,5 +280,33 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
 
         where:
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
+
+    private enum DependencyMethod {
+        EXTENSION_SETTER("extension setter", "ext.setProductDependenciesConfig(configurations.runtimeClasspath)"),
+        CONFIGURATION_EXTENDS_FROM("extends from", "configurations.productDependencyDiscovery.extendsFrom(configurations.runtimeClasspath)"),
+        CONSUMABLE_CONFIGURATION_DEPENDENCY("consumable configuration dependency", """
+            dependencies {
+              productDependencyDiscovery project(path: project.path, configuration: 'runtimeElements')
+            }
+        """.stripIndent(true))
+
+        private final String name
+        private final String body
+
+        DependencyMethod(String name, String body) {
+            this.name = name
+            this.body = body
+        }
+
+        String getBody() {
+            return body
+        }
+
+        @Override
+        String toString() {
+            return name
+        }
     }
 }
