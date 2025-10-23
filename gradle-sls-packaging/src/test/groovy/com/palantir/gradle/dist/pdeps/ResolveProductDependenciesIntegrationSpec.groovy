@@ -36,7 +36,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         maximumVersion = "1.3.x"
         recommendedVersion = "1.2.1"
     }
-    """.stripIndent()
+    """.stripIndent(true)
 
     def setup() {
         buildFile << """
@@ -46,7 +46,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         
         def ext = project.extensions.create("distribution", BaseDistributionExtension, project)
         ProductDependencies.registerProductDependencyTasks(project, ext);
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     def '#gradleVersionNumber: consumes declared product dependencies (method: #method)'() {
@@ -57,7 +57,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
             distribution {
                 ${PDEP}
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasksSuccessfully(':resolveProductDependencies')
@@ -84,13 +84,13 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         recommendedProductDependencies {
             ${PDEP}
         }
-        """.stripIndent())
+        """.stripIndent(true))
         buildFile << """
         ${method.getBody()}
         dependencies {
             implementation project('child')
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksSuccessfully(':resolveProductDependencies')
@@ -131,7 +131,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         dependencies {
             implementation 'a:a:1.0'
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasksSuccessfully(':resolveProductDependencies')
@@ -171,7 +171,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         dependencies {
             implementation 'missingmanifest:missingmanifest:1.0'
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasksSuccessfully(':resolveProductDependencies')
@@ -273,7 +273,7 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
             apply plugin: 'java'
             apply plugin: 'com.palantir.recommended-product-dependencies'
             apply plugin: 'com.palantir.sls-asset-distribution'
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         then:
         runTasksSuccessfully('resolveProductDependencies', 'processResources')

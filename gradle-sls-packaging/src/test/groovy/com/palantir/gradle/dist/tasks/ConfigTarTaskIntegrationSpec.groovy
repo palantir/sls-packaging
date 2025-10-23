@@ -174,6 +174,6 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
                 into "\${projectDir}/dist"
                 dependsOn configTar
             }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 }

@@ -42,7 +42,7 @@ public class SchemaVersionLockFileTest extends Specification {
         - type: "online"
           from: 100
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     void 'works with contiguous range'() {
@@ -66,7 +66,7 @@ public class SchemaVersionLockFileTest extends Specification {
         - type: "online"
           from: 102
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     void 'works with gap'() {
@@ -87,7 +87,7 @@ public class SchemaVersionLockFileTest extends Specification {
         - type: "online"
           from: 102
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     void 'works with multiple ranges'() {
@@ -120,7 +120,7 @@ public class SchemaVersionLockFileTest extends Specification {
         - type: "offline"
           from: 105
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     void 'deserialization works'() {

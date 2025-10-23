@@ -31,7 +31,7 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         repositories {
           mavenCentral()
         }
-        """.stripIndent()
+        """.stripIndent(true)
         addResource("src/main/resources/sls-manifest", "diagnostics.json",
                 '[{"type": "foo.v1", "docs" : "This does something", "safe" : false}]')
 
@@ -45,7 +45,7 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
           "type" : "foo.v1",
           "docs" : "This does something",
           "safe" : false
-        } ]""".stripIndent()
+        } ]""".stripIndent(true)
 
         when:
         def result2 = runTasksSuccessfully("mergeDiagnosticsJson", '-is')
@@ -103,7 +103,7 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
         }, {
           "type" : "myproject2.v1",
           "docs" : "Click me if you dare!"
-        } ]""".stripIndent()
+        } ]""".stripIndent(true)
 
         where:
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS

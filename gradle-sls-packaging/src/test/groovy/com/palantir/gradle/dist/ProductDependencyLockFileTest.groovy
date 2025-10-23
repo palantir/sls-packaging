@@ -33,7 +33,7 @@ class ProductDependencyLockFileTest extends Specification {
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     def 'serialize project version'() {
@@ -46,7 +46,7 @@ class ProductDependencyLockFileTest extends Specification {
         result == '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.product:foo ($projectVersion, 1.x.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
     }
 
     def 'deserialize'() {
@@ -55,7 +55,7 @@ class ProductDependencyLockFileTest extends Specification {
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.other:bar (0.2.0, 0.x.x)
         com.palantir.product:foo (1.20.0, 1.x.x) optional
-        """.stripIndent(), "0.0.0")
+        """.stripIndent(true), "0.0.0")
 
         then:
         result.size() == 2
