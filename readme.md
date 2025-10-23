@@ -77,7 +77,8 @@ distribution {
 }
 ```
 
-sls-packaging also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it. e.g.
+#### Product dependencies lock file
+`sls-packaging` also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it. e.g.
 
 ```
 # Run ./gradlew writeProductDependenciesLocks to regenerate this file
@@ -96,6 +97,35 @@ It's possible to further restrict the acceptable version range for a dependency 
 If all the constraints on a given product don't overlap, then an error will the thrown:
 `Could not merge recommended product dependencies as their version ranges do not overlap`.
 
+#### Additional product dependency discovery sources
+
+If you wanted to discover another source of product dependencies without modifying your classpath e.g. depend on a project that's not an sls service, but will be run in a different environment that *still* requires minimum versions of certain products. You can do this by adding a dependency to the `productDependencyDiscovery` configuration like so:
+
+```gradle
+dependencies {
+  // requires the configuration being passed in to be a consumable configuration
+  productDependencyDiscovery project(path: ':non-sls-service', configuration: 'runtimeElements')
+}
+```
+
+> [!INFO]
+> This requires the configuration passed in to be a [consumable](https://docs.gradle.org/current/userguide/declaring_configurations.html#sec:configuration-flags-roles) configuration 
+
+You can also decide to extend the `productDependencyDiscovery` configuration with the configuration of your choice:
+
+```gradle
+configurations {
+  productDependencyDiscovery {
+    extendsFrom configurations.myConfiguration
+  }
+}
+```
+
+> [!INFO]
+> The configuration being extended from has to exist in the same project.
+
+#### Ignore product dependencies
+
 It's also possible to explicitly ignore a dependency or mark it as optional if it comes as a recommendation from a jar:
 
 ```gradle
@@ -109,6 +139,17 @@ distribution {
 ```
 Dependencies marked as optional will appear with the `optional` suffix in the lockfile.
 
+If you want to ignore all product dependencies that come from a particular jar dependency *transitively*, you can exclude the jar like you would any other dependency on the `productDependencyDiscovery` configuration. For example, to exclude `group:should-exclude`, you would something like this:
+
+```gradle
+configurations {
+  productDependencyDiscovery {
+    exclude group: 'group', module: 'should-exclude'
+  }
+}
+```
+
+Concretely, this means any product depenendencies coming from `group:should-exclude` and other dependencies in its dependency graph will not contribute any product dependencies.
 #### Accessing product dependencies
 
 You can programmatically access the minimum product dependency version as follows:
