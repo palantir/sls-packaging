@@ -47,13 +47,13 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 checkArgs 'healthcheck'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
         file('var/conf/launcher-custom.yml') << '''
             configType: java
             configVersion: 1
             jvmOpts:
               - '-Dcustom.property=myCustomValue'
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         file('src/main/java/test/Test.java') << '''
         package test;
@@ -69,7 +69,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 while(true);
             }
         }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         def result = runTasks(':build', ':distTar', ':untar')
@@ -100,7 +100,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 enableManifestClasspath true
             }
-         '''.stripIndent()
+         '''.stripIndent(true)
         file('src/main/java/test/Test.java') << '''
         package test;
         public class Test {
@@ -108,13 +108,13 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 while(true);
             }
         }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':build', ':distTar', ':untar')
         buildFile << '''
             version '0.0.2'
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         then:
         def result = runTasks(':build', ':distTar', ':untar')
@@ -159,7 +159,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 Files.write(Files.createTempFile("prefix", "suffix"), "temp content".getBytes());
             }
         }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -193,7 +193,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         createUntarTask(buildFile)
 
@@ -242,7 +242,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         createUntarTask(buildFile)
 
@@ -290,12 +290,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     maximumVersion = "1.x.x"
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
         group2:name2 (1.0.0, 1.x.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -329,7 +329,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     maximumVersion = "2.0.0"
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksAndFail('distTar')
@@ -440,7 +440,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 checkArgs 'myCheckArg1', 'myCheckArg2'
                 env "key1": "val1",
                     "key2": "val2"
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -524,7 +524,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 checkArgs 'myCheckArg1', 'myCheckArg2'
                 env "key1": "val1",
                     "key2": "val2"
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -600,7 +600,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 javaHome 'foo'
                 addJava8GcLogging true
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -652,7 +652,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 javaVersion 14
                 gc 'response-time'
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -676,7 +676,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 javaVersion 21
                 gc 'response-time'
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -699,7 +699,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 21
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -718,7 +718,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 checkArgs 'healthcheck', 'var/conf/service.yml'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -741,7 +741,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             dependencies {
               implementation "com.google.guava:guava:19.0"
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -803,7 +803,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                             "expected: ${expectedTarballPath}")
                 }
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         expect:
         runTasks(':tasks')
@@ -928,7 +928,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     configurations.fromOtherProject.resolve()
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         helper.addSubproject('dist', '''
             plugins {
@@ -956,7 +956,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 id 'com.palantir.sls-asset-distribution'
                 id 'com.palantir.sls-java-service-distribution'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         def result = runTasksAndFail(":tasks")
@@ -1058,7 +1058,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 version = '1.0.0'
             }
 
-        """.stripIndent()
+        """.stripIndent(true)
         helper.addSubproject("first", """
             plugins {
                 id 'java'
@@ -1072,7 +1072,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     minimumVersion = project.version
                 }
             }
-        """.stripIndent())
+        """.stripIndent(true))
         helper.addSubproject("second", """
             plugins {
                 id 'java'
@@ -1082,7 +1082,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 serviceName = 'second-product'
                 mainClass "dummy.service.MainClass"
             }
-        """.stripIndent())
+        """.stripIndent(true))
 
         runTasks(writeLocksTask)
 
@@ -1192,7 +1192,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 while(true);
             }
         }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':build', ':distTar', ':untar')
@@ -1224,7 +1224,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     initiatingOccupancyFraction 75
                 }
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         createUntarTask(buildFile)
 
@@ -1258,7 +1258,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                     maxGCPauseMillis 1234
                 }
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         createUntarTask(buildFile)
 
@@ -1290,7 +1290,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 mainClass 'test.Test'
                 gc 'hybrid'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         createUntarTask(buildFile)
 
@@ -1313,7 +1313,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 11
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1336,7 +1336,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 11
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1353,7 +1353,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 17
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1385,7 +1385,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 17
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1424,7 +1424,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 17
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1464,7 +1464,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             distribution {
                 javaVersion 17
                 enableManifestClasspath true
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1500,7 +1500,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 javaVersion 17
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1515,7 +1515,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         // GCV
         file('gradle.properties') << """
         ${JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE}=1.17.0
-        """.stripIndent()
+        """.stripIndent(true)
 
         def goJavaLauncherVersion = "1.18.0"
 
@@ -1534,11 +1534,11 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             serviceName 'service-name'
             mainClass 'test.Test'
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('versions.props') << """
         com.palantir.launching:* = ${goJavaLauncherVersion}
-        """.stripIndent()
+        """.stripIndent(true)
 
         createUntarTask(buildFile)
 
@@ -1560,7 +1560,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             tasks.jar.archiveBaseName = "internal"
             distribution {
                 enableAlwaysPreTouch()
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
 
         when:
@@ -1590,7 +1590,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                       from(files("${EXTERNAL_JAR}"))
                     }
                 }
-            }""".stripIndent()
+            }""".stripIndent(true)
         file('src/main/java/test/Test.java') << """
           package test;
           public class Test {}
@@ -1628,7 +1628,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             }
 
             sourceCompatibility = '1.7'
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         createUntarTask(buildFile)
     }
@@ -1642,7 +1642,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                 dependsOn distTar
                 duplicatesStrategy = 'INCLUDE'
             }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     def readFromZip(File zipFile, String pathInZipFile) {

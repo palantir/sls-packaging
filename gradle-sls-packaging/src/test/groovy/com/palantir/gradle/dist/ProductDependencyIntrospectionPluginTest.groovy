@@ -29,7 +29,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
         project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.product:test (1.0.0, 1.x.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         def result = project.ext.getMinimumProductVersion("com.palantir.product:test")
@@ -43,7 +43,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
         project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.product:test ($projectVersion, 1.x.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         def result = project.ext.getMinimumProductVersion("com.palantir.product:test")
@@ -65,7 +65,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
         project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.product:test (1.0.0, 1.x.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         project.ext.getMinimumProductVersion("com.palantir.other:test")

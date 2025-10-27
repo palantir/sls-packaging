@@ -30,7 +30,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
             distribution {
                 serviceName 'asset-name'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':distTar', ':untar')
@@ -58,7 +58,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
                 assets "static/abc", "maven"
                 assets file("static/abs").getAbsolutePath(), "maven"
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         runTasks(':distTar', ':untar')
@@ -81,7 +81,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
                 id 'com.palantir.sls-java-service-distribution'
                 id 'com.palantir.sls-asset-distribution'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         when:
         def result = runTasksAndFail(":tasks")
@@ -109,12 +109,12 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
                     maximumVersion = "2.x.x"
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 2.0.0)
         group2:name2 (1.0.0, 2.x.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasks(':distTar', ':untar')
@@ -223,7 +223,7 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
                     configurations.fromOtherProject.resolve()
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         helper.addSubproject('dist', '''
             plugins {
@@ -262,6 +262,6 @@ class AssetDistributionPluginIntegrationSpec extends GradleIntegrationSpec {
                 dependsOn distTar
                 duplicatesStrategy = 'WARN'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
     }
 }

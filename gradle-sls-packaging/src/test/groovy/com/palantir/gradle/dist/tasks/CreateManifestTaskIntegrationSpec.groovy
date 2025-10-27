@@ -38,7 +38,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                 serviceName "serviceName"
                 serviceGroup "serviceGroup"
             }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     def 'fails if lockfile is not up to date'() {
@@ -46,12 +46,12 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group:name2 (2.0.0, 2.x.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksWithFailure(':createManifest')
@@ -78,12 +78,12 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         runTasksSuccessfully('createManifest') // ensure task is run once
         runTasksSuccessfully('createManifest')
@@ -100,12 +100,12 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         runTasksSuccessfully('createManifest') // ensure task is run once
         runTasksSuccessfully('createManifest')
@@ -138,7 +138,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                     recommendedVersion = rootProject.version
                 }
             }
-        """.stripIndent())
+        """.stripIndent(true))
         helper.addSubproject("foo-server", """
             apply plugin: 'com.palantir.sls-java-service-distribution'
             distribution {
@@ -147,7 +147,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                 mainClass 'com.palantir.foo.bar.MyServiceMainClass'
                 args 'server', 'var/conf/my-service.yml'
             }
-        """.stripIndent())
+        """.stripIndent(true))
         def barDir = helper.addSubproject("bar-server", """
             apply plugin: 'com.palantir.sls-java-service-distribution'
             dependencies {
@@ -159,12 +159,12 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                 mainClass 'com.palantir.foo.bar.MyServiceMainClass'
                 args 'server', 'var/conf/my-service.yml'
             }
-        """.stripIndent())
+        """.stripIndent(true))
 
         file('product-dependencies.lock', barDir).text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         com.palantir.group:foo-service (\$projectVersion, 1.x.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksSuccessfully('bar-server:createManifest')
@@ -189,7 +189,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksSuccessfully(writeLocksTask)
@@ -199,7 +199,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         file('product-dependencies.lock').text == """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         group1:name1 (1.0.0, 1.3.x)
-        """.stripIndent()
+        """.stripIndent(true)
 
         where:
         writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
@@ -213,7 +213,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                 uri = "registry.example.io/foo/bar:v1.3.0"
             }
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksSuccessfully('createManifest')
@@ -231,7 +231,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                 uri = "registry.example[.io/foo/bar:v1.3.0"
             }
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksWithFailure('createManifest')
@@ -276,7 +276,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                     uri = artifactOutput.flatMap { it.output }.map { Files.readString(it.getAsFile().toPath())}
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksSuccessfully('createManifest')

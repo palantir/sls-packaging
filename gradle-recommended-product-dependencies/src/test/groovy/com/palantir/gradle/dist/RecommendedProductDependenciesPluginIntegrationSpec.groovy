@@ -32,7 +32,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
         }
         apply plugin: 'java'
         apply plugin: 'com.palantir.recommended-product-dependencies'
-        """.stripIndent()
+        """.stripIndent(true)
 
     }
 
@@ -48,7 +48,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
                 optional = true
             }
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasksSuccessfully(':jar')
@@ -82,7 +82,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
             java {
                withSourcesJar()
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('src/main/java/Main.java') << '''
                 public class Main {
@@ -110,7 +110,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
                     recommendedVersion = '1.2.3'
                 }
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksSuccessfully(':jar')
@@ -152,7 +152,7 @@ class RecommendedProductDependenciesPluginIntegrationSpec extends IntegrationSpe
                 maximumVersion = '1.x.x'
             }
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksSuccessfully( '--write-locks', ':jar')
