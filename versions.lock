@@ -16,7 +16,7 @@ com.google.errorprone:error_prone_annotations:2.41.0 (5 constraints: a7493495)
 
 com.google.guava:failureaccess:1.0.3 (1 constraints: 160ae3b4)
 
-com.google.guava:guava:33.5.0-jre (5 constraints: ac674454)
+com.google.guava:guava:33.5.0-jre (6 constraints: f4828e0e)
 
 com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava (1 constraints: bd17c918)
 
@@ -64,7 +64,7 @@ org.eclipse.sisu:org.eclipse.sisu.inject:0.3.3 (1 constraints: 5e0fd67f)
 
 org.immutables:value:2.11.6 (1 constraints: 3c05383b)
 
-org.jetbrains:annotations:26.0.2 (2 constraints: 1420d600)
+org.jetbrains:annotations:26.0.2 (3 constraints: ec394310)
 
 org.jetbrains.kotlin:kotlin-stdlib:1.3.50 (2 constraints: be218de0)
 
@@ -86,19 +86,29 @@ org.yaml:snakeyaml:2.4 (1 constraints: 3e178d10)
 
 cglib:cglib-nodep:3.2.2 (1 constraints: 490ded24)
 
-com.netflix.nebula:nebula-test:10.6.2 (1 constraints: 3b053b3b)
+com.netflix.nebula:nebula-test:10.6.2 (2 constraints: d61de72d)
 
-com.palantir.gradle.plugintesting:plugin-testing-core:0.5.0 (1 constraints: 0705fa35)
+com.palantir.gradle.plugintesting:configuration-cache-spec:0.19.0 (1 constraints: 3c053e3b)
+
+com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.19.0 (1 constraints: 3c053e3b)
+
+com.palantir.gradle.plugintesting:plugin-testing-core:0.19.0 (1 constraints: 3c053e3b)
+
+commons-io:commons-io:2.19.0 (1 constraints: db190cdf)
 
 junit:junit:4.13.2 (3 constraints: 052421c6)
+
+net.bytebuddy:byte-buddy:1.15.11 (1 constraints: 7f0bc9ea)
 
 org.apache.commons:commons-compress:1.21 (1 constraints: f70aebc8)
 
 org.apiguardian:apiguardian-api:1.1.2 (7 constraints: cc761de9)
 
+org.assertj:assertj-core:3.27.3 (1 constraints: de1913df)
+
 org.awaitility:awaitility:4.3.0 (1 constraints: 09050836)
 
-org.codehaus.groovy:groovy:3.0.12 (2 constraints: 781b1f9d)
+org.codehaus.groovy:groovy:3.0.24 (3 constraints: 133429dd)
 
 org.hamcrest:hamcrest:2.2 (2 constraints: 40189e6e)
 
@@ -106,11 +116,11 @@ org.hamcrest:hamcrest-core:1.3 (1 constraints: cc05fe3f)
 
 org.junit.jupiter:junit-jupiter:6.0.0 (1 constraints: 47070770)
 
-org.junit.jupiter:junit-jupiter-api:6.0.0 (3 constraints: 5b2f43d8)
+org.junit.jupiter:junit-jupiter-api:6.0.0 (5 constraints: f45fbb93)
 
 org.junit.jupiter:junit-jupiter-engine:6.0.0 (1 constraints: 030eca3b)
 
-org.junit.jupiter:junit-jupiter-params:6.0.0 (1 constraints: 030eca3b)
+org.junit.jupiter:junit-jupiter-params:6.0.0 (2 constraints: c12425d7)
 
 org.junit.platform:junit-platform-commons:6.0.0 (2 constraints: d320144a)
 
@@ -126,6 +136,6 @@ org.opentest4j:opentest4j:1.3.0 (2 constraints: cf209249)
 
 org.rauschig:jarchivelib:1.2.0 (1 constraints: 0505f635)
 
-org.spockframework:spock-core:2.3-groovy-3.0 (2 constraints: 922109a6)
+org.spockframework:spock-core:2.3-groovy-3.0 (3 constraints: 2c3deb38)
 
 org.spockframework:spock-junit4:2.3-groovy-3.0 (1 constraints: 7a1000b0)
