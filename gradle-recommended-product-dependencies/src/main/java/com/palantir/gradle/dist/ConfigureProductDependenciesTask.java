@@ -36,8 +36,9 @@ import org.gradle.api.tasks.bundling.Jar;
  * This task is only necessary because {@link Jar#getManifest()} cannot be configured lazily at configuration-time, so
  * we have to configure it at execution-time instead.
  */
-public class ConfigureProductDependenciesTask extends DefaultTask {
+public abstract class ConfigureProductDependenciesTask extends DefaultTask {
 
+    @SuppressWarnings("for-rollout:GradleTypesAsFields")
     private final SetProperty<ProductDependency> productDependencies =
             getProject().getObjects().setProperty(ProductDependency.class);
 
@@ -45,6 +46,7 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
         setDescription("Configures the 'jar' task to write the input product dependencies into its manifest");
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     @TaskAction
     final void action() {
         getProject()

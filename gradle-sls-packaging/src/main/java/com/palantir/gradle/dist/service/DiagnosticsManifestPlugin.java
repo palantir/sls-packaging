@@ -114,6 +114,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     }
 
     private static Configuration createConsumableRuntimeConfiguration(Project project) {
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration consumable = project.getConfigurations().create("runtimeClasspathForDiagnostics", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");

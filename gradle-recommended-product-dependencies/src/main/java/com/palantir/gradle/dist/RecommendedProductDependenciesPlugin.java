@@ -30,6 +30,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
     @Override
     public final void apply(Project project) {
+        @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
         RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 

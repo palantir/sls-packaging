@@ -80,6 +80,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply("java");
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
         project.getPluginManager().apply(DiagnosticsManifestPlugin.class);
+        @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
         JavaServiceDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
 
@@ -97,6 +98,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         });
 
         Configuration runtimeClasspath = project.getConfigurations().getByName("runtimeClasspath");
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration javaAgentConfiguration = project.getConfigurations().create("javaAgent");
 
         // Set default configuration to look for product dependencies to be runtimeClasspath
@@ -107,8 +109,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
         // Create configuration to load executable dependencies
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
         project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
         project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
 

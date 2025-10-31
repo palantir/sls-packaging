@@ -23,3 +23,13 @@ acceptedBreaks:
     - code: "java.method.removed"
       old: "method java.io.File com.palantir.gradle.dist.CompileRecommendedProductDependencies::getProductDependenciesFile()"
       justification: "Changing a new API"
+  "7.82.0":
+    com.palantir.sls-packaging:gradle-recommended-product-dependencies:
+    - code: "java.class.nowAbstract"
+      old: "class com.palantir.gradle.dist.ConfigureProductDependenciesTask"
+      new: "class com.palantir.gradle.dist.ConfigureProductDependenciesTask"
+      justification: "gradle-guide made this ABI break to improve your Gradle code"
+    - code: "java.missing.oldSuperType"
+      old: "class com.palantir.gradle.dist.ConfigureProductDependenciesTask"
+      new: "class com.palantir.gradle.dist.ConfigureProductDependenciesTask"
+      justification: "gradle-guide made this ABI break to improve your Gradle code"

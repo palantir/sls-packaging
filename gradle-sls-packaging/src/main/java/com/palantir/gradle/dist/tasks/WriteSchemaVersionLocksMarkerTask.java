@@ -20,10 +20,11 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
-public class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
+public abstract class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
 
     public static final String NAME = "writeSchemaVersionLocks";
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     @TaskAction
     public final void checkWriteLocksShouldBeRunning() {
         // Check that our task name matcher for writeSchemaVersionLocks is actually matching up the Gradle one;

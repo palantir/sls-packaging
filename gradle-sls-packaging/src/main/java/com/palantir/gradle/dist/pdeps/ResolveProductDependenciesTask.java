@@ -169,6 +169,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
         return mergedDep;
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     private String getProjectVersion() {
         return getProject().getVersion().toString();
     }
