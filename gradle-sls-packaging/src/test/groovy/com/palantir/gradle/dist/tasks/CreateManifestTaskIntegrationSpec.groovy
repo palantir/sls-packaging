@@ -234,8 +234,10 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent(true)
 
         where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
-        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
+        [gradleVersionNumber, writeLocksTask] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
+        ].combinations()
     }
 
     def '#gradleVersionNumber: write artifacts to manifest'() {

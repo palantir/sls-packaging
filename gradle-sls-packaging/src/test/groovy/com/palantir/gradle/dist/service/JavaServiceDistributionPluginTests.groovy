@@ -1214,8 +1214,10 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks("generateDockerCompose")
 
         where:
-        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks']
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+        [writeLocksTask, gradleVersionNumber] << [
+                ['--write-locks', 'writeProductDependenciesLocks'],
+                GradleTestVersions.GRADLE_VERSIONS
+        ].combinations()
     }
 
     def '#gradleVersionNumber: uses the runtimeClasspath in manifest jar'() {
