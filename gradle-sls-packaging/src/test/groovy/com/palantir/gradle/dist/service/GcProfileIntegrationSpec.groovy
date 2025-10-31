@@ -53,7 +53,7 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
                 from { tarTree(distTar.outputs.files.singleFile) }
                 into projectDir
             }
-        """.stripIndent()
+        """.stripIndent(true)
         Path path = projectDir.toPath().resolve(
                 "src/main/java/com/palantir/gradle/dist/service/ExampleTouchService.java")
         Files.createDirectories(path.getParent())
@@ -68,7 +68,7 @@ class GcProfileIntegrationSpec extends GradleIntegrationSpec {
         distribution {
             gc '${gc}'
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         runTasks(':extractDistTarForTest')

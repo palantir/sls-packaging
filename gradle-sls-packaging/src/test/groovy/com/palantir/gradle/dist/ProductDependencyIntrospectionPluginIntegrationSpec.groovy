@@ -27,7 +27,7 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         file("product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.0.0, 1.x.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
         def mavenRepo = generateMavenRepo('com.palantir.product:test:1.0.0')
         buildFile << """
             repositories {
@@ -41,7 +41,7 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
             dependencies {
                 foo 'com.palantir.product:test'
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksSuccessfully('dependencies', '--configuration', 'foo')
@@ -54,12 +54,12 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         file("a/product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.0.0, 1.x.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         file("b/product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
             com.palantir.product:test (1.2.0, 1.6.x)
-        '''.stripIndent()
+        '''.stripIndent(true)
 
         addSubproject('a', 'apply plugin: com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin')
         addSubproject('b', 'apply plugin: com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin')
@@ -80,7 +80,7 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
                 foo project(path: ':b', configuration: 'productDependencies')
                 foo 'com.palantir.product:test'
             }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def result = runTasksSuccessfully('dependencies', '--configuration', 'foo')

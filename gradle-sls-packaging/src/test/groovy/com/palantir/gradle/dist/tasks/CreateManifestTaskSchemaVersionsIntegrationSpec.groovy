@@ -29,7 +29,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
                 'type': 'offline'
             ],
         ]
-    """.stripIndent()
+    """.stripIndent(true)
 
     def setup() {
         buildFile << """
@@ -41,7 +41,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
                 serviceName "serviceName"
                 serviceGroup "serviceGroup"
             }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     def 'fails if lockfile is not up to date'() {
@@ -49,7 +49,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         distribution {
             ${SCHEMA}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('schema-versions.lock').text = """\
         ---
@@ -58,7 +58,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         - type: "offline"
           from: 52
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksWithFailure(':createManifest')
@@ -85,7 +85,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         distribution {
             ${SCHEMA}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('schema-versions.lock').text = """\
         ---
@@ -94,7 +94,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         - type: "offline"
           from: 53
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
 
         runTasksSuccessfully('createManifest') // ensure task is run once
         runTasksSuccessfully('createManifest')
@@ -111,7 +111,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         distribution {
             ${SCHEMA}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         file('schema-versions.lock').text = """\
         ---
@@ -120,7 +120,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         - type: "offline"
           from: 53
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
 
         runTasksSuccessfully('createManifest') // ensure task is run once
         runTasksSuccessfully('createManifest')
@@ -138,7 +138,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         distribution {
             ${SCHEMA}
         }
-        """.stripIndent()
+        """.stripIndent(true)
 
         when:
         def buildResult = runTasksSuccessfully(writeLocksTask)
@@ -152,7 +152,7 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         - type: "offline"
           from: 53
         version: 1
-        """.stripIndent()
+        """.stripIndent(true)
 
         where:
         writeLocksTask << ['--write-locks', 'writeSchemaVersionLocks', 'wSVL']

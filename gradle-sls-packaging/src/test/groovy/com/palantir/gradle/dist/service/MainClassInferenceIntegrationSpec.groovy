@@ -38,7 +38,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
             }
 
             version '0.0.1'
-        '''.stripIndent()
+        '''.stripIndent(true)
     }
 
     def 'infers main class correctly'() {
@@ -59,7 +59,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
             task Foo {} 
             tasks.run.dependsOn Foo
             ${unTarTask('service-name')}
-        """.stripIndent()
+        """.stripIndent(true)
         file('src/main/java/test/Test.java') << mainClass('Test')
         file('src/main/java/test/TestSchema.java') << schemaClass('TestSchema')
 
@@ -79,7 +79,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
                 serviceName 'service-name'
                 gc 'hybrid'
             }
-        '''.stripIndent()
+        '''.stripIndent(true)
         file('src/main/java/test/Test.java') << mainClass('Test')
         file('src/main/java/test/Test2.java') << mainClass('Test2')
 
@@ -100,7 +100,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
                 gc 'hybrid'
             }
             ${unTarTask('service-name')}
-        """.stripIndent()
+        """.stripIndent(true)
         file('src/main/java/test/Test.java') << mainClass('Test')
         file('src/main/java/test/Test2.java') << mainClass('Test2')
 
@@ -121,7 +121,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
             into "dist"
             dependsOn distTar
         }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     static def mainClass(String className) {
@@ -132,7 +132,7 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
                 while(true);
             }
         }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 
     static def schemaClass(String className) {
@@ -144,6 +144,6 @@ class MainClassInferenceIntegrationSpec extends GradleIntegrationSpec {
                 while(true);
             }
         }
-        """.stripIndent()
+        """.stripIndent(true)
     }
 }

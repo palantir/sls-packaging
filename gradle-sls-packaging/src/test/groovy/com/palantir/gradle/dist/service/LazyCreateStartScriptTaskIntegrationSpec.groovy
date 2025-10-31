@@ -28,7 +28,7 @@ class LazyCreateStartScriptTaskIntegrationSpec extends IntegrationSpec {
             lazyMainClassName = 'myMainClass'
             outputDir = file('build/scripts')
         }
-        """.stripIndent()
+        """.stripIndent(true)
         def successfully = runTasksSuccessfully('createStartScripts')
 
         then:
