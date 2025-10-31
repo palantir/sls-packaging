@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.logsafe.Preconditions;
+import java.io.UncheckedIOException;
 import java.util.Set;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -82,7 +83,7 @@ public class ConfigureProductDependenciesTask extends DefaultTask {
                                 .recommendedProductDependencies(recommendedProductDependencies)
                                 .build());
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Couldn't serialize recommended product dependencies as string", e);
+                throw new UncheckedIOException("Couldn't serialize recommended product dependencies as string", e);
             }
             manifest.attributes(ImmutableMap.of(
                     RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY, recommendedProductDeps));

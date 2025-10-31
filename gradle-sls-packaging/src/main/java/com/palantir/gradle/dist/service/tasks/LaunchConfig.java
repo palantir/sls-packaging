@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
@@ -245,7 +246,7 @@ public final class LaunchConfig {
             Files.createDirectories(scriptFile.getParentFile().toPath());
             OBJECT_MAPPER.writeValue(scriptFile, config);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write config", e);
+            throw new UncheckedIOException("Failed to write config", e);
         }
     }
 

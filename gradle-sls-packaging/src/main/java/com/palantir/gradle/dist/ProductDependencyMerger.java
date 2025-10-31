@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist;
 
-import com.google.common.collect.Streams;
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
@@ -44,7 +43,7 @@ public final class ProductDependencyMerger {
 
         // This could be empty if both of the versions are dirty
         Optional<OrderableSlsVersion> minimumVersionOrderable = Stream.of(dep1.parseMinimum(), dep2.parseMinimum())
-                .flatMap(Streams::stream)
+                .<OrderableSlsVersion>mapMulti(Optional::ifPresent)
                 .max(VersionComparator.INSTANCE);
 
         SlsVersion minimumVersion;
@@ -75,7 +74,7 @@ public final class ProductDependencyMerger {
 
         // Recommended version. Check that it matches the inferred min and max.
         Optional<OrderableSlsVersion> recommendedVersion = Stream.of(dep1.parseRecommended(), dep2.parseRecommended())
-                .flatMap(Streams::stream)
+                .<OrderableSlsVersion>mapMulti(Optional::ifPresent)
                 .filter(version -> minimumVersionOrderable
                         .map(mv -> VersionComparator.INSTANCE.compare(version, mv) >= 0)
                         .orElse(true))

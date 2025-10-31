@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.artifacts;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Optional;
@@ -65,7 +66,7 @@ public abstract class ExtractSingleFileOrManifest implements TransformAction<Fil
                 Files.write(outputFile.toPath(), value.get().getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
+            throw new UncheckedIOException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
         }
     }
 }

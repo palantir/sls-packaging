@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.service.util;
 import com.google.common.collect.Iterables;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,7 +67,7 @@ public final class MainClassResolver {
         try (Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8)) {
             return lines.anyMatch(line -> line.contains(text));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -78,7 +79,7 @@ public final class MainClassResolver {
                     .collect(Collectors.toSet())
                     .stream();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

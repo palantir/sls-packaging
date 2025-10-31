@@ -24,6 +24,7 @@ import com.palantir.logsafe.SafeArg;
 import groovy.lang.Closure;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +107,7 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
             return Optional.of(ProductDependencyLockFile.fromString(
                     Files.readString(lockFile.toPath()), project.getVersion().toString()));
         } catch (IOException e) {
-            throw new RuntimeException("Error reading lock file: " + lockFile, e);
+            throw new UncheckedIOException("Error reading lock file: " + lockFile, e);
         }
     }
 
