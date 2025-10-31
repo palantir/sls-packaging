@@ -16,12 +16,14 @@
 
 package com.palantir.gradle.dist.service
 
+import com.palantir.gradle.dist.GradleTestVersions
 import nebula.test.IntegrationSpec
 
 class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
 
-    def 'detects stuff defined in current project'() {
+    def '#gradleVersionNumber: detects stuff defined in current project'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         apply plugin: 'java-library'
         ${applyPlugin(DiagnosticsManifestPlugin.class)}
@@ -50,10 +52,14 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
 
         then:
         result2.wasUpToDate(":mergeDiagnosticsJson")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'detects stuff defined in sibling projects'() {
+    def '#gradleVersionNumber: detects stuff defined in sibling projects'() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << '''
         subprojects {
             apply plugin: 'java-library'
@@ -98,5 +104,8 @@ class DiagnosticsManifestPluginIntegrationSpec extends IntegrationSpec {
           "type" : "myproject2.v1",
           "docs" : "Click me if you dare!"
         } ]""".stripIndent(true)
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 }

@@ -17,12 +17,14 @@
 package com.palantir.gradle.dist.tasks
 
 import com.google.common.base.Throwables
+import com.palantir.gradle.dist.GradleTestVersions
 import nebula.test.IntegrationSpec
 
 class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
 
-    def 'configTar task exists for services'() {
+    def '#gradleVersionNumber: configTar task exists for services'() {
         setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
@@ -30,10 +32,14 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         fileExists('build/distributions/foo-service-0.0.1.service.config.tgz')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'configTar task exists for assets'() {
+    def '#gradleVersionNumber: configTar task exists for assets'() {
         setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
@@ -41,10 +47,14 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         fileExists('build/distributions/foo-asset-0.0.1.asset.config.tgz')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'configTar task contains the necessary deployment files for services'() {
+    def '#gradleVersionNumber: configTar task contains the necessary deployment files for services'() {
         setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile, "java-service", "service", "foo-service")
 
         when:
@@ -57,10 +67,14 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         def manifest = new File(projectDir, 'dist/foo-service-0.0.1/deployment/manifest.yml').text
         manifest.contains('service.v1')
         fileExists('dist/foo-service-0.0.1/service/bin/launcher-static.yml')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'configTar task contains the necessary deployment files for assets'() {
+    def '#gradleVersionNumber: configTar task contains the necessary deployment files for assets'() {
         setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         when:
@@ -72,10 +86,14 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         files.contains('deployment')
         def manifest = new File(projectDir, 'dist/foo-asset-0.0.1/deployment/manifest.yml').text
         manifest.contains('asset.v1')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'configTar task support configuration.ymls being generated to a non-standard location'() {
+    def '#gradleVersionNumber: configTar task support configuration.ymls being generated to a non-standard location'() {
         setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         // language=Gradle
@@ -99,10 +117,14 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
         then:
         def configuration = new File(projectDir, 'dist/foo-asset-0.0.1/deployment/configuration.yml').text
         configuration.contains('custom: yml')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'errors out if the custom configuration.yml location is not a file called configuration.yml'() {
+    def '#gradleVersionNumber: errors out if the custom configuration.yml location is not a file called configuration.yml'() {
         setup:
+        gradleVersion = gradleVersionNumber
         createUntarBuildFile(buildFile, "asset", "asset", "foo-asset")
 
         // language=Gradle
@@ -125,6 +147,9 @@ class ConfigTarTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         failureMessage.contains('must be called configuration.yml')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     private static createUntarBuildFile(buildFile, pluginType, artifactType, name) {

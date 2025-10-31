@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service
 
+import com.palantir.gradle.dist.GradleTestVersions
 import nebula.test.IntegrationSpec
 import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
@@ -59,7 +60,9 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         file('build/fake-jdk/release') << 'its a jdk trust me'
     }
 
-    def 'puts jdk in dist'() {
+    def '#gradleVersionNumber: puts jdk in dist'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         // language=gradle
         buildFile << '''
             distribution {
@@ -83,9 +86,14 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         def launcherStatic = new File(rootDir, "service/bin/launcher-static.yml").text
         launcherStatic.contains 'javaHome: "service/myService-jdks/jdk17"'
         launcherStatic.contains '  JAVA_17_HOME: "service/myService-jdks/jdk17"'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'multiple jdks can exist in the dist'() {
+    def '#gradleVersionNumber: multiple jdks can exist in the dist'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         // language=gradle
         buildFile << '''
             distribution {
@@ -116,9 +124,14 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
             def envVarLine = "  JAVA_${version}_HOME: \"service/myService-jdks/jdk${version}\""
             assert launcherStatic.contains(envVarLine)
         }
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'does not force value of jdks at configuration time when task is evaluated'() {
+    def '#gradleVersionNumber: does not force value of jdks at configuration time when task is evaluated'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         // language=gradle
         buildFile << '''
             distribution {
@@ -147,9 +160,14 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
         // A way of fixing this tests seems to open up the possibility of making extra unnecessary JDK repos - ensure
         // this does not happen.
         !new File(rootDir, "service/myService-jdks/jdk11").exists()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'even a user clearing env does not get rid of JAVA_XX_HOME env vars'() {
+    def '#gradleVersionNumber: even a user clearing env does not get rid of JAVA_XX_HOME env vars'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         // language=gradle
         buildFile << '''
             distribution {
@@ -171,6 +189,9 @@ class JdksInDistsIntegrationSpec extends IntegrationSpec {
 
         launcherStatic.contains 'JAVA_11_HOME: "service/myService-jdks/jdk11"'
         launcherStatic.contains 'JAVA_17_HOME: "service/myService-jdks/jdk17"'
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     private File extractDist() {

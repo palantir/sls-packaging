@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.tasks
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.ObjectMappers
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.artifacts.JsonArtifactLocator
@@ -41,7 +42,9 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent(true)
     }
 
-    def 'fails if lockfile is not up to date'() {
+    def '#gradleVersionNumber: fails if lockfile is not up to date'() {
+        setup:
+        gradleVersion = gradleVersionNumber
         buildFile << """
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
@@ -59,9 +62,15 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         then:
         buildResult.getStandardError().contains(
                 "product-dependencies.lock is out of date, please run `./gradlew writeProductDependenciesLocks` to update it")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if unexpected lockfile exists'() {
+    def '#gradleVersionNumber: fails if unexpected lockfile exists'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         runTasksSuccessfully('createManifest') // ensure task is run once
         def result = runTasksSuccessfully('createManifest')
         result.wasUpToDate(':createManifest')
@@ -71,9 +80,15 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksWithFailure('createManifest')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if lock file disappears'() {
+    def '#gradleVersionNumber: fails if lock file disappears'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
@@ -93,9 +108,15 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksWithFailure('createManifest')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if lockfile has changed contents'() {
+    def '#gradleVersionNumber: fails if lockfile has changed contents'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
@@ -115,10 +136,15 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         runTasksWithFailure('createManifest')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'always write projectVersion as minimum version in product dependency that is published by this repo'() {
+    def '#gradleVersionNumber: always write projectVersion as minimum version in product dependency that is published by this repo'() {
         setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         allprojects {
             project.version = '1.0.1'
@@ -181,10 +207,16 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                         "optional"           : false
                 ]
         ]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     @Unroll
-    def 'writes locks when #writeLocksTask is on the command line'() {
+    def '#gradleVersionNumber: writes locks when #writeLocksTask is on the command line'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         distribution {
             ${ResolveProductDependenciesIntegrationSpec.PDEP}
@@ -202,10 +234,16 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent(true)
 
         where:
-        writeLocksTask << ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
+        [gradleVersionNumber, writeLocksTask] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                ['--write-locks', 'writeProductDependenciesLocks', 'wPDL']
+        ].combinations()
     }
 
-    def 'write artifacts to manifest'() {
+    def '#gradleVersionNumber: write artifacts to manifest'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         distribution {
             artifact {
@@ -221,9 +259,15 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         then:
         buildResult.wasExecuted('createManifest')
         readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def 'fails if invalid'() {
+    def '#gradleVersionNumber: fails if invalid'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         buildFile << """
         distribution {
             artifact {
@@ -238,10 +282,14 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         buildResult.failure.cause.cause.message.contains("uri is not valid")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def "write artifacts to manifest from task output"() {
+    def "#gradleVersionNumber: write artifacts to manifest from task output"() {
         given:
+        gradleVersion = gradleVersionNumber
         buildFile << """
             
             import org.gradle.api.file.RegularFileProperty
@@ -284,6 +332,9 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
     private List<JsonArtifactLocator> readArtifactsExtension() {
@@ -291,11 +342,17 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         ObjectMappers.jsonMapper.convertValue(manifest.extensions().get("artifacts"), new TypeReference<List<JsonArtifactLocator>>() {})
     }
 
-    def "check depends on createManifest"() {
+    def "#gradleVersionNumber: check depends on createManifest"() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
         when:
         def result = runTasks(':check')
 
         then:
         result.wasExecuted(":createManifest")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 }
