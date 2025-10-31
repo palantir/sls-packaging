@@ -21,6 +21,7 @@ import com.palantir.gradle.dist.DeploymentDirInclusion;
 import com.palantir.gradle.dist.ObjectMappers;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.file.CopySpec;
@@ -69,7 +70,7 @@ public abstract class ConfigTarTask extends Tar {
                             .substring(1, productTypeString.lastIndexOf('.'))
                             .concat(".config.tgz");
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             }));
         });

@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.artifacts;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -61,7 +62,7 @@ public abstract class ExtractFileFromJar implements TransformAction<FileExtractP
                 Files.copy(is, outputFile.toPath());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
+            throw new UncheckedIOException("Failed to extract '" + pathToExtract + "' from jar: " + jarFile, e);
         }
     }
 }

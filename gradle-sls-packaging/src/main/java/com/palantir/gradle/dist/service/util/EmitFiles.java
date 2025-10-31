@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +32,7 @@ public final class EmitFiles {
         try (Reader reader = new InputStreamReader(src, StandardCharsets.UTF_8)) {
             text = CharStreams.toString(reader);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read template", e);
+            throw new UncheckedIOException("Failed to read template", e);
         }
 
         for (Map.Entry<String, String> entry : vars.entrySet()) {
@@ -45,7 +46,7 @@ public final class EmitFiles {
         try {
             return Files.write(dest, text.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write templated file", e);
+            throw new UncheckedIOException("Failed to write templated file", e);
         }
     }
 

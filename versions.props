@@ -7,6 +7,7 @@ com.palantir.sls.versions:sls-versions = 1.5.0
 org.apache.commons:commons-lang3 = 3.17.0
 org.immutables:value = 2.10.1
 org.junit.jupiter:* = 5.11.4
+org.junit.platform:* = 1.11.4
 org.junit.vintage:* = 5.11.4
 org.rauschig:jarchivelib = 1.2.0
 com.palantir.gradle.failure-reports:* = 1.2.0

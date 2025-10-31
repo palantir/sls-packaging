@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.artifacts;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.gradle.api.artifacts.transform.InputArtifact;
@@ -55,7 +56,7 @@ public abstract class SelectSingleFile implements TransformAction<FileExtractPar
         try {
             Files.copy(pathToExtract, outputFile);
         } catch (IOException e) {
-            throw new RuntimeException(String.format("Failed to copy '%s'", pathToExtract), e);
+            throw new UncheckedIOException(String.format("Failed to copy '%s'", pathToExtract), e);
         }
     }
 }
