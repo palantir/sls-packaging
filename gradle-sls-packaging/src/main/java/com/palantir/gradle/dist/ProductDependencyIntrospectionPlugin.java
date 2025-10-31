@@ -17,32 +17,32 @@
 package com.palantir.gradle.dist;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.logsafe.Preconditions;
 import com.palantir.logsafe.SafeArg;
 import groovy.lang.Closure;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.provider.ListProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 
-public final class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
+public abstract class ProductDependencyIntrospectionPlugin implements Plugin<Project> {
     static final String PRODUCT_DEPENDENCIES_CONFIGURATION = "productDependencies";
 
+    @Inject
+    protected abstract ProviderFactory getProviderFactory();
+
     @Override
-    public void apply(Project project) {
+    public final void apply(Project project) {
         createGetMinimumProductVersion(project);
 
         project.getConfigurations().create(PRODUCT_DEPENDENCIES_CONFIGURATION, conf -> {
@@ -50,16 +50,16 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
             conf.setDescription("Exposes minimum, maximum versions of product dependencies as constraints");
 
             // Lazily wire up product dependencies
-            Provider<List<ProductDependency>> allProductDependencies =
-                    project.provider(() -> getAllProductDependencies(project).orElseGet(ImmutableList::of));
-            ListProperty<Dependency> dependencies = project.getObjects().listProperty(Dependency.class);
-            dependencies.set(allProductDependencies.map(pdeps ->
-                    createAllProductDependencies(project, pdeps, getInRepoProductIds(project.getRootProject()))));
-            conf.getDependencies().addAllLater(GradleWorkarounds.fixListProperty(dependencies));
+            Provider<List<Dependency>> allProductDependencies = getAllProductDependencies(project)
+                    .orElse(List.of())
+                    .map(pdeps -> createAllProductDependencies(
+                            project, pdeps, getInRepoProductIds(project.getRootProject())));
+
+            conf.getDependencies().addAllLater(allProductDependencies);
         });
     }
 
-    private static void createGetMinimumProductVersion(Project project) {
+    private void createGetMinimumProductVersion(Project project) {
         project.getExtensions()
                 .getExtraProperties()
                 .set("getMinimumProductVersion", new Closure<String>(project, project) {
@@ -75,8 +75,8 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
                 });
     }
 
-    private static String getMinimumProductVersion(Project project, String group, String name) {
-        Optional<List<ProductDependency>> dependenciesOpt = getAllProductDependencies(project);
+    private String getMinimumProductVersion(Project project, String group, String name) {
+        Provider<List<ProductDependency>> dependenciesOpt = getAllProductDependencies(project);
         Preconditions.checkState(
                 dependenciesOpt.isPresent(),
                 ProductDependencyLockFile.LOCK_FILE + " does not exist. Run ./gradlew --write-locks to generate it.");
@@ -97,18 +97,13 @@ public final class ProductDependencyIntrospectionPlugin implements Plugin<Projec
     /**
      * Returns all product dependencies from the lock file, or empty if the lock file doesn't exist.
      */
-    private static Optional<List<ProductDependency>> getAllProductDependencies(Project project) {
-        File lockFile = project.file(ProductDependencyLockFile.LOCK_FILE);
-        if (!Files.exists(lockFile.toPath())) {
-            return Optional.empty();
-        }
-
-        try {
-            return Optional.of(ProductDependencyLockFile.fromString(
-                    Files.readString(lockFile.toPath()), project.getVersion().toString()));
-        } catch (IOException e) {
-            throw new UncheckedIOException("Error reading lock file: " + lockFile, e);
-        }
+    private Provider<List<ProductDependency>> getAllProductDependencies(Project project) {
+        RegularFile lockFile = project.getLayout().getProjectDirectory().file(ProductDependencyLockFile.LOCK_FILE);
+        return getProviderFactory()
+                .fileContents(lockFile)
+                .getAsText()
+                .map(contents -> ProductDependencyLockFile.fromString(
+                        contents, project.getVersion().toString()));
     }
 
     static List<Dependency> createAllProductDependencies(
