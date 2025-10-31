@@ -6,9 +6,9 @@ com.palantir.safe-logging:* = 3.9.0
 com.palantir.sls.versions:sls-versions = 1.8.0
 org.apache.commons:commons-lang3 = 3.19.0
 org.immutables:value = 2.11.6
-org.junit.jupiter:* = 6.0.0
-org.junit.platform:* = 6.0.0
-org.junit.vintage:* = 6.0.0
+org.junit.jupiter:* = 6.0.1
+org.junit.platform:* = 6.0.1
+org.junit.vintage:* = 6.0.1
 org.rauschig:jarchivelib = 1.2.0
 com.palantir.gradle.failure-reports:* = 1.2.0
 
