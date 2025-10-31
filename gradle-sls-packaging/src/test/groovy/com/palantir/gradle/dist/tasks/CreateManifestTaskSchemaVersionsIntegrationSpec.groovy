@@ -177,8 +177,10 @@ class CreateManifestTaskSchemaVersionsIntegrationSpec extends IntegrationSpec {
         """.stripIndent(true)
 
         where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
-        writeLocksTask << ['--write-locks', 'writeSchemaVersionLocks', 'wSVL']
+        [gradleVersionNumber, writeLocksTask] << [
+                GradleTestVersions.GRADLE_VERSIONS,
+                ['--write-locks', 'writeSchemaVersionLocks', 'wSVL']
+        ].combinations()
     }
 
     def "#gradleVersionNumber: check depends on createManifest"() {
