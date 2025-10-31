@@ -96,6 +96,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getManifestFile();
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     @Input
     final String getProjectVersion() {
         return getProject().getVersion().toString();
@@ -193,7 +194,9 @@ public abstract class CreateManifestTask extends DefaultTask {
         return ObjectMappers.jsonMapper.convertValue(raw, new TypeReference<>() {});
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     private void requireAbsentLockfile(String writeLocksTaskName, File lockfile) {
+        @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
         if (!lockfile.exists()) {
@@ -212,6 +215,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     private File getProductDependenciesLockfile() {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
@@ -231,8 +235,10 @@ public abstract class CreateManifestTask extends DefaultTask {
         ensureFileIsUpToDate(WriteProductDependenciesLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     private void ensureFileIsUpToDate(String writeLocksTaskName, File lockfile, String upToDateContents)
             throws IOException {
+        @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
         Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         boolean lockfileExists = lockfile.exists();
 
@@ -289,6 +295,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     private File getSchemaVersionLockfile() {
         return getProject().file(SchemaVersionLockFile.LOCK_FILE);
     }
@@ -299,6 +306,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         ensureFileIsUpToDate(WriteSchemaVersionLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
         Preconditions.checkArgument(
@@ -307,8 +315,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                         + "Please ensure there's at least one git tag on the repo (e.g. 0.0.0)",
                 stringVersion);
         if (!OrderableSlsVersion.check(stringVersion)) {
-            getProject()
-                    .getLogger()
+            getLogger()
                     .info(
                             "Version string in project {} is not orderable as per SLS specification: {}",
                             getProject().getName(),

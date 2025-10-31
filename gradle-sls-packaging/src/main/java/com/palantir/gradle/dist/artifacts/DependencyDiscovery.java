@@ -42,6 +42,7 @@ public final class DependencyDiscovery {
 
     public static Configuration copyConfiguration(Project project, String configurationName, String name) {
         String consumableConfigName = configurationName + "For" + StringUtils.capitalize(name);
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration consumable = project.getConfigurations().create(consumableConfigName, conf -> {
             conf.extendsFrom(project.getConfigurations().getByName(configurationName));
             conf.setCanBeConsumed(true);

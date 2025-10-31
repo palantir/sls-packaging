@@ -20,10 +20,11 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
-public class WriteProductDependenciesLocksMarkerTask extends DefaultTask {
+public abstract class WriteProductDependenciesLocksMarkerTask extends DefaultTask {
 
     public static final String NAME = "writeProductDependenciesLocks";
 
+    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
     @TaskAction
     public final void checkWriteLocksShouldBeRunning() {
         // Check that our task name matcher for writeProductDependenciesLocks is actually matching up the Gradle one;

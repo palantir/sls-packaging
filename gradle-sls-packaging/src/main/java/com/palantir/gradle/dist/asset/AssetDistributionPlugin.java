@@ -49,10 +49,12 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             GcvUtils.lockConfigurationInGcv(project);
         });
 
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
             conf.setCanBeConsumed(false);
         });
 
+        @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
         AssetDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
         distributionExtension.setProductDependenciesConfig(assetConfiguration);
