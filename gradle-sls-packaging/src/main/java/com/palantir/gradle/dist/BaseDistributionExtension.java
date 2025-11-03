@@ -21,6 +21,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.palantir.gradle.dist.artifacts.ArtifactLocator;
+import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
@@ -31,6 +32,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.DomainObjectSet;
 import org.gradle.api.Project;
@@ -68,6 +70,7 @@ public class BaseDistributionExtension {
     private final RegularFileProperty configurationYml;
     private final String projectName;
     private Configuration productDependenciesConfig;
+    private final Property<String> consumableProductDependenciesConfigurationName;
 
     @Inject
     public BaseDistributionExtension(Project project) {
@@ -80,6 +83,7 @@ public class BaseDistributionExtension {
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
         artifacts = project.getObjects().domainObjectSet(ArtifactLocator.class);
+        consumableProductDependenciesConfigurationName = project.getObjects().property(String.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
         serviceName.set(project.provider(project::getName));
@@ -285,7 +289,47 @@ public class BaseDistributionExtension {
         return productDependenciesConfig;
     }
 
+    public final Provider<String> getConsumableProductDependenciesConfigName() {
+        return consumableProductDependenciesConfigurationName;
+    }
+
+    /**
+     * Passing in a non-consumable {@link Configuration} is deprecated as it won't be compatible with Gradle 9.
+     * It will be an error in version 4.0.0. We work around this by creating a consumable {@link Configuration} that
+     * extends the given {@code productDependenciesConfig} {@link Configuration}. This is somewhat surprising
+     * behaviour, and undesirable, but here to maintain backwards compatibility as we transition to Gradle 9.
+     *
+     * <p>
+     * You should be able to just extend {@link ProductDependencies#PRODUCT_DEPENDENCY_DISCOVERY_CONFIGURATION_NAME}
+     * with the configuration in question for example:
+     *
+     * <pre>
+     * configurations {
+     *   productDependencyDiscovery {
+     *     extendsFrom configurations.nonConsumableConfiguration
+     *   }
+     * }
+     * </pre>
+     *
+     * Ideally, a consumable configuration is used, and even still, this method is not required. An easier way would be
+     * to just add a dependency on the consumable configuration like so:
+     *
+     * <pre>
+     * dependencies {
+     *     productDependencyDiscovery project(name: project.path, conf: 'myConsumableConfiguration')
+     * }
+     * </pre>
+     */
     public final void setProductDependenciesConfig(Configuration productDependenciesConfig) {
+        String consumableConfigName =
+                productDependenciesConfig.getName() + "For" + StringUtils.capitalize("productDependencies");
+        project.getConfigurations().register(consumableConfigName, conf -> {
+            conf.extendsFrom(productDependenciesConfig);
+            conf.setCanBeConsumed(true);
+            conf.setCanBeResolved(false);
+            conf.setVisible(false);
+        });
+        consumableProductDependenciesConfigurationName.set(consumableConfigName);
         this.productDependenciesConfig = productDependenciesConfig;
     }
 

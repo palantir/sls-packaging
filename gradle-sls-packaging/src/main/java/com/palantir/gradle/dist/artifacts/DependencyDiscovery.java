@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.artifacts;
 
+import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +41,20 @@ public final class DependencyDiscovery {
         });
     }
 
+    /**
+     * This is not compatible with Gradle 9. This will be removed in version 4.0.0.
+     * <p>
+     * Whatever consumes this will not be able to resolve it as it both a resolution root and a consumable variant.
+     * This is an error in Gradle 9. To resolve this, you need to split the configuration into both a resolvable
+     * configuration and a consumable configuration. As a result, this largely depends on what consumes this method.
+     * <p>
+     * You should reevaluate whether "copying" a configuration is actually required. It may be advantageous to have a
+     * standard consumable configuration that consumers can extend with their own provided configurations. An example
+     * of this in {@link ProductDependencies#registerProductDependencyTasks}.
+     * @deprecated This is not compatible with Gradle 9.
+     * @see ProductDependencies#registerProductDependencyTasks
+     */
+    @Deprecated
     public static Configuration copyConfiguration(Project project, String configurationName, String name) {
         String consumableConfigName = configurationName + "For" + StringUtils.capitalize(name);
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")

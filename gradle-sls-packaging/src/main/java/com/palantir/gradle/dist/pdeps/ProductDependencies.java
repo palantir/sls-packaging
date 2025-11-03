@@ -24,17 +24,20 @@ import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
 import com.palantir.gradle.dist.artifacts.ExtractSingleFileOrManifest;
 import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
+import java.util.Map;
+import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.Directory;
-import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class ProductDependencies {
 
     private static final String PRODUCT_DEPENDENCIES = "product-dependencies";
+    public static final String PRODUCT_DEPENDENCY_DISCOVERY_CONFIGURATION_NAME = "productDependencyDiscovery";
 
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
@@ -55,7 +58,29 @@ public final class ProductDependencies {
                     params.getPathToExtract().set(RecommendedProductDependenciesPlugin.RESOURCE_PATH);
                 });
 
-        Provider<ArtifactView> discoveredDependencies = getDiscoveredDependencies(project, ext);
+        NamedDomainObjectProvider<Configuration> productDependencyDependencyScope = project.getConfigurations()
+                .register(PRODUCT_DEPENDENCY_DISCOVERY_CONFIGURATION_NAME, conf -> {
+                    conf.setCanBeResolved(false);
+                    conf.setCanBeConsumed(false);
+                });
+        NamedDomainObjectProvider<Configuration> productDependencyClasspath = project.getConfigurations()
+                .register("productDependencyClasspath", conf -> {
+                    conf.setCanBeResolved(true);
+                    conf.setCanBeConsumed(false);
+                    conf.extendsFrom(productDependencyDependencyScope.get());
+                });
+
+        Provider<Dependency> consumableProjectDependency = ext.getConsumableProductDependenciesConfigName()
+                .map(configurationName -> {
+                    Map<String, String> projectDependency =
+                            Map.of("path", project.getPath(), "configuration", configurationName);
+                    return project.getDependencies().project(projectDependency);
+                });
+        project.getDependencies().addProvider(productDependencyDependencyScope.getName(), consumableProjectDependency);
+
+        Provider<ArtifactView> discoveredDependencies = productDependencyClasspath.map(
+                conf -> DependencyDiscovery.getFilteredArtifact(project, conf, PRODUCT_DEPENDENCIES));
+
         return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
             task.getServiceGroup().set(ext.getDistributionServiceGroup());
@@ -73,23 +98,6 @@ public final class ProductDependencies {
 
             task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
-    }
-
-    private static Provider<ArtifactView> getDiscoveredDependencies(
-            Project project, BaseDistributionExtension distribution) {
-        // Use a property with `Property#finalizeValueOnRead` instead of a provider as the provider can get resolved
-        // multiple times during the Gradle execution (e.g. for up-to-date checks) which would result in the pdeps
-        // configuration getting copied multiple times.
-        Property<ArtifactView> discoveredDependencies = project.getObjects().property(ArtifactView.class);
-        discoveredDependencies.finalizeValueOnRead();
-
-        discoveredDependencies.set(project.provider(() -> {
-            Configuration pdepsConfig = DependencyDiscovery.copyConfiguration(
-                    project, distribution.getProductDependenciesConfig().getName(), "productDependencies");
-            return DependencyDiscovery.getFilteredArtifact(project, pdepsConfig, PRODUCT_DEPENDENCIES);
-        }));
-
-        return discoveredDependencies;
     }
 
     private ProductDependencies() {}
