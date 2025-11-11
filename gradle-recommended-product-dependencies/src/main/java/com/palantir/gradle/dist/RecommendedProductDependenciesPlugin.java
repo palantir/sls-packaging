@@ -40,6 +40,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         });
     }
 
+    @SuppressWarnings("for-rollout:TaskDependsOn")
     private void configureManifest(Project project, RecommendedProductDependenciesExtension ext) {
         TaskProvider<ConfigureProductDependenciesTask> configureProductDependenciesTask = project.getTasks()
                 .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {

@@ -70,7 +70,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
 
     @Override
-    @SuppressWarnings({"checkstyle:methodlength", "RawTypes", "deprecation"})
+    @SuppressWarnings({"RawTypes", "checkstyle:methodlength", "deprecation", "for-rollout:TaskDependsOn"})
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
@@ -164,6 +164,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                             distributionExtension.getEnableManifestClasspath().get());
                 });
 
+        @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<CreateStartScripts> startScripts = project.getTasks()
                 .register("createStartScripts", CreateStartScripts.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
@@ -213,6 +214,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             }
         }));
 
+        @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<LaunchConfigTask> launchConfigTask = project.getTasks()
                 .register("createLaunchConfig", LaunchConfigTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
@@ -264,6 +266,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.dependsOn(manifest, launchConfigTask, startScripts, copyLauncherBinaries);
         });
 
+        @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<JavaExec> runTask = project.getTasks().register("run", JavaExec.class, task -> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Runs the specified project using configured mainClass and with default args.");
@@ -300,6 +303,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setArgs(distributionExtension.getArgs().get());
         }));
 
+        @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required runtime resources.");
