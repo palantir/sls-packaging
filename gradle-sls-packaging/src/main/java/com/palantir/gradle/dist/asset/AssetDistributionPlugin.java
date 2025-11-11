@@ -36,7 +36,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String ASSET_CONFIGURATION = "assetBundle";
 
     @Override
-    @SuppressWarnings("RawTypes")
+    @SuppressWarnings({"RawTypes", "for-rollout:TaskDependsOn"})
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {
@@ -62,6 +62,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
+        @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");

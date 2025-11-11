@@ -55,7 +55,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
      * gradle has all these jars and resources, it can use the right TransformAction to bridge the gap.
      */
     @Override
-    @SuppressWarnings("RawTypes")
+    @SuppressWarnings({"RawTypes", "for-rollout:TaskDependsOn"})
     public void apply(Project project) {
         configureDiagnosticsTransform(project);
 

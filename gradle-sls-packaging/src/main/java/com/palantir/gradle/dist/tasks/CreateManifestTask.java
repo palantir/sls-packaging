@@ -323,10 +323,12 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
+    @SuppressWarnings("for-rollout:TaskDependsOn")
     public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         TaskProvider<ResolveProductDependenciesTask> resolveProductDependenciesTask =
                 ProductDependencies.registerProductDependencyTasks(project, ext);
 
+        @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register(CREATE_MANIFEST_TASK_NAME, CreateManifestTask.class, task -> {
                     task.getServiceName().set(ext.getDistributionServiceName());
