@@ -838,7 +838,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
-        !actualStaticConfig.jvmOpts().contains("-XX:+UseCompactObjectHeaders")
+        actualStaticConfig.jvmOpts().stream().noneMatch { it.contains("UseCompactObjectHeaders") }
 
         where:
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
