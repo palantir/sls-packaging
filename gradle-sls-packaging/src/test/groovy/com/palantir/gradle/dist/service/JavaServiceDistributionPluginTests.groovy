@@ -796,6 +796,54 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
+    def '#gradleVersionNumber: jdk-25 enables compact object headers'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 25
+            }""".stripIndent(true)
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        actualStaticConfig.jvmOpts().contains("-XX:+UseCompactObjectHeaders")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
+    def '#gradleVersionNumber: jdk-24 does not enable compact object headers'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        createUntarBuildFile(buildFile)
+        buildFile << """
+            dependencies { implementation files("${EXTERNAL_JAR}") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion 24
+            }""".stripIndent(true)
+        file('src/main/java/test/Test.java') << "package test;\npublic class Test {}"
+
+        when:
+        runTasks(':build', ':distTar', ':untar')
+
+        then:
+        def actualStaticConfig = OBJECT_MAPPER.readValue(
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+        !actualStaticConfig.jvmOpts().contains("-XX:+UseCompactObjectHeaders")
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
     def '#gradleVersionNumber: produce distribution bundle that populates check.sh'() {
         given:
         gradleVersion = gradleVersionNumber
