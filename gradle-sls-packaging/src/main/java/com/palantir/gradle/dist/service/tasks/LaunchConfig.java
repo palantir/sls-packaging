@@ -66,6 +66,8 @@ public final class LaunchConfig {
     // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
     private static final ImmutableList<String> jdk11DisableC2Compile =
             ImmutableList.of("-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord");
+    // Enable compact object headers for JDK 25+, reducing memory overhead per object
+    private static final ImmutableList<String> compactObjectHeaders = ImmutableList.of("-XX:+UseCompactObjectHeaders");
 
     private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
             "-XX:+CrashOnOutOfMemoryError",
@@ -195,6 +197,10 @@ public final class LaunchConfig {
                         .addAllJvmOpts(
                                 javaVersion.compareTo(JavaVersion.toVersion("15")) < 0
                                         ? disableBiasedLocking
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("25")) >= 0
+                                        ? compactObjectHeaders
                                         : ImmutableList.of())
                         .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, params.getFullClasspath()))
                         .addAllJvmOpts(params.getGcJvmOptions().get())
