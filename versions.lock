@@ -52,7 +52,7 @@ org.apache.commons:commons-lang3:3.20.0 (1 constraints: 3705393b)
 
 org.codehaus.woodstox:stax2-api:4.2.2 (2 constraints: 6a278bd2)
 
-org.immutables:value:2.11.7 (1 constraints: 3d05393b)
+org.immutables:value:2.12.0 (1 constraints: 3705353b)
 
 org.jetbrains:annotations:26.0.2 (2 constraints: 0e2b30a3)
 
