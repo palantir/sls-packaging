@@ -60,6 +60,7 @@ subprojects {
 }
 
 javaVersions {
+    javaCompiler = 25
     libraryTarget = 17
 }
 
