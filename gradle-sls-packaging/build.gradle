@@ -34,6 +34,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.rauschig:jarchivelib'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
 }
 
 gradlePlugin {
