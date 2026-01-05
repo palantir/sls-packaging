@@ -16,8 +16,30 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-public abstract class CreateCheckScriptTask extends CreateCheckScriptTaskImpl {
+import org.gradle.api.DefaultTask;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.TaskAction;
+
+public abstract class CreateCheckScriptTask extends DefaultTask {
+    @Input
+    public abstract Property<String> getServiceName();
+
+    @Input
+    public abstract ListProperty<String> getCheckArgs();
+
+    @OutputFile
+    public abstract RegularFileProperty getOutputFile();
+
     public CreateCheckScriptTask() {
         getOutputFile().set(getProject().getLayout().getBuildDirectory().file("monitoring/check.sh"));
+    }
+
+    @TaskAction
+    public final void action() {
+        CreateCheckScript.action(this);
     }
 }

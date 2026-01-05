@@ -16,4 +16,25 @@
 
 package com.palantir.gradle.dist.service;
 
-public abstract class MergeDiagnosticsJsonTask extends MergeDiagnosticsJsonTaskImpl {}
+import org.gradle.api.DefaultTask;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.api.tasks.TaskAction;
+
+public abstract class MergeDiagnosticsJsonTask extends DefaultTask {
+    @InputFiles
+    @PathSensitive(PathSensitivity.NONE)
+    public abstract ConfigurableFileCollection getClasspath();
+
+    @OutputFile
+    public abstract RegularFileProperty getOutputJsonFile();
+
+    @TaskAction
+    public final void action() {
+        MergeDiagnosticsJson.action(this);
+    }
+}

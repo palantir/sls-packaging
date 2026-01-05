@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -46,8 +45,7 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.immutables.value.Value;
 
-@AutoParallelizable
-public final class LaunchConfig {
+final class LaunchConfig {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
     private static final ImmutableList<String> java8gcLoggingOptions = ImmutableList.of(
             "-XX:+PrintGCDateStamps",

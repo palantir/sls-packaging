@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.service.tasks;
 
 import com.google.common.collect.ImmutableMap;
-import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
 import org.gradle.api.file.RegularFileProperty;
@@ -25,8 +24,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 
-@AutoParallelizable
-public final class CreateInitScript {
+final class CreateInitScript {
     interface Params {
         @Input
         Property<String> getServiceName();

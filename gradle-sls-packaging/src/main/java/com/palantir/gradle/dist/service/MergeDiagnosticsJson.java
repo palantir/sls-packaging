@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.service;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.ObjectMappers;
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +31,6 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 
-@AutoParallelizable
 final class MergeDiagnosticsJson {
     interface Params {
         @InputFiles
