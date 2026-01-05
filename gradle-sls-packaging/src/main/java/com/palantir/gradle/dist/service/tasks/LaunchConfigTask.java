@@ -259,7 +259,8 @@ public abstract class LaunchConfigTask extends DefaultTask {
 
     private List<String> javaAgentArgs() {
         return getJavaAgents().getFiles().stream()
-                .map(file -> "-javaagent:service/lib/agent/" + validateJavaAgent(file).getName())
+                .map(file -> "-javaagent:service/lib/agent/"
+                        + validateJavaAgent(file).getName())
                 .collect(Collectors.toList());
     }
 

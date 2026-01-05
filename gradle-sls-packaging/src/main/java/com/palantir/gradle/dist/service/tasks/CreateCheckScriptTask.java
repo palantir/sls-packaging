@@ -50,7 +50,8 @@ public abstract class CreateCheckScriptTask extends DefaultTask {
                             getOutputFile().get().getAsFile().toPath(),
                             ImmutableMap.of(
                                     "@serviceName@", getServiceName().get(),
-                                    "@checkArgs@", Joiner.on(" ").join(getCheckArgs().get())))
+                                    "@checkArgs@",
+                                            Joiner.on(" ").join(getCheckArgs().get())))
                     .toFile()
                     .setExecutable(true);
         }

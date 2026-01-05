@@ -22,7 +22,8 @@ import com.palantir.gradle.dist.GradleIntegrationSpec
 import com.palantir.gradle.dist.GradleTestVersions
 import com.palantir.gradle.dist.SlsManifest
 import com.palantir.gradle.dist.Versions
-import com.palantir.gradle.dist.service.tasks.LaunchConfig
+import com.palantir.gradle.dist.service.tasks.LaunchConfigInfo
+import com.palantir.gradle.dist.service.tasks.LaunchConfigTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
@@ -505,7 +506,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = LaunchConfig.LaunchConfigInfo.builder()
+        def expectedStaticConfig = LaunchConfigInfo.builder()
                 .mainClass("test.Test")
                 .serviceName("service-name")
                 .javaHome("foo")
@@ -528,15 +529,15 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:+UseParallelGC',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
-                .env(LaunchConfig.defaultEnvironment + [
+                .env(LaunchConfigTask.defaultEnvironment + [
                         "key1": "val1",
                         "key2": "val2"])
                 .dirs(["var/data/tmp"])
                 .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
 
-        def expectedCheckConfig = LaunchConfig.LaunchConfigInfo.builder()
+        def expectedCheckConfig = LaunchConfigInfo.builder()
                 .mainClass(actualStaticConfig.mainClass())
                 .serviceName(actualStaticConfig.serviceName())
                 .javaHome(actualStaticConfig.javaHome())
@@ -556,12 +557,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:UseAVX=2',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
-                .env(LaunchConfig.defaultEnvironment)
+                .env(LaunchConfigTask.defaultEnvironment)
                 .dirs(actualStaticConfig.dirs())
                 .build()
 
         def actualCheckConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigInfo)
         expectedCheckConfig == actualCheckConfig
         expectedStaticConfig == actualStaticConfig
 
@@ -593,7 +594,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = LaunchConfig.LaunchConfigInfo.builder()
+        def expectedStaticConfig = LaunchConfigInfo.builder()
                 .mainClass("test.Test")
                 .serviceName("service-name")
                 .javaHome("foo")
@@ -615,16 +616,16 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:+UseParallelGC',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
-                .env(LaunchConfig.defaultEnvironment + [
+                .env(LaunchConfigTask.defaultEnvironment + [
                         "key1": "val1",
                         "key2": "val2",
                         "JAVA_11_HOME": "service/service-name-jdks/jdk11"])
                 .dirs(["var/data/tmp"])
                 .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                file('dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
 
-        def expectedCheckConfig = LaunchConfig.LaunchConfigInfo.builder()
+        def expectedCheckConfig = LaunchConfigInfo.builder()
                 .mainClass(actualStaticConfig.mainClass())
                 .serviceName(actualStaticConfig.serviceName())
                 .javaHome(actualStaticConfig.javaHome())
@@ -644,12 +645,12 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
                         '-XX:UseAVX=2',
                         '-Xmx4M',
                         '-Djavax.net.ssl.trustStore=truststore.jks'])
-                .env(LaunchConfig.defaultEnvironment)
+                .env(LaunchConfigTask.defaultEnvironment)
                 .dirs(actualStaticConfig.dirs())
                 .build()
 
         def actualCheckConfig = OBJECT_MAPPER.readValue(
-                file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfig.LaunchConfigInfo)
+                file('dist/service-name-0.0.1/service/bin/launcher-check.yml'), LaunchConfigInfo)
         expectedCheckConfig == actualCheckConfig
         expectedStaticConfig == actualStaticConfig
 
@@ -674,7 +675,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         runTasks(':build', ':distTar', ':untar')
 
         then:
-        def expectedStaticConfig = LaunchConfig.LaunchConfigInfo.builder()
+        def expectedStaticConfig = LaunchConfigInfo.builder()
             .mainClass("test.Test")
             .serviceName("service-name")
             .javaHome("foo")
@@ -707,7 +708,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
             .env(["MALLOC_ARENA_MAX": '4'])
             .build()
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         expectedStaticConfig == actualStaticConfig
 
         where:
@@ -732,7 +733,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().containsAll([
                 "-XX:+UseShenandoahGC",
                 "-XX:+ExplicitGCInvokesConcurrent",
@@ -761,7 +762,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().containsAll([
                 "-XX:+UseZGC",
                 "-XX:+ZGenerational",
@@ -789,7 +790,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().stream().noneMatch { it.contains("UseAVX") }
 
         where:
@@ -813,7 +814,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().contains("-XX:+UseCompactObjectHeaders")
 
         where:
@@ -837,7 +838,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().stream().noneMatch { it.contains("UseCompactObjectHeaders") }
 
         where:
@@ -1191,17 +1192,17 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         startScript.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
         // verify launcher YAML files
-        LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
+        LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
-                LaunchConfig.LaunchConfigInfo.class)
+                LaunchConfigInfo.class)
 
         launcherCheck.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherCheck.classpath.any { it.contains('/lib/guava-19.0.jar') }
         launcherCheck.classpath.any { it.contains('/lib/mockito-core-2.7.22.jar') }
 
-        LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
+        LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfig.LaunchConfigInfo.class)
+                LaunchConfigInfo.class)
 
         launcherStatic.classpath.any { it.contains('/lib/annotations-3.0.1.jar') }
         launcherStatic.classpath.any { it.contains('/lib/guava-19.0.jar') }
@@ -1345,15 +1346,15 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         startScript.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
         // verify launcher YAML files
-        LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
+        LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-check.yml'),
-                LaunchConfig.LaunchConfigInfo.class)
+                LaunchConfigInfo.class)
 
         launcherCheck.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
-        LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
+        LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'parent/dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfig.LaunchConfigInfo.class)
+                LaunchConfigInfo.class)
 
         launcherStatic.classpath.any { it.contains('-manifest-classpath-0.0.1.jar') }
 
@@ -1417,7 +1418,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseParNewGC', '-XX:+UseConcMarkSweepGC', '-XX:CMSInitiatingOccupancyFraction=75'])
 
         where:
@@ -1455,7 +1456,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', '-XX:MaxGCPauseMillis=1234'])
 
         where:
@@ -1491,7 +1492,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts.containsAll(['-XX:+UseG1GC', '-XX:+UseNUMA', "-XX:MaxGCPauseMillis=500"])
 
         where:
@@ -1518,7 +1519,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().contains("-javaagent:service/lib/agent/byte-buddy-agent-1.10.21.jar")
         fileExists('dist/service-name-0.0.1/service/lib/agent/byte-buddy-agent-1.10.21.jar')
 
@@ -1568,7 +1569,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().containsAll([
                 "--add-exports",
                 "java.management/sun.management=ALL-UNNAMED"
@@ -1606,7 +1607,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualOpts = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfig.LaunchConfigInfo)
+                LaunchConfigInfo)
                 .jvmOpts()
 
         // Quick check
@@ -1650,7 +1651,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualOpts = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfig.LaunchConfigInfo)
+                LaunchConfigInfo)
                 .jvmOpts()
 
         // Quick check
@@ -1695,7 +1696,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
         then:
         def actualOpts = OBJECT_MAPPER.readValue(
                 new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'),
-                LaunchConfig.LaunchConfigInfo)
+                LaunchConfigInfo)
                 .jvmOpts()
 
         // Quick check
@@ -1805,7 +1806,7 @@ class JavaServiceDistributionPluginTests extends GradleIntegrationSpec {
 
         then:
         def actualStaticConfig = OBJECT_MAPPER.readValue(
-                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfig.LaunchConfigInfo)
+                new File(projectDir, 'dist/service-name-0.0.1/service/bin/launcher-static.yml'), LaunchConfigInfo)
         actualStaticConfig.jvmOpts().containsAll([
                 "-XX:+AlwaysPreTouch",
                 "-XX:+UseTransparentHugePages",
