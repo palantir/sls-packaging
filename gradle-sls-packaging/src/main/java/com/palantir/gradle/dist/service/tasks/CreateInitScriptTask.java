@@ -16,6 +16,9 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
+import com.google.common.collect.ImmutableMap;
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import com.palantir.gradle.dist.service.util.EmitFiles;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
@@ -36,6 +39,11 @@ public abstract class CreateInitScriptTask extends DefaultTask {
 
     @TaskAction
     public final void action() {
-        CreateInitScript.action(this);
+        EmitFiles.replaceVars(
+                        JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/init.sh"),
+                        getOutputFile().get().getAsFile().toPath(),
+                        ImmutableMap.of("@serviceName@", getServiceName().get()))
+                .toFile()
+                .setExecutable(true);
     }
 }

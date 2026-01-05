@@ -16,7 +16,14 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.File;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFiles;
@@ -35,6 +42,17 @@ public abstract class MergeDiagnosticsJsonTask extends DefaultTask {
 
     @TaskAction
     public final void action() {
-        MergeDiagnosticsJson.action(this);
+        List<ObjectNode> aggregated = getClasspath().getFiles().stream()
+                .flatMap(file -> Diagnostics.parse(file).stream())
+                .distinct()
+                .sorted(Comparator.comparing(node -> node.get("type").asText()))
+                .collect(Collectors.toList());
+
+        File out = getOutputJsonFile().getAsFile().get();
+        try {
+            ObjectMappers.jsonMapper.writeValue(out, aggregated);
+        } catch (IOException e) {
+            throw new GradleException("Failed to write " + out, e);
+        }
     }
 }

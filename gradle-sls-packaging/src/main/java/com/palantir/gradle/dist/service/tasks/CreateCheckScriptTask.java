@@ -16,6 +16,10 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import com.palantir.gradle.dist.service.util.EmitFiles;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -40,6 +44,15 @@ public abstract class CreateCheckScriptTask extends DefaultTask {
 
     @TaskAction
     public final void action() {
-        CreateCheckScript.action(this);
+        if (!getCheckArgs().get().isEmpty()) {
+            EmitFiles.replaceVars(
+                            JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/check.sh"),
+                            getOutputFile().get().getAsFile().toPath(),
+                            ImmutableMap.of(
+                                    "@serviceName@", getServiceName().get(),
+                                    "@checkArgs@", Joiner.on(" ").join(getCheckArgs().get())))
+                    .toFile()
+                    .setExecutable(true);
+        }
     }
 }
