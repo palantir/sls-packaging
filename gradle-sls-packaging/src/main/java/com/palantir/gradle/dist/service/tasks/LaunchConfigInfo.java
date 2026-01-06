@@ -26,7 +26,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonSerialize(as = ImmutableLaunchConfigInfo.class)
 @JsonDeserialize(as = ImmutableLaunchConfigInfo.class)
-interface LaunchConfigInfo {
+public interface LaunchConfigInfo {
     // keep in sync with StaticLaunchConfig struct in go-java-launcher
     @Value.Default
     default String configType() {
