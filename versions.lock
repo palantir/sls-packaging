@@ -1,6 +1,6 @@
 # Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.
 
-com.fasterxml.jackson.core:jackson-annotations:2.20 (5 constraints: 3a556642)
+com.fasterxml.jackson.core:jackson-annotations:2.20 (5 constraints: d2540e98)
 
 com.fasterxml.jackson.core:jackson-core:2.20.1 (5 constraints: 4e6e7ac6)
 
@@ -16,7 +16,7 @@ com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.20.1 (2 constraints: db1f
 
 com.fasterxml.woodstox:woodstox-core:7.1.1 (1 constraints: 3d174926)
 
-com.google.errorprone:error_prone_annotations:2.41.0 (5 constraints: a7493495)
+com.google.errorprone:error_prone_annotations:2.41.0 (5 constraints: db48a599)
 
 com.google.guava:failureaccess:1.0.3 (1 constraints: 160ae3b4)
 
@@ -34,17 +34,17 @@ com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (2 c
 
 com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
 
-com.palantir.safe-logging:logger:3.9.0 (1 constraints: c51092b2)
+com.palantir.safe-logging:logger:3.10.0 (1 constraints: c51092b2)
 
-com.palantir.safe-logging:logger-slf4j:3.9.0 (1 constraints: 070e6e42)
+com.palantir.safe-logging:logger-slf4j:3.10.0 (1 constraints: 2f0e8750)
 
-com.palantir.safe-logging:logger-spi:3.9.0 (2 constraints: 1d1e0c7c)
+com.palantir.safe-logging:logger-spi:3.10.0 (2 constraints: 6d1ed4af)
 
-com.palantir.safe-logging:preconditions:3.9.0 (2 constraints: d21519d6)
+com.palantir.safe-logging:preconditions:3.10.0 (2 constraints: fa1591e2)
 
-com.palantir.safe-logging:safe-logging:3.9.0 (4 constraints: 513f92c6)
+com.palantir.safe-logging:safe-logging:3.10.0 (4 constraints: c93f794d)
 
-com.palantir.sls.versions:sls-versions:1.8.0 (1 constraints: 0b050836)
+com.palantir.sls.versions:sls-versions:1.9.0 (1 constraints: 0c050b36)
 
 one.util:streamex:0.8.4 (1 constraints: c01b2d46)
 
