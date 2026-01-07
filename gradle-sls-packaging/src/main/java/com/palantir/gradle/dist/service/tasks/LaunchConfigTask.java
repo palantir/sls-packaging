@@ -16,9 +16,271 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-public abstract class LaunchConfigTask extends LaunchConfigTaskImpl {
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.JavaVersion;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.TaskAction;
+
+public abstract class LaunchConfigTask extends DefaultTask {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+    private static final ImmutableList<String> java8gcLoggingOptions = ImmutableList.of(
+            "-XX:+PrintGCDateStamps",
+            "-XX:+PrintGCDetails",
+            "-XX:-TraceClassUnloading",
+            "-XX:+UseGCLogFileRotation",
+            "-XX:GCLogFileSize=10M",
+            "-XX:NumberOfGCLogFiles=10",
+            "-Xloggc:var/log/gc-%t-%p.log",
+            "-verbose:gc");
+    private static final ImmutableList<String> java14PlusOptions =
+            ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+    private static final ImmutableList<String> java15Options =
+            ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
+    private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
+    // Disable C2 compilation for problematic structure in JDK 11.0.16, see https://bugs.openjdk.org/browse/JDK-8291665
+    private static final ImmutableList<String> jdk11DisableC2Compile =
+            ImmutableList.of("-XX:CompileCommand=exclude,sun/security/ssl/SSLEngineInputRecord.decodeInputRecord");
+    // Enable compact object headers for JDK 25+, reducing memory overhead per object
+    private static final ImmutableList<String> compactObjectHeaders = ImmutableList.of("-XX:+UseCompactObjectHeaders");
+
+    private static final ImmutableList<String> alwaysOnJvmOptions = ImmutableList.of(
+            "-XX:+CrashOnOutOfMemoryError",
+            "-Djava.io.tmpdir=var/data/tmp",
+            "-Djna.tmpdir=var/data/tmp",
+            "-XX:ErrorFile=var/log/hs_err_pid%p.log",
+            "-XX:HeapDumpPath=var/log",
+            // Set DNS cache TTL to 10s to account for systems such as RDS and other
+            // AWS-managed systems that modify DNS records on failover.
+            // We use a 10 second value matching the default negative cache ttl.
+            "-Dsun.net.inetaddr.ttl=10",
+            "-XX:+UnlockDiagnosticVMOptions",
+            "-XX:+IgnoreUnrecognizedVMOptions",
+            "-XX:NativeMemoryTracking=summary",
+            // Increase default JFR stack depth beyond the default (conservative) 64 frames.
+            // This can be overridden by user-provided options.
+            // See sls-packaging#1230
+            "-XX:FlightRecorderOptions=stackdepth=256");
+
+    // Disable AVX-512 intrinsics due to AES/CTR corruption bug in https://bugs.openjdk.org/browse/JDK-8292158
+    // UseAVX is not recognized on some platforms (arm), so we must include 'IgnoreUnrecognizedVMOptions' above.
+    // When a system supports UseAVX=N, setting UseAVX=N+1 will set the flag to the highest supported value.
+    private static final ImmutableList<String> disableAvx512 = ImmutableList.of("-XX:UseAVX=2");
+
+    private static final ImmutableList<String> alwaysPreTouchOptions =
+            ImmutableList.of("-XX:+AlwaysPreTouch", "-XX:+UseTransparentHugePages");
+
+    // Reduce memory usage for some versions of glibc.
+    // Default value is 8 * CORES.
+    // See https://issues.apache.org/jira/browse/HADOOP-7154
+    public static final Map<String, String> defaultEnvironment = ImmutableMap.of("MALLOC_ARENA_MAX", "4");
+
+    @Input
+    public abstract Property<String> getMainClass();
+
+    @Input
+    public abstract Property<String> getServiceName();
+
+    @Input
+    public abstract ListProperty<String> getGcJvmOptions();
+
+    @Input
+    public abstract Property<Boolean> getAddJava8GcLogging();
+
+    @Input
+    @Optional
+    public abstract Property<String> getJavaHome();
+
+    @Input
+    public abstract Property<JavaVersion> getJavaVersion();
+
+    @Input
+    public abstract Property<Boolean> getBundledJdks();
+
+    @Input
+    public abstract Property<Boolean> getAlwaysPreTouch();
+
+    @Input
+    public abstract ListProperty<String> getArgs();
+
+    @Input
+    public abstract ListProperty<String> getCheckArgs();
+
+    @Input
+    public abstract ListProperty<String> getDefaultJvmOpts();
+
+    @Input
+    public abstract MapProperty<String, String> getEnv();
+
+    @InputFiles
+    public abstract ConfigurableFileCollection getClasspath();
+
+    /**
+     * The difference between fullClasspath and classpath is that classpath is what is written
+     * to the launcher-static.yml file, this <i>might</i> in some cases be the manifest classpath
+     * JAR. Full Classpath on the other hand is always going to be the full set of JARs which may
+     * be the same as classpath if manifest classpath JARs are not used.
+     */
+    @InputFiles
+    public abstract ConfigurableFileCollection getFullClasspath();
+
+    @InputFiles
+    public abstract ConfigurableFileCollection getJavaAgents();
+
+    @OutputFile
+    public abstract RegularFileProperty getStaticLauncher();
+
+    @OutputFile
+    public abstract RegularFileProperty getCheckLauncher();
+
     public LaunchConfigTask() {
         getStaticLauncher().set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));
         getCheckLauncher().set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-check.yml"));
+    }
+
+    @TaskAction
+    public final void action() {
+        JavaVersion javaVersion = getJavaVersion().get();
+        List<String> avxOptions = getAvxOptions();
+
+        writeConfig(
+                LaunchConfigInfo.builder()
+                        .mainClass(getMainClass().get())
+                        .serviceName(getServiceName().get())
+                        .javaHome(getJavaHome().getOrElse(""))
+                        .args(getArgs().get())
+                        .classpath(relativizeToServiceLibDirectory(getClasspath()))
+                        .addAllJvmOpts(javaAgentArgs())
+                        .addAllJvmOpts(alwaysOnJvmOptions)
+                        .addAllJvmOpts(avxOptions)
+                        .addAllJvmOpts(getAddJava8GcLogging().get() ? java8gcLoggingOptions : ImmutableList.of())
+                        // Java 11.0.16 introduced a potential memory leak issues when using the C2
+                        // compiler, resolved in 11.0.16.1
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("11")) == 0
+                                                && !getBundledJdks().get()
+                                        ? jdk11DisableC2Compile
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("14")) >= 0
+                                        ? java14PlusOptions
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("15")) == 0
+                                        ? java15Options
+                                        : ImmutableList.of())
+                        // Biased locking is disabled on java 15+ https://openjdk.java.net/jeps/374
+                        // We disable biased locking on all releases in order to reduce safepoint time,
+                        // revoking biased locks requires a safepoint, and can occur for non-obvious
+                        // reasons, e.g. System.identityHashCode.
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("15")) < 0
+                                        ? disableBiasedLocking
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("25")) >= 0
+                                        ? compactObjectHeaders
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(ModuleArgs.collectClasspathArgs(javaVersion, getFullClasspath()))
+                        .addAllJvmOpts(getGcJvmOptions().get())
+                        .addAllJvmOpts(getAlwaysPreTouch().get() ? alwaysPreTouchOptions : ImmutableList.of())
+                        .addAllJvmOpts(getDefaultJvmOpts().get())
+                        .putAllEnv(defaultEnvironment)
+                        .putAllEnv(getEnv().get())
+                        .build(),
+                getStaticLauncher().get().getAsFile());
+
+        writeConfig(
+                LaunchConfigInfo.builder()
+                        .mainClass(getMainClass().get())
+                        .serviceName(getServiceName().get())
+                        .javaHome(getJavaHome().getOrElse(""))
+                        .args(getCheckArgs().get())
+                        .classpath(relativizeToServiceLibDirectory(getClasspath()))
+                        .addAllJvmOpts(javaAgentArgs())
+                        .addAllJvmOpts(alwaysOnJvmOptions)
+                        .addAllJvmOpts(avxOptions)
+                        .addAllJvmOpts(getDefaultJvmOpts().get())
+                        .env(defaultEnvironment)
+                        .build(),
+                getCheckLauncher().get().getAsFile());
+    }
+
+    // When a specific jdk is provided, we can assume a modern versions including the
+    // bugfix for JDK-8292158. Only Java versions 11-19 were impacted by this bug, so
+    // we don't need to worry about newer releases.
+    // Update for Java 20-21:
+    // https://bugs.openjdk.org/browse/JDK-8317121
+    // https://mail.openjdk.org/pipermail/hotspot-compiler-dev/2023-September/068447.html
+    // AVX-512 is largely unreliable, so we're going to opt out entirely for the time
+    // being.
+    // Update for the October 17, 2023 CPU hotfixes: The above issue has been resolved,
+    // we will allow avx-512 instructions initially only for jdk21+ to build confidence,
+    // and align rollout with the new jdk. Assuming this goes well, we may allow jdk17
+    // to use avx-512 instructions in a future sls-packaging release.
+    private List<String> getAvxOptions() {
+        JavaVersion javaVersion = getJavaVersion().get();
+        if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
+            return Collections.emptyList();
+        }
+        return disableAvx512;
+    }
+
+    private void writeConfig(LaunchConfigInfo config, File scriptFile) {
+        try {
+            Files.createDirectories(scriptFile.getParentFile().toPath());
+            OBJECT_MAPPER.writeValue(scriptFile, config);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to write config", e);
+        }
+    }
+
+    private List<String> javaAgentArgs() {
+        return getJavaAgents().getFiles().stream()
+                .map(file -> "-javaagent:service/lib/agent/"
+                        + validateJavaAgent(file).getName())
+                .collect(Collectors.toList());
+    }
+
+    /** Returns the input file. An exception is thrown if the {@code agentFile} is not a java agent. */
+    private File validateJavaAgent(File agentFile) {
+        try {
+            JarFile agentJarFile = new JarFile(agentFile);
+            if (!agentJarFile.getManifest().getMainAttributes().containsKey(new Attributes.Name("Premain-Class"))) {
+                throw new IllegalArgumentException("Jar file " + agentFile.getName()
+                        + " is not a java agent and contains no Premain-Class manifest entry");
+            }
+            return agentFile;
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
+    }
+
+    private List<String> relativizeToServiceLibDirectory(FileCollection files) {
+        return files.getFiles().stream()
+                .map(file -> "service/lib/" + file.getName())
+                .collect(Collectors.toList());
     }
 }
