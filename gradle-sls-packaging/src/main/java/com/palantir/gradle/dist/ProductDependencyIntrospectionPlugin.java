@@ -130,7 +130,7 @@ public abstract class ProductDependencyIntrospectionPlugin implements Plugin<Pro
 
     public static Map<ProductId, Project> getInRepoProductIds(Project rootProject) {
         Preconditions.checkArgument(
-                rootProject.getPath().equals(rootProject.getRootProject().getPath()),
+                rootProject.equals(rootProject.getRootProject()),
                 "Must call this method with the root project",
                 SafeArg.of("project", rootProject.getPath()));
         // get products we publish via BaseDistributionExtension from all other projects
