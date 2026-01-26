@@ -129,8 +129,11 @@ public abstract class ProductDependencyIntrospectionPlugin implements Plugin<Pro
     }
 
     public static Map<ProductId, Project> getInRepoProductIds(Project rootProject) {
+        // Use path comparison instead of identity check (==) for Gradle 9 compatibility.
+        // During dependency resolution, Gradle may wrap/decorate project instances,
+        // causing identity comparison to fail even for the actual root project.
         Preconditions.checkArgument(
-                rootProject == rootProject.getRootProject(),
+                rootProject.getPath().equals(rootProject.getRootProject().getPath()),
                 "Must call this method with the root project",
                 SafeArg.of("project", rootProject.getPath()));
         // get products we publish via BaseDistributionExtension from all other projects
