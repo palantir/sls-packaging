@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.palantir.gradle.testing.execution.GradleInvoker;
 import com.palantir.gradle.testing.execution.InvocationResult;
-import com.palantir.gradle.testing.files.gradle.GradleFile;
 import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
@@ -31,35 +30,6 @@ import org.junit.jupiter.api.Test;
 @GradlePluginTests
 @DisabledConfigurationCache
 class ConfigTarTaskIntegrationTest {
-
-    private GradleFile createUntarBuildFile(
-            RootProject rootProject, String pluginType, String artifactType, String name) {
-        rootProject.buildGradle().plugins().add("com.palantir.sls-" + pluginType + "-distribution");
-
-        rootProject
-                .buildGradle()
-                .append("""
-                    repositories {
-                        mavenCentral()
-                    }
-                    distribution {
-                        serviceName '%s'
-                        %s
-                    }
-
-                    version "0.0.1"
-                    project.group = 'service-group'
-
-                    // most convenient way to untar the dist is to use gradle
-                    task untar (type: Copy) {
-                        from tarTree(resources.gzip("${buildDir}/distributions/%s-0.0.1.%s.config.tgz"))
-                        into "${projectDir}/dist"
-                        dependsOn configTar
-                    }
-                    """, name, artifactType.equals("service") ? "mainClass 'main.Main'" : "", name, artifactType);
-
-        return rootProject.buildGradle();
-    }
 
     @Test
     void config_tar_task_exists_for_services(GradleInvoker gradle, RootProject rootProject) {
@@ -152,7 +122,6 @@ class ConfigTarTaskIntegrationTest {
         assertThat(configuration).contains("custom: yml");
     }
 
-    // configuration.yml
     @Test
     void errors_out_if_the_custom_configuration_yml_location_is_not_a_file_called_configuration_yml(
             GradleInvoker gradle, RootProject rootProject) {
@@ -175,5 +144,32 @@ class ConfigTarTaskIntegrationTest {
         InvocationResult result = gradle.withArgs(":configTar", ":untar").buildsWithFailure();
 
         assertThat(result).output().contains("must be called configuration.yml");
+    }
+
+    private void createUntarBuildFile(
+            RootProject rootProject, String pluginType, String artifactType, String name) {
+        rootProject.buildGradle().plugins().add("com.palantir.sls-" + pluginType + "-distribution");
+
+        rootProject
+                .buildGradle()
+                .append("""
+                    repositories {
+                        mavenCentral()
+                    }
+                    distribution {
+                        serviceName '%s'
+                        %s
+                    }
+
+                    version "0.0.1"
+                    project.group = 'service-group'
+
+                    // most convenient way to untar the dist is to use gradle
+                    task untar (type: Copy) {
+                        from tarTree(resources.gzip("${buildDir}/distributions/%s-0.0.1.%s.config.tgz"))
+                        into "${projectDir}/dist"
+                        dependsOn configTar
+                    }
+                    """, name, artifactType.equals("service") ? "mainClass 'main.Main'" : "", name, artifactType);
     }
 }
