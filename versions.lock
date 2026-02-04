@@ -1,6 +1,6 @@
 # Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.
 
-com.fasterxml.jackson.core:jackson-annotations:2.21 (5 constraints: d654329a)
+com.fasterxml.jackson.core:jackson-annotations:2.21 (5 constraints: d754339a)
 
 com.fasterxml.jackson.core:jackson-core:2.21.0 (5 constraints: 4e6e84c6)
 
@@ -34,17 +34,17 @@ com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (2 c
 
 com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
 
-com.palantir.safe-logging:logger:3.11.0 (1 constraints: c51092b2)
+com.palantir.safe-logging:logger:3.11.0 (1 constraints: ee106cc3)
 
 com.palantir.safe-logging:logger-slf4j:3.11.0 (1 constraints: 300e8a50)
 
 com.palantir.safe-logging:logger-spi:3.11.0 (2 constraints: 6f1e0ab0)
 
-com.palantir.safe-logging:preconditions:3.11.0 (2 constraints: fb15c3e2)
+com.palantir.safe-logging:preconditions:3.11.0 (2 constraints: 2416d3f8)
 
-com.palantir.safe-logging:safe-logging:3.11.0 (4 constraints: cc3f9f4e)
+com.palantir.safe-logging:safe-logging:3.11.0 (4 constraints: f53f808e)
 
-com.palantir.sls.versions:sls-versions:1.9.0 (1 constraints: 0c050b36)
+com.palantir.sls.versions:sls-versions:1.10.0 (1 constraints: 3405293b)
 
 one.util:streamex:0.8.4 (1 constraints: c01b2d46)
 
