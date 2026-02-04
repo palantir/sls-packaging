@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.palantir.gradle.testing.execution.GradleInvoker;
 import com.palantir.gradle.testing.execution.InvocationResult;
-import com.palantir.gradle.testing.files.gradle.GradleFile;
 import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
@@ -29,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -37,14 +37,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 @GradlePluginTests
 @DisabledConfigurationCache
 class CreateManifestTaskSchemaVersionsIntegrationTest {
-    private static final String SCHEMA = """
-        manifestExtensions 'schema-migrations': [
-            [
-                'from': 53,
-                'type': 'offline'
-            ],
-        ]
-        """;
 
     @BeforeEach
     void setup(RootProject rootProject) {
@@ -60,34 +52,101 @@ class CreateManifestTaskSchemaVersionsIntegrationTest {
             """);
     }
 
-    private GradleFile standardBuildFile(RootProject rootProject) {
-        return rootProject.buildGradle().append("""
-            distribution {
-                %s
-            }
-            """, SCHEMA);
-    }
+    @Nested
+    class TestDistributionSchema {
 
-    @Test
-    void fails_if_lockfile_is_not_up_to_date(GradleInvoker gradle, RootProject rootProject) {
-        standardBuildFile(rootProject);
+        @BeforeEach
+        void setup(RootProject rootProject) {
+            rootProject.buildGradle().append("""
+                distribution {
+                    manifestExtensions 'schema-migrations': [
+                        [
+                            'from': 53,
+                            'type': 'offline'
+                        ],
+                    ]
+                }
+                """);
+        }
 
-        rootProject.file("schema-versions.lock").overwrite("""
-            ---
-            comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
-            schemaMigrations:
-            - type: "offline"
-              from: 52
-            version: 1
-            """);
+        @Test
+        void fails_if_lockfile_is_not_up_to_date(GradleInvoker gradle, RootProject rootProject) {
+            rootProject.file("schema-versions.lock").overwrite("""
+                ---
+                comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
+                schemaMigrations:
+                - type: "offline"
+                  from: 52
+                version: 1
+                """);
 
-        InvocationResult buildResult = gradle.withArgs(":createManifest").buildsWithFailure();
+            InvocationResult buildResult = gradle.withArgs(":createManifest").buildsWithFailure();
 
-        assertThat(buildResult)
-                .output()
-                .contains(
-                        "schema-versions.lock is out of date, please run `./gradlew writeSchemaVersionLocks` to update"
-                                + " it");
+            assertThat(buildResult)
+                    .output()
+                    .contains("schema-versions.lock is out of date, please run `./gradlew writeSchemaVersionLocks` to"
+                            + " update it");
+        }
+
+        @Test
+        void fails_if_lock_file_disappears(GradleInvoker gradle, RootProject rootProject) throws IOException {
+            rootProject.file("schema-versions.lock").overwrite("""
+                ---
+                comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
+                schemaMigrations:
+                - type: "offline"
+                  from: 53
+                version: 1
+                """);
+
+            gradle.withArgs("createManifest").buildsSuccessfully(); // ensure task is run once
+            gradle.withArgs("createManifest").buildsSuccessfully();
+
+            Files.delete(rootProject.file("schema-versions.lock").path());
+
+            gradle.withArgs("createManifest").buildsWithFailure();
+        }
+
+        @Test
+        void fails_if_lockfile_has_changed_contents(GradleInvoker gradle, RootProject rootProject) {
+            rootProject.file("schema-versions.lock").overwrite("""
+                ---
+                comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
+                schemaMigrations:
+                - type: "offline"
+                  from: 53
+                version: 1
+                """);
+
+            gradle.withArgs("createManifest").buildsSuccessfully(); // ensure task is run once
+            gradle.withArgs("createManifest").buildsSuccessfully();
+
+            rootProject.file("schema-versions.lock").append("\nthis should not be here");
+
+            gradle.withArgs("createManifest").buildsWithFailure();
+        }
+
+        @ParameterizedTest
+        @MethodSource("writeLocksTaskProvider")
+        void writes_locks_when_task_is_on_the_command_line(
+                String writeLocksTask, GradleInvoker gradle, RootProject rootProject) {
+            InvocationResult buildResult = gradle.withArgs(writeLocksTask).buildsSuccessfully();
+
+            assertThat(buildResult).task(":createManifest").isPresent();
+            assertThat(rootProject.file("schema-versions.lock").text()).isEqualTo("""
+                ---
+                comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
+                schemaMigrations:
+                - type: "offline"
+                  from: 53
+                version: 1
+                """);
+        }
+
+        private static Stream<Arguments> writeLocksTaskProvider() {
+            return Stream.of(
+                    Arguments.of("--write-locks"), Arguments.of("writeSchemaVersionLocks"), Arguments.of("wSVL"));
+        }
     }
 
     @Test
@@ -96,74 +155,9 @@ class CreateManifestTaskSchemaVersionsIntegrationTest {
         InvocationResult result = gradle.withArgs("createManifest").buildsSuccessfully();
         assertThat(result).task(":createManifest").upToDate();
 
-        rootProject.file("schema-versions.lock").append("\nthis should not be here");
+        rootProject.file("schema-versions.lock").createEmpty().append("\nthis should not be here");
 
         gradle.withArgs("createManifest").buildsWithFailure();
-    }
-
-    @Test
-    void fails_if_lock_file_disappears(GradleInvoker gradle, RootProject rootProject) throws IOException {
-        standardBuildFile(rootProject);
-
-        rootProject.file("schema-versions.lock").overwrite("""
-            ---
-            comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
-            schemaMigrations:
-            - type: "offline"
-              from: 53
-            version: 1
-            """);
-
-        gradle.withArgs("createManifest").buildsSuccessfully(); // ensure task is run once
-        gradle.withArgs("createManifest").buildsSuccessfully();
-
-        Files.delete(rootProject.file("schema-versions.lock").path());
-
-        gradle.withArgs("createManifest").buildsWithFailure();
-    }
-
-    @Test
-    void fails_if_lockfile_has_changed_contents(GradleInvoker gradle, RootProject rootProject) {
-        standardBuildFile(rootProject);
-
-        rootProject.file("schema-versions.lock").overwrite("""
-            ---
-            comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
-            schemaMigrations:
-            - type: "offline"
-              from: 53
-            version: 1
-            """);
-
-        gradle.withArgs("createManifest").buildsSuccessfully(); // ensure task is run once
-        gradle.withArgs("createManifest").buildsSuccessfully();
-
-        rootProject.file("schema-versions.lock").append("\nthis should not be here");
-
-        gradle.withArgs("createManifest").buildsWithFailure();
-    }
-
-    @ParameterizedTest
-    @MethodSource("writeLocksTaskProvider")
-    void writes_locks_when_task_is_on_the_command_line(
-            String writeLocksTask, GradleInvoker gradle, RootProject rootProject) {
-        standardBuildFile(rootProject);
-
-        InvocationResult buildResult = gradle.withArgs(writeLocksTask).buildsSuccessfully();
-
-        assertThat(buildResult).task(":createManifest").isPresent();
-        assertThat(rootProject.file("schema-versions.lock").text().trim()).isEqualTo("""
-            ---
-            comment: "Run ./gradlew writeSchemaVersionLocks to regenerate this file"
-            schemaMigrations:
-            - type: "offline"
-              from: 53
-            version: 1
-            """);
-    }
-
-    private static Stream<Arguments> writeLocksTaskProvider() {
-        return Stream.of(Arguments.of("--write-locks"), Arguments.of("writeSchemaVersionLocks"), Arguments.of("wSVL"));
     }
 
     @Test
