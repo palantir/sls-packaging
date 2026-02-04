@@ -146,8 +146,7 @@ class ConfigTarTaskIntegrationTest {
         assertThat(result).output().contains("must be called configuration.yml");
     }
 
-    private void createUntarBuildFile(
-            RootProject rootProject, String pluginType, String artifactType, String name) {
+    private void createUntarBuildFile(RootProject rootProject, String pluginType, String artifactType, String name) {
         rootProject.buildGradle().plugins().add("com.palantir.sls-" + pluginType + "-distribution");
 
         rootProject
