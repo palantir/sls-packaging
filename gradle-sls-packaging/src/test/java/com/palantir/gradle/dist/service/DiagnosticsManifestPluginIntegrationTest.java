@@ -24,6 +24,7 @@ import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
 import com.palantir.gradle.testing.project.SubProject;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 @GradlePluginTests
@@ -47,20 +48,18 @@ class DiagnosticsManifestPluginIntegrationTest {
 
         gradle.withArgs("mergeDiagnosticsJson", "-is").buildsSuccessfully();
 
-        String expectedContent = """
-            [ {
-              "type" : "foo.v1",
-              "docs" : "This does something",
-              "safe" : false
-            } ]\
-            """;
-
-        org.assertj.core.api.Assertions.assertThat(rootProject
-                        .buildDir()
-                        .file("mergeDiagnosticsJson.json")
-                        .text()
-                        .trim())
-                .isEqualTo(expectedContent);
+        rootProject
+                .buildDir()
+                .file("mergeDiagnosticsJson.json")
+                .assertThat()
+                .content()
+                .isEqualTo("""
+                    [ {
+                      "type" : "foo.v1",
+                      "docs" : "This does something",
+                      "safe" : false
+                    } ]\
+                    """);
 
         InvocationResult result2 =
                 gradle.withArgs("mergeDiagnosticsJson", "-is").buildsSuccessfully();
@@ -69,16 +68,18 @@ class DiagnosticsManifestPluginIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("GradleTestPluginsBlock")
     void detects_stuff_defined_in_sibling_projects(
             GradleInvoker gradle,
             RootProject rootProject,
             SubProject myServer,
             SubProject myProject1,
             SubProject myProject2) {
+
+        List.of(myServer, myProject1, myProject2)
+                .forEach(subProject -> subProject.buildGradle().plugins().add("java-library"));
+
         rootProject.buildGradle().append("""
             subprojects {
-                apply plugin: 'java-library'
                 repositories {
                     mavenCentral()
                 }
@@ -108,28 +109,23 @@ class DiagnosticsManifestPluginIntegrationTest {
                 .file("diagnostics.json")
                 .overwrite("[{\"type\": \"myproject2.v1\", \"docs\" : \"Click me if you dare!\"}]");
 
-        InvocationResult output =
-                gradle.withArgs("myServer:mergeDiagnosticsJson", "-is").buildsSuccessfully();
+        gradle.withArgs("myServer:mergeDiagnosticsJson", "-is").buildsSuccessfully();
 
-        System.out.println(output.output());
-
-        String expectedContent = """
-            [ {
-              "type" : "foo.v1",
-              "docs" : "This does something"
-            }, {
-              "type" : "myproject1.v1",
-              "docs" : "Who knows what this does"
-            }, {
-              "type" : "myproject2.v1",
-              "docs" : "Click me if you dare!"
-            } ]\
-            """;
-
-        org.assertj.core.api.Assertions.assertThat(myServer.buildDir()
-                        .file("mergeDiagnosticsJson.json")
-                        .text()
-                        .trim())
-                .isEqualTo(expectedContent);
+        myServer.buildDir()
+                .file("mergeDiagnosticsJson.json")
+                .assertThat()
+                .content()
+                .isEqualTo("""
+                    [ {
+                      "type" : "foo.v1",
+                      "docs" : "This does something"
+                    }, {
+                      "type" : "myproject1.v1",
+                      "docs" : "Who knows what this does"
+                    }, {
+                      "type" : "myproject2.v1",
+                      "docs" : "Click me if you dare!"
+                    } ]\
+                    """);
     }
 }
