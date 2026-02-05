@@ -33,17 +33,14 @@ public final class TestUtils {
                 .path()
                 .toFile()
                 .listFiles();
-
         if (libFiles == null) {
             return null;
         }
-
         for (File file : libFiles) {
             if (file.getName().matches(namePattern)) {
                 return file;
             }
         }
-
         return null;
     }
 
@@ -59,7 +56,7 @@ public final class TestUtils {
         String classpathLine = Arrays.stream(startScriptContent.split("\n"))
                 .filter(line -> line.contains("CLASSPATH="))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("Could not find CLASSPATH in start script"));
+                .orElseThrow(() -> new RuntimeException("Could not find CLASSPATH in start script"));
         String classpath = classpathLine.replaceAll(".*CLASSPATH=\"([^\"]*)\".*", "$1");
         return Arrays.asList(classpath.split(":"));
     }
