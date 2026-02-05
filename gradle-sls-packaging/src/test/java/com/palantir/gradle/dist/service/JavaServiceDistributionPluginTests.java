@@ -18,33 +18,36 @@ package com.palantir.gradle.dist.service;
 import static com.palantir.gradle.testing.assertion.GradlePluginTestAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.dist.SlsManifest;
 import com.palantir.gradle.dist.service.tasks.LaunchConfig;
+import com.palantir.gradle.dist.service.utils.ExecUtils;
+import com.palantir.gradle.dist.service.utils.TestUtils;
 import com.palantir.gradle.testing.execution.GradleInvoker;
 import com.palantir.gradle.testing.execution.InvocationResult;
-import com.palantir.gradle.testing.files.gradle.GradleFile;
 import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
+import com.palantir.gradle.testing.project.GradleProject;
 import com.palantir.gradle.testing.project.RootProject;
 import com.palantir.gradle.testing.project.SubProject;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @GradlePluginTests
 @DisabledConfigurationCache
@@ -52,131 +55,7 @@ class JavaServiceDistributionPluginTests {
     private static final ObjectMapper OBJECT_MAPPER =
             new ObjectMapper(new YAMLFactory()).registerModule(new GuavaModule());
 
-    @SuppressWarnings("StrictUnusedVariable") // Will be used in upcoming tests
     private static final String EXTERNAL_JAR = new File("src/test/resources/external.jar").getAbsolutePath();
-
-    private GradleFile createUntarBuildFile(RootProject rootProject) {
-        rootProject.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
-
-        rootProject.buildGradle().append("""
-            project.group = 'service-group'
-
-            repositories {
-                mavenCentral()
-            }
-
-            version '0.0.1'
-
-            distribution {
-                serviceName 'service-name'
-                mainClass 'test.Test'
-                defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
-                manifestExtensions 'foo': [
-                    'bar': ['1', '2']
-                ]
-            }
-
-            java {
-                sourceCompatibility = '1.7'
-            }
-            """);
-
-        createUntarTask(rootProject);
-        return rootProject.buildGradle();
-    }
-
-    private void createUntarTask(RootProject rootProject) {
-        rootProject.buildGradle().append("""
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from { tarTree(tasks.distTar.outputs.files.singleFile) }
-                into "dist"
-                dependsOn distTar
-                duplicatesStrategy = 'INCLUDE'
-            }
-            """);
-    }
-
-    @SuppressWarnings("UnusedMethod") // Will be used in upcoming tests
-    private String readFromZip(File zipFile, String pathInZipFile) throws IOException {
-        try (ZipFile zf = new ZipFile(zipFile)) {
-            Enumeration<? extends ZipEntry> entries = zf.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (entry.getName().equals(pathInZipFile)) {
-                    return new String(zf.getInputStream(entry).readAllBytes(), StandardCharsets.UTF_8);
-                }
-            }
-        }
-        throw new IllegalArgumentException("Entry not found: " + pathInZipFile);
-    }
-
-    private int execWithExitCode(RootProject rootProject, String... tasks) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder()
-                .command(tasks)
-                .directory(rootProject.path().toFile())
-                .inheritIO();
-        pb.environment().put("JAVA_HOME", System.getProperty("java.home"));
-        Process proc = pb.start();
-        return proc.waitFor();
-    }
-
-    private String execWithOutput(RootProject rootProject, String... tasks) throws IOException, InterruptedException {
-        StringBuilder sout = new StringBuilder();
-        StringBuilder serr = new StringBuilder();
-        ProcessBuilder pb =
-                new ProcessBuilder().command(tasks).directory(rootProject.path().toFile());
-        pb.environment().put("JAVA_HOME", System.getProperty("java.home"));
-        Process proc = pb.start();
-
-        Thread outThread = new Thread(() -> {
-            try {
-                proc.getInputStream().transferTo(new java.io.OutputStream() {
-                    @Override
-                    public void write(int b) {
-                        sout.append((char) b);
-                    }
-                });
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-        Thread errThread = new Thread(() -> {
-            try {
-                proc.getErrorStream().transferTo(new java.io.OutputStream() {
-                    @Override
-                    public void write(int b) {
-                        serr.append((char) b);
-                    }
-                });
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-
-        outThread.start();
-        errThread.start();
-        int result = proc.waitFor();
-        outThread.join();
-        errThread.join();
-
-        int expected = 0;
-        if (result != expected) {
-            throw new AssertionError(String.format(
-                    "Expected command '%s' to exit with '%d'\nstdout: %s\nstderr: %s",
-                    String.join(" ", tasks), expected, sout, serr));
-        }
-        return sout.toString();
-    }
-
-    private void execAllowFail(RootProject rootProject, String... tasks) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder()
-                .command(tasks)
-                .directory(rootProject.path().toFile())
-                .inheritIO();
-        pb.environment().put("JAVA_HOME", System.getProperty("java.home"));
-        pb.start().waitFor();
-    }
 
     @Test
     void produce_distribution_bundle_and_check_start_stop_restart_check_behavior(
@@ -216,8 +95,8 @@ class JavaServiceDistributionPluginTests {
 
         assertThat(result).task(":createCheckScript").succeeded();
 
-        // try all of the service commands
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+        // try all the service commands
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
                 .isEqualTo(0);
         // wait for the Java process to start up and emit output
         Thread.sleep(1000);
@@ -225,20 +104,21 @@ class JavaServiceDistributionPluginTests {
                         .file("dist/service-name-0.0.1/var/log/startup.log")
                         .text())
                 .contains("Test started\n");
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
                 .isEqualTo(0);
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "status"))
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "status"))
                 .isEqualTo(0);
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "restart"))
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "restart"))
                 .isEqualTo(0);
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "stop"))
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "stop"))
                 .isEqualTo(0);
 
-        String checkOutput = execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "check");
+        String checkOutput =
+                ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "check");
         assertThat(checkOutput).containsPattern("Checking health of 'service-name'\\.\\.\\.\\s+Healthy");
 
         String monitoringCheckOutput =
-                execWithOutput(rootProject, "dist/service-name-0.0.1/service/monitoring/bin/check.sh");
+                ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/monitoring/bin/check.sh");
         assertThat(monitoringCheckOutput).containsPattern("Checking health of 'service-name'\\.\\.\\.\\s+Healthy");
     }
 
@@ -274,9 +154,9 @@ class JavaServiceDistributionPluginTests {
         assertThat(result).task(":manifestClasspathJar").succeeded();
         assertThat(result).task(":distTar").succeeded();
 
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.2/service/bin/init.sh", "start"))
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.2/service/bin/init.sh", "start"))
                 .isEqualTo(0);
-        assertThat(execWithExitCode(rootProject, "dist/service-name-0.0.2/service/bin/init.sh", "stop"))
+        assertThat(ExecUtils.execWithExitCode(rootProject, "dist/service-name-0.0.2/service/bin/init.sh", "stop"))
                 .isEqualTo(0);
     }
 
@@ -317,7 +197,7 @@ class JavaServiceDistributionPluginTests {
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
-        execAllowFail(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start");
+        ExecUtils.execAllowFail(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start");
         Thread.sleep(1000);
         File[] tmpFiles = rootProject
                 .file("dist/service-name-0.0.1/var/data/tmp")
@@ -423,13 +303,12 @@ class JavaServiceDistributionPluginTests {
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
-        @SuppressWarnings("unchecked")
         Map<String, Object> manifest = OBJECT_MAPPER.readValue(
                 rootProject
                         .file("dist/service-name-0.0.1/deployment/manifest.yml")
                         .path()
                         .toFile(),
-                Map.class);
+                new TypeReference<Map<String, Object>>() {});
         assertThat(manifest.get("manifest-version")).isEqualTo("1.0");
         assertThat(manifest.get("product-group")).isEqualTo("service-group");
         assertThat(manifest.get("product-name")).isEqualTo("service-name");
@@ -471,14 +350,12 @@ class JavaServiceDistributionPluginTests {
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
-        ObjectMapper mapper = new ObjectMapper();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> manifest = mapper.readValue(
+        Map<String, Object> manifest = OBJECT_MAPPER.readValue(
                 rootProject
                         .file("dist/service-name-0.0.1/deployment/manifest.yml")
                         .path()
                         .toFile(),
-                Map.class);
+                new TypeReference<Map<String, Object>>() {});
 
         @SuppressWarnings("unchecked")
         Map<String, Object> extensions = (Map<String, Object>) manifest.get("extensions");
@@ -627,7 +504,10 @@ class JavaServiceDistributionPluginTests {
             }
             """, EXTERNAL_JAR);
 
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -688,7 +568,7 @@ class JavaServiceDistributionPluginTests {
                         "-XX:UseAVX=2",
                         "-Xmx4M",
                         "-Djavax.net.ssl.trustStore=truststore.jks"))
-                .env(Map.of("MALLOC_ARENA_MAX", "4"))
+                .env(LaunchConfig.defaultEnvironment)
                 .dirs(actualStaticConfig.dirs())
                 .build();
 
@@ -721,7 +601,10 @@ class JavaServiceDistributionPluginTests {
                     "key2": "val2"
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -747,11 +630,13 @@ class JavaServiceDistributionPluginTests {
                         "-XX:+UseParallelGC",
                         "-Xmx4M",
                         "-Djavax.net.ssl.trustStore=truststore.jks"))
-                .env(Map.of(
-                        "MALLOC_ARENA_MAX", "4",
-                        "key1", "val1",
-                        "key2", "val2",
-                        "JAVA_11_HOME", "service/service-name-jdks/jdk11"))
+                .env(ImmutableMap.<String, String>builder()
+                        .putAll(LaunchConfig.defaultEnvironment)
+                        .putAll(Map.of(
+                                "key1", "val1",
+                                "key2", "val2",
+                                "JAVA_11_HOME", "service/service-name-jdks/jdk11"))
+                        .buildOrThrow())
                 .dirs(List.of("var/data/tmp"))
                 .build();
         LaunchConfig.LaunchConfigInfo actualStaticConfig = OBJECT_MAPPER.readValue(
@@ -781,7 +666,7 @@ class JavaServiceDistributionPluginTests {
                         "-XX:UseAVX=2",
                         "-Xmx4M",
                         "-Djavax.net.ssl.trustStore=truststore.jks"))
-                .env(Map.of("MALLOC_ARENA_MAX", "4"))
+                .env(LaunchConfig.defaultEnvironment)
                 .dirs(actualStaticConfig.dirs())
                 .build();
 
@@ -806,7 +691,10 @@ class JavaServiceDistributionPluginTests {
                 addJava8GcLogging true
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -862,7 +750,10 @@ class JavaServiceDistributionPluginTests {
                 gc 'response-time'
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -890,7 +781,10 @@ class JavaServiceDistributionPluginTests {
                 gc 'response-time'
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -914,7 +808,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 21
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -938,7 +835,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 25
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -962,7 +862,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 24
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1016,22 +919,13 @@ class JavaServiceDistributionPluginTests {
         assertThat(startScript).contains("-manifest-classpath-0.0.1.jar");
         assertThat(startScript).doesNotContain("-classpath \"%CLASSPATH%\"");
 
-        File[] libFiles = rootProject
-                .file("dist/service-name-0.0.1/service/lib/")
-                .path()
-                .toFile()
-                .listFiles();
-        File classpathJar = null;
-        for (File file : libFiles) {
-            if (file.getName().endsWith("-manifest-classpath-0.0.1.jar")) {
-                classpathJar = file;
-                break;
-            }
-        }
+        File classpathJar =
+                TestUtils.findJarInLibDirectory(rootProject, "0.0.1", ".*-manifest-classpath-0\\.0\\.1\\.jar");
         assertThat(classpathJar).isNotNull();
         assertThat(classpathJar).exists();
 
-        String zipManifest = readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace("\r\n ", "");
+        String zipManifest =
+                TestUtils.readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace("\r\n ", "");
         assertThat(zipManifest).contains("Class-Path: ");
         assertThat(zipManifest).contains("guava-19.0.jar");
         assertThat(zipManifest).contains("root-project-manifest-classpath-0.0.1.jar");
@@ -1051,19 +945,9 @@ class JavaServiceDistributionPluginTests {
         assertThat(startScript).doesNotContain("-manifest-classpath-0.1.jar");
         assertThat(startScript).contains("-classpath \"%CLASSPATH%\"");
 
-        File[] libFiles = rootProject
-                .file("dist/service-name-0.0.1/service/lib/")
-                .path()
-                .toFile()
-                .listFiles();
-        boolean found = false;
-        for (File file : libFiles) {
-            if (file.getName().endsWith("-manifest-classpath-0.1.jar")) {
-                found = true;
-                break;
-            }
-        }
-        assertThat(found).isFalse();
+        // Check that the manifest classpath JAR is not present
+        assertThat(TestUtils.hasJarInLibDirectory(rootProject, "0.0.1", ".*-manifest-classpath-0\\.1\\.jar"))
+                .isFalse();
     }
 
     @Test
@@ -1183,6 +1067,15 @@ class JavaServiceDistributionPluginTests {
                 .exists();
     }
 
+    /**
+     * Note: in this test, we are not checking that we can resolve exactly the right artifact,
+     * as that is tricky to get right, when the configuration being resolved doesn't set any required attributes.
+     *
+     * For instance, if java happens to be applied to the project, gradle will ALWAYS prefer the
+     * runtimeElements variant (from configuration runtimeElements) so our {@code sls} variant won't be selected.
+     * However, here we only care about testing that it can resolve to <i>something</i>, for the sole purpose of
+     * extracting the version the resolved component.
+     */
     @Test
     void dist_project_can_be_resolved_through_plain_dependency_when_gcv_is_applied(
             GradleInvoker gradle, RootProject rootProject, SubProject dist) {
@@ -1272,21 +1165,20 @@ class JavaServiceDistributionPluginTests {
 
         gradle.withArgs(":parent:build", ":parent:distTar", ":parent:untar").buildsSuccessfully();
 
-        File[] libFiles = parent.file("dist/service-name-0.0.1/service/lib/")
-                .path()
-                .toFile()
-                .listFiles();
-        assertThat(libFiles)
-                .extracting(File::getName)
-                .contains("annotations-3.0.1.jar", "guava-19.0.jar", "mockito-core-2.7.22.jar")
-                .doesNotContain("main");
+        // Verify required JARs are present
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "annotations-3\\.0\\.1\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "guava-19\\.0\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "mockito-core-2\\.7\\.22\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "main")).isFalse();
 
         // verify start scripts
-        String startScriptContent =
-                parent.file("dist/service-name-0.0.1/service/bin/service-name").text();
-        assertThat(startScriptContent).contains("/lib/annotations-3.0.1.jar");
-        assertThat(startScriptContent).contains("/lib/guava-19.0.jar");
-        assertThat(startScriptContent).contains("/lib/mockito-core-2.7.22.jar");
+        List<String> classpathEntries = TestUtils.extractClasspathEntriesFromScript(parent, "0.0.1", "service-name");
+        assertThat(classpathEntries).anyMatch(entry -> entry.contains("/lib/annotations-3.0.1.jar"));
+        assertThat(classpathEntries).anyMatch(entry -> entry.contains("/lib/guava-19.0.jar"));
+        assertThat(classpathEntries).anyMatch(entry -> entry.contains("/lib/mockito-core-2.7.22.jar"));
 
         // verify launcher YAML files
         LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
@@ -1310,37 +1202,17 @@ class JavaServiceDistributionPluginTests {
                 .anyMatch(cp -> cp.contains("/lib/mockito-core-2.7.22.jar"));
     }
 
-    private void createUntarTask(SubProject subProject) {
-        subProject.buildGradle().append("""
-            // most convenient way to untar the dist is to use gradle
-            task untar (type: Copy) {
-                from { tarTree(tasks.distTar.outputs.files.singleFile) }
-                into "dist"
-                dependsOn distTar
-                duplicatesStrategy = 'INCLUDE'
-            }
-            """);
-    }
-
-    @Test
-    @SuppressWarnings("GradleTestPluginsBlock") // Using legacy plugin syntax from docker-compose plugin
+    @ParameterizedTest
+    @ValueSource(strings = {"--write-locks", "writeProductDependenciesLocks"})
     void docker_can_resolve_inter_project_product_dependencies(
-            GradleInvoker gradle, RootProject rootProject, SubProject first, SubProject second) {
-        rootProject.buildGradle().overwrite("""
-            buildscript {
-                repositories {
-                    mavenCentral()
-                }
-                dependencies {
-                    classpath 'com.palantir.gradle.docker:gradle-docker:0.36.0'
-                }
-            }
-            apply plugin: 'com.palantir.docker-compose'
+            String writeLocksTask, GradleInvoker gradle, RootProject rootProject, SubProject first, SubProject second) {
+        rootProject.buildGradle().append("""
             allprojects {
                 group = 'group'
                 version = '1.0.0'
             }
             """);
+        rootProject.buildGradle().plugins().add("com.palantir.docker-compose");
 
         first.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
 
@@ -1364,7 +1236,7 @@ class JavaServiceDistributionPluginTests {
             }
             """);
 
-        gradle.withArgs("--write-locks").buildsSuccessfully();
+        gradle.withArgs(writeLocksTask).buildsSuccessfully();
 
         // We're just using generateDockerCompose as it conveniently resolves the 'docker' configuration for us
         // Which in turn, conveniently depends on all subprojects' `productDependencies` configurations
@@ -1411,27 +1283,22 @@ class JavaServiceDistributionPluginTests {
 
         gradle.withArgs(":parent:build", ":parent:distTar", ":parent:untar").buildsSuccessfully();
 
-        File[] libFiles = parent.file("dist/service-name-0.0.1/service/lib/")
-                .path()
-                .toFile()
-                .listFiles();
-        assertThat(libFiles)
-                .extracting(File::getName)
-                .contains("annotations-3.0.1.jar", "guava-19.0.jar", "mockito-core-2.7.22.jar")
-                .doesNotContain("main");
+        // Verify required JARs are present
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "annotations-3\\.0\\.1\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "guava-19\\.0\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "mockito-core-2\\.7\\.22\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "main")).isFalse();
 
-        File classpathJar = null;
-        for (File file : libFiles) {
-            if (file.getName().endsWith("-manifest-classpath-0.0.1.jar")) {
-                classpathJar = file;
-                break;
-            }
-        }
+        // Find the manifest classpath JAR
+        File classpathJar = TestUtils.findJarInLibDirectory(parent, "0.0.1", ".*-manifest-classpath-0\\.0\\.1\\.jar");
         assertThat(classpathJar).isNotNull();
         assertThat(classpathJar).exists();
 
         // verify META-INF/MANIFEST.MF
-        String manifestContents = readFromZip(classpathJar, "META-INF/MANIFEST.MF");
+        String manifestContents = TestUtils.readFromZip(classpathJar, "META-INF/MANIFEST.MF");
         String normalizedManifest = manifestContents.replace("\r\n ", "").replace("\n ", "");
         assertThat(normalizedManifest).contains("annotations-3.0.1.jar");
         assertThat(normalizedManifest).contains("guava-19.0.jar");
@@ -1439,9 +1306,8 @@ class JavaServiceDistributionPluginTests {
         assertThat(normalizedManifest).doesNotContain("main");
 
         // verify start scripts
-        String startScriptContent =
-                parent.file("dist/service-name-0.0.1/service/bin/service-name").text();
-        assertThat(startScriptContent).contains("-manifest-classpath-0.0.1.jar");
+        List<String> classpathEntries = TestUtils.extractClasspathEntriesFromScript(parent, "0.0.1", "service-name");
+        assertThat(classpathEntries).anyMatch(entry -> entry.contains("-manifest-classpath-0.0.1.jar"));
 
         // verify launcher YAML files
         LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
@@ -1597,7 +1463,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 11
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}\
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1627,7 +1496,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 11
             }
             """, EXTERNAL_JAR, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         InvocationResult result = gradle.withArgs(":distTar").buildsWithFailure();
 
@@ -1644,7 +1516,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 17
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1664,8 +1539,7 @@ class JavaServiceDistributionPluginTests {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().putValue("Add-Exports", "jdk.compiler/com.sun.tools.javac.file");
         File testJar = rootProject.path().resolve("test.jar").toFile();
-        try (JarOutputStream jos =
-                new JarOutputStream(java.nio.file.Files.newOutputStream(testJar.toPath()), manifest)) {
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(testJar.toPath()), manifest)) {
             // Just create the jar with the manifest
         }
 
@@ -1680,7 +1554,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 17
             }
             """);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1706,8 +1583,7 @@ class JavaServiceDistributionPluginTests {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().putValue("Add-Opens", "jdk.compiler/com.sun.tools.javac.file");
         File testJar = rootProject.path().resolve("test.jar").toFile();
-        try (JarOutputStream jos =
-                new JarOutputStream(java.nio.file.Files.newOutputStream(testJar.toPath()), manifest)) {
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(testJar.toPath()), manifest)) {
             // Just create the jar with the manifest
         }
 
@@ -1722,7 +1598,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 17
             }
             """);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1749,8 +1628,7 @@ class JavaServiceDistributionPluginTests {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().putValue("Add-Opens", "jdk.compiler/com.sun.tools.javac.file");
         File testJar = rootProject.path().resolve("test.jar").toFile();
-        try (JarOutputStream jos =
-                new JarOutputStream(java.nio.file.Files.newOutputStream(testJar.toPath()), manifest)) {
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(testJar.toPath()), manifest)) {
             // Just create the jar with the manifest
         }
 
@@ -1766,7 +1644,10 @@ class JavaServiceDistributionPluginTests {
                 enableManifestClasspath true
             }
             """);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1789,7 +1670,7 @@ class JavaServiceDistributionPluginTests {
     @Test
     void handles_jars_with_no_manifest(GradleInvoker gradle, RootProject rootProject) {
         File testJar = rootProject.path().resolve("test.jar").toFile();
-        try (ZipOutputStream zos = new ZipOutputStream(java.nio.file.Files.newOutputStream(testJar.toPath()))) {
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(testJar.toPath()))) {
             // Just create an empty zip
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -1806,7 +1687,10 @@ class JavaServiceDistributionPluginTests {
                 javaVersion 17
             }
             """);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         InvocationResult result =
                 gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
@@ -1877,7 +1761,10 @@ class JavaServiceDistributionPluginTests {
                 enableAlwaysPreTouch()
             }
             """, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1908,7 +1795,10 @@ class JavaServiceDistributionPluginTests {
                 }
             }
             """, EXTERNAL_JAR, EXTERNAL_JAR);
-        rootProject.mainSourceSet().java().writeClass("package test;\npublic class Test {}");
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
 
         gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
@@ -1918,5 +1808,46 @@ class JavaServiceDistributionPluginTests {
                         Path.of(EXTERNAL_JAR).getFileName()))
                 .assertThat()
                 .exists();
+    }
+
+    private void createUntarBuildFile(GradleProject gradleProject) {
+        gradleProject.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
+
+        gradleProject.buildGradle().append("""
+            project.group = 'service-group'
+
+            repositories {
+                mavenCentral()
+            }
+
+            version '0.0.1'
+
+            distribution {
+                serviceName 'service-name'
+                mainClass 'test.Test'
+                defaultJvmOpts '-Xmx4M', '-Djavax.net.ssl.trustStore=truststore.jks'
+                manifestExtensions 'foo': [
+                    'bar': ['1', '2']
+                ]
+            }
+
+            java {
+                sourceCompatibility = '1.7'
+            }
+            """);
+
+        createUntarTask(gradleProject);
+    }
+
+    private void createUntarTask(GradleProject project) {
+        project.buildGradle().append("""
+            // most convenient way to untar the dist is to use gradle
+            task untar (type: Copy) {
+                from { tarTree(tasks.distTar.outputs.files.singleFile) }
+                into "dist"
+                dependsOn distTar
+                duplicatesStrategy = 'INCLUDE'
+            }
+            """);
     }
 }

@@ -35,6 +35,7 @@ dependencies {
     testImplementation 'org.rauschig:jarchivelib'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
+    gradlePluginForTesting 'com.palantir.gradle.docker:gradle-docker'
 }
 
 gradlePlugin {
