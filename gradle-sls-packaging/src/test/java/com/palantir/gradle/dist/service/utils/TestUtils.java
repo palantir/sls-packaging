@@ -23,42 +23,43 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class TestUtils {
 
-    public static File findJarInLibDirectory(GradleProject project, String serviceVersion, String namePattern) {
-        File[] libFiles = project.file("dist/service-name-" + serviceVersion + "/service/lib/")
-                .path()
-                .toFile()
-                .listFiles();
-        if (libFiles == null) {
-            return null;
-        }
-        for (File file : libFiles) {
-            if (file.getName().matches(namePattern)) {
-                return file;
-            }
-        }
-        return null;
+    public static Optional<File> findJarInLibDirectory(
+            GradleProject project, String serviceVersion, String namePattern) {
+        List<File> libFiles = Optional.ofNullable(project.file("dist/service-name-" + serviceVersion + "/service/lib/")
+                        .path()
+                        .toFile()
+                        .listFiles())
+                .map(Arrays::asList)
+                .orElseGet(List::of);
+        return libFiles.stream()
+                .filter(file -> file.getName().matches(namePattern))
+                .findAny();
     }
 
     public static boolean hasJarInLibDirectory(GradleProject project, String serviceVersion, String namePattern) {
-        File jarFile = findJarInLibDirectory(project, serviceVersion, namePattern);
-        return jarFile != null && jarFile.exists();
+        return findJarInLibDirectory(project, serviceVersion, namePattern).isPresent();
     }
 
     public static List<String> extractClasspathEntriesFromScript(
             GradleProject project, String serviceVersion, String scriptName) {
         String startScriptContent = project.file("dist/service-name-" + serviceVersion + "/service/bin/" + scriptName)
                 .text();
-        String classpathLine = Arrays.stream(startScriptContent.split("\n"))
-                .filter(line -> line.contains("CLASSPATH="))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Could not find CLASSPATH in start script"));
-        String classpath = classpathLine.replaceAll(".*CLASSPATH=\"([^\"]*)\".*", "$1");
-        return Arrays.asList(classpath.split(":"));
+
+        Pattern pattern = Pattern.compile("CLASSPATH=(.*)");
+        Matcher matcher = pattern.matcher(startScriptContent);
+        if (matcher.find()) {
+            String classpath = matcher.group(1);
+            return Arrays.asList(classpath.split(":"));
+        }
+        throw new RuntimeException("Could not find CLASSPATH in start script");
     }
 
     public static String readFromZip(File zipFile, String pathInZipFile) throws IOException {

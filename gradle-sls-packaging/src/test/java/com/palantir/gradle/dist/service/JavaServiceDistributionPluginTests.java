@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -919,13 +920,12 @@ class JavaServiceDistributionPluginTests {
         assertThat(startScript).contains("-manifest-classpath-0.0.1.jar");
         assertThat(startScript).doesNotContain("-classpath \"%CLASSPATH%\"");
 
-        File classpathJar =
+        Optional<File> classpathJar =
                 TestUtils.findJarInLibDirectory(rootProject, "0.0.1", ".*-manifest-classpath-0\\.0\\.1\\.jar");
-        assertThat(classpathJar).isNotNull();
-        assertThat(classpathJar).exists();
+        assertThat(classpathJar).isPresent();
 
-        String zipManifest =
-                TestUtils.readFromZip(classpathJar, "META-INF/MANIFEST.MF").replace("\r\n ", "");
+        String zipManifest = TestUtils.readFromZip(classpathJar.get(), "META-INF/MANIFEST.MF")
+                .replace("\r\n ", "");
         assertThat(zipManifest).contains("Class-Path: ");
         assertThat(zipManifest).contains("guava-19.0.jar");
         assertThat(zipManifest).contains("root-project-manifest-classpath-0.0.1.jar");
@@ -1293,12 +1293,12 @@ class JavaServiceDistributionPluginTests {
         assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "main")).isFalse();
 
         // Find the manifest classpath JAR
-        File classpathJar = TestUtils.findJarInLibDirectory(parent, "0.0.1", ".*-manifest-classpath-0\\.0\\.1\\.jar");
-        assertThat(classpathJar).isNotNull();
-        assertThat(classpathJar).exists();
+        Optional<File> classpathJar =
+                TestUtils.findJarInLibDirectory(parent, "0.0.1", ".*-manifest-classpath-0\\.0\\.1\\.jar");
+        assertThat(classpathJar).isPresent();
 
         // verify META-INF/MANIFEST.MF
-        String manifestContents = TestUtils.readFromZip(classpathJar, "META-INF/MANIFEST.MF");
+        String manifestContents = TestUtils.readFromZip(classpathJar.get(), "META-INF/MANIFEST.MF");
         String normalizedManifest = manifestContents.replace("\r\n ", "").replace("\n ", "");
         assertThat(normalizedManifest).contains("annotations-3.0.1.jar");
         assertThat(normalizedManifest).contains("guava-19.0.jar");
