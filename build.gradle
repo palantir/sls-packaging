@@ -17,7 +17,7 @@ buildscript {
         classpath 'com.gradle.publish:plugin-publish-plugin:2.0.0'
         classpath 'com.palantir.baseline-error-prone:gradle-baseline-error-prone:0.7.0'
         classpath 'com.palantir.baseline:gradle-baseline-java:6.90.0'
-        classpath 'de.undercouch:gradle-download-task:5.6.0'
+        classpath 'de.undercouch:gradle-download-task:5.7.0'
         classpath 'com.palantir.gradle.gitversion:gradle-git-version:4.3.0'
         classpath 'com.palantir.gradle.guide:gradle-guide:1.27.0'
         classpath 'com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.8.0'
