@@ -28,21 +28,21 @@ com.google.j2objc:j2objc-annotations:3.1 (1 constraints: b809f1a0)
 
 com.palantir.gradle.auto-parallelizable:auto-parallelizable-annotations:1.4.0 (1 constraints: 0705fc35)
 
-com.palantir.gradle.consistentversions:gradle-consistent-versions:3.12.0 (1 constraints: 38053b3b)
+com.palantir.gradle.consistentversions:gradle-consistent-versions:3.13.0 (1 constraints: 39053e3b)
 
 com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (2 constraints: bb2049ef)
 
 com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
 
-com.palantir.safe-logging:logger:3.11.0 (1 constraints: ee106cc3)
+com.palantir.safe-logging:logger:3.12.0 (1 constraints: ee106cc3)
 
-com.palantir.safe-logging:logger-slf4j:3.11.0 (1 constraints: 300e8a50)
+com.palantir.safe-logging:logger-slf4j:3.12.0 (1 constraints: 310e8d50)
 
-com.palantir.safe-logging:logger-spi:3.11.0 (2 constraints: 6f1e0ab0)
+com.palantir.safe-logging:logger-spi:3.12.0 (2 constraints: 711e40b0)
 
-com.palantir.safe-logging:preconditions:3.11.0 (2 constraints: 2416d3f8)
+com.palantir.safe-logging:preconditions:3.12.0 (2 constraints: 251606f9)
 
-com.palantir.safe-logging:safe-logging:3.11.0 (4 constraints: f53f808e)
+com.palantir.safe-logging:safe-logging:3.12.0 (4 constraints: f83fa98f)
 
 com.palantir.sls.versions:sls-versions:1.10.0 (1 constraints: 3405293b)
 
@@ -54,7 +54,7 @@ org.codehaus.woodstox:stax2-api:4.2.2 (2 constraints: 6a278bd2)
 
 org.immutables:value:2.12.1 (1 constraints: 3805363b)
 
-org.jetbrains:annotations:26.0.2 (2 constraints: 0e2b30a3)
+org.jetbrains:annotations:26.1.0 (2 constraints: 0d2b31a3)
 
 org.jspecify:jspecify:1.0.0 (8 constraints: c9803ac0)
 
