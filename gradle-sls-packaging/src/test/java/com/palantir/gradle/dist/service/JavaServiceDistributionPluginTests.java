@@ -1706,8 +1706,7 @@ class JavaServiceDistributionPluginTests {
         // GCV
         rootProject
                 .gradlePropertiesFile()
-                .appendProperty(
-                        JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE, "1.17.0");
+                .setProperty(JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE, "1.17.0");
 
         String goJavaLauncherVersion = "1.18.0";
 
@@ -1729,7 +1728,7 @@ class JavaServiceDistributionPluginTests {
             }
             """);
 
-        rootProject.propertiesFile("versions.props").appendProperty("com.palantir.launching:*", goJavaLauncherVersion);
+        rootProject.propertiesFile("versions.props").setProperty("com.palantir.launching:*", goJavaLauncherVersion);
 
         createUntarTask(rootProject);
 
