@@ -54,7 +54,7 @@ org.codehaus.woodstox:stax2-api:4.2.2 (2 constraints: 6a278bd2)
 
 org.immutables:value:2.12.1 (1 constraints: 3805363b)
 
-org.jetbrains:annotations:26.1.0 (2 constraints: 0d2b31a3)
+org.jetbrains:annotations:26.1.0 (2 constraints: 0c2b01a3)
 
 org.jspecify:jspecify:1.0.0 (8 constraints: c9803ac0)
 
@@ -70,13 +70,13 @@ cglib:cglib-nodep:3.2.2 (1 constraints: 490ded24)
 
 com.netflix.nebula:nebula-test:10.6.2 (2 constraints: d61de72d)
 
-com.palantir.gradle.plugintesting:configuration-cache-spec:0.59.0 (1 constraints: 40054e3b)
+com.palantir.gradle.plugintesting:configuration-cache-spec:0.60.0 (1 constraints: 3805373b)
 
-com.palantir.gradle.plugintesting:discover-tests-cli:0.59.0 (1 constraints: 40054e3b)
+com.palantir.gradle.plugintesting:discover-tests-cli:0.60.0 (1 constraints: 3805373b)
 
-com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.59.0 (1 constraints: ad078c7e)
+com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.60.0 (1 constraints: a5076d7e)
 
-com.palantir.gradle.plugintesting:plugin-testing-core:0.59.0 (1 constraints: 40054e3b)
+com.palantir.gradle.plugintesting:plugin-testing-core:0.60.0 (1 constraints: 3805373b)
 
 commons-io:commons-io:2.19.0 (1 constraints: db190cdf)
 
