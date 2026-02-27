@@ -93,8 +93,9 @@ public final class ProductDependencies {
             task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
             task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
 
-            task.getProductDependenciesFiles().from(discoveredDependencies.map(pdeps -> pdeps.getArtifacts()
-                    .getArtifactFiles()));
+            task.getProductDependenciesFiles()
+                    .from(discoveredDependencies.map(
+                            pdeps -> pdeps.getArtifacts().getArtifactFiles()));
 
             task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
