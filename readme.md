@@ -149,7 +149,7 @@ configurations {
 }
 ```
 
-Concretely, this means any product depenendencies coming from `group:should-exclude` and other dependencies in its dependency graph will not contribute any product dependencies.
+Concretely, this means any product dependencies coming from `group:should-exclude` and other dependencies in its dependency graph will not contribute any product dependencies.
 #### Accessing product dependencies
 
 You can programmatically access the minimum product dependency version as follows:
