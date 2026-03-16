@@ -28,7 +28,7 @@ com.google.j2objc:j2objc-annotations:3.1 (1 constraints: b809f1a0)
 
 com.palantir.gradle.auto-parallelizable:auto-parallelizable-annotations:1.4.0 (1 constraints: 0705fc35)
 
-com.palantir.gradle.consistentversions:gradle-consistent-versions:3.14.0 (1 constraints: 3a05413b)
+com.palantir.gradle.consistentversions:gradle-consistent-versions:3.15.0 (1 constraints: 3b05443b)
 
 com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (2 constraints: bb2049ef)
 
