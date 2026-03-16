@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fix 'depenendencies' typo in readme
+  links:
+  - https://github.com/palantir/sls-packaging/pull/2035
