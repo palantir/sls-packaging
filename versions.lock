@@ -72,13 +72,13 @@ com.netflix.nebula:nebula-test:10.6.2 (2 constraints: d61de72d)
 
 com.palantir.gradle.docker:gradle-docker:0.37.0 (1 constraints: 3c05403b)
 
-com.palantir.gradle.plugintesting:configuration-cache-spec:0.65.0 (1 constraints: 3d05463b)
+com.palantir.gradle.plugintesting:configuration-cache-spec:0.66.0 (1 constraints: 3e05493b)
 
-com.palantir.gradle.plugintesting:discover-tests-cli:0.65.0 (1 constraints: 3d05463b)
+com.palantir.gradle.plugintesting:discover-tests-cli:0.66.0 (1 constraints: 3e05493b)
 
-com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.65.0 (1 constraints: aa07817e)
+com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.66.0 (1 constraints: ab07857e)
 
-com.palantir.gradle.plugintesting:plugin-testing-core:0.65.0 (1 constraints: 3d05463b)
+com.palantir.gradle.plugintesting:plugin-testing-core:0.66.0 (1 constraints: 3e05493b)
 
 commons-io:commons-io:2.19.0 (1 constraints: db190cdf)
 
