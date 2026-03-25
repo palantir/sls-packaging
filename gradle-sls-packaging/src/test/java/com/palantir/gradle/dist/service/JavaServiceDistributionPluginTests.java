@@ -826,8 +826,9 @@ class JavaServiceDistributionPluginTests {
                 .isTrue();
     }
 
+    // Compact object headers (JEP 519) disabled pending resolution of https://bugs.openjdk.org/browse/JDK-8380060
     @Test
-    void jdk_25_enables_compact_object_headers(GradleInvoker gradle, RootProject rootProject) throws Exception {
+    void jdk_25_does_not_enable_compact_object_headers(GradleInvoker gradle, RootProject rootProject) throws Exception {
         createUntarBuildFile(rootProject);
         rootProject.buildGradle().append("""
             dependencies { implementation files("%s") }
@@ -849,7 +850,7 @@ class JavaServiceDistributionPluginTests {
                         .path()
                         .toFile(),
                 LaunchConfig.LaunchConfigInfo.class);
-        assertThat(actualStaticConfig.jvmOpts().contains("-XX:+UseCompactObjectHeaders"))
+        assertThat(actualStaticConfig.jvmOpts().stream().noneMatch(opt -> opt.contains("UseCompactObjectHeaders")))
                 .isTrue();
     }
 
