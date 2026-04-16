@@ -34,15 +34,15 @@ com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (2 c
 
 com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
 
-com.palantir.safe-logging:logger:3.13.0 (1 constraints: f01072c3)
+com.palantir.safe-logging:logger:3.14.0 (1 constraints: f01072c3)
 
-com.palantir.safe-logging:logger-slf4j:3.13.0 (1 constraints: 320e9050)
+com.palantir.safe-logging:logger-slf4j:3.14.0 (1 constraints: 330e9350)
 
-com.palantir.safe-logging:logger-spi:3.13.0 (2 constraints: 731e76b0)
+com.palantir.safe-logging:logger-spi:3.14.0 (2 constraints: 751eacb0)
 
-com.palantir.safe-logging:preconditions:3.13.0 (2 constraints: 28163ff9)
+com.palantir.safe-logging:preconditions:3.14.0 (2 constraints: 291672f9)
 
-com.palantir.safe-logging:safe-logging:3.13.0 (4 constraints: fd3fd890)
+com.palantir.safe-logging:safe-logging:3.14.0 (4 constraints: 00400192)
 
 com.palantir.sls.versions:sls-versions:1.12.0 (1 constraints: 36052f3b)
 
@@ -76,7 +76,7 @@ com.palantir.gradle.plugintesting:configuration-cache-spec:0.67.0 (1 constraints
 
 com.palantir.gradle.plugintesting:discover-tests-cli:0.67.0 (1 constraints: 3f054c3b)
 
-com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.67.0 (1 constraints: ab077e7e)
+com.palantir.gradle.plugintesting:gradle-plugin-testing-junit:0.67.0 (1 constraints: 3f054c3b)
 
 com.palantir.gradle.plugintesting:plugin-testing-core:0.67.0 (1 constraints: 3f054c3b)
 
