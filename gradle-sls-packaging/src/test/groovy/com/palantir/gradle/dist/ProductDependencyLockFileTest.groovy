@@ -29,8 +29,9 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
-        ProductDependencyLockFile.asString(sample, [] as Set<ProductId>) == """\
+        ProductDependencyLockFile.asString(new ProductId("com.palantir.test", "my-service"), sample, [] as Set<ProductId>) == """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.test:my-service
         com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
         """.stripIndent(true)
@@ -39,12 +40,14 @@ class ProductDependencyLockFileTest extends Specification {
     def 'serialize project version'() {
         when:
         def result = ProductDependencyLockFile.asString(
+                new ProductId("com.palantir.test", "my-service"),
                 [new ProductDependency("com.palantir.product", "foo", "1.0.0", "1.x.x", null),],
                 [new ProductId("com.palantir.product", "foo")] as Set<ProductId>
         )
         then:
         result == '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.test:my-service
         com.palantir.product:foo ($projectVersion, 1.x.x)
         '''.stripIndent(true)
     }
@@ -53,6 +56,7 @@ class ProductDependencyLockFileTest extends Specification {
         when:
         List<ProductDependency> result = ProductDependencyLockFile.fromString("""\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.test:my-service
         com.palantir.other:bar (0.2.0, 0.x.x)
         com.palantir.product:foo (1.20.0, 1.x.x) optional
         """.stripIndent(true), "0.0.0")
@@ -71,6 +75,6 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
-        input == ProductDependencyLockFile.fromString(ProductDependencyLockFile.asString(input, [] as Set<ProductId>), "0.0.0")
+        input == ProductDependencyLockFile.fromString(ProductDependencyLockFile.asString(new ProductId("com.palantir.test", "my-service"), input, [] as Set<ProductId>), "0.0.0")
     }
 }

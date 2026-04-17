@@ -230,8 +230,10 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     private void ensurePdepsLockfileIsUpToDate(List<ProductDependency> productDeps) throws IOException {
         File lockfile = getProductDependenciesLockfile();
+        ProductId productId =
+                new ProductId(getServiceGroup().get(), getServiceName().get());
         String upToDateContents = ProductDependencyLockFile.asString(
-                productDeps, getInRepoProductIds().get());
+                productId, productDeps, getInRepoProductIds().get());
         ensureFileIsUpToDate(WriteProductDependenciesLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 

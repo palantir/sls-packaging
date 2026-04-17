@@ -345,6 +345,7 @@ class JavaServiceDistributionPluginTests {
             """);
         rootProject.file("product-dependencies.lock").overwrite("""
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+            product-id: service-group:service-name
             group1:name1 (1.0.0, 1.3.x)
             group2:name2 (1.0.0, 1.x.x)
             """);

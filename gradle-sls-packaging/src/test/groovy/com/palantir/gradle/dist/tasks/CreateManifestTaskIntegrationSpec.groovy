@@ -53,6 +53,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: serviceGroup:serviceName
         group:name2 (2.0.0, 2.x.x)
         """.stripIndent(true)
 
@@ -97,6 +98,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: serviceGroup:serviceName
         group1:name1 (1.0.0, 1.3.x)
         """.stripIndent(true)
 
@@ -125,6 +127,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         file('product-dependencies.lock').text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: serviceGroup:serviceName
         group1:name1 (1.0.0, 1.3.x)
         """.stripIndent(true)
 
@@ -189,6 +192,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
 
         file('product-dependencies.lock', barDir).text = """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.group:bar-service
         com.palantir.group:foo-service (\$projectVersion, 1.x.x)
         """.stripIndent(true)
 
@@ -230,6 +234,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         buildResult.wasExecuted(':createManifest')
         file('product-dependencies.lock').text == """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: serviceGroup:serviceName
         group1:name1 (1.0.0, 1.3.x)
         """.stripIndent(true)
 

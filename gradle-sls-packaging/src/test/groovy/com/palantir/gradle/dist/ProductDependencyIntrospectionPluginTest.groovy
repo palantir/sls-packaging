@@ -28,6 +28,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
     def "get version from lock file"() {
         project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.test:my-service
         com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent(true)
 
@@ -42,6 +43,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
         project.version = "1.1.0"
         project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.test:my-service
         com.palantir.product:test ($projectVersion, 1.x.x)
         '''.stripIndent(true)
 
@@ -64,6 +66,7 @@ class ProductDependencyIntrospectionPluginTest extends ProjectSpec {
     def "fails if dependency does not exist in lock file"() {
         project.file("product-dependencies.lock").text = '''\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.palantir.test:my-service
         com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent(true)
 

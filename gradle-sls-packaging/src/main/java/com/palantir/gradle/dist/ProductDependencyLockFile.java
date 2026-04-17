@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 public final class ProductDependencyLockFile {
 
     private static final String HEADER = "# Run ./gradlew writeProductDependenciesLocks to regenerate this file\n";
+    public static final String PRODUCT_ID_PREFIX = "product-id: ";
     public static final String PROJECT_VERSION = "$projectVersion";
     private static final Pattern LOCK_PATTERN = Pattern.compile(
             "^(?<group>[^:]+):(?<name>[^ ]+) \\((?<min>[^,]+), (?<max>[^\\)]+)\\)(?<optional> optional)?$");
@@ -52,7 +53,8 @@ public final class ProductDependencyLockFile {
                 .collect(toList());
     }
 
-    public static String asString(List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject) {
+    public static String asString(
+            ProductId productId, List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject) {
         return deps.stream()
                 .map(dep -> String.format(
                         "%s:%s (%s, %s)%s",
@@ -62,7 +64,7 @@ public final class ProductDependencyLockFile {
                         dep.getMaximumVersion(),
                         dep.getOptional() ? " optional" : ""))
                 .sorted()
-                .collect(Collectors.joining("\n", HEADER, "\n"));
+                .collect(Collectors.joining("\n", HEADER + PRODUCT_ID_PREFIX + productId + "\n", "\n"));
     }
 
     /**
