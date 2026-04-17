@@ -29,6 +29,7 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
 
         file("product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+            product-id: com.palantir.test:my-service
             com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent(true)
         def mavenRepo = generateMavenRepo('com.palantir.product:test:1.0.0')
@@ -61,11 +62,13 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         gradleVersion = gradleVersionNumber
         file("a/product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+            product-id: com.palantir.test:service-a
             com.palantir.product:test (1.0.0, 1.x.x)
         '''.stripIndent(true)
 
         file("b/product-dependencies.lock").text = '''\
             # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+            product-id: com.palantir.test:service-b
             com.palantir.product:test (1.2.0, 1.6.x)
         '''.stripIndent(true)
 
