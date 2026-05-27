@@ -29,6 +29,7 @@ import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.maven.MavenArtifact;
 import com.palantir.gradle.testing.maven.MavenRepo;
 import com.palantir.gradle.testing.project.RootProject;
+import com.palantir.gradle.testing.project.SubProject;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
@@ -177,6 +178,40 @@ class RecommendedProductDependenciesPluginIntegrationTest {
         assertThat(dep.getProductName()).isEqualTo("name");
         assertThat(dep.getMinimumVersion()).isEqualTo("1.0.0");
         assertThat(dep.getMaximumVersion()).isEqualTo("1.x.x");
+    }
+
+    @Test
+    void works_with_consistent_versions_in_subproject(
+            GradleInvoker gradle, RootProject rootProject, SubProject child, MavenRepo repo) throws IOException {
+        repo.publish(MavenArtifact.of("group:name:1.0.0"));
+        rootProject.buildGradle().plugins().add("com.palantir.consistent-versions");
+        rootProject.buildGradle().withMavenRepo(repo);
+        rootProject.buildGradle().append("allprojects { repositories { maven { url '%s' } } }", repo.path().toUri());
+
+        child.buildGradle().plugins().add("java").add("com.palantir.recommended-product-dependencies");
+        child.buildGradle().append("""
+            dependencies {
+                implementation 'group:name:1.0.0'
+            }
+
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersion = getVersion('group:name')
+                    maximumVersion = '1.x.x'
+                }
+            }
+            """);
+
+        InvocationResult result = gradle.withArgs("--write-locks", ":child:jar").buildsSuccessfully();
+
+        assertThat(result).task(":child:compileRecommendedProductDependencies").succeeded();
+
+        ProductDependency dep = Iterables.getOnlyElement(readRecommendedProductDeps(
+                        child.buildDir().file("libs/child.jar").path().toFile())
+                .recommendedProductDependencies());
+        assertThat(dep.getMinimumVersion()).isEqualTo("1.0.0");
     }
 
     private static RecommendedProductDependencies readRecommendedProductDeps(File jarFile) throws IOException {
