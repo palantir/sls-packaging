@@ -17,7 +17,7 @@
 package com.palantir.gradle.dist.pdeps;
 
 import com.palantir.gradle.dist.BaseDistributionExtension;
-import com.palantir.gradle.dist.ProductDependency;
+import com.palantir.gradle.dist.MinimumVersionFromResolver;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.RecommendedProductDependencies;
 import com.palantir.gradle.dist.RecommendedProductDependenciesPlugin;
@@ -25,20 +25,12 @@ import com.palantir.gradle.dist.artifacts.DependencyDiscovery;
 import com.palantir.gradle.dist.artifacts.ExtractSingleFileOrManifest;
 import com.palantir.gradle.dist.artifacts.PreferProjectCompatibilityRule;
 import com.palantir.gradle.dist.artifacts.SelectSingleFile;
-import com.palantir.gradle.versions.VersionsLockExtension;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -91,7 +83,9 @@ public final class ProductDependencies {
         Provider<ArtifactView> discoveredDependencies = productDependencyClasspath.map(
                 conf -> DependencyDiscovery.getFilteredArtifact(project, conf, PRODUCT_DEPENDENCIES));
 
-        NamedDomainObjectProvider<Configuration> versionLookup = registerVersionLookupConfiguration(project, ext);
+        NamedDomainObjectProvider<Configuration> versionLookup =
+                MinimumVersionFromResolver.registerVersionLookupConfiguration(
+                        project, PRODUCT_DEPENDENCY_VERSION_LOOKUP_CONFIGURATION_NAME, ext.getAllProductDependencies());
 
         return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
@@ -101,7 +95,9 @@ public final class ProductDependencies {
                     .set(project.provider(
                             () -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(project.getRootProject())
                                     .keySet()));
-            task.getProductDependencies().set(resolveMinimumVersionsFrom(ext, versionLookup));
+            task.getProductDependencies()
+                    .set(MinimumVersionFromResolver.resolveMinimumVersions(
+                            ext.getAllProductDependencies(), versionLookup));
             task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
             task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
 
@@ -111,77 +107,6 @@ public final class ProductDependencies {
 
             task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
-    }
-
-    private static Provider<List<ProductDependency>> resolveMinimumVersionsFrom(
-            BaseDistributionExtension ext, NamedDomainObjectProvider<Configuration> versionLookup) {
-        Provider<Map<String, String>> versionsByCoordinate = versionLookup.map(configuration ->
-                configuration.getIncoming().getResolutionResult().getAllComponents().stream()
-                        .map(ResolvedComponentResult::getModuleVersion)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(
-                                moduleVersion -> moduleVersion.getGroup() + ":" + moduleVersion.getName(),
-                                ModuleVersionIdentifier::getVersion)));
-
-        return ext.getAllProductDependencies()
-                .zip(
-                        versionsByCoordinate,
-                        (productDependencies, versionsForCoordinate) -> productDependencies.stream()
-                                .map(productDependency ->
-                                        withResolvedMinimumVersion(productDependency, versionsForCoordinate))
-                                .toList());
-    }
-
-    private static ProductDependency withResolvedMinimumVersion(
-            ProductDependency original, Map<String, String> versionsByCoordinate) {
-        Optional<String> coordinate = original.getMinimumVersionFrom();
-        if (coordinate.isEmpty()) {
-            return original;
-        }
-        String resolvedVersion = Optional.ofNullable(versionsByCoordinate.get(coordinate.get()))
-                .orElseThrow(() -> new GradleException(String.format(
-                        "Unable to resolve minimumVersionFrom '%s' for product dependency %s:%s",
-                        coordinate.get(), original.getProductGroup(), original.getProductName())));
-        return new ProductDependency(
-                original.getProductGroup(),
-                original.getProductName(),
-                resolvedVersion,
-                original.getMaximumVersion() != null
-                        ? original.getMaximumVersion()
-                        : BaseDistributionExtension.generateMaxVersion(resolvedVersion),
-                original.getRecommendedVersion(),
-                original.getOptional());
-    }
-
-    /**
-     * Registers a resolvable configuration that the plugin populates with the {@code group:name} entries declared via
-     * {@link ProductDependency#getMinimumVersionFrom()}. When gradle-consistent-versions is applied the configuration
-     * is also added to the {@code versionsLock} extension so that lockfile-driven constraints apply when it is
-     * resolved.
-     */
-    private static NamedDomainObjectProvider<Configuration> registerVersionLookupConfiguration(
-            Project project, BaseDistributionExtension ext) {
-        Provider<List<Dependency>> versionLookupDeps = ext.getAllProductDependencies()
-                .map(productDependencies -> productDependencies.stream()
-                        .flatMap(productDependency -> productDependency.getMinimumVersionFrom().stream())
-                        .distinct()
-                        .map(coordinate -> project.getDependencies().create(coordinate))
-                        .collect(Collectors.toList()));
-
-        NamedDomainObjectProvider<Configuration> versionLookup = project.getConfigurations()
-                .register(PRODUCT_DEPENDENCY_VERSION_LOOKUP_CONFIGURATION_NAME, configuration -> {
-                    configuration.setCanBeResolved(true);
-                    configuration.setCanBeConsumed(false);
-                    configuration.getDependencies().addAllLater(versionLookupDeps);
-                });
-
-        project.getRootProject().getPluginManager().withPlugin("com.palantir.consistent-versions", _appliedPlugin -> {
-            VersionsLockExtension versionsLock = project.getExtensions().getByType(VersionsLockExtension.class);
-            versionsLock.production(
-                    scopeConfigurer -> scopeConfigurer.from(PRODUCT_DEPENDENCY_VERSION_LOOKUP_CONFIGURATION_NAME));
-        });
-
-        return versionLookup;
     }
 
     private ProductDependencies() {}

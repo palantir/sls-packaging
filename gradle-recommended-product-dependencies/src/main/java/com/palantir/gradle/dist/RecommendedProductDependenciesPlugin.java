@@ -16,9 +16,14 @@
 
 package com.palantir.gradle.dist;
 
+import java.util.HashSet;
+import java.util.List;
+import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
@@ -28,6 +33,9 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
     public static final String RESOURCE_PATH =
             RecommendedProductDependencies.SLS_RECOMMENDED_PRODUCT_DEPS_KEY + "/product-dependencies.json";
 
+    public static final String RECOMMENDED_PRODUCT_DEPENDENCY_VERSION_LOOKUP_CONFIGURATION_NAME =
+            "recommendedProductDependencyVersionLookup";
+
     @Override
     public final void apply(Project project) {
         @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
@@ -35,16 +43,23 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
         project.getPluginManager().withPlugin("java", _plugin -> {
-            embedResource(project, ext);
-            configureManifest(project, ext);
+            NamedDomainObjectProvider<Configuration> versionLookup =
+                    MinimumVersionFromResolver.registerVersionLookupConfiguration(
+                            project,
+                            RECOMMENDED_PRODUCT_DEPENDENCY_VERSION_LOOKUP_CONFIGURATION_NAME,
+                            ext.getRecommendedProductDependenciesProvider());
+            Provider<List<ProductDependency>> resolvedDependencies = MinimumVersionFromResolver.resolveMinimumVersions(
+                    ext.getRecommendedProductDependenciesProvider(), versionLookup);
+            embedResource(project, resolvedDependencies);
+            configureManifest(project, resolvedDependencies);
         });
     }
 
     @SuppressWarnings("for-rollout:TaskDependsOn")
-    private void configureManifest(Project project, RecommendedProductDependenciesExtension ext) {
+    private void configureManifest(Project project, Provider<List<ProductDependency>> resolvedDependencies) {
         TaskProvider<ConfigureProductDependenciesTask> configureProductDependenciesTask = project.getTasks()
                 .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-                    cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
+                    cmt.setProductDependencies(resolvedDependencies.map(HashSet::new));
                 });
 
         // Ensure that the jar task depends on this wiring task
@@ -53,12 +68,11 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         });
     }
 
-    private void embedResource(Project project, RecommendedProductDependenciesExtension ext) {
+    private void embedResource(Project project, Provider<List<ProductDependency>> resolvedDependencies) {
         TaskProvider<CompileRecommendedProductDependencies> compilePdeps = project.getTasks()
                 .register(
                         "compileRecommendedProductDependencies", CompileRecommendedProductDependencies.class, task -> {
-                            task.getRecommendedProductDependencies()
-                                    .set(ext.getRecommendedProductDependenciesProvider());
+                            task.getRecommendedProductDependencies().set(resolvedDependencies.map(HashSet::new));
                             task.getOutputDir()
                                     .set(project.getLayout().getBuildDirectory().dir("product-dependencies"));
                         });

@@ -29,6 +29,7 @@ import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.maven.MavenArtifact;
 import com.palantir.gradle.testing.maven.MavenRepo;
 import com.palantir.gradle.testing.project.RootProject;
+import com.palantir.gradle.testing.project.SubProject;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
@@ -177,6 +178,32 @@ class RecommendedProductDependenciesPluginIntegrationTest {
         assertThat(dep.getProductName()).isEqualTo("name");
         assertThat(dep.getMinimumVersion()).isEqualTo("1.0.0");
         assertThat(dep.getMaximumVersion()).isEqualTo("1.x.x");
+    }
+
+    @Test
+    void productDependency_minimumVersionFrom_resolves_via_gcv_under_parallel(
+            GradleInvoker gradle, RootProject rootProject, SubProject child) {
+        rootProject.buildGradle().plugins().add("com.palantir.consistent-versions");
+        rootProject.file("versions.props").createEmpty();
+        rootProject.file("versions.lock").createEmpty();
+
+        child.buildGradle().plugins().add("java").add("com.palantir.recommended-product-dependencies");
+        child.buildGradle().append("""
+            recommendedProductDependencies {
+                productDependency {
+                    productGroup = 'group'
+                    productName = 'name'
+                    minimumVersionFrom = 'group:name'
+                    maximumVersion = '1.x.x'
+                }
+            }
+            """);
+
+        InvocationResult result =
+                gradle.withArgs(":child:compileRecommendedProductDependencies").buildsWithFailure();
+        assertThat(result)
+                .output()
+                .contains("Unable to resolve minimumVersionFrom 'group:name' for product dependency group:name");
     }
 
     private static RecommendedProductDependencies readRecommendedProductDeps(File jarFile) throws IOException {

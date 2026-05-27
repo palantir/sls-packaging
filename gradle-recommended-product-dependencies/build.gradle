@@ -12,6 +12,8 @@ dependencies {
     api 'com.palantir.sls.versions:sls-versions'
     api 'com.palantir.safe-logging:preconditions'
 
+    compileOnly 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
+
     testImplementation gradleTestKit()
     testImplementation 'com.netflix.nebula:nebula-test'
 

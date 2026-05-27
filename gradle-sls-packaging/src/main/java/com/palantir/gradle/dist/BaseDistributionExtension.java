@@ -17,9 +17,7 @@
 package com.palantir.gradle.dist;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.palantir.gradle.dist.artifacts.ArtifactLocator;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.logsafe.SafeArg;
@@ -187,7 +185,7 @@ public class BaseDistributionExtension {
                 matcher.group("group"),
                 matcher.group("name"),
                 minVersion,
-                generateMaxVersion(minVersion),
+                ProductDependency.generateMaxVersion(minVersion),
                 recommendedVersion));
     }
 
@@ -210,7 +208,7 @@ public class BaseDistributionExtension {
                 dependencyGroup,
                 dependencyName,
                 minVersion,
-                maxVersion == null ? generateMaxVersion(minVersion) : maxVersion,
+                maxVersion == null ? ProductDependency.generateMaxVersion(minVersion) : maxVersion,
                 recommendedVersion));
     }
 
@@ -221,7 +219,7 @@ public class BaseDistributionExtension {
             try {
                 project.configure(dep, closure);
                 if (dep.getMinimumVersion() != null && dep.getMaximumVersion() == null) {
-                    dep.setMaximumVersion(generateMaxVersion(dep.getMinimumVersion()));
+                    dep.setMaximumVersion(ProductDependency.generateMaxVersion(dep.getMinimumVersion()));
                 }
                 dep.isValid();
             } catch (Exception e) {
@@ -331,9 +329,5 @@ public class BaseDistributionExtension {
         });
         consumableProductDependenciesConfigurationName.set(consumableConfigName);
         this.productDependenciesConfig = productDependenciesConfig;
-    }
-
-    public static String generateMaxVersion(String minimumVersion) {
-        return String.format("%s.x.x", Iterables.getFirst(Splitter.on(".").split(minimumVersion), null));
     }
 }

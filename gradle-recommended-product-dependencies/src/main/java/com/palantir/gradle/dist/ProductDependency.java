@@ -263,6 +263,13 @@ public final class ProductDependency implements Serializable {
         this.minimumVersionFrom = minimumVersionFrom;
     }
 
+    /** Generates a maximum version (e.g. {@code "1.x.x"}) from a minimum version (e.g. {@code "1.2.3"}). */
+    public static String generateMaxVersion(String minimumVersion) {
+        int firstDot = minimumVersion.indexOf('.');
+        String major = firstDot < 0 ? minimumVersion : minimumVersion.substring(0, firstDot);
+        return major + ".x.x";
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
