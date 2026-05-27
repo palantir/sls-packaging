@@ -41,8 +41,7 @@ class ProductDependencyClosureGcvSubprojectIntegrationTest {
     }
 
     @Test
-    void productDependency_minimumVersionFrom_resolves_via_gcv_under_parallel(
-            GradleInvoker gradle, SubProject child) {
+    void productDependency_minimumVersionFrom_resolves_via_gcv_under_parallel(GradleInvoker gradle, SubProject child) {
         child.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
         child.buildGradle().append("""
             distribution {

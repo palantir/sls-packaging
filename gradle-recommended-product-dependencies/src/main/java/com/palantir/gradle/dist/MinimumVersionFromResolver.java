@@ -99,8 +99,7 @@ public final class MinimumVersionFromResolver {
         return productDependencies.zip(
                 versionsByCoordinate,
                 (declared, versionsForCoordinate) -> declared.stream()
-                        .map(productDependency ->
-                                withResolvedMinimumVersion(productDependency, versionsForCoordinate))
+                        .map(productDependency -> withResolvedMinimumVersion(productDependency, versionsForCoordinate))
                         .toList());
     }
 
