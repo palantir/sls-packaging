@@ -15,6 +15,8 @@ dependencies {
     testImplementation gradleTestKit()
     testImplementation 'com.netflix.nebula:nebula-test'
 
+    gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
+
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'
 }
