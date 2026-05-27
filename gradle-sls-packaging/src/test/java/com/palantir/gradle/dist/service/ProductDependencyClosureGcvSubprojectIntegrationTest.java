@@ -41,7 +41,7 @@ class ProductDependencyClosureGcvSubprojectIntegrationTest {
     }
 
     @Test
-    void productDependency_closure_can_call_getVersion_from_subproject_under_parallel(
+    void productDependency_minimumVersionFrom_resolves_via_gcv_under_parallel(
             GradleInvoker gradle, SubProject child) {
         child.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
         child.buildGradle().append("""
@@ -51,7 +51,7 @@ class ProductDependencyClosureGcvSubprojectIntegrationTest {
                 productDependency {
                     productGroup = 'group'
                     productName = 'name'
-                    minimumVersion = getVersion('group:name')
+                    minimumVersionFrom = 'group:name'
                     maximumVersion = '1.x.x'
                 }
             }
@@ -61,6 +61,6 @@ class ProductDependencyClosureGcvSubprojectIntegrationTest {
                 .buildsWithFailure();
         assertThat(result)
                 .output()
-                .contains("Unable to find 'group:name' in configuration ':unifiedClasspath'");
+                .contains("Unable to resolve minimumVersionFrom 'group:name' for product dependency group:name");
     }
 }

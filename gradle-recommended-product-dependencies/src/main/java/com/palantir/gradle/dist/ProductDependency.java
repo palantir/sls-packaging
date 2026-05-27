@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.palantir.logsafe.Preconditions;
@@ -49,6 +50,15 @@ public final class ProductDependency implements Serializable {
 
     @JsonProperty("optional")
     private boolean optional = false;
+
+    /**
+     * Module coordinate ({@code group:name}) whose resolved version should be used as {@link #minimumVersion}. The
+     * resolution is performed by the plugin (against gradle-consistent-versions' locked classpath when present),
+     * not the consumer; the resolved version is filled in before the manifest is written, so this field itself is
+     * not serialised.
+     */
+    @JsonIgnore
+    private String minimumVersionFrom;
 
     public ProductDependency() {}
 
@@ -84,6 +94,22 @@ public final class ProductDependency implements Serializable {
     public void isValid() {
         Preconditions.checkNotNull(productGroup, "productGroup must be specified");
         Preconditions.checkNotNull(productName, "productName must be specified");
+        if (minimumVersionFrom != null) {
+            Preconditions.checkArgument(
+                    minimumVersion == null,
+                    "Cannot specify both minimumVersion and minimumVersionFrom",
+                    SafeArg.of("productGroup", productGroup),
+                    SafeArg.of("productName", productName));
+            String[] parts = minimumVersionFrom.split(":", -1);
+            Preconditions.checkArgument(
+                    parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty(),
+                    "minimumVersionFrom must be in the format 'group:name'",
+                    SafeArg.of("minimumVersionFrom", minimumVersionFrom),
+                    SafeArg.of("productGroup", productGroup),
+                    SafeArg.of("productName", productName));
+            // Remaining validation runs after the minimum version is resolved.
+            return;
+        }
         Optional<OrderableSlsVersion> minimum = parseMinimum();
         Optional<OrderableSlsVersion> recommended = parseRecommended();
         SlsVersionMatcher maximum = parseMaximum();
@@ -227,6 +253,14 @@ public final class ProductDependency implements Serializable {
 
     public void setOptional(boolean optional) {
         this.optional = optional;
+    }
+
+    public Optional<String> getMinimumVersionFrom() {
+        return Optional.ofNullable(minimumVersionFrom);
+    }
+
+    public void setMinimumVersionFrom(String minimumVersionFrom) {
+        this.minimumVersionFrom = minimumVersionFrom;
     }
 
     @Override

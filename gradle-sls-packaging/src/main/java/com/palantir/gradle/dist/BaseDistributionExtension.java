@@ -333,7 +333,7 @@ public class BaseDistributionExtension {
         this.productDependenciesConfig = productDependenciesConfig;
     }
 
-    static String generateMaxVersion(String minimumVersion) {
+    public static String generateMaxVersion(String minimumVersion) {
         return String.format("%s.x.x", Iterables.getFirst(Splitter.on(".").split(minimumVersion), null));
     }
 }
