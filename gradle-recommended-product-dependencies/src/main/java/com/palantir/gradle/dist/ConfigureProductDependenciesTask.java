@@ -62,7 +62,7 @@ public abstract class ConfigureProductDependenciesTask extends DefaultTask {
                 });
     }
 
-    public final void setProductDependencies(Provider<Set<ProductDependency>> productDependencies) {
+    public final void setProductDependencies(Provider<? extends Iterable<ProductDependency>> productDependencies) {
         getProductDependencies().set(productDependencies);
     }
 

@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist;
 
-import java.util.HashSet;
 import java.util.List;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
@@ -59,7 +58,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
     private void configureManifest(Project project, Provider<List<ProductDependency>> resolvedDependencies) {
         TaskProvider<ConfigureProductDependenciesTask> configureProductDependenciesTask = project.getTasks()
                 .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
-                    cmt.setProductDependencies(resolvedDependencies.map(HashSet::new));
+                    cmt.setProductDependencies(resolvedDependencies);
                 });
 
         // Ensure that the jar task depends on this wiring task
@@ -72,7 +71,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         TaskProvider<CompileRecommendedProductDependencies> compilePdeps = project.getTasks()
                 .register(
                         "compileRecommendedProductDependencies", CompileRecommendedProductDependencies.class, task -> {
-                            task.getRecommendedProductDependencies().set(resolvedDependencies.map(HashSet::new));
+                            task.getRecommendedProductDependencies().set(resolvedDependencies);
                             task.getOutputDir()
                                     .set(project.getLayout().getBuildDirectory().dir("product-dependencies"));
                         });
