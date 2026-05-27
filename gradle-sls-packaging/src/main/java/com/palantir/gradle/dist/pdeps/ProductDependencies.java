@@ -41,6 +41,8 @@ public final class ProductDependencies {
 
     public static TaskProvider<ResolveProductDependenciesTask> registerProductDependencyTasks(
             Project project, BaseDistributionExtension ext) {
+        Provider<Directory> pdepsDir = project.getLayout().getBuildDirectory().dir("resolved-pdeps");
+
         // Register compatibility rule to ensure that ResourceTransform is applied onto project dependencies so we
         // avoid compilation
         PreferProjectCompatibilityRule.configureRule(project);
@@ -79,34 +81,14 @@ public final class ProductDependencies {
         Provider<ArtifactView> discoveredDependencies = productDependencyClasspath.map(
                 conf -> DependencyDiscovery.getFilteredArtifact(project, conf, PRODUCT_DEPENDENCIES));
 
-        TaskProvider<ResolveProductDependenciesTask> rootWorker =
-                registerRootWorker(project, ext, discoveredDependencies);
-
-        // The subproject keeps the public task name; it just delegates to the root worker.
-        boolean ownsTaskName = project.equals(project.getRootProject());
-        if (!ownsTaskName) {
-            project.getTasks().register("resolveProductDependencies", task -> {
-                task.dependsOn(rootWorker);
-            });
-        }
-
-        return rootWorker;
-    }
-
-    private static TaskProvider<ResolveProductDependenciesTask> registerRootWorker(
-            Project project, BaseDistributionExtension ext, Provider<ArtifactView> discoveredDependencies) {
-        Project rootProject = project.getRootProject();
-        String taskName = rootWorkerTaskName(project);
-        Provider<Directory> pdepsDir =
-                rootProject.getLayout().getBuildDirectory().dir(rootWorkerOutputDir(project));
-
-        return rootProject.getTasks().register(taskName, ResolveProductDependenciesTask.class, task -> {
+        return project.getTasks().register("resolveProductDependencies", ResolveProductDependenciesTask.class, task -> {
             task.getServiceName().set(ext.getDistributionServiceName());
             task.getServiceGroup().set(ext.getDistributionServiceGroup());
 
             task.getInRepoProductIds()
-                    .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(rootProject)
-                            .keySet()));
+                    .set(project.provider(
+                            () -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(project.getRootProject())
+                                    .keySet()));
             task.getProductDependencies().set(ext.getAllProductDependencies());
             task.getOptionalProductIds().set(ext.getOptionalProductDependencies());
             task.getIgnoredProductIds().set(ext.getIgnoredProductDependencies());
@@ -117,20 +99,6 @@ public final class ProductDependencies {
 
             task.getManifestFile().set(pdepsDir.map(dir -> dir.file("pdeps-manifest.json")));
         });
-    }
-
-    private static String rootWorkerTaskName(Project project) {
-        if (project.equals(project.getRootProject())) {
-            return "resolveProductDependencies";
-        }
-        return "resolveProductDependenciesFor" + project.getPath().replace(':', '_');
-    }
-
-    private static String rootWorkerOutputDir(Project project) {
-        if (project.equals(project.getRootProject())) {
-            return "resolved-pdeps";
-        }
-        return "resolved-pdeps" + project.getPath().replace(':', '/');
     }
 
     private ProductDependencies() {}

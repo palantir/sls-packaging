@@ -57,8 +57,10 @@ class ProductDependencyClosureGcvSubprojectIntegrationTest {
             }
             """);
 
-        InvocationResult result =
-                gradle.withArgs(":child:resolveProductDependencies").buildsWithFailure();
-        assertThat(result).output().contains("Unable to find 'group:name' in configuration ':unifiedClasspath'");
+        InvocationResult result = gradle.withArgs(":child:resolveProductDependencies", "--parallel")
+                .buildsWithFailure();
+        assertThat(result)
+                .output()
+                .contains("Unable to find 'group:name' in configuration ':unifiedClasspath'");
     }
 }
