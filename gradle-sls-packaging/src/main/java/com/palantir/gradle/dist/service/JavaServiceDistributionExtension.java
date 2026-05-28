@@ -47,6 +47,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final Property<String> javaHome;
     private final Property<Boolean> addJava8GcLogging;
     private final Property<Boolean> enableManifestClasspath;
+    private final Property<Boolean> enableExplodedClasspath;
     private final Property<GcProfile> gc;
     private final Property<Boolean> alwaysPreTouch;
     private final ListProperty<String> args;
@@ -93,6 +94,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
         addJava8GcLogging = objectFactory.property(Boolean.class).value(false);
         enableManifestClasspath = objectFactory.property(Boolean.class).value(false);
+        enableExplodedClasspath = objectFactory.property(Boolean.class).value(false);
 
         gc = objectFactory
                 .property(GcProfile.class)
@@ -165,6 +167,14 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
     public final void enableManifestClasspath(boolean newEnableManifestClasspath) {
         this.enableManifestClasspath.set(newEnableManifestClasspath);
+    }
+
+    public final Provider<Boolean> getEnableExplodedClasspath() {
+        return enableExplodedClasspath;
+    }
+
+    public final void enableExplodedClasspath(boolean newEnableExplodedClasspath) {
+        this.enableExplodedClasspath.set(newEnableExplodedClasspath);
     }
 
     public final Provider<Boolean> getAlwaysPreTouch() {

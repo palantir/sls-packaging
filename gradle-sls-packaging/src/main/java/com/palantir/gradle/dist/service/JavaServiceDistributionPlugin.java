@@ -27,16 +27,23 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.gradle.api.Action;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
@@ -164,6 +171,38 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                             distributionExtension.getEnableManifestClasspath().get());
                 });
 
+        TaskProvider<Copy> explodeClassPathTask = project.getTasks().register("explodeClasspath", Copy.class, task -> {
+            task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
+            task.setDescription("TODO");
+
+            task.doFirst(new Action<Task>() {
+                @Override
+                public void execute(Task _task) {
+                    // TODO: define inputs?
+                    FileCollection runtimeClasspath =
+                            project.getConfigurations().getByName("runtimeClasspath");
+
+                    FileCollection jarOutputs = project.getTasks()
+                            .withType(Jar.class)
+                            .getByName(JavaPlugin.JAR_TASK_NAME)
+                            .getOutputs()
+                            .getFiles();
+
+                    List<Path> classPath = jarOutputs.plus(runtimeClasspath).getFiles().stream()
+                            .map(File::toPath)
+                            .toList();
+
+                    try {
+                        explodeClasspath(classPath, task.getDestinationDir().toPath());
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+            });
+            task.onlyIf(_unused ->
+                    distributionExtension.getEnableExplodedClasspath().get());
+        });
+
         @SuppressWarnings("for-rollout:TaskDependsOn")
         TaskProvider<CreateStartScripts> startScripts = project.getTasks()
                 .register("createStartScripts", CreateStartScripts.class, task -> {
@@ -220,6 +259,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates launcher-static.yml and launcher-check.yml configurations.");
                     task.dependsOn(manifestClassPathTask);
+                    task.dependsOn(explodeClassPathTask);
 
                     task.getMainClass().set(mainClassName);
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
@@ -318,6 +358,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     launchConfigTask,
                     manifest,
                     manifestClassPathTask,
+                    explodeClassPathTask,
                     javaAgentConfiguration);
         });
 
@@ -332,9 +373,16 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.getFullClasspath().from(fullClasspath);
             task.getClasspath()
                     .from(
-                            distributionExtension.getEnableManifestClasspath().get()
-                                    ? manifestClassPathTask.get().getOutputs().getFiles()
-                                    : fullClasspath);
+                            distributionExtension.getEnableExplodedClasspath().get()
+                                    ? "exploded"
+                                    : (distributionExtension
+                                                    .getEnableManifestClasspath()
+                                                    .get()
+                                            ? manifestClassPathTask
+                                                    .get()
+                                                    .getOutputs()
+                                                    .getFiles()
+                                            : fullClasspath));
         }));
 
         project.afterEvaluate(_proj -> distTar.configure(task -> {
@@ -385,5 +433,50 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .toString();
         project.getLogger().lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
         return coordinate + ":" + versionOverride;
+    }
+
+    private static void explodeClasspath(List<Path> jars, Path outDir) throws IOException {
+        Map<String, List<String>> serviceLines = new LinkedHashMap<>();
+
+        for (Path jar : jars) {
+            try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(jar))) {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    if (entry.isDirectory()) {
+                        continue;
+                    }
+                    String name = entry.getName();
+                    Path target = outDir.resolve(name);
+
+                    if (name.startsWith("META-INF/services/")) {
+                        // Collect for merging
+                        String svcName = name.substring("META-INF/services/".length());
+                        serviceLines
+                                .computeIfAbsent(svcName, _k -> new ArrayList<>())
+                                .addAll(new BufferedReader(new InputStreamReader(zis, StandardCharsets.UTF_8))
+                                        .lines()
+                                        .toList());
+                        continue;
+                    }
+
+                    if (!Files.exists(target)) { // first-on-classpath wins
+                        Files.createDirectories(target.getParent());
+                        Files.copy(zis, target);
+                    }
+                }
+            }
+        }
+
+        // Write merged service files
+        for (Map.Entry<String, List<String>> e : serviceLines.entrySet()) {
+            Path svcFile = outDir.resolve("META-INF/services").resolve(e.getKey());
+            Files.createDirectories(svcFile.getParent());
+            // Deduplicate while preserving order
+            List<String> merged = e.getValue().stream()
+                    .filter(l -> !l.isBlank() && !l.startsWith("#"))
+                    .distinct()
+                    .toList();
+            Files.write(svcFile, merged);
+        }
     }
 }

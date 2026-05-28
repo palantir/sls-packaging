@@ -84,6 +84,12 @@ final class DistTarTask {
                 });
             }
 
+            if (distributionExtension.getEnableExplodedClasspath().get()) {
+                root.into("service/lib/exploded", t -> {
+                    t.from(project.getTasks().named("explodeClasspath"));
+                });
+            }
+
             root.into("service/lib/agent", t -> {
                 t.from(project.getConfigurations().named("javaAgent"));
             });
