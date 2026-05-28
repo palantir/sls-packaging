@@ -32,26 +32,10 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.provider.Provider;
 
-/**
- * Resolves {@link ProductDependency#getMinimumVersionFrom()} coordinates via a per-project resolvable configuration.
- *
- * <p>Calling {@code com.palantir.gradle.versions}'s {@code getVersion(...)} inside a {@code productDependency} closure
- * is unsafe under Gradle 9: the closure runs at task-action time on a subproject, and {@code getVersion} resolves the
- * <em>root</em> project's {@code :unifiedClasspath} configuration without holding its exclusive lock. The
- * {@code minimumVersionFrom = 'group:name'} declaration lets the plugin do the lookup against a configuration owned
- * by the <em>same</em> project — so the lock requirement is met — and, when gradle-consistent-versions is applied,
- * GCV's lockfile-driven constraints supply the resolved version.
- */
 public final class MinimumVersionFromResolver {
 
     private MinimumVersionFromResolver() {}
 
-    /**
-     * Registers a resolvable configuration named {@code configurationName} on {@code project}, populated with one
-     * dependency per distinct {@link ProductDependency#getMinimumVersionFrom()} value found in {@code productDependencies}.
-     * If gradle-consistent-versions is applied (to the root project), the configuration is added to the project's
-     * {@link VersionsLockExtension} so lockfile-driven constraints apply.
-     */
     public static NamedDomainObjectProvider<Configuration> registerVersionLookupConfiguration(
             Project project,
             String configurationName,
@@ -80,11 +64,6 @@ public final class MinimumVersionFromResolver {
         return versionLookup;
     }
 
-    /**
-     * Returns a Provider that, when queried, yields {@code productDependencies} with any
-     * {@link ProductDependency#getMinimumVersionFrom()} coordinate replaced by the version resolved from
-     * {@code versionLookup}. Dependencies without {@code minimumVersionFrom} are returned unchanged.
-     */
     public static Provider<List<ProductDependency>> resolveMinimumVersions(
             Provider<? extends Collection<ProductDependency>> productDependencies,
             NamedDomainObjectProvider<Configuration> versionLookup) {
