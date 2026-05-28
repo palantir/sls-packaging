@@ -148,16 +148,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                                     .getOutputs()
                                     .getFiles();
 
-                            String classPath = runtimeClasspath.plus(jarOutputs).getFiles().stream()
+                            String classPath = jarOutputs.plus(runtimeClasspath).getFiles().stream()
                                     .map(File::getName)
                                     .collect(Collectors.joining(" "));
-                            task.getManifest()
-                                    .getAttributes()
-                                    .put(
-                                            "Class-Path",
-                                            classPath
-                                                    + " "
-                                                    + task.getArchiveFileName().get());
+                            task.getManifest().getAttributes().put("Class-Path", classPath);
                         }
                     });
                     task.onlyIf(_unused ->

@@ -930,8 +930,8 @@ class JavaServiceDistributionPluginTests {
                 .replace("\r\n ", "");
         assertThat(zipManifest).contains("Class-Path: ");
         assertThat(zipManifest).contains("guava-19.0.jar");
-        assertThat(zipManifest).contains("root-project-manifest-classpath-0.0.1.jar");
         assertThat(zipManifest).contains("root-project-0.0.1.jar");
+        assertThat(zipManifest).doesNotContain("root-project-manifest-classpath-0.0.1.jar");
     }
 
     @Test
