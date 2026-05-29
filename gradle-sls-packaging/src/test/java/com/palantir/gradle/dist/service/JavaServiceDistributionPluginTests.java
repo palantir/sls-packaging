@@ -39,10 +39,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipOutputStream;
@@ -929,9 +931,54 @@ class JavaServiceDistributionPluginTests {
         String zipManifest = TestUtils.readFromZip(classpathJar.get(), "META-INF/MANIFEST.MF")
                 .replace("\r\n ", "");
         assertThat(zipManifest).contains("Class-Path: ");
-        assertThat(zipManifest).contains("guava-19.0.jar");
-        assertThat(zipManifest).contains("root-project-manifest-classpath-0.0.1.jar");
-        assertThat(zipManifest).contains("root-project-0.0.1.jar");
+        assertThat(zipManifest)
+                .as("the project's own jar should be listed before its runtime dependencies on the Class-Path")
+                .containsSubsequence("root-project-0.0.1.jar", "guava-19.0.jar");
+        assertThat(zipManifest).doesNotContain("root-project-manifest-classpath-0.0.1.jar");
+    }
+
+    @Test
+    void manifest_classpath_lists_jars_in_the_same_order_as_the_non_manifest_classpath(
+            GradleInvoker gradle, RootProject rootProject) throws Exception {
+        createUntarBuildFile(rootProject);
+        rootProject.settingsGradle().rootProjectName("root-project");
+        rootProject.buildGradle().append("""
+            distribution {
+                enableManifestClasspath findProperty('manifestClasspath') == 'true'
+            }
+            dependencies {
+              implementation "com.google.guava:guava:19.0"
+            }
+            """);
+
+        // Without the manifest classpath jar, the full classpath is written directly into the start script.
+        gradle.withArgs(":distTar", ":untar", "-PmanifestClasspath=false").buildsSuccessfully();
+        List<String> nonManifestClasspath =
+                TestUtils.extractClasspathEntriesFromScript(rootProject, "0.0.1", "service-name").stream()
+                        .map(JavaServiceDistributionPluginTests::jarFileName)
+                        .toList();
+
+        // With the manifest classpath jar, that same classpath instead lives in the jar's Class-Path attribute.
+        gradle.withArgs(":distTar", ":untar", "-PmanifestClasspath=true").buildsSuccessfully();
+        Optional<File> classpathJar =
+                TestUtils.findJarInLibDirectory(rootProject, "0.0.1", ".*-manifest-classpath-0\\.0\\.1\\.jar");
+        assertThat(classpathJar).isPresent();
+        List<String> manifestClasspath;
+        try (JarFile jarFile = new JarFile(classpathJar.get())) {
+            String classPathAttribute =
+                    jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+            manifestClasspath = Arrays.stream(classPathAttribute.split(" "))
+                    .map(JavaServiceDistributionPluginTests::jarFileName)
+                    .toList();
+        }
+
+        assertThat(manifestClasspath)
+                .as("the manifest Class-Path should list the same jars in the same order as the plain classpath")
+                .containsExactlyElementsOf(nonManifestClasspath);
+    }
+
+    private static String jarFileName(String classpathEntry) {
+        return Path.of(classpathEntry).getFileName().toString();
     }
 
     @Test

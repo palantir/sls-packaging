@@ -43,11 +43,9 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
@@ -139,25 +137,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.doFirst(new Action<Task>() {
                         @Override
                         public void execute(Task _task) {
-                            FileCollection runtimeClasspath =
-                                    project.getConfigurations().getByName("runtimeClasspath");
-
-                            FileCollection jarOutputs = project.getTasks()
-                                    .withType(Jar.class)
-                                    .getByName(JavaPlugin.JAR_TASK_NAME)
-                                    .getOutputs()
-                                    .getFiles();
-
-                            String classPath = runtimeClasspath.plus(jarOutputs).getFiles().stream()
+                            String classPath = serviceRuntimeClasspath(project).getFiles().stream()
                                     .map(File::getName)
                                     .collect(Collectors.joining(" "));
-                            task.getManifest()
-                                    .getAttributes()
-                                    .put(
-                                            "Class-Path",
-                                            classPath
-                                                    + " "
-                                                    + task.getArchiveFileName().get());
+                            task.getManifest().getAttributes().put("Class-Path", classPath);
                         }
                     });
                     task.onlyIf(_unused ->
@@ -203,14 +186,10 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.setDefaultJvmOpts(distributionExtension.getDefaultJvmOpts().get());
             task.dependsOn(manifestClassPathTask);
 
-            JavaPluginExtension javaPlugin = project.getExtensions().getByType(JavaPluginExtension.class);
             if (distributionExtension.getEnableManifestClasspath().get()) {
                 task.setClasspath(manifestClassPathTask.get().getOutputs().getFiles());
             } else {
-                task.setClasspath(jarTask.get()
-                        .getOutputs()
-                        .getFiles()
-                        .plus(javaPlugin.getSourceSets().getByName("main").getRuntimeClasspath()));
+                task.setClasspath(serviceRuntimeClasspath(project));
             }
         }));
 
@@ -297,9 +276,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
         // been correctly configured
-        project.afterEvaluate(p -> runTask.configure(task -> {
-            task.setClasspath(project.files(
-                    jarTask.get().getArchiveFile().get(), p.getConfigurations().getByName("runtimeClasspath")));
+        project.afterEvaluate(_p -> runTask.configure(task -> {
+            task.setClasspath(serviceRuntimeClasspath(project));
             task.setArgs(distributionExtension.getArgs().get());
         }));
 
@@ -324,10 +302,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
             task.getJavaAgents().setFrom(javaAgentConfiguration);
 
-            ConfigurableFileCollection fullClasspath = project.getObjects()
-                    .fileCollection()
-                    .from(jarTask.get().getOutputs().getFiles())
-                    .from(project.getConfigurations().named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+            FileCollection fullClasspath = serviceRuntimeClasspath(project);
 
             task.getFullClasspath().from(fullClasspath);
             task.getClasspath()
@@ -342,6 +317,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
+    }
+
+    private static FileCollection serviceRuntimeClasspath(Project project) {
+        return project.getObjects()
+                .fileCollection()
+                .from(project.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class))
+                .from(project.getConfigurations().named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
     }
 
     private static Provider<Map<String, String>> userConfiguredEnvWithJdkEnvVars(
