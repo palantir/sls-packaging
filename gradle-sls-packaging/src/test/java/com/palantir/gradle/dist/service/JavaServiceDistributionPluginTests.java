@@ -45,6 +45,7 @@ import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1325,6 +1326,85 @@ class JavaServiceDistributionPluginTests {
                         .toFile(),
                 LaunchConfig.LaunchConfigInfo.class);
         assertThat(launcherStatic.classpath()).anyMatch(cp -> cp.contains("-manifest-classpath-0.0.1.jar"));
+    }
+
+    @Test
+    void explode_classpath(GradleInvoker gradle, SubProject parent, SubProject child) throws Exception {
+        parent.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
+
+        parent.buildGradle().append("""
+            version '0.0.1'
+            distribution {
+                serviceName "service-name"
+                mainClass "dummy.service.MainClass"
+                args "hello"
+                enableExplodedClasspath true
+            }
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                implementation project(':child')
+                implementation 'org.mockito:mockito-core:2.7.22'
+            }
+            """);
+
+        createUntarTask(parent);
+
+        child.buildGradle().plugins().add("java-library");
+
+        child.buildGradle().append("""
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                api "com.google.guava:guava:19.0"
+                implementation "com.google.code.findbugs:annotations:3.0.1"
+            }
+            """);
+
+        gradle.withArgs(":parent:build", ":parent:distTar", ":parent:untar").buildsSuccessfully();
+
+        // Verify required JARs are present
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "annotations-3\\.0\\.1\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "guava-19\\.0\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "mockito-core-2\\.7\\.22\\.jar"))
+                .isTrue();
+        assertThat(TestUtils.hasJarInLibDirectory(parent, "0.0.1", "main")).isFalse();
+
+        // Verify the class files exist in the exploded directory
+        Path explodedDir =
+                parent.file("dist/service-name-0.0.1/service/lib/exploded").path();
+        assertThat(explodedDir).exists();
+
+        List<String> classFiles;
+        try (Stream<Path> f = Files.walk(explodedDir)) {
+            classFiles = f.map(p -> explodedDir.relativize(p).toString()).toList();
+        }
+        assertThat(classFiles).isNotEmpty();
+        assertThat(classFiles).contains("com/google/common/collect/ImmutableCollection.class");
+
+        // verify start scripts
+        //        List<String> classpathEntries = TestUtils.extractClasspathEntriesFromScript(parent, "0.0.1",
+        // "service-name");
+        //        assertThat(classpathEntries).anyMatch(entry -> entry.contains("-manifest-classpath-0.0.1.jar"));
+
+        // verify launcher YAML files
+        LaunchConfig.LaunchConfigInfo launcherStatic = OBJECT_MAPPER.readValue(
+                parent.file("dist/service-name-0.0.1/service/bin/launcher-static.yml")
+                        .path()
+                        .toFile(),
+                LaunchConfig.LaunchConfigInfo.class);
+        assertThat(launcherStatic.classpath()).containsExactly("service/lib/exploded");
+
+        LaunchConfig.LaunchConfigInfo launcherCheck = OBJECT_MAPPER.readValue(
+                parent.file("dist/service-name-0.0.1/service/bin/launcher-check.yml")
+                        .path()
+                        .toFile(),
+                LaunchConfig.LaunchConfigInfo.class);
+        assertThat(launcherCheck.classpath()).containsExactly("service/lib/exploded");
     }
 
     @Test
