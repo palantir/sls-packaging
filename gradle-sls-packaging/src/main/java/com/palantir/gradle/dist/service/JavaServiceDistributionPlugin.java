@@ -276,9 +276,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has
         // been correctly configured
-        project.afterEvaluate(p -> runTask.configure(task -> {
-            task.setClasspath(project.files(
-                    jarTask.get().getArchiveFile().get(), p.getConfigurations().getByName("runtimeClasspath")));
+        project.afterEvaluate(_p -> runTask.configure(task -> {
+            task.setClasspath(serviceRuntimeClasspath(project));
             task.setArgs(distributionExtension.getArgs().get());
         }));
 
