@@ -20,7 +20,7 @@ com.google.errorprone:error_prone_annotations:2.47.0 (5 constraints: e148f59d)
 
 com.google.guava:failureaccess:1.0.3 (1 constraints: 160ae3b4)
 
-com.google.guava:guava:33.6.0-jre (7 constraints: 689ef246)
+com.google.guava:guava:33.6.0-jre (7 constraints: 699e0c48)
 
 com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava (1 constraints: bd17c918)
 
@@ -28,13 +28,13 @@ com.google.j2objc:j2objc-annotations:3.1 (1 constraints: b809f1a0)
 
 com.palantir.gradle.auto-parallelizable:auto-parallelizable-annotations:1.4.0 (1 constraints: 0705fc35)
 
-com.palantir.gradle.consistentversions:gradle-consistent-versions:3.15.0 (1 constraints: 3b05443b)
+com.palantir.gradle.consistentversions:gradle-consistent-versions:3.16.0 (1 constraints: 3c05473b)
 
 com.palantir.gradle.failure-reports:gradle-failure-reports-common:1.18.0 (1 constraints: f21c3bc2)
 
-com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.18.0 (2 constraints: f2208904)
+com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.18.0 (2 constraints: 2921c125)
 
-com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
+com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.8.0 (1 constraints: bc1b2946)
 
 com.palantir.safe-logging:logger:3.16.0 (1 constraints: f3107bc3)
 
