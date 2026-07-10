@@ -342,6 +342,49 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
+    def "#gradleVersionNumber: createManifest depends on task whose artifacts are added to the extension via addAllLater"() {
+        given:
+        gradleVersion = gradleVersionNumber
+        buildFile << """
+            import com.palantir.gradle.dist.artifacts.ArtifactLocator
+            import org.gradle.api.file.RegularFileProperty
+            import org.gradle.api.tasks.OutputFile
+            import org.gradle.api.tasks.TaskAction
+            import java.nio.file.Files
+
+            abstract class ProduceArtifactsTask extends DefaultTask {
+                @OutputFile
+                abstract RegularFileProperty getOutput();
+
+                @TaskAction
+                final void action() throws Exception {
+                    Files.writeString(getOutput().getAsFile().get().toPath(), "registry.example.io/foo/bar:v1.3.0")
+                }
+            }
+
+            def produceArtifacts = tasks.register('produceArtifacts', ProduceArtifactsTask) {
+                output.fileValue(file("build/artifact-url"))
+            }
+
+            distribution.artifacts.addAllLater(produceArtifacts.map { producer ->
+                def locator = project.objects.newInstance(ArtifactLocator)
+                locator.type.set("oci")
+                locator.uri.set(Files.readString(producer.output.getAsFile().get().toPath()))
+                return [locator]
+            })
+        """.stripIndent(true)
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted(':produceArtifacts')
+        readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
     private List<JsonArtifactLocator> readArtifactsExtension() {
         def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml').text, SlsManifest)
         ObjectMappers.jsonMapper.convertValue(manifest.extensions().get("artifacts"), new TypeReference<List<JsonArtifactLocator>>() {})
