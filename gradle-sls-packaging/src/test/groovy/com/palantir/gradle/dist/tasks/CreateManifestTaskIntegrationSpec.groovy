@@ -407,7 +407,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
             distribution.artifacts.addAll(produceArtifacts.map { producer ->
                 def locator = project.objects.newInstance(ArtifactLocator)
                 locator.type.set("oci")
-                locator.uri.set(Files.readString(producer.output.getAsFile().get().toPath()))
+                locator.uri.set(producer.output.map { output -> Files.readString(output.getAsFile().toPath()) })
                 return [locator]
             })
         """.stripIndent(true)
