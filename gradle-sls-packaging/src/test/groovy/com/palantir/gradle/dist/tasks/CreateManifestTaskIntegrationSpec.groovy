@@ -269,6 +269,43 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
+    def '#gradleVersionNumber: lazily configures matching artifacts'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
+        buildFile << """
+        distribution {
+            artifact {
+                type = "oci"
+                uri = "registry.example.io/foo/bar:v1.3.0"
+            }
+            artifact {
+                type = "other"
+                uri = "registry.example.io/foo/baz:v1.3.0"
+            }
+        }
+
+        distribution.configureArtifacts { artifact ->
+            if (artifact.type.getOrNull() == "oci") {
+                artifact.uri.set("transformed." + artifact.uri.get())
+            }
+        }
+        """.stripIndent(true)
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted('createManifest')
+        readArtifactsExtension().toSet() == [
+            JsonArtifactLocator.from("oci", "transformed.registry.example.io/foo/bar:v1.3.0"),
+            JsonArtifactLocator.from("other", "registry.example.io/foo/baz:v1.3.0")
+        ].toSet()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
     def '#gradleVersionNumber: fails if invalid'() {
         setup:
         gradleVersion = gradleVersionNumber
@@ -329,6 +366,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                     uri = artifactOutput.flatMap { it.output }.map { Files.readString(it.getAsFile().toPath())}
                 }
             }
+
         """.stripIndent(true)
 
         when:
@@ -342,7 +380,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def "#gradleVersionNumber: createManifest depends on task whose artifacts are added to the extension via addAllLater"() {
+    def "#gradleVersionNumber: createManifest depends on task whose artifacts are added to the extension via a provider"() {
         given:
         gradleVersion = gradleVersionNumber
         buildFile << """
@@ -366,7 +404,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                 output.fileValue(file("build/artifact-url"))
             }
 
-            distribution.artifacts.addAllLater(produceArtifacts.map { producer ->
+            distribution.artifacts.addAll(produceArtifacts.map { producer ->
                 def locator = project.objects.newInstance(ArtifactLocator)
                 locator.type.set("oci")
                 locator.uri.set(Files.readString(producer.output.getAsFile().get().toPath()))

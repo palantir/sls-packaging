@@ -26,6 +26,7 @@ import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +35,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Action;
-import org.gradle.api.DomainObjectSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.RegularFileProperty;
@@ -64,7 +64,9 @@ public class BaseDistributionExtension {
     private final ListProperty<ProductDependency> productDependencies;
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
-    private final DomainObjectSet<ArtifactLocator> artifacts;
+    private final SetProperty<ArtifactLocator> artifacts;
+    private final SetProperty<ArtifactLocator> configuredArtifacts;
+    private final List<Action<? super ArtifactLocator>> artifactConfigurations = new ArrayList<>();
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
@@ -82,7 +84,10 @@ public class BaseDistributionExtension {
         productDependencies = project.getObjects().listProperty(ProductDependency.class);
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
-        artifacts = project.getObjects().domainObjectSet(ArtifactLocator.class);
+        artifacts = project.getObjects().setProperty(ArtifactLocator.class).empty();
+        configuredArtifacts = project.getObjects().setProperty(ArtifactLocator.class);
+        configuredArtifacts.set(artifacts.map(this::applyArtifactConfigurations));
+        configuredArtifacts.finalizeValueOnRead();
         consumableProductDependenciesConfigurationName = project.getObjects().property(String.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
@@ -140,8 +145,24 @@ public class BaseDistributionExtension {
         this.productType.set(productType);
     }
 
-    public final DomainObjectSet<ArtifactLocator> getArtifacts() {
+    public final SetProperty<ArtifactLocator> getArtifacts() {
         return artifacts;
+    }
+
+    /** Lazily configures every artifact when the collection is queried. */
+    public final void configureArtifacts(Action<? super ArtifactLocator> configureAction) {
+        artifactConfigurations.add(configureAction);
+    }
+
+    /** A lazy view of the artifacts after actions registered with {@link #configureArtifacts} have been applied. */
+    public final Provider<Set<ArtifactLocator>> getConfiguredArtifacts() {
+        return configuredArtifacts;
+    }
+
+    private Set<ArtifactLocator> applyArtifactConfigurations(Set<ArtifactLocator> artifactLocators) {
+        artifactLocators.forEach(
+                artifactLocator -> artifactConfigurations.forEach(action -> action.execute(artifactLocator)));
+        return artifactLocators;
     }
 
     /** Lazily configures and adds a {@link ArtifactLocator}. */

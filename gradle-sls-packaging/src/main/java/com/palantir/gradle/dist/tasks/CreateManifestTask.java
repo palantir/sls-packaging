@@ -47,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.StartParameter;
@@ -57,6 +58,7 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
@@ -89,6 +91,10 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     @Nested
     public abstract SetProperty<ArtifactLocator> getArtifacts();
+
+    /** Allows Gradle to establish producers of the collection before traversing its nested elements. */
+    @Input
+    public abstract Property<Integer> getArtifactCount();
 
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
@@ -342,7 +348,9 @@ public abstract class CreateManifestTask extends DefaultTask {
                             .set(resolveProductDependenciesTask.flatMap(
                                     ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
-                    task.getArtifacts().addAll(ext.getArtifacts());
+                    Provider<Set<ArtifactLocator>> artifacts = ext.getConfiguredArtifacts();
+                    task.getArtifacts().set(artifacts);
+                    task.getArtifactCount().set(artifacts.map(Set::size));
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())
