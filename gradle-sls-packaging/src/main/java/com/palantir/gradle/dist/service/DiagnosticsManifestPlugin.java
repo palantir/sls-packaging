@@ -120,7 +120,6 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
-            conf.setVisible(false);
         });
 
         project.getDependencies().add(consumable.getName(), project);

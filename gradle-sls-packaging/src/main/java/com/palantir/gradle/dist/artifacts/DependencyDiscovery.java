@@ -62,7 +62,6 @@ public final class DependencyDiscovery {
             conf.extendsFrom(project.getConfigurations().getByName(configurationName));
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(true);
-            conf.setVisible(false);
         });
 
         // Explicitly declare the configuration to depend on to avoid resolution failures due to ambiguous variants.

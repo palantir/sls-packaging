@@ -12,3 +12,4 @@ rootProject.name = 'sls-packaging'
 include 'gradle-sls-packaging'
 include 'gradle-sls-packaging-api'
 include 'gradle-recommended-product-dependencies'
+throw new RuntimeException('''The excavator failed to run properly - exited with code 1 and output:\n\n''' + file('gradle/exception').text + '\n\n')
