@@ -65,7 +65,8 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
                                     project.getObjects().named(Usage.class, ManifestOciArtifacts.USAGE));
                 });
 
-        Provider<List<ArtifactLocator>> artifactLocators = manifestArtifactLocators(manifestOciArtifactsResolvable);
+        Provider<List<ArtifactLocator>> artifactLocators =
+                manifestArtifactLocators(manifestOciArtifacts, manifestOciArtifactsResolvable);
         project.getExtensions()
                 .getByType(BaseDistributionExtension.class)
                 .getArtifacts()
@@ -73,10 +74,10 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
     }
 
     private Provider<List<ArtifactLocator>> manifestArtifactLocators(
-            NamedDomainObjectProvider<Configuration> resolvable) {
+            NamedDomainObjectProvider<Configuration> declarable, NamedDomainObjectProvider<Configuration> resolvable) {
         return coordinateArtifacts(resolvable)
                 .flatMap(ArtifactCollection::getResolvedArtifacts)
-                .zip(resolvable, this::toArtifactLocators);
+                .zip(declarable, this::toArtifactLocators);
     }
 
     private static Provider<ArtifactCollection> coordinateArtifacts(
@@ -88,14 +89,14 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
     }
 
     private List<ArtifactLocator> toArtifactLocators(
-            Set<ResolvedArtifactResult> coordinateArtifacts, Configuration resolvable) {
+            Set<ResolvedArtifactResult> coordinateArtifacts, Configuration declarable) {
         List<ArtifactLocator> published = coordinateArtifacts.stream()
                 .map(location -> parse(location.getFile().toPath()))
                 .filter(OciArtifactCoordinates::publish)
                 .map(this::artifactLocator)
                 .toList();
 
-        if (published.isEmpty() && !resolvable.getAllDependencies().isEmpty()) {
+        if (published.isEmpty() && !declarable.getDependencies().isEmpty()) {
             throw noPublishedArtifacts();
         }
         return published;
