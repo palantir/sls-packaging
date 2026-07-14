@@ -61,7 +61,6 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
@@ -87,7 +86,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @Input
     public abstract MapProperty<String, Object> getManifestExtensions();
 
-    @Nested
+    @Input
     public abstract SetProperty<ArtifactLocator> getArtifacts();
 
     @InputFile

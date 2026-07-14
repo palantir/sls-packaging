@@ -380,7 +380,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def "#gradleVersionNumber: createManifest depends on task whose artifacts are added to the extension via a provider"() {
+    def "#gradleVersionNumber: createManifest lazily consumes task-produced artifacts added via a provider"() {
         given:
         gradleVersion = gradleVersionNumber
         buildFile << """
@@ -407,7 +407,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
             distribution.artifacts.addAll(produceArtifacts.map { producer ->
                 def locator = project.objects.newInstance(ArtifactLocator)
                 locator.type.set("oci")
-                locator.uri.set(producer.output.map { output -> Files.readString(output.getAsFile().toPath()) })
+                locator.uri.set(Files.readString(producer.output.getAsFile().get().toPath()))
                 return [locator]
             })
         """.stripIndent(true)

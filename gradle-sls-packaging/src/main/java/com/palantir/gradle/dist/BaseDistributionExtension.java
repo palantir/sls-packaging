@@ -169,13 +169,13 @@ public class BaseDistributionExtension {
     public final void artifact(@DelegatesTo(ArtifactLocator.class) Closure<ArtifactLocator> closure) {
         ArtifactLocator artifactLocator = project.getObjects().newInstance(ArtifactLocator.class);
         project.configure(artifactLocator, closure);
-        artifacts.add(artifactLocator);
+        artifacts.add(artifactLocator.asProvider());
     }
 
     public final void artifact(Action<ArtifactLocator> action) {
         ArtifactLocator artifactLocator = project.getObjects().newInstance(ArtifactLocator.class);
         action.execute(artifactLocator);
-        artifacts.add(artifactLocator);
+        artifacts.add(artifactLocator.asProvider());
     }
 
     /**
