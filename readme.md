@@ -190,7 +190,43 @@ distribution {
 }
 ```
 
-The result will be embedded in the `deployment/manifest.yml` file. The file will look something like this:
+#### Container images published by another project
+
+OCI coordinates published by another project can be added without manually copying their URI into the distribution:
+
+```groovy
+distribution {
+    manifestOciArtifacts project(':images')
+}
+```
+
+This adds every coordinate from `:images` whose JSON has `publish` set to `true`. To add only one published artifact, supply its outgoing artifact name:
+
+```groovy
+distribution {
+    manifestOciArtifacts project(':images'), 'image-a'
+}
+```
+
+The producer must expose the coordinates from a consumable configuration with the `sls-manifest-oci-artifacts` usage attribute. Each outgoing artifact must be a JSON file containing the manifest artifact type, URI, and whether it should be published, for example:
+
+```json
+{
+  "type": "oci",
+  "uri": "registry.example.io/foo/image-a:v1.3.0",
+  "publish": true
+}
+```
+
+Java producers can create this document using the public coordinate type:
+
+```java
+OciArtifactCoordinates coordinates = OciArtifactCoordinates.of("oci", imageUri, true);
+```
+
+#### Manifest output
+
+In both cases, the result is embedded in `deployment/manifest.yml`. The file will look something like this:
 
 ```json
 {

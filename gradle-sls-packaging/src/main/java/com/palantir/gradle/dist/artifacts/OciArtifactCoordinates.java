@@ -18,13 +18,15 @@ package com.palantir.gradle.dist.artifacts;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
 /** Coordinates of a single OCI artifact published by a producer. */
 @Value.Immutable
 @JsonDeserialize(as = ImmutableOciArtifactCoordinates.class)
+@JsonSerialize(as = ImmutableOciArtifactCoordinates.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-interface OciArtifactCoordinates {
+public interface OciArtifactCoordinates {
 
     @Value.Parameter
     String type();
@@ -34,4 +36,8 @@ interface OciArtifactCoordinates {
 
     @Value.Parameter
     boolean publish();
+
+    static OciArtifactCoordinates of(String type, String uri, boolean publish) {
+        return ImmutableOciArtifactCoordinates.of(type, uri, publish);
+    }
 }
