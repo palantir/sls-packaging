@@ -204,7 +204,7 @@ This adds every coordinate from `:images` whose JSON has `publish` set to `true`
 
 ```groovy
 distribution {
-    manifestOciArtifacts project(':images'), 'image-a'
+    manifestOciArtifacts project(':images'), 'bar'
 }
 ```
 
@@ -213,7 +213,7 @@ The producer must expose the coordinates from a consumable configuration with th
 ```json
 {
   "type": "oci",
-  "uri": "registry.example.io/foo/image-a:v1.3.0",
+  "uri": "registry.example.io/foo/bar:v1.3.0",
   "publish": true
 }
 ```
@@ -221,7 +221,8 @@ The producer must expose the coordinates from a consumable configuration with th
 Java producers can create this document using the public coordinate type:
 
 ```java
-OciArtifactCoordinates coordinates = OciArtifactCoordinates.of("oci", imageUri, true);
+OciArtifactCoordinates coordinates =
+        OciArtifactCoordinates.of("oci", "registry.example.io/foo/bar:v1.3.0", true);
 ```
 
 #### Manifest output
