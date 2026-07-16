@@ -90,7 +90,7 @@ com.palantir.email:email-service (1.200.3, 2.x.x) optional
 
 _The `$projectVersion` string is a placeholder that will appear if your repo publishes multiple services, and one of them depends on another.  The actual manifest will contain a concrete version._
 
-The suffix `optional` will be added for `optional = true` in the `productDependency` declaration. All dependencies are required by default. Required dependencies are listed first, followed by optional ones, so that reviewers can see the required set at a glance.
+The suffix `optional` will be added for `optional = true` in the `productDependency` declaration. All dependencies are required by default. Required dependencies are listed first, followed by optional ones, so that reviewers can see the required set at a glance. The lockfile represents an unordered set of product dependencies: nothing that reads it relies on line order, so this ordering exists only to keep diffs stable and reviews easy.
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
 `productDependency` block - this will be merged with any constraints detected from other jars.
