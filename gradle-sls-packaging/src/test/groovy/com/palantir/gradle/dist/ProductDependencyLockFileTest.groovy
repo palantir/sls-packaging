@@ -29,11 +29,12 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
+        // The required dependency comes first even though the optional one sorts earlier alphabetically.
         ProductDependencyLockFile.asString(new ProductId("com.palantir.test", "my-service"), sample, [] as Set<ProductId>) == """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         product-id: com.palantir.test:my-service
-        com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
+        com.palantir.other:bar (0.2.0, 0.x.x) optional
         """.stripIndent(true)
     }
 
