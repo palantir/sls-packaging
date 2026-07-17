@@ -178,7 +178,7 @@ class ManifestOciArtifactsPluginTests {
             """);
         addImage(producer, "image-a", "registry.example.com/group/image-a:1.0.0", true);
         consumer.buildGradle().append("""
-            distribution.configureArtifacts { artifact ->
+            distribution.artifacts.configureEach { artifact ->
                 artifact.uri.set(artifact.uri.get().replace('registry.example.com', 'mirror.example.com'))
             }
             """);
