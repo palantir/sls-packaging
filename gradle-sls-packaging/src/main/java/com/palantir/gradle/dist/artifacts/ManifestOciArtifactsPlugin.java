@@ -52,7 +52,7 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
 
     @Override
     public final void apply(Project project) {
-        NamedDomainObjectProvider<Configuration> manifestOciArtifacts = project.getConfigurations()
+        NamedDomainObjectProvider<Configuration> declarable = project.getConfigurations()
                 .register(ManifestOciArtifacts.DEPENDENCY_SCOPE, configuration -> {
                     configuration.setCanBeConsumed(false);
                     configuration.setCanBeResolved(false);
@@ -60,11 +60,11 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
                             "Projects whose published OCI artifacts are added to this project's SLS manifest");
                 });
 
-        NamedDomainObjectProvider<Configuration> manifestOciArtifactsResolvable = project.getConfigurations()
+        NamedDomainObjectProvider<Configuration> resolvable = project.getConfigurations()
                 .register(ManifestOciArtifacts.RESOLVABLE, configuration -> {
                     configuration.setCanBeConsumed(false);
                     configuration.setCanBeResolved(true);
-                    configuration.extendsFrom(manifestOciArtifacts.get());
+                    configuration.extendsFrom(declarable.get());
                     configuration
                             .getAttributes()
                             .attribute(
@@ -72,18 +72,11 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
                                     project.getObjects().named(Usage.class, ManifestOciArtifacts.USAGE));
                 });
 
-        Provider<List<ArtifactLocator>> artifactLocators =
-                manifestArtifactLocators(manifestOciArtifacts, manifestOciArtifactsResolvable);
         project.getExtensions()
                 .getByType(BaseDistributionExtension.class)
                 .getArtifacts()
-                .addAllLater(artifactLocators);
-    }
-
-    private Provider<List<ArtifactLocator>> manifestArtifactLocators(
-            NamedDomainObjectProvider<Configuration> declarable, NamedDomainObjectProvider<Configuration> resolvable) {
-        return coordinateArtifacts(resolvable)
-                .flatMap(artifactCollection -> artifactLocators(artifactCollection, declarable));
+                .addAllLater(coordinateArtifacts(resolvable)
+                        .flatMap(artifactCollection -> artifactLocators(artifactCollection, declarable)));
     }
 
     private static Provider<ArtifactCollection> coordinateArtifacts(
