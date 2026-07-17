@@ -147,11 +147,11 @@ class ManifestOciArtifactsPluginTests {
                 manifestOciArtifacts project(':producer')
             }
             """);
-        addImageBuiltByTask(producer, "generateCoordinates", "image-a", "registry.example.com/group/image-a:1.0.0");
+        addImage(producer, "image-a", "registry.example.com/group/image-a:1.0.0", true);
 
         InvocationResult result = gradle.withArgs("createManifest").buildsSuccessfully();
 
-        result.assertThat().task(":producer:generateCoordinates").succeeded();
+        result.assertThat().task(":producer:image-a").succeeded();
         assertThat(manifestArtifacts(consumer))
                 .containsExactly(JsonArtifactLocator.from("oci", "registry.example.com/group/image-a:1.0.0"));
     }
@@ -169,7 +169,7 @@ class ManifestOciArtifactsPluginTests {
     }
 
     @Test
-    void applies_distribution_artifact_configuration_to_resolved_artifacts(
+    void applies_matching_distribution_artifact_configuration_to_resolved_artifacts(
             GradleInvoker gradle, RootProject consumer, SubProject producer) throws IOException {
         consumer.buildGradle().append("""
             distribution {
@@ -177,16 +177,28 @@ class ManifestOciArtifactsPluginTests {
             }
             """);
         addImage(producer, "image-a", "registry.example.com/group/image-a:1.0.0", true);
+        addImage(producer, "image-b", "other.example.com/group/image-b:1.0.0", true);
         consumer.buildGradle().append("""
-            distribution.artifacts.configureEach { artifact ->
-                artifact.uri.set(artifact.uri.get().replace('registry.example.com', 'mirror.example.com'))
-            }
+            distribution.artifacts
+                    .matching { artifact ->
+                        artifact.type != null &&
+                                artifact.type.getOrNull() == 'oci' &&
+                                artifact.uri != null &&
+                                artifact.uri.getOrNull() != null &&
+                                artifact.uri.getOrNull().startsWith('registry.example.com/')
+                    }
+                    .configureEach { artifact ->
+                        artifact.uri.set(artifact.uri.get().replaceFirst(
+                                'registry.example.com', 'mirror.example.com'))
+                    }
             """);
 
         gradle.withArgs("createManifest").buildsSuccessfully();
 
         assertThat(manifestArtifacts(consumer))
-                .containsExactly(JsonArtifactLocator.from("oci", "mirror.example.com/group/image-a:1.0.0"));
+                .containsExactlyInAnyOrder(
+                        JsonArtifactLocator.from("oci", "mirror.example.com/group/image-a:1.0.0"),
+                        JsonArtifactLocator.from("oci", "other.example.com/group/image-b:1.0.0"));
     }
 
     @Test
@@ -229,30 +241,14 @@ class ManifestOciArtifactsPluginTests {
     private static void addImage(SubProject producer, String name, String uri, boolean publish) {
         producer.buildGradle().append("""
             configurations.manifestOciArtifactsElements.outgoing.artifact(
-                    layout.buildDirectory.file("coords/%1$s.json").get().asFile.tap {
-                        it.parentFile.mkdirs()
-                        it.text = '{"type":"oci","uri":"%2$s","publish":%3$b}'
-                    })
+                    tasks.register('%1$s') {
+                        outputs.file(layout.buildDirectory.file("coords/${name}.json"))
+                        doLast {
+                            outputs.files.singleFile.parentFile.mkdirs()
+                            outputs.files.singleFile.text = '{"type":"oci","uri":"%2$s","publish":%3$b}'
+                        }
+                    }.map { coordinatesTask -> coordinatesTask.outputs.files.singleFile })
             """, name, uri, publish);
-    }
-
-    private static void addImageBuiltByTask(SubProject producer, String taskName, String name, String uri) {
-        producer.buildGradle().append("""
-            def %1$s = tasks.register('%1$s') {
-                def outputFile = layout.buildDirectory.file('coords/%2$s.json')
-                outputs.file(outputFile)
-                doLast {
-                    def file = outputFile.get().asFile
-                    file.parentFile.mkdirs()
-                    file.text = '{"type":"oci","uri":"%3$s","publish":true}'
-                }
-            }
-            configurations.manifestOciArtifactsElements.outgoing.artifact(%1$s.map {
-                it.outputs.files.singleFile
-            }) {
-                builtBy %1$s
-            }
-            """, taskName, name, uri);
     }
 
     private static List<JsonArtifactLocator> manifestArtifacts(GradleProject project) throws IOException {
