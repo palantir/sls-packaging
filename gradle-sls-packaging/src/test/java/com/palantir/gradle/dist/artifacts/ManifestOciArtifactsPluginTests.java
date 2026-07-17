@@ -179,18 +179,15 @@ class ManifestOciArtifactsPluginTests {
         addImage(producer, "image-a", "registry.example.com/group/image-a:1.0.0", true);
         addImage(producer, "image-b", "other.example.com/group/image-b:1.0.0", true);
         consumer.buildGradle().append("""
-            distribution.artifacts
-                    .matching { artifact ->
-                        artifact.type != null &&
-                                artifact.type.getOrNull() == 'oci' &&
-                                artifact.uri != null &&
-                                artifact.uri.getOrNull() != null &&
-                                artifact.uri.getOrNull().startsWith('registry.example.com/')
+            distribution.artifacts.configureEach { artifact ->
+                artifact.uri.replace { uri ->
+                    uri.map { value ->
+                        'oci' == artifact.type.getOrNull() && value.startsWith('registry.example.com/')
+                                ? value.replaceFirst('registry.example.com', 'mirror.example.com')
+                                : value
                     }
-                    .configureEach { artifact ->
-                        artifact.uri.set(artifact.uri.get().replaceFirst(
-                                'registry.example.com', 'mirror.example.com'))
-                    }
+                }
+            }
             """);
 
         gradle.withArgs("createManifest").buildsSuccessfully();
