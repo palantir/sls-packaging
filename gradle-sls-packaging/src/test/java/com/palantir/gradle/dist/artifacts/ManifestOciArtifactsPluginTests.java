@@ -163,7 +163,7 @@ class ManifestOciArtifactsPluginTests {
             configurations.named('%s').configure {
                 throw new GradleException('OCI artifact configuration was realized')
             }
-            """, ManifestOciArtifacts.RESOLVABLE_CONFIGURATION_NAME);
+            """, ManifestOciArtifacts.RESOLVABLE);
 
         gradle.withArgs("help").buildsSuccessfully();
     }
@@ -202,7 +202,7 @@ class ManifestOciArtifactsPluginTests {
 
         assertThat(failure.output())
                 .contains("No published OCI artifact coordinates")
-                .contains(ManifestOciArtifacts.CONFIGURATION_NAME);
+                .contains(ManifestOciArtifacts.DEPENDENCY_SCOPE);
     }
 
     @Test

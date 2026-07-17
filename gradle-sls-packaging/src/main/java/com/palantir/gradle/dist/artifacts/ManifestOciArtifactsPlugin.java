@@ -53,7 +53,7 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
     @Override
     public final void apply(Project project) {
         NamedDomainObjectProvider<Configuration> manifestOciArtifacts = project.getConfigurations()
-                .register(ManifestOciArtifacts.CONFIGURATION_NAME, configuration -> {
+                .register(ManifestOciArtifacts.DEPENDENCY_SCOPE, configuration -> {
                     configuration.setCanBeConsumed(false);
                     configuration.setCanBeResolved(false);
                     configuration.setDescription(
@@ -61,7 +61,7 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
                 });
 
         NamedDomainObjectProvider<Configuration> manifestOciArtifactsResolvable = project.getConfigurations()
-                .register(ManifestOciArtifacts.RESOLVABLE_CONFIGURATION_NAME, configuration -> {
+                .register(ManifestOciArtifacts.RESOLVABLE, configuration -> {
                     configuration.setCanBeConsumed(false);
                     configuration.setCanBeResolved(true);
                     configuration.extendsFrom(manifestOciArtifacts.get());
@@ -148,7 +148,7 @@ public abstract class ManifestOciArtifactsPlugin implements Plugin<Project> {
             No published OCI artifact coordinates were found for dependencies in the '%s' configuration. A dependency \
             must expose OCI artifact coordinates as a consumable configuration with the '%s' usage attribute, and at \
             least one matching artifact must be published.\
-            """.formatted(ManifestOciArtifacts.CONFIGURATION_NAME, ManifestOciArtifacts.USAGE));
+            """.formatted(ManifestOciArtifacts.DEPENDENCY_SCOPE, ManifestOciArtifacts.USAGE));
     }
 
     private static OciArtifactCoordinates parse(Path file) {

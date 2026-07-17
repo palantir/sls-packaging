@@ -16,20 +16,13 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-/** Contract between producers of OCI coordinates and SLS distributions which reference them in a manifest. */
 public final class ManifestOciArtifacts {
-
-    /** Declarable configuration where consumers place dependencies on OCI artifact producers. */
-    public static final String CONFIGURATION_NAME = "manifestOciArtifacts";
-
-    /** Internal resolvable configuration used to resolve artifact coordinates. */
-    static final String RESOLVABLE_CONFIGURATION_NAME = "manifestOciArtifactsResolvable";
-
     /** Usage attribute identifying an OCI artifact coordinates variant. */
     public static final String USAGE = "sls-manifest-oci-artifacts";
 
-    /** Gradle artifact type used by OCI coordinates files. */
-    public static final String COORDINATES_ARTIFACT_TYPE = "json";
+    public static final String DEPENDENCY_SCOPE = "manifestOciArtifacts";
+
+    static final String RESOLVABLE = "manifestOciArtifactsResolvable";
 
     private ManifestOciArtifacts() {}
 }

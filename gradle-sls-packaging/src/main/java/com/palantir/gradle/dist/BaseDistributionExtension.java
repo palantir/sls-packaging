@@ -149,7 +149,7 @@ public class BaseDistributionExtension {
 
     /** Adds a dependency whose published OCI artifacts are included in the manifest. */
     public final Dependency manifestOciArtifacts(Object dependencyNotation) {
-        return project.getDependencies().add(ManifestOciArtifacts.CONFIGURATION_NAME, dependencyNotation);
+        return project.getDependencies().add(ManifestOciArtifacts.DEPENDENCY_SCOPE, dependencyNotation);
     }
 
     /** Adds a project dependency and selects one named OCI coordinates artifact. */
@@ -157,7 +157,7 @@ public class BaseDistributionExtension {
         ModuleDependency dependency = (ModuleDependency) manifestOciArtifacts(dependencyProject);
         dependency.artifact(artifact -> {
             artifact.setName(artifactName);
-            artifact.setType(ManifestOciArtifacts.COORDINATES_ARTIFACT_TYPE);
+            artifact.setType("json");
         });
         return dependency;
     }
