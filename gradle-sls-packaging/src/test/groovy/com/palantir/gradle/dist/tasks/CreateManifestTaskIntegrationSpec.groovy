@@ -370,7 +370,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         buildResult.wasExecuted(':createManifest')
         readArtifactsExtension() == [
             JsonArtifactLocator.from('oci', 'first-mirror.example.io/foo/bar:v1.3.0'),
-            JsonArtifactLocator.from('other', 'first-mirror.example.io/foo/baz:v1.3.0'),
+            JsonArtifactLocator.from('other', 'registry.example.io/foo/baz:v1.3.0'),
             JsonArtifactLocator.from('oci', 'registry.example.io.invalid/foo/qux:v1.3.0')
         ]
 

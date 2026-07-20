@@ -72,6 +72,7 @@ import org.gradle.process.ExecOperations;
 public abstract class CreateManifestTask extends DefaultTask {
 
     public static final String CREATE_MANIFEST_TASK_NAME = "createManifest";
+    private static final String OCI_ARTIFACT_TYPE = "oci";
 
     @Input
     public abstract SetProperty<ProductId> getInRepoProductIds();
@@ -186,6 +187,10 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     private static JsonArtifactLocator applyRegistryOverride(
             JsonArtifactLocator artifact, Map<String, String> registryOverrides) {
+        if (!OCI_ARTIFACT_TYPE.equals(artifact.type())) {
+            return artifact;
+        }
+
         int firstPathSeparator = artifact.uri().indexOf('/');
         if (firstPathSeparator < 0) {
             return artifact;

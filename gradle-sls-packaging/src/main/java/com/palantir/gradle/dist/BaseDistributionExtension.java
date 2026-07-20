@@ -148,8 +148,8 @@ public class BaseDistributionExtension {
     }
 
     /**
-     * Maps artifact registries to the registries written to the generated manifest. When the same source registry is
-     * configured more than once, the last override wins.
+     * Maps OCI artifact registries to the registries written to the generated manifest. When the same source registry
+     * is configured more than once, the last override wins.
      */
     public final MapProperty<String, String> getRegistryOverrides() {
         return registryOverrides;

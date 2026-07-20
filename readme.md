@@ -190,7 +190,7 @@ distribution {
 }
 ```
 
-Registry overrides replace the registry component of matching artifact URIs when the manifest is generated. For example, the following writes `mirror.example.io/foo/bar:v1.3.0` to the manifest:
+Registry overrides replace the registry component of matching OCI artifact URIs when the manifest is generated. For example, the following writes `mirror.example.io/foo/bar:v1.3.0` to the manifest:
 
 ```gradle
 distribution {
@@ -198,7 +198,7 @@ distribution {
 }
 ```
 
-Only an exact match for the URI component before the first `/` is replaced. If the same source registry is configured more than once, the last override wins.
+Only `oci` artifacts with an exact match for the URI component before the first `/` are changed. If the same source registry is configured more than once, the last override wins.
 
 The result will be embedded in the `deployment/manifest.yml` file. The file will look something like this:
 
