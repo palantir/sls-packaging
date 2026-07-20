@@ -65,6 +65,7 @@ public class BaseDistributionExtension {
     private final SetProperty<ProductId> optionalProductDependencies;
     private final SetProperty<ProductId> ignoredProductDependencies;
     private final DomainObjectSet<ArtifactLocator> artifacts;
+    private final MapProperty<String, String> registryOverrides;
     private final ProviderFactory providerFactory;
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
@@ -83,6 +84,8 @@ public class BaseDistributionExtension {
         optionalProductDependencies = project.getObjects().setProperty(ProductId.class);
         ignoredProductDependencies = project.getObjects().setProperty(ProductId.class);
         artifacts = project.getObjects().domainObjectSet(ArtifactLocator.class);
+        registryOverrides =
+                project.getObjects().mapProperty(String.class, String.class).empty();
         consumableProductDependenciesConfigurationName = project.getObjects().property(String.class);
 
         serviceGroup.set(project.provider(() -> project.getGroup().toString()));
@@ -142,6 +145,14 @@ public class BaseDistributionExtension {
 
     public final DomainObjectSet<ArtifactLocator> getArtifacts() {
         return artifacts;
+    }
+
+    /**
+     * Maps artifact registries to the registries written to the generated manifest. When the same source registry is
+     * configured more than once, the last override wins.
+     */
+    public final MapProperty<String, String> getRegistryOverrides() {
+        return registryOverrides;
     }
 
     /** Lazily configures and adds a {@link ArtifactLocator}. */
