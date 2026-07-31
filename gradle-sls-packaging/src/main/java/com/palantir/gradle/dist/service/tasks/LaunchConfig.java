@@ -82,12 +82,9 @@ public final class LaunchConfig {
             "-XX:+IgnoreUnrecognizedVMOptions",
             "-XX:NativeMemoryTracking=summary",
             // Increase default JFR stack depth beyond the default (conservative) 64 frames.
-            // Also increase the JFR max chunk size beyond the default 12m. Each chunk is
-            // self-contained and repeats its checkpoint/constant-pool data, so fewer, larger
-            // chunks amortize that repeated metadata and reduce its overhead.
-            // These can be overridden by user-provided options.
+            // This can be overridden by user-provided options.
             // See sls-packaging#1230
-            "-XX:FlightRecorderOptions=stackdepth=256,maxchunksize=40m");
+            "-XX:FlightRecorderOptions=stackdepth=256");
 
     // Disable AVX-512 intrinsics due to AES/CTR corruption bug in https://bugs.openjdk.org/browse/JDK-8292158
     // UseAVX is not recognized on some platforms (arm), so we must include 'IgnoreUnrecognizedVMOptions' above.
