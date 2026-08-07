@@ -36,15 +36,15 @@ com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.18.0 (2 
 
 com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.8.0 (1 constraints: bc1b2946)
 
-com.palantir.safe-logging:logger:3.17.0 (1 constraints: f4107ec3)
+com.palantir.safe-logging:logger:3.18.0 (1 constraints: f4107ec3)
 
-com.palantir.safe-logging:logger-slf4j:3.17.0 (1 constraints: 360e9c50)
+com.palantir.safe-logging:logger-slf4j:3.18.0 (1 constraints: 370e9f50)
 
-com.palantir.safe-logging:logger-spi:3.17.0 (2 constraints: 7b1e4eb1)
+com.palantir.safe-logging:logger-spi:3.18.0 (2 constraints: 7d1e84b1)
 
-com.palantir.safe-logging:preconditions:3.17.0 (2 constraints: 301617fa)
+com.palantir.safe-logging:preconditions:3.18.0 (2 constraints: 31164afa)
 
-com.palantir.safe-logging:safe-logging:3.17.0 (4 constraints: 0d408895)
+com.palantir.safe-logging:safe-logging:3.18.0 (4 constraints: 1040b196)
 
 com.palantir.sls.versions:sls-versions:1.17.0 (1 constraints: 3b053e3b)
 
