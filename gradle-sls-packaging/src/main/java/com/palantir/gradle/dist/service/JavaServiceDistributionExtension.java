@@ -59,8 +59,6 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
 
     private final ObjectFactory objectFactory;
 
-    // TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before migrating to Gradle 8.
-    @SuppressWarnings("deprecation")
     @Inject
     public JavaServiceDistributionExtension(Project project) {
         super(project);

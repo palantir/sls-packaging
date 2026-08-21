@@ -327,7 +327,6 @@ public class BaseDistributionExtension {
             conf.extendsFrom(productDependenciesConfig);
             conf.setCanBeConsumed(true);
             conf.setCanBeResolved(false);
-            conf.setVisible(false);
         });
         consumableProductDependenciesConfigurationName.set(consumableConfigName);
         this.productDependenciesConfig = productDependenciesConfig;

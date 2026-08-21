@@ -17,8 +17,8 @@
 package com.palantir.gradle.dist
 
 import nebula.test.IntegrationSpec
-import nebula.test.dependencies.DependencyGraph
-import nebula.test.dependencies.GradleDependencyGenerator
+import nebula.test.dependencies.maven.Pom
+import nebula.test.dependencies.repositories.MavenRepo
 
 class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpec {
     def "#gradleVersionNumber: adds product dependency constraints to configuration"() {
@@ -103,9 +103,29 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    File generateMavenRepo(String... graph) {
-        DependencyGraph dependencyGraph = new DependencyGraph(graph)
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
-        return generator.generateTestMavenRepo()
+    def "#gradleVersionNumber: resolves product dependencies for a subproject"() {
+        setup:
+        gradleVersion = gradleVersionNumber
+        addSubproject('distribution', '''
+            apply plugin: 'com.palantir.sls-asset-distribution'
+            group = 'com.palantir.test'
+            version = '1.0.0'
+        '''.stripIndent(true))
+
+        expect:
+        runTasksSuccessfully(':distribution:resolveProductDependencies')
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
+    File generateMavenRepo(String... coordinates) {
+        def poms = coordinates.collect { coordinate ->
+            def components = coordinate.split(':')
+            return new Pom(components[0], components[1], components[2])
+        } as Set
+        def mavenRepo = new MavenRepo(root: new File(projectDir, "build/testrepogen/mavenrepo"), poms: poms)
+        mavenRepo.generate()
+        return mavenRepo.root
     }
 }

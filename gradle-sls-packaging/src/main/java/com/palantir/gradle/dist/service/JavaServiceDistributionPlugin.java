@@ -55,7 +55,6 @@ import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.process.CommandLineArgumentProvider;
-import org.gradle.util.GradleVersion;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     // Used as fallback version if no higher version is specified in 'versions.props'.
@@ -262,16 +261,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                             .build();
                 }
             });
-            if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
-                task.doFirst(new Action<Task>() {
-                    @Override
-                    public void execute(Task _task) {
-                        task.setMain(mainClassName.get());
-                    }
-                });
-            } else {
-                task.getMainClass().set(mainClassName);
-            }
+            task.getMainClass().set(mainClassName);
         });
 
         // HACKHACK setClasspath of JavaExec is eager so we configure it after evaluation to ensure everything has

@@ -42,11 +42,13 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 
+@DisableCachingByDefault(because = "Not assessed for cacheability")
 public abstract class ResolveProductDependenciesTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(ResolveProductDependenciesTask.class);
 
@@ -68,7 +70,7 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     @Input
     abstract SetProperty<ProductId> getIgnoredProductIds();
 
-    @InputFiles
+    @Classpath
     public abstract ConfigurableFileCollection getProductDependenciesFiles();
 
     @OutputFile

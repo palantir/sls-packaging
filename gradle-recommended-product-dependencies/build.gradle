@@ -11,12 +11,17 @@ dependencies {
     api 'com.fasterxml.jackson.core:jackson-databind'
     api 'com.palantir.sls.versions:sls-versions'
     api 'com.palantir.safe-logging:preconditions'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.palantir.safe-logging:safe-logging'
 
     testImplementation gradleTestKit()
-    testImplementation 'com.netflix.nebula:nebula-test'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
 
     gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
 
+    compileOnly 'com.google.errorprone:error_prone_annotations'
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'
 }

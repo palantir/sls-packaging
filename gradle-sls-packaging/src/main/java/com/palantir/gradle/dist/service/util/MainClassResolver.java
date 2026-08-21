@@ -29,8 +29,6 @@ import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.SourceSet;
 
-// TODO(fwindheuser): Replace 'JavaPluginConvention' with 'JavaPluginExtension' before migrating to Gradle 8.
-@SuppressWarnings("deprecation")
 public final class MainClassResolver {
     public static String resolveMainClass(Project project) {
         SourceSet main = project.getExtensions()

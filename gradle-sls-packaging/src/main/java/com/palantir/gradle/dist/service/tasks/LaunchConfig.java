@@ -44,6 +44,8 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.immutables.value.Value;
 
 @AutoParallelizable
@@ -138,6 +140,7 @@ public final class LaunchConfig {
         MapProperty<String, String> getEnv();
 
         @InputFiles
+        @PathSensitive(PathSensitivity.NAME_ONLY)
         ConfigurableFileCollection getClasspath();
 
         /**
@@ -147,9 +150,11 @@ public final class LaunchConfig {
          * be the same as classpath if manifest classpath JARs are not used.
          */
         @InputFiles
+        @PathSensitive(PathSensitivity.NAME_ONLY)
         ConfigurableFileCollection getFullClasspath();
 
         @InputFiles
+        @PathSensitive(PathSensitivity.NAME_ONLY)
         ConfigurableFileCollection getJavaAgents();
 
         @OutputFile

@@ -56,7 +56,7 @@ subprojects {
         options.compilerArgs += ['-Werror']
     }
 
-    tasks.named("eclipse") {
+    tasks.matching { task -> task.name == "eclipse" }.configureEach {
         dependsOn "pluginUnderTestMetadata"
     }
 }

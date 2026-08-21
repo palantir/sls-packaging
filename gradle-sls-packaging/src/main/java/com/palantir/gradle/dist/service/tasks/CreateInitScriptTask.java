@@ -16,6 +16,9 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
+import org.gradle.work.DisableCachingByDefault;
+
+@DisableCachingByDefault(because = "Not assessed for cacheability")
 public abstract class CreateInitScriptTask extends CreateInitScriptTaskImpl {
     public CreateInitScriptTask() {
         getOutputFile().set(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));

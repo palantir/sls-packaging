@@ -116,7 +116,11 @@ final class DistTarTask {
     @SuppressWarnings("deprecation")
     private static void fileModeWorkaround(CopySpec copySpec, int newFileMode) {
         if (GradleVersion.current().compareTo(GradleVersion.version("8.3")) < 0) {
-            copySpec.setFileMode(newFileMode);
+            try {
+                CopySpec.class.getMethod("setFileMode", Integer.class).invoke(copySpec, newFileMode);
+            } catch (ReflectiveOperationException exception) {
+                throw new IllegalStateException("Failed to set file mode", exception);
+            }
         } else {
             copySpec.filePermissions(permissions -> permissions.unix(newFileMode));
         }
