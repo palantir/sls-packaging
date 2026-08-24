@@ -22,5 +22,5 @@ public final class GradleTestVersions {
     private GradleTestVersions() {}
 
     public static final List<String> GRADLE_VERSIONS =
-            com.palantir.gradle.plugintesting.GradleTestVersions.getGradleVersionsForTests();
+            List.of(SlsBaseDistPlugin.MINIMUM_GRADLE.getVersion(), "8.14.3", "9.1.0");
 }

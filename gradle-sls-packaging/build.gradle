@@ -78,7 +78,6 @@ publishPlugins.onlyIf {
 
 test {
     maxHeapSize = '1g'
-    forkEvery = 1
     // required so nebula tests don't fail on stuff to be removed in gradle 9
     // of course, we are going to have to deal with those things sooner or later
     systemProperty('ignoreDeprecations', true)
