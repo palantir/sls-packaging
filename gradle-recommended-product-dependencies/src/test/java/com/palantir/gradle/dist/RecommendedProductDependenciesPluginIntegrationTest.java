@@ -23,7 +23,6 @@ import com.google.common.collect.Iterables;
 import com.palantir.gradle.testing.execution.GradleInvoker;
 import com.palantir.gradle.testing.execution.InvocationResult;
 import com.palantir.gradle.testing.files.arbitrary.ArbitraryFile;
-import com.palantir.gradle.testing.junit.AdditionallyRunWithGradle;
 import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.maven.MavenArtifact;
@@ -38,7 +37,6 @@ import org.junit.jupiter.api.Test;
 
 @GradlePluginTests
 @DisabledConfigurationCache
-@AdditionallyRunWithGradle({"7.6.4", "9.1.0"})
 class RecommendedProductDependenciesPluginIntegrationTest {
 
     @BeforeEach
