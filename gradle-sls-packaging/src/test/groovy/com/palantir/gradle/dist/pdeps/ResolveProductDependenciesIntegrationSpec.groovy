@@ -111,10 +111,14 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     def '#gradleVersionNumber: discovers external dependencies (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
-        def mavenRepo = generateMavenRepo("a", "a", "1.0")
+        def mavenRepo = new File(projectDir, "build/testrepogen/mavenrepo")
+        new MavenRepo(root: mavenRepo, poms: [new Pom("a", "a", "1.0")] as Set).generate()
 
         // depends on group:name:[1.0.0, 1.x.x]:1.2.0
-        copyResource(mavenRepo, "/a-1.0.jar", "a/a/1.0/a-1.0.jar")
+        Files.copy(
+                ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream("/a-1.0.jar"),
+                new File(mavenRepo, "a/a/1.0/a-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
 
         buildFile << """
         repositories {
@@ -146,12 +150,16 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     def '#gradleVersionNumber: handles jars without manifest (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
-        def mavenRepo = generateMavenRepo("missingmanifest", "missingmanifest", "1.0")
+        def mavenRepo = new File(projectDir, "build/testrepogen/mavenrepo")
+        new MavenRepo(
+                        root: mavenRepo,
+                        poms: [new Pom("missingmanifest", "missingmanifest", "1.0")] as Set)
+                .generate()
 
-        copyResource(
-                mavenRepo,
-                "/missing-manifest.jar",
-                "missingmanifest/missingmanifest/1.0/missingmanifest-1.0.jar")
+        Files.copy(
+                ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream("/missing-manifest.jar"),
+                new File(mavenRepo, "missingmanifest/missingmanifest/1.0/missingmanifest-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
 
         buildFile << """
         repositories {
@@ -186,10 +194,14 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def groupPdep = new ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0")
         def group1Pdep = new ProductDependency("group1", "name1", "1.0.0", "1.3.x", "1.2.1")
 
-        def mavenRepo = generateMavenRepo("a", "a", "1.0")
+        def mavenRepo = new File(projectDir, "build/testrepogen/mavenrepo")
+        new MavenRepo(root: mavenRepo, poms: [new Pom("a", "a", "1.0")] as Set).generate()
 
         // depends on group:name:[1.0.0, 1.x.x]:1.2.0
-        copyResource(mavenRepo, "/a-1.0.jar", "a/a/1.0/a-1.0.jar")
+        Files.copy(
+                ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream("/a-1.0.jar"),
+                new File(mavenRepo, "a/a/1.0/a-1.0.jar").toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
 
         buildFile << """
             repositories {
@@ -269,22 +281,6 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    private static void copyResource(File mavenRepo, String resource, String relativePath) {
-        def target = new File(mavenRepo, relativePath).toPath()
-        Files.createDirectories(target.getParent())
-        Files.copy(
-                ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream(resource),
-                target,
-                StandardCopyOption.REPLACE_EXISTING)
-    }
-
-    private File generateMavenRepo(String group, String artifact, String version) {
-        def mavenRepo = new MavenRepo(
-                root: new File(projectDir, "build/testrepogen/mavenrepo"),
-                poms: [new Pom(group, artifact, version)] as Set)
-        mavenRepo.generate()
-        return mavenRepo.root
-    }
 
     private enum DependencyMethod {
         EXTENSION_SETTER("extension setter", "ext.setProductDependenciesConfig(configurations.runtimeClasspath)"),

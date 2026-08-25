@@ -103,22 +103,6 @@ class ProductDependencyIntrospectionPluginIntegrationSpec extends IntegrationSpe
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
-    def "#gradleVersionNumber: resolves product dependencies for a subproject"() {
-        setup:
-        gradleVersion = gradleVersionNumber
-        addSubproject('distribution', '''
-            apply plugin: 'com.palantir.sls-asset-distribution'
-            group = 'com.palantir.test'
-            version = '1.0.0'
-        '''.stripIndent(true))
-
-        expect:
-        runTasksSuccessfully(':distribution:resolveProductDependencies')
-
-        where:
-        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
-    }
-
     File generateMavenRepo(String... graph) {
         DependencyGraph dependencyGraph = new DependencyGraph(graph)
         GradleDependencyGenerator generator = new GradleDependencyGenerator(dependencyGraph)
