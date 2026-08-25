@@ -29,7 +29,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "The output is cheap to generate")
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
 public abstract class CompileRecommendedProductDependencies extends DefaultTask {
 
     static final ObjectMapper MAPPER = new ObjectMapper();

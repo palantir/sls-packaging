@@ -37,7 +37,7 @@ import org.gradle.work.DisableCachingByDefault;
  * This task is only necessary because {@link Jar#getManifest()} cannot be configured lazily at configuration-time, so
  * we have to configure it at execution-time instead.
  */
-@DisableCachingByDefault(because = "Configures another task and has no outputs")
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
 public abstract class ConfigureProductDependenciesTask extends DefaultTask {
 
     @SuppressWarnings("for-rollout:GradleTypesAsFields")

@@ -18,7 +18,7 @@ package com.palantir.gradle.dist.service.tasks;
 
 import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "Not assessed for cacheability")
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
 public abstract class CreateInitScriptTask extends CreateInitScriptTaskImpl {
     public CreateInitScriptTask() {
         getOutputFile().set(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));

@@ -21,7 +21,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "Marker task has no outputs")
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
 public abstract class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
 
     public static final String NAME = "writeSchemaVersionLocks";
