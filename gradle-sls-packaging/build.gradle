@@ -19,28 +19,18 @@ dependencies {
     api "com.fasterxml.jackson.datatype:jackson-datatype-guava"
     api 'com.palantir.safe-logging:preconditions'
     implementation 'org.apache.commons:commons-lang3'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations'
-    implementation 'com.fasterxml.jackson.core:jackson-core'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     implementation 'com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions'
-    implementation 'com.palantir.safe-logging:safe-logging'
-    implementation 'com.palantir.sls.versions:sls-versions'
 
-    compileOnly 'com.google.errorprone:error_prone_annotations'
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'
     compileOnly 'com.palantir.gradle.auto-parallelizable:auto-parallelizable-annotations'
     annotationProcessor 'com.palantir.gradle.auto-parallelizable:auto-parallelizable'
 
     testImplementation gradleTestKit()
-    testImplementation 'com.fasterxml.jackson.core:jackson-core'
     testImplementation 'com.netflix.nebula:nebula-test'
-    testImplementation 'org.apache.groovy:groovy'
-    testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params'
     testImplementation 'org.rauschig:jarchivelib'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'

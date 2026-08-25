@@ -1,7 +1,6 @@
 com.fasterxml.jackson.*:* = 2.22.1
 com.fasterxml.jackson.core:jackson-annotations = 2.22
 com.google.guava:guava = 33.7.1-jre
-com.google.errorprone:error_prone_annotations = 2.50.0
 com.palantir.gradle.auto-parallelizable:* = 1.6.0
 com.palantir.gradle.consistentversions:gradle-consistent-versions = 3.18.0
 com.palantir.gradle.plugintesting:gradle-plugin-testing-junit = 0.69.0
@@ -18,7 +17,5 @@ com.palantir.gradle.failure-reports:* = 1.18.0
 com.netflix.nebula:nebula-test = 12.1.0
 junit:junit = 4.13.2
 org.awaitility:awaitility = 4.3.0
-org.apache.groovy:groovy = 4.0.29
-org.assertj:assertj-core = 3.27.7
 com.palantir.gradle.docker:gradle-docker = 0.37.0
 org.spockframework:* = 2.4-groovy-4.0

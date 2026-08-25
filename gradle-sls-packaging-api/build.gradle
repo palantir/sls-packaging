@@ -1,11 +1,9 @@
 apply plugin: 'com.palantir.external-publish-jar'
 
 dependencies {
-    implementation 'com.fasterxml.jackson.core:jackson-annotations'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.palantir.safe-logging:preconditions'
 
-    compileOnly 'com.google.errorprone:error_prone_annotations'
     compileOnly 'org.immutables:value::annotations'
     annotationProcessor 'org.immutables:value'
 }
