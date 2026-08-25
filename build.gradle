@@ -55,10 +55,6 @@ subprojects {
     tasks.withType(JavaCompile) {
         options.compilerArgs += ['-Werror']
     }
-
-    tasks.matching { task -> task.name == "eclipse" }.configureEach {
-        dependsOn "pluginUnderTestMetadata"
-    }
 }
 
 javaVersions {
