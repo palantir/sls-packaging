@@ -18,7 +18,7 @@ package com.palantir.gradle.dist.service.tasks;
 
 import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
+@DisableCachingByDefault(because = "The launcher configuration files are small and cheap to regenerate")
 public abstract class LaunchConfigTask extends LaunchConfigTaskImpl {
     public LaunchConfigTask() {
         getStaticLauncher().set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));

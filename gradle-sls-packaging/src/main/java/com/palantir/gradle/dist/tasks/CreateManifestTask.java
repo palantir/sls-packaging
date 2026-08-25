@@ -71,7 +71,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.process.ExecOperations;
 import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
+@DisableCachingByDefault(because = "The task may update lock files based on the build invocation")
 public abstract class CreateManifestTask extends DefaultTask {
 
     public static final String CREATE_MANIFEST_TASK_NAME = "createManifest";
