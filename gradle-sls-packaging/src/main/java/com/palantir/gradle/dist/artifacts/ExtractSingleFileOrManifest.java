@@ -34,7 +34,8 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
+@DisableCachingByDefault(
+        because = "Extracting a single file from a zip is much faster than making network requests to the build cache")
 public abstract class ExtractSingleFileOrManifest implements TransformAction<FileAndManifestExtractParameter> {
     @PathSensitive(PathSensitivity.NAME_ONLY)
     @InputArtifact

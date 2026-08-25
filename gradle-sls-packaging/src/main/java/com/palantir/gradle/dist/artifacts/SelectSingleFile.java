@@ -32,7 +32,8 @@ import org.gradle.work.DisableCachingByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7.0")
+@DisableCachingByDefault(
+        because = "Extracting a single file from a zip is much faster than making network requests to the build cache")
 public abstract class SelectSingleFile implements TransformAction<FileExtractParameter> {
     private static final Logger log = LoggerFactory.getLogger(SelectSingleFile.class);
 
