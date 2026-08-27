@@ -16,7 +16,4 @@
 
 package com.palantir.gradle.dist.service;
 
-import org.gradle.work.DisableCachingByDefault;
-
-@DisableCachingByDefault(because = "The merged diagnostics file is small and cheap to regenerate")
 public abstract class MergeDiagnosticsJsonTask extends MergeDiagnosticsJsonTaskImpl {}

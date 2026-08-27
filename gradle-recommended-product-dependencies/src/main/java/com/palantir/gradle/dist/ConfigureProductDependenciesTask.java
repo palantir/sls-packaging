@@ -31,13 +31,11 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.bundling.Jar;
-import org.gradle.work.DisableCachingByDefault;
 
 /**
  * This task is only necessary because {@link Jar#getManifest()} cannot be configured lazily at configuration-time, so
  * we have to configure it at execution-time instead.
  */
-@DisableCachingByDefault(because = "The task configures another task and has no output to cache")
 public abstract class ConfigureProductDependenciesTask extends DefaultTask {
 
     @SuppressWarnings("for-rollout:GradleTypesAsFields")

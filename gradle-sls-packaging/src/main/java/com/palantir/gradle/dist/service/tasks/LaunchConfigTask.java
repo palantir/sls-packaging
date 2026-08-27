@@ -16,9 +16,6 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import org.gradle.work.DisableCachingByDefault;
-
-@DisableCachingByDefault(because = "The launcher configuration files are small and cheap to regenerate")
 public abstract class LaunchConfigTask extends LaunchConfigTaskImpl {
     public LaunchConfigTask() {
         getStaticLauncher().set(getProject().getLayout().getBuildDirectory().file("scripts/launcher-static.yml"));

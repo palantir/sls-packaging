@@ -16,9 +16,6 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import org.gradle.work.DisableCachingByDefault;
-
-@DisableCachingByDefault(because = "The generated script is small and cheap to regenerate")
 public abstract class CreateInitScriptTask extends CreateInitScriptTaskImpl {
     public CreateInitScriptTask() {
         getOutputFile().set(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));

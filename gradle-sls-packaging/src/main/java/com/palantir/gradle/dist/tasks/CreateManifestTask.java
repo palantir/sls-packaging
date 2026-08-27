@@ -63,15 +63,11 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.process.ExecOperations;
-import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "The task may update lock files based on the build invocation")
 public abstract class CreateManifestTask extends DefaultTask {
 
     public static final String CREATE_MANIFEST_TASK_NAME = "createManifest";
@@ -95,7 +91,6 @@ public abstract class CreateManifestTask extends DefaultTask {
     public abstract SetProperty<ArtifactLocator> getArtifacts();
 
     @InputFile
-    @PathSensitive(PathSensitivity.NONE)
     public abstract RegularFileProperty getProductDependenciesFile();
 
     @OutputFile
@@ -115,7 +110,6 @@ public abstract class CreateManifestTask extends DefaultTask {
      * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
      */
     @InputFile
-    @PathSensitive(PathSensitivity.NONE)
     @org.gradle.api.tasks.Optional
     final File getLockfileIfExists() {
         File file = getProductDependenciesLockfile();
@@ -130,7 +124,6 @@ public abstract class CreateManifestTask extends DefaultTask {
      * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
      */
     @InputFile
-    @PathSensitive(PathSensitivity.NONE)
     @org.gradle.api.tasks.Optional
     final File getSchemaLockfileIfExists() {
         File file = getSchemaVersionLockfile();

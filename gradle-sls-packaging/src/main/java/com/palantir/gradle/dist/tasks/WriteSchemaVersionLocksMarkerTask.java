@@ -19,9 +19,7 @@ package com.palantir.gradle.dist.tasks;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "The check depends on the build invocation and has no output to cache")
 public abstract class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
 
     public static final String NAME = "writeSchemaVersionLocks";

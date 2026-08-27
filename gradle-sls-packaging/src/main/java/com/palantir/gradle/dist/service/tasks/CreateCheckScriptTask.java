@@ -16,9 +16,6 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import org.gradle.work.DisableCachingByDefault;
-
-@DisableCachingByDefault(because = "The generated script is small and cheap to regenerate")
 public abstract class CreateCheckScriptTask extends CreateCheckScriptTaskImpl {
     public CreateCheckScriptTask() {
         getOutputFile().set(getProject().getLayout().getBuildDirectory().file("monitoring/check.sh"));

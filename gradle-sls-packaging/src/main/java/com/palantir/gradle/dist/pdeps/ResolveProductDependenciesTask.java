@@ -45,12 +45,8 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "The product dependency manifest is small and cheap to regenerate")
 public abstract class ResolveProductDependenciesTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(ResolveProductDependenciesTask.class);
 
@@ -73,7 +69,6 @@ public abstract class ResolveProductDependenciesTask extends DefaultTask {
     abstract SetProperty<ProductId> getIgnoredProductIds();
 
     @InputFiles
-    @PathSensitive(PathSensitivity.NONE)
     public abstract ConfigurableFileCollection getProductDependenciesFiles();
 
     @OutputFile

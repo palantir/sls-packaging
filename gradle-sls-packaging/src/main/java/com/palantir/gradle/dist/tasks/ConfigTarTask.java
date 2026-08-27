@@ -29,9 +29,7 @@ import org.gradle.api.tasks.AbstractCopyTask;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Tar;
-import org.gradle.work.DisableCachingByDefault;
 
-@DisableCachingByDefault(because = "The configuration archive is small and cheap to regenerate")
 public abstract class ConfigTarTask extends Tar {
     @Override
     public final AbstractCopyTask from(Object... sourcePaths) {
