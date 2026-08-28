@@ -36,6 +36,9 @@ dependencies {
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
     gradlePluginForTesting 'com.palantir.gradle.docker:gradle-docker'
+    testImplementation 'org.spockframework:spock-core'
+    testCompileOnly 'junit:junit'
+    testRuntimeOnly 'org.spockframework:spock-junit4'
 }
 
 gradlePlugin {
