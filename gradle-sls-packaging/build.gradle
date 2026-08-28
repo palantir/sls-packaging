@@ -20,7 +20,6 @@ dependencies {
     api 'com.palantir.safe-logging:preconditions'
     implementation 'org.apache.commons:commons-lang3'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
     implementation 'com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions'
 
     compileOnly 'org.immutables:value::annotations'
@@ -36,6 +35,9 @@ dependencies {
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
     gradlePluginForTesting 'com.palantir.gradle.docker:gradle-docker'
+    testImplementation 'org.spockframework:spock-core'
+    testCompileOnly 'junit:junit'
+    testRuntimeOnly 'org.spockframework:spock-junit4'
 }
 
 gradlePlugin {

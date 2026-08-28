@@ -13,7 +13,6 @@ dependencies {
     api 'com.palantir.safe-logging:preconditions'
 
     testImplementation gradleTestKit()
-    testImplementation 'com.netflix.nebula:nebula-test'
 
     gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
 

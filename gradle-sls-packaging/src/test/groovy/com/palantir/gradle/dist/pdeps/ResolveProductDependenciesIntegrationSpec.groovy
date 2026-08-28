@@ -24,8 +24,8 @@ import com.palantir.gradle.dist.ProductDependency
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import nebula.test.IntegrationSpec
-import nebula.test.dependencies.DependencyGraph
-import nebula.test.dependencies.GradleDependencyGenerator
+import nebula.test.dependencies.maven.Pom
+import nebula.test.dependencies.repositories.MavenRepo
 
 class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     public static String PDEP = """
@@ -111,9 +111,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     def '#gradleVersionNumber: discovers external dependencies (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(
-                new DependencyGraph("a:a:1.0"), new File(projectDir, "build/testrepogen").toString())
-        def mavenRepo = generator.generateTestMavenRepo()
+        def mavenRepo = directory("mavenrepo")
+        new MavenRepo(root: mavenRepo, poms: [new Pom("a", "a", "1.0")] as Set).generate()
 
         // depends on group:name:[1.0.0, 1.x.x]:1.2.0
         Files.copy(
@@ -151,10 +150,11 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
     def '#gradleVersionNumber: handles jars without manifest (method: #method)'() {
         given:
         gradleVersion = gradleVersionNumber
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(
-                new DependencyGraph(
-                        "missingmanifest:missingmanifest:1.0"), new File(projectDir, "build/testrepogen").toString())
-        def mavenRepo = generator.generateTestMavenRepo()
+        def mavenRepo = directory("mavenrepo")
+        new MavenRepo(
+                        root: mavenRepo,
+                        poms: [new Pom("missingmanifest", "missingmanifest", "1.0")] as Set)
+                .generate()
 
         Files.copy(
                 ResolveProductDependenciesIntegrationSpec.class.getResourceAsStream("/missing-manifest.jar"),
@@ -194,9 +194,8 @@ class ResolveProductDependenciesIntegrationSpec extends IntegrationSpec {
         def groupPdep = new ProductDependency("group", "name", "1.0.0", "1.x.x", "1.2.0")
         def group1Pdep = new ProductDependency("group1", "name1", "1.0.0", "1.3.x", "1.2.1")
 
-        GradleDependencyGenerator generator = new GradleDependencyGenerator(
-                new DependencyGraph("a:a:1.0"), new File(projectDir, "build/testrepogen").toString())
-        def mavenRepo = generator.generateTestMavenRepo()
+        def mavenRepo = directory("mavenrepo")
+        new MavenRepo(root: mavenRepo, poms: [new Pom("a", "a", "1.0")] as Set).generate()
 
         // depends on group:name:[1.0.0, 1.x.x]:1.2.0
         Files.copy(

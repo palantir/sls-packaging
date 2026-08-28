@@ -21,5 +21,5 @@ import java.util.List;
 public final class GradleTestVersions {
     private GradleTestVersions() {}
 
-    public static final List<String> GRADLE_VERSIONS = List.of("7.6.4", "8.14.3", "9.1.0");
+    public static final List<String> GRADLE_VERSIONS = List.of("8.4", "8.14.3", "9.1.0");
 }
