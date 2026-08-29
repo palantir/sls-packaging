@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Remove outdated optional transitive recommended pdep restriction
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1756

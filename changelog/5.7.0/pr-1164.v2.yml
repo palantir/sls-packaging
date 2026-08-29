@@ -1,5 +1,0 @@
-type: feature
-feature:
-  description: Discover product dependencies in a lazy, pluggable way
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1164

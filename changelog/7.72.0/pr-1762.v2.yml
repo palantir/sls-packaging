@@ -1,5 +1,0 @@
-type: fix
-fix:
-  description: Add getProductDependenciesFile() to CompileRecommendedProductDependencies
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1762

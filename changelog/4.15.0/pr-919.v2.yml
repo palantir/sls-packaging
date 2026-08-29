@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Tolerate multiple product dependencies on the `distribution` extension.
-  links:
-  - https://github.com/palantir/sls-packaging/pull/919

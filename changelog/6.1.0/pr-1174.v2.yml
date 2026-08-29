@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Enable `-XX:NativeMemoryTracking=summary` for all
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1174

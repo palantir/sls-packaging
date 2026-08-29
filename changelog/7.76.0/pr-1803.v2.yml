@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Do not cache any artifact transforms
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1803

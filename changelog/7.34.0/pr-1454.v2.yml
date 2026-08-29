@@ -1,5 +1,0 @@
-type: feature
-feature:
-  description: Create schema-versions.lock file to track supported schema versions
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1454

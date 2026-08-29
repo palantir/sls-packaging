@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Add jvm args to jdk16+ to support safepoint metrics
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1176

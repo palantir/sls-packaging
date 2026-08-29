@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Allow extraFiles to be added into a distribution
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1825

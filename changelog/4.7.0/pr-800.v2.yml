@@ -1,6 +1,0 @@
-type: improvement
-improvement:
-  description: Refactor `com.palantir.recommended-product-dependencies` into separate
-    JAR
-  links:
-  - https://github.com/palantir/sls-packaging/pull/800
