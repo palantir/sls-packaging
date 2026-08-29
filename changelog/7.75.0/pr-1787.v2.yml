@@ -1,6 +1,0 @@
-type: feature
-feature:
-  description: The enableAlwaysPreTouch() option will include the `+UseTransparentHugePages`
-    JVM opt.
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1787

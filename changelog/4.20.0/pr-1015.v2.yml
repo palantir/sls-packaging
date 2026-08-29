@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: Add empty GC profile
-  links:
-  - https://github.com/palantir/sls-packaging/pull/1015
