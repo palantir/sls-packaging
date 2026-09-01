@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2024 Palantir Technologies Inc. All rights reserved.
+ * (c) Copyright 2026 Palantir Technologies Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,13 @@
 
 package com.palantir.gradle.dist.artifacts;
 
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
+public final class ManifestOciArtifacts {
+    /** Usage attribute identifying an OCI artifact coordinates variant. */
+    public static final String USAGE = "sls-manifest-oci-artifacts";
 
-public interface ArtifactLocator {
-    @Input
-    Property<String> getType();
+    public static final String DEPENDENCY_SCOPE = "manifestOciArtifacts";
 
-    @Input
-    Property<String> getUri();
+    static final String RESOLVABLE = "manifestOciArtifactsResolvable";
 
-    @Internal
-    default boolean isPublished() {
-        return true;
-    }
+    private ManifestOciArtifacts() {}
 }

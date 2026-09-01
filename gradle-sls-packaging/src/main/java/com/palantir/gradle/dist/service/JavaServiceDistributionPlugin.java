@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
+import com.palantir.gradle.dist.artifacts.ManifestOciArtifactsPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
@@ -80,6 +81,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
         JavaServiceDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", JavaServiceDistributionExtension.class, project);
+        project.getPluginManager().apply(ManifestOciArtifactsPlugin.class);
 
         // In baseline 3.52.0 we added this new plugin as a one-liner to add the --enable-preview flag wherever
         // necessary (https://github.com/palantir/gradle-baseline/pull/1549). We're using the extraProperties thing to
