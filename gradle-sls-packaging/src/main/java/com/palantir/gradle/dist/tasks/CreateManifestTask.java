@@ -46,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -71,6 +72,7 @@ import org.gradle.process.ExecOperations;
 public abstract class CreateManifestTask extends DefaultTask {
 
     public static final String CREATE_MANIFEST_TASK_NAME = "createManifest";
+    private static final String OCI_ARTIFACT_TYPE = "oci";
 
     @Input
     public abstract SetProperty<ProductId> getInRepoProductIds();
@@ -89,6 +91,9 @@ public abstract class CreateManifestTask extends DefaultTask {
 
     @Nested
     public abstract SetProperty<ArtifactLocator> getArtifacts();
+
+    @Input
+    public abstract MapProperty<String, String> getRegistryOverrides();
 
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
@@ -159,6 +164,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
 
         validateEmptyArtifactsExtension();
+        Map<String, String> registryOverrides = getRegistryOverrides().get();
 
         ObjectMappers.jsonMapper.writeValue(
                 getManifestFile().getAsFile().get(),
@@ -174,8 +180,27 @@ public abstract class CreateManifestTask extends DefaultTask {
                                 "artifacts",
                                 getArtifacts().get().stream()
                                         .map(JsonArtifactLocator::from)
+                                        .map(artifact -> applyRegistryOverride(artifact, registryOverrides))
                                         .collect(Collectors.toList()))
                         .build());
+    }
+
+    private static JsonArtifactLocator applyRegistryOverride(
+            JsonArtifactLocator artifact, Map<String, String> registryOverrides) {
+        if (!OCI_ARTIFACT_TYPE.equals(artifact.type())) {
+            return artifact;
+        }
+
+        int firstPathSeparator = artifact.uri().indexOf('/');
+        if (firstPathSeparator < 0) {
+            return artifact;
+        }
+
+        String registry = artifact.uri().substring(0, firstPathSeparator);
+        return Optional.ofNullable(registryOverrides.get(registry))
+                .map(registryOverride -> JsonArtifactLocator.from(
+                        artifact.type(), registryOverride + artifact.uri().substring(firstPathSeparator)))
+                .orElse(artifact);
     }
 
     private void validateEmptyArtifactsExtension() {
@@ -343,6 +368,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                                     ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
                     task.getArtifacts().addAll(ext.getArtifacts());
+                    task.getRegistryOverrides().set(ext.getRegistryOverrides());
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())
