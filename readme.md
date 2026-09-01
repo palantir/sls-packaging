@@ -78,7 +78,7 @@ distribution {
 ```
 
 #### Product dependencies lock file
-`sls-packaging` also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git.  This file is an accurate reflection of all the inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it. e.g.
+`sls-packaging` also maintains a lockfile, `product-dependencies.lock`, which should be checked in to Git. This file accurately reflects all inferred and explicitly defined product dependencies. Run **`./gradlew --write-locks`** or **`./gradlew writeProductDependenciesLocks`** to update it. e.g.
 
 ```
 # Run ./gradlew writeProductDependenciesLocks to regenerate this file
@@ -90,7 +90,7 @@ com.palantir.foo:foo-service ($projectVersion, 1.x.x)
 
 _The `$projectVersion` string is a placeholder that will appear if your repo publishes multiple services, and one of them depends on another.  The actual manifest will contain a concrete version._
 
-The suffix `optional` will be added for `optional = true` in the `productDependency` declaration. All dependencies are required by default.
+The suffix `optional` will be added for `optional = true` in the `productDependency` declaration. All dependencies are required by default. The ordering of dependencies in the lockfile does not matter.
 
 It's possible to further restrict the acceptable version range for a dependency by declaring a tighter constraint in a
 `productDependency` block - this will be merged with any constraints detected from other jars.
