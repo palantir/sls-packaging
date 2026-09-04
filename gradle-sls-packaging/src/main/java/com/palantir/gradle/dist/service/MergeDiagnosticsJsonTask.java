@@ -16,4 +16,7 @@
 
 package com.palantir.gradle.dist.service;
 
+import org.gradle.work.DisableCachingByDefault;
+
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7")
 public abstract class MergeDiagnosticsJsonTask extends MergeDiagnosticsJsonTaskImpl {}
