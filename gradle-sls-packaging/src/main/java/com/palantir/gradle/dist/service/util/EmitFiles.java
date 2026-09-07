@@ -28,12 +28,11 @@ import java.util.Map;
 
 public final class EmitFiles {
     public static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) {
-        String text;
-        try (Reader reader = new InputStreamReader(src, StandardCharsets.UTF_8)) {
-            text = CharStreams.toString(reader);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read template", e);
-        }
+        return replaceVars(readTemplate(src), dest, vars);
+    }
+
+    public static Path replaceVars(String template, Path dest, Map<String, String> vars) {
+        String text = template;
 
         for (Map.Entry<String, String> entry : vars.entrySet()) {
             text = text.replaceAll(entry.getKey(), entry.getValue());
@@ -47,6 +46,14 @@ public final class EmitFiles {
             return Files.write(dest, text.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write templated file", e);
+        }
+    }
+
+    public static String readTemplate(InputStream src) {
+        try (Reader reader = new InputStreamReader(src, StandardCharsets.UTF_8)) {
+            return CharStreams.toString(reader);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read template", e);
         }
     }
 

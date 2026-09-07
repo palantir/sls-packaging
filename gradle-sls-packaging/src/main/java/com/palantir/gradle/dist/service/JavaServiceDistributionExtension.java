@@ -56,6 +56,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final MapProperty<String, String> env;
     private final MapProperty<JavaVersion, Object> jdks;
     private final CopySpec extraFiles;
+    private final ServiceLauncherExtension launcher;
 
     private final ObjectFactory objectFactory;
 
@@ -107,6 +108,16 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
         extraFiles = project.copySpec();
+        launcher = objectFactory.newInstance(ServiceLauncherExtension.class, project);
+    }
+
+    /** Configures the launcher binaries and init script used to run this service. */
+    public final ServiceLauncherExtension getLauncher() {
+        return launcher;
+    }
+
+    public final void launcher(Action<? super ServiceLauncherExtension> action) {
+        action.execute(launcher);
     }
 
     public final CopySpec getExtraFiles() {

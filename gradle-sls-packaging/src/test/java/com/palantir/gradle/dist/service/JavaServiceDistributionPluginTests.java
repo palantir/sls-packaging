@@ -1858,6 +1858,50 @@ class JavaServiceDistributionPluginTests {
                 .exists();
     }
 
+    @Test
+    void can_replace_launcher_binaries_and_init_script(GradleInvoker gradle, RootProject rootProject) {
+        createUntarBuildFile(rootProject);
+
+        rootProject.file("my-init.sh").overwrite("""
+            #!/bin/bash
+            echo "custom launcher for @serviceName@ in @launcherDir@"
+            """);
+
+        rootProject.buildGradle().append("""
+            distribution {
+                launcher {
+                    useDefaultBinaries.set(false)
+                    binaries {
+                        from(files("%s")) { into 'my-launcher' }
+                    }
+                    initScriptTemplateFile = file('my-init.sh')
+                    initScriptVars.put('@launcherDir@', 'my-launcher')
+                }
+            }
+            """, EXTERNAL_JAR);
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
+
+        gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+        assertThat(rootProject
+                        .file("dist/service-name-0.0.1/service/bin/init.sh")
+                        .text())
+                .contains("custom launcher for service-name in my-launcher");
+        rootProject
+                .file(String.format(
+                        "dist/service-name-0.0.1/service/bin/my-launcher/%s",
+                        Path.of(EXTERNAL_JAR).getFileName()))
+                .assertThat()
+                .exists();
+        rootProject
+                .file("dist/service-name-0.0.1/service/bin/linux-amd64")
+                .assertThat()
+                .doesNotExist();
+    }
+
     private void createUntarBuildFile(GradleProject gradleProject) {
         gradleProject.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
 

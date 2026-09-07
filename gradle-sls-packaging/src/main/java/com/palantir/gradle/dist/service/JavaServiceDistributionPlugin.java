@@ -43,6 +43,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
@@ -105,24 +106,32 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
-        // Create configuration to load executable dependencies
+        ServiceLauncherExtension launcherExtension = distributionExtension.getLauncher();
+
+        // Create configuration to load executable dependencies. These use 'defaultDependencies' so that a consumer can
+        // replace the launcher binaries entirely by declaring their own dependency on the configuration.
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
-        project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
+        launcherConfig.defaultDependencies(deps ->
+                deps.add(project.getDependencies().create(getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER))));
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
-        project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
+        initConfig.defaultDependencies(
+                deps -> deps.add(project.getDependencies().create(getGoJavaLauncherCoordinate(project, GO_INIT))));
 
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
-                    task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
-                    task.from(project.provider(() -> project.tarTree(initConfig.getSingleFile())));
-                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
-                    task.eachFile(fcd -> {
+                    Action<CopySpec> stripTarPrefix = spec -> spec.eachFile(fcd -> {
                         String[] segments = fcd.getRelativePath().getSegments();
                         fcd.setRelativePath(new RelativePath(
                                 !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
                     });
+                    task.from(defaultLauncherBinaries(project, launcherExtension, launcherConfig), stripTarPrefix);
+                    task.from(defaultLauncherBinaries(project, launcherExtension, initConfig), stripTarPrefix);
+                    // Extension point: any plugin or build can contribute its own launcher binaries here, which end up
+                    // in 'service/bin' of the distribution.
+                    task.with(launcherExtension.getBinaries());
+                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
                 });
 
         TaskProvider<Jar> manifestClassPathTask = project.getTasks()
@@ -223,6 +232,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
+                    task.getTemplate().set(launcherExtension.getInitScriptTemplate());
+                    task.getTemplateVars().set(launcherExtension.getInitScriptVars());
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()
@@ -307,6 +318,17 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
+    }
+
+    /**
+     * Resolves the tar contents of a bundled go launcher binary configuration, or nothing if the build has opted out of
+     * the default launcher binaries.
+     */
+    private static Provider<Object> defaultLauncherBinaries(
+            Project project, ServiceLauncherExtension launcherExtension, Configuration configuration) {
+        return project.provider(() -> launcherExtension.getUseDefaultBinaries().get()
+                ? project.tarTree(configuration.getSingleFile())
+                : project.files());
     }
 
     private static FileCollection serviceRuntimeClasspath(Project project) {

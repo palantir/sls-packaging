@@ -308,6 +308,36 @@ And the complete list of configurable properties:
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
  * (optional) `enableAlwaysPreTouch()` adds the `-XX:+AlwaysPreTouch` and `-XX:+UseTransparentHugePages` JVM options.
  * (optional) `extraFiles` a collection of additional files (CopySpecs) to be included in the distribution.
+ * (optional) `launcher` a block for replacing the launcher binaries and/or the generated `init.sh`, see
+   [Custom launchers](#custom-launchers).
+
+#### Custom launchers
+
+By default the distribution bundles the [go-java-launcher](https://github.com/palantir/go-java-launcher) and `go-init`
+binaries along with the `init.sh` script shipped with this plugin. Another plugin, or an individual build, can replace
+either piece via the `launcher` block:
+
+```gradle
+distribution {
+    launcher {
+        // Stop unpacking the bundled go-java-launcher / go-init binaries
+        useDefaultBinaries.set(false)
+
+        // Anything added here ends up in 'service/bin' of the distribution
+        binaries {
+            from(configurations.myLauncher) { into 'my-launcher' }
+        }
+
+        // The template used to generate 'service/bin/init.sh'. '@serviceName@' is always substituted; any
+        // additional placeholders can be supplied through 'initScriptVars'.
+        initScriptTemplateFile = file('src/dist/my-init.sh')
+        initScriptVars.put('@launcherDir@', 'my-launcher')
+    }
+}
+```
+
+The versions of the default binaries can also be overridden without replacing them, by declaring dependencies on the
+`goJavaLauncherBinary` and `goInitBinary` configurations.
 
 #### JVM Options
 

@@ -20,26 +20,47 @@ import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 
 @AutoParallelizable
 public final class CreateInitScript {
+    public static final String DEFAULT_TEMPLATE_RESOURCE = "/sls-packaging/init.sh";
+
     interface Params {
         @Input
         Property<String> getServiceName();
+
+        @Input
+        Property<String> getTemplate();
+
+        @Input
+        MapProperty<String, String> getTemplateVars();
 
         @OutputFile
         RegularFileProperty getOutputFile();
     }
 
+    /** The init script shipped with this plugin, which drives go-init and go-java-launcher. */
+    public static String defaultTemplate() {
+        return EmitFiles.readTemplate(
+                JavaServiceDistributionPlugin.class.getResourceAsStream(DEFAULT_TEMPLATE_RESOURCE));
+    }
+
     static void action(Params params) {
+        Map<String, String> vars = new LinkedHashMap<>(
+                ImmutableMap.of("@serviceName@", params.getServiceName().get()));
+        vars.putAll(params.getTemplateVars().get());
+
         EmitFiles.replaceVars(
-                        JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/init.sh"),
+                        params.getTemplate().get(),
                         params.getOutputFile().get().getAsFile().toPath(),
-                        ImmutableMap.of("@serviceName@", params.getServiceName().get()))
+                        vars)
                 .toFile()
                 .setExecutable(true);
     }

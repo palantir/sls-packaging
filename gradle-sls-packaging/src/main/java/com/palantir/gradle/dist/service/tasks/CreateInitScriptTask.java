@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.service.tasks;
 
 public abstract class CreateInitScriptTask extends CreateInitScriptTaskImpl {
     public CreateInitScriptTask() {
-        getOutputFile().set(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));
+        getOutputFile().convention(getProject().getLayout().getBuildDirectory().file("scripts/init.sh"));
+        getTemplate().convention(getProject().provider(CreateInitScript::defaultTemplate));
     }
 }
