@@ -86,8 +86,15 @@ final class DistTarTask {
                 t.from(project.getConfigurations().named("javaAgent"));
             });
 
+            root.into(JavaServiceDistributionPlugin.LAUNCHER_LIB_DIST_LOCATION, t -> {
+                t.from(JavaServiceDistributionPlugin.launcherStagingDir(
+                        project, JavaServiceDistributionPlugin.LAUNCHER_STAGING_LIB_DIR));
+            });
+
             root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
+                t.from(JavaServiceDistributionPlugin.launcherStagingDir(
+                        project, JavaServiceDistributionPlugin.LAUNCHER_STAGING_BIN_DIR));
                 t.filePermissions(permissions -> permissions.unix(0755));
             });
 
