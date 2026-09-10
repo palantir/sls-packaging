@@ -1800,6 +1800,95 @@ class JavaServiceDistributionPluginTests {
     }
 
     @Test
+    void jvm_based_launcher_replaces_the_go_binaries(GradleInvoker gradle, RootProject rootProject, SubProject launcher)
+            throws Exception {
+        launcher.buildGradle().plugins().add("java");
+        launcher.mainSourceSet().java().writeClass("""
+            package launcher;
+            public class FakeLauncher {
+                public static void main(String[] args) {
+                    System.out.println("fake-launcher " + String.join(" ", args));
+                }
+            }
+            """);
+        launcher.mainSourceSet().java().writeClass("""
+            package launcher;
+            public class FakeInit {
+                public static void main(String[] args) {
+                    System.out.println("fake-init " + String.join(" ", args));
+                }
+            }
+            """);
+
+        createUntarBuildFile(rootProject);
+        rootProject.buildGradle().append("""
+            dependencies {
+                javaLauncherBinary project(':launcher')
+            }
+
+            distribution {
+                javaLauncher {
+                    launcherMainClass 'launcher.FakeLauncher'
+                    initMainClass 'launcher.FakeInit'
+                }
+            }
+            """);
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
+
+        gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+        // the launcher jars are packaged in their own directory
+        rootProject
+                .file("dist/service-name-0.0.1/service/lib/launcher/launcher.jar")
+                .assertThat()
+                .exists();
+
+        // the go binaries are neither packaged...
+        rootProject
+                .file("dist/service-name-0.0.1/service/bin/linux-amd64")
+                .assertThat()
+                .doesNotExist();
+        rootProject
+                .file("dist/service-name-0.0.1/service/bin/darwin-amd64")
+                .assertThat()
+                .doesNotExist();
+
+        // ...nor referenced by init.sh, which runs the configured main classes with java instead
+        String initScript =
+                rootProject.file("dist/service-name-0.0.1/service/bin/init.sh").text();
+        assertThat(initScript).doesNotContain("go-java-launcher");
+        assertThat(initScript)
+                .contains("LAUNCHER_CMD=\"$LAUNCHER_JAVA_CMD -cp $LAUNCHER_CLASSPATH launcher.FakeLauncher\"");
+        assertThat(initScript).contains("GO_INIT_CMD=\"$LAUNCHER_JAVA_CMD -cp $LAUNCHER_CLASSPATH launcher.FakeInit\"");
+        assertThat(initScript).contains("LAUNCHER_CLASSPATH=\"service/lib/launcher/launcher.jar\"");
+
+        assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                .contains("fake-init start");
+    }
+
+    @Test
+    void jvm_based_launcher_requires_both_main_classes(GradleInvoker gradle, RootProject rootProject) {
+        createUntarBuildFile(rootProject);
+        rootProject.buildGradle().append("""
+            distribution {
+                javaLauncher {
+                    launcherMainClass 'launcher.FakeLauncher'
+                }
+            }
+            """);
+
+        InvocationResult result = gradle.withArgs(":createInitScript").buildsWithFailure();
+
+        assertThat(result)
+                .output()
+                .contains("Both 'distribution.javaLauncher.launcherMainClass' and "
+                        + "'distribution.javaLauncher.initMainClass' must be set");
+    }
+
+    @Test
     void enable_always_pre_touch(GradleInvoker gradle, RootProject rootProject) throws Exception {
         createUntarBuildFile(rootProject);
         rootProject.buildGradle().append("""
