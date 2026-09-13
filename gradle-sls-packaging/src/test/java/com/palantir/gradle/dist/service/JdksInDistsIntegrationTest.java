@@ -19,7 +19,6 @@ package com.palantir.gradle.dist.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.palantir.gradle.testing.execution.GradleInvoker;
-import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
 import java.io.File;
@@ -33,7 +32,6 @@ import org.rauschig.jarchivelib.ArchiverFactory;
 import org.rauschig.jarchivelib.CompressionType;
 
 @GradlePluginTests
-@DisabledConfigurationCache
 class JdksInDistsIntegrationTest {
 
     @BeforeEach
