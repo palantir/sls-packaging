@@ -25,9 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 public final class EmitFiles {
-    public static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) {
+    public static String replaceVars(InputStream src, Map<String, String> vars) {
         String text;
         try (Reader reader = new InputStreamReader(src, StandardCharsets.UTF_8)) {
             text = CharStreams.toString(reader);
@@ -36,8 +37,14 @@ public final class EmitFiles {
         }
 
         for (Map.Entry<String, String> entry : vars.entrySet()) {
-            text = text.replaceAll(entry.getKey(), entry.getValue());
+            text = text.replaceAll(entry.getKey(), Matcher.quoteReplacement(entry.getValue()));
         }
+
+        return text;
+    }
+
+    public static Path replaceVars(InputStream src, Path dest, Map<String, String> vars) {
+        String text = replaceVars(src, vars);
 
         // ensure output directory exists
         dest.getParent().toFile().mkdirs();

@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
@@ -43,6 +44,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
@@ -62,6 +64,21 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
+
+    /** Configuration holding the jars of a jvm based replacement for the go-java-launcher and go-init binaries. */
+    public static final String JAVA_LAUNCHER_CONFIGURATION_NAME = "javaLauncherBinary";
+
+    /** Distribution relative directory the {@link #JAVA_LAUNCHER_CONFIGURATION_NAME} jars are packaged into. */
+    static final String LAUNCHER_LIB_DIST_LOCATION = "service/lib/launcher";
+
+    /** Build directory the {@code copyLauncherBinaries} task stages the launcher into. */
+    private static final String LAUNCHER_STAGING_DIR = "launcher";
+
+    /** Staging subdirectory holding the go binaries. */
+    static final String LAUNCHER_STAGING_BIN_DIR = "bin";
+
+    /** Staging subdirectory holding the jvm launcher jars. */
+    static final String LAUNCHER_STAGING_LIB_DIR = "lib";
 
     @VisibleForTesting
     static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
@@ -105,24 +122,49 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
+        // Configuration holding a jvm based launcher, which replaces the go binaries entirely when configured
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
+        Configuration javaLauncherConfig = project.getConfigurations().create(JAVA_LAUNCHER_CONFIGURATION_NAME);
+        javaLauncherConfig.withDependencies(dependencies -> {
+            String coordinate = javaLauncher.getCoordinate().getOrNull();
+            if (coordinate != null) {
+                dependencies.add(project.getDependencies().create(coordinate));
+            }
+        });
+
         // Create configuration to load executable dependencies
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
-        project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
+        launcherConfig.withDependencies(dependencies -> {
+            if (!usesJavaLauncher(javaLauncher)) {
+                dependencies.add(
+                        project.getDependencies().create(getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER)));
+            }
+        });
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
-        project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
+        initConfig.withDependencies(dependencies -> {
+            if (!usesJavaLauncher(javaLauncher)) {
+                dependencies.add(project.getDependencies().create(getGoJavaLauncherCoordinate(project, GO_INIT)));
+            }
+        });
 
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
-                    task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
-                    task.from(project.provider(() -> project.tarTree(initConfig.getSingleFile())));
-                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
-                    task.eachFile(fcd -> {
-                        String[] segments = fcd.getRelativePath().getSegments();
-                        fcd.setRelativePath(new RelativePath(
-                                !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
+                    task.into(project.getLayout().getBuildDirectory().dir(LAUNCHER_STAGING_DIR));
+
+                    task.into(LAUNCHER_STAGING_BIN_DIR, spec -> {
+                        spec.from(project.provider(() -> goBinaryTarTree(project, javaLauncher, launcherConfig)));
+                        spec.from(project.provider(() -> goBinaryTarTree(project, javaLauncher, initConfig)));
+                        spec.eachFile(fcd -> {
+                            String[] segments = fcd.getRelativePath().getSegments();
+                            fcd.setRelativePath(new RelativePath(
+                                    !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
+                        });
                     });
+
+                    task.into(LAUNCHER_STAGING_LIB_DIR, spec -> spec.from(javaLauncherConfig));
                 });
 
         TaskProvider<Jar> manifestClassPathTask = project.getTasks()
@@ -223,6 +265,11 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
+                    task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
+                    task.getInitMainClass().set(javaLauncher.getInitMainClass());
+                    task.getJavaHome().set(distributionExtension.getJavaHome());
+                    task.getLauncherClasspath().set(launcherClasspath(javaLauncherConfig));
+                    task.dependsOn(javaLauncherConfig);
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()
@@ -307,6 +354,31 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
+    }
+
+    /** Empty when a jvm based launcher replaces the go binaries, as the go configurations resolve to nothing then. */
+    private static Object goBinaryTarTree(
+            Project project, JavaLauncherExtension javaLauncher, Configuration goBinaryConfig) {
+        return usesJavaLauncher(javaLauncher) ? project.files() : project.tarTree(goBinaryConfig.getSingleFile());
+    }
+
+    private static boolean usesJavaLauncher(JavaLauncherExtension javaLauncher) {
+        return javaLauncher.getLauncherMainClass().isPresent()
+                || javaLauncher.getInitMainClass().isPresent();
+    }
+
+    static Provider<Directory> launcherStagingDir(Project project, String subdirectory) {
+        return project.getLayout().getBuildDirectory().dir(LAUNCHER_STAGING_DIR + "/" + subdirectory);
+    }
+
+    /** Paths, relative to the root of the distribution, of the jars making up the jvm based launcher. */
+    private static Provider<List<String>> launcherClasspath(Configuration javaLauncherConfig) {
+        return javaLauncherConfig
+                .getElements()
+                .map(files -> files.stream()
+                        .map(file -> LAUNCHER_LIB_DIST_LOCATION + "/"
+                                + file.getAsFile().getName())
+                        .collect(Collectors.toList()));
     }
 
     private static FileCollection serviceRuntimeClasspath(Project project) {
