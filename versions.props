@@ -17,5 +17,5 @@ com.palantir.gradle.failure-reports:* = 1.18.0
 com.netflix.nebula:nebula-test = 12.1.0
 junit:junit = 4.13.2
 org.awaitility:awaitility = 4.3.0
-com.palantir.gradle.docker:gradle-docker = 0.37.0
+com.palantir.gradle.docker:gradle-docker = 0.40.0
 org.spockframework:* = 2.4-groovy-4.0
