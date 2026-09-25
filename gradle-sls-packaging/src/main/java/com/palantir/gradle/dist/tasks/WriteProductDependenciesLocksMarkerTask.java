@@ -19,7 +19,9 @@ package com.palantir.gradle.dist.tasks;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7")
 public abstract class WriteProductDependenciesLocksMarkerTask extends DefaultTask {
 
     public static final String NAME = "writeProductDependenciesLocks";
