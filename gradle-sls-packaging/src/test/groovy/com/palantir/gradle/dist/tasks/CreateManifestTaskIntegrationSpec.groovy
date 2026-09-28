@@ -342,6 +342,67 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
+    def "#gradleVersionNumber: applies registry overrides to manifest artifacts"() {
+        given:
+        gradleVersion = gradleVersionNumber
+        buildFile << """
+            distribution {
+                registryOverrides.put('registry.example.io', 'first-mirror.example.io')
+                artifact {
+                    type = 'oci'
+                    uri = 'registry.example.io/foo/bar:v1.3.0'
+                }
+                artifact {
+                    type = 'other'
+                    uri = 'registry.example.io/foo/baz:v1.3.0'
+                }
+                artifact {
+                    type = 'oci'
+                    uri = 'registry.example.io.invalid/foo/qux:v1.3.0'
+                }
+            }
+        """.stripIndent(true)
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted(':createManifest')
+        readArtifactsExtension() == [
+            JsonArtifactLocator.from('oci', 'first-mirror.example.io/foo/bar:v1.3.0'),
+            JsonArtifactLocator.from('other', 'registry.example.io/foo/baz:v1.3.0'),
+            JsonArtifactLocator.from('oci', 'registry.example.io.invalid/foo/qux:v1.3.0')
+        ]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
+    def "#gradleVersionNumber: last registry override for the same registry wins"() {
+        given:
+        gradleVersion = gradleVersionNumber
+        buildFile << """
+            distribution {
+                registryOverrides.put('registry.example.io', 'first-mirror.example.io')
+                registryOverrides.put('registry.example.io', 'second-mirror.example.io')
+                artifact {
+                    type = 'oci'
+                    uri = 'registry.example.io/foo/bar:v1.3.0'
+                }
+            }
+        """.stripIndent(true)
+
+        when:
+        runTasksSuccessfully('createManifest')
+
+        then:
+        readArtifactsExtension() ==
+                [JsonArtifactLocator.from('oci', 'second-mirror.example.io/foo/bar:v1.3.0')]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
     private List<JsonArtifactLocator> readArtifactsExtension() {
         def manifest = ObjectMappers.jsonMapper.readValue(file('build/deployment/manifest.yml').text, SlsManifest)
         ObjectMappers.jsonMapper.convertValue(manifest.extensions().get("artifacts"), new TypeReference<List<JsonArtifactLocator>>() {})
