@@ -38,17 +38,17 @@ com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.8.0 (1 constr
 
 com.palantir.gradle.utils:project-dependency-utils:0.29.0 (1 constraints: ef1b1a62)
 
-com.palantir.safe-logging:logger:3.20.0 (1 constraints: f61084c3)
+com.palantir.safe-logging:logger:3.20.0 (1 constraints: ee106dc3)
 
 com.palantir.safe-logging:logger-slf4j:3.20.0 (1 constraints: 300e8b50)
 
 com.palantir.safe-logging:logger-spi:3.20.0 (2 constraints: 6f1e0cb0)
 
-com.palantir.safe-logging:preconditions:3.20.0 (2 constraints: 2c16ecf8)
+com.palantir.safe-logging:preconditions:3.20.0 (2 constraints: 2416d5f8)
 
-com.palantir.safe-logging:safe-logging:3.20.0 (4 constraints: fd3f9b8e)
+com.palantir.safe-logging:safe-logging:3.20.0 (4 constraints: f53f848e)
 
-com.palantir.sls.versions:sls-versions:1.19.0 (1 constraints: 3d05443b)
+com.palantir.sls.versions:sls-versions:1.20.0 (1 constraints: 35052d3b)
 
 one.util:streamex:0.9.0 (1 constraints: bd1b2c46)
 
