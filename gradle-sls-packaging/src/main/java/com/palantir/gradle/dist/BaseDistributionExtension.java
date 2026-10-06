@@ -69,6 +69,9 @@ public class BaseDistributionExtension {
     private final MapProperty<String, Object> manifestExtensions;
     private final RegularFileProperty configurationYml;
     private final String projectName;
+    private final Property<Boolean> usePigz;
+    private final Property<Integer> pigzThreads;
+    private final Property<String> pigzExecutable;
     private Configuration productDependenciesConfig;
     private final Property<String> consumableProductDependenciesConfigurationName;
 
@@ -94,6 +97,24 @@ public class BaseDistributionExtension {
         configurationYml = project.getObjects().fileProperty().fileValue(project.file("deployment/configuration.yml"));
 
         projectName = project.getName();
+        usePigz = project.getObjects().property(Boolean.class).convention(false);
+        pigzThreads = project.getObjects().property(Integer.class).convention(4);
+        pigzExecutable = project.getObjects().property(String.class).convention("pigz");
+    }
+
+    /** Opts distribution archives into external pigz compression. Disabled by default. */
+    public final Property<Boolean> getUsePigz() {
+        return usePigz;
+    }
+
+    /** Maximum compression threads per distribution archive. Defaults to four. */
+    public final Property<Integer> getPigzThreads() {
+        return pigzThreads;
+    }
+
+    /** Pigz executable name or absolute path. Defaults to {@code pigz} on PATH. */
+    public final Property<String> getPigzExecutable() {
+        return pigzExecutable;
     }
 
     public final Provider<String> getDistributionServiceGroup() {

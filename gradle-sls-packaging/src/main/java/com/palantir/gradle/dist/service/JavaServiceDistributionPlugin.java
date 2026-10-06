@@ -27,6 +27,7 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.tasks.DistributionTarTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -53,7 +54,6 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.application.CreateStartScripts;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
-import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.process.CommandLineArgumentProvider;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
@@ -272,22 +272,27 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         @SuppressWarnings("for-rollout:TaskDependsOn")
-        TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
-            task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
-            task.setDescription("Creates a compressed, gzipped tar file that contains required runtime resources.");
-            // Set compression in constructor so that task output has the right name from the start.
-            task.setCompression(Compression.GZIP);
-            task.getArchiveExtension().set("sls.tgz");
-            task.dependsOn(
-                    startScripts,
-                    initScript,
-                    checkScript,
-                    copyLauncherBinaries,
-                    launchConfigTask,
-                    manifest,
-                    manifestClassPathTask,
-                    javaAgentConfiguration);
-        });
+        TaskProvider<DistributionTarTask> distTar = project.getTasks()
+                .register("distTar", DistributionTarTask.class, task -> {
+                    task.getUsePigz().set(distributionExtension.getUsePigz());
+                    task.getPigzThreads().set(distributionExtension.getPigzThreads());
+                    task.getPigzExecutable().set(distributionExtension.getPigzExecutable());
+                    task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
+                    task.setDescription(
+                            "Creates a compressed, gzipped tar file that contains required runtime resources.");
+                    // Set compression in constructor so that task output has the right name from the start.
+                    task.setCompression(Compression.GZIP);
+                    task.getArchiveExtension().set("sls.tgz");
+                    task.dependsOn(
+                            startScripts,
+                            initScript,
+                            checkScript,
+                            copyLauncherBinaries,
+                            launchConfigTask,
+                            manifest,
+                            manifestClassPathTask,
+                            javaAgentConfiguration);
+                });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {
             task.getJavaAgents().setFrom(javaAgentConfiguration);

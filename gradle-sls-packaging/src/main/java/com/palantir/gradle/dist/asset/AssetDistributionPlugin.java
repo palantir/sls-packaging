@@ -22,6 +22,7 @@ import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.tasks.DistributionTarTask;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -29,7 +30,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
-import org.gradle.api.tasks.bundling.Tar;
 
 public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
@@ -63,20 +63,24 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
         @SuppressWarnings("for-rollout:TaskDependsOn")
-        TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
-            task.setGroup(AssetDistributionPlugin.GROUP_NAME);
-            task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
-            task.setCompression(Compression.GZIP);
-            task.getArchiveBaseName().set(distributionExtension.getDistributionServiceName());
-            task.getArchiveVersion()
-                    .set(project.provider(() -> project.getVersion().toString()));
-            task.getArchiveExtension().set("sls.tgz");
-            task.getDestinationDirectory()
-                    .set(project.getLayout().getBuildDirectory().dir("distributions"));
-            task.setDuplicatesStrategy(DuplicatesStrategy.FAIL);
+        TaskProvider<DistributionTarTask> distTar = project.getTasks()
+                .register("distTar", DistributionTarTask.class, task -> {
+                    task.getUsePigz().set(distributionExtension.getUsePigz());
+                    task.getPigzThreads().set(distributionExtension.getPigzThreads());
+                    task.getPigzExecutable().set(distributionExtension.getPigzExecutable());
+                    task.setGroup(AssetDistributionPlugin.GROUP_NAME);
+                    task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
+                    task.setCompression(Compression.GZIP);
+                    task.getArchiveBaseName().set(distributionExtension.getDistributionServiceName());
+                    task.getArchiveVersion()
+                            .set(project.provider(() -> project.getVersion().toString()));
+                    task.getArchiveExtension().set("sls.tgz");
+                    task.getDestinationDirectory()
+                            .set(project.getLayout().getBuildDirectory().dir("distributions"));
+                    task.setDuplicatesStrategy(DuplicatesStrategy.FAIL);
 
-            task.dependsOn(manifest);
-        });
+                    task.dependsOn(manifest);
+                });
 
         // HACKHACK after evaluate to configure task with all declared assets, this is required since
         // task.into doesn't support providers

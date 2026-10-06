@@ -399,6 +399,31 @@ by specifying that a later invocation be relocated to a previously used destinat
 To create a compressed, gzipped tar file of the distribution, run the `distTar` task. To create a compressed,
 gzipped tar file of the deployment metadata for the distribution, run the `configTar` task.
 
+#### Optional parallel compression
+
+Both distribution plugins can use [pigz](https://zlib.net/pigz/) to compress `distTar` archives in parallel.
+Gradle's built-in gzip compressor remains the default. Pigz produces standard gzip archives: consumers can
+extract them with ordinary gzip/tar tools and do not need pigz installed. Install pigz on the build machine, then opt in:
+
+```groovy
+distribution {
+    usePigz.set(true)
+    pigzThreads.set(4) // Default; must be positive. Applies to each concurrently running distTar task.
+    // pigzExecutable.set('/opt/tools/pigz') // Defaults to pigz on PATH.
+}
+```
+
+This preserves Gradle's archive contents, file permissions, CopySpec customizations, and `.sls.tgz` artifact.
+It requires gzip compression and fails the task if the configured executable is missing or fails;
+there is no automatic fallback. `configTar` continues to use Gradle's compressor.
+
+The task first writes an uncompressed tar, then compresses it. Allow temporary disk space for both files.
+Choose the thread count with concurrent Gradle tasks in mind to avoid oversubscribing the machine.
+Pigz omits the gzip timestamp and filename; tar timestamp/order settings still follow the Gradle task's configuration.
+The gzip bytes may differ from Gradle's compressor or across pigz versions. Pin the installed version if byte-for-byte
+reproducibility matters, and rerun tasks after replacing the executable at the same path.
+The compression integration tests require pigz on PATH (for example, `apt-get install pigz` or `brew install pigz`).
+
 The plugins expose the tar file as an artifact in the `sls` configuration, making it easy to
 share the artifact between sibling Gradle projects. For example:
 
