@@ -18,23 +18,7 @@
 # Everything in this script is relative to the base directory of an SLSv2 distribution
 pushd "`dirname \"$0\"`/../.." > /dev/null
 
-# Select launcher binary for this OS
-case "`uname -sm`" in
-  "Linux x86_64")
-    NATIVE_ARCH="linux-amd64"
-    ;;
-  "Linux aarch64")
-    NATIVE_ARCH="linux-arm64"
-    ;;
-  Darwin*)
-    NATIVE_ARCH="darwin-amd64"
-    ;;
-  *)
-    echo "Unsupported operating system: $(uname)"; exit 1
-esac
-
-LAUNCHER_CMD="service/bin/${NATIVE_ARCH}/go-java-launcher"
-GO_INIT_CMD="service/bin/${NATIVE_ARCH}/go-init"
+@launcherSetup@
 
 ACTION=$1
 SCRIPT_DIR="service/bin"
@@ -53,16 +37,16 @@ function print_help() {
 
 if [[ "$ACTION" =~ ^(-h|--help)$ && "$2" =~ ^(|start|stop|status)$ ]]; then
     print_help
-    exec $GO_INIT_CMD --help "$2"
+    exec $INIT_CMD --help "$2"
 fi
 
 case $ACTION in
 start|status|stop)
     if [[ "$2" =~ ^(-h|--help)$ ]]; then
         print_help
-        exec $GO_INIT_CMD "$ACTION" $2
+        exec $INIT_CMD "$ACTION" $2
     fi
-    exec $GO_INIT_CMD "$ACTION"
+    exec $INIT_CMD "$ACTION"
 ;;
 console)
     echo $DEPRECATION_MESSAGE
@@ -105,6 +89,6 @@ check)
         exit $?
     else
         print_help
-        exec $GO_INIT_CMD
+        exec $INIT_CMD
     fi
 esac

@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.Action;
+import org.gradle.api.GradleException;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -62,6 +63,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
+
+    public static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
 
     @VisibleForTesting
     static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
@@ -105,19 +108,38 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
+        // This configuration is expected to be configured by downstream consumers or plugins
+        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
+        Configuration javaLauncherConfig = project.getConfigurations().create(JAVA_LAUNCHER_CONFIGURATION);
+
         // Create configuration to load executable dependencies
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
-        project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
+        launcherConfig.withDependencies(dependencies -> {
+            if (!javaLauncher.configured().get()) {
+                dependencies.add(
+                        project.getDependencies().create(getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER)));
+            }
+        });
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
         Configuration initConfig = project.getConfigurations().create("goInitBinary");
-        project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
+        initConfig.withDependencies(dependencies -> {
+            if (!javaLauncher.configured().get()) {
+                dependencies.add(project.getDependencies().create(getGoJavaLauncherCoordinate(project, GO_INIT)));
+            }
+        });
 
+        // Note: java launcher binaries are directly copied from the configuration into the service/lib directory
+        // in DistTarTask
         TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Copy.class, task -> {
+                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
+                    if (javaLauncher.configured().get()) {
+                        return;
+                    }
                     task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
                     task.from(project.provider(() -> project.tarTree(initConfig.getSingleFile())));
-                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
                     task.eachFile(fcd -> {
                         String[] segments = fcd.getRelativePath().getSegments();
                         fcd.setRelativePath(new RelativePath(
@@ -223,6 +245,23 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
+
+                    if (javaLauncher.configured().get()) {
+                        if (!distributionExtension
+                                .getJdks()
+                                .get()
+                                .containsKey(
+                                        distributionExtension.getJavaVersion().get())) {
+                            throw new GradleException(
+                                    "Jdks must be configured and included in the distribution to configure a java-based"
+                                            + " launcher.");
+                        }
+                        task.getJavaHome().set(distributionExtension.getJavaHome());
+                        task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
+                        task.getInitMainClass().set(javaLauncher.getInitMainClass());
+                        // TODO: check whether this properly wires up deps
+                        task.getLauncherClasspath().from(javaLauncherConfig);
+                    }
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()

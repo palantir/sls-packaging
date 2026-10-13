@@ -82,6 +82,13 @@ final class DistTarTask {
                 });
             }
 
+            if (distributionExtension.getJavaLauncher().configured().get()) {
+                root.into("service/lib", t -> {
+                    t.from(project.getConfigurations()
+                            .named(JavaServiceDistributionPlugin.JAVA_LAUNCHER_CONFIGURATION));
+                });
+            }
+
             root.into("service/lib/agent", t -> {
                 t.from(project.getConfigurations().named("javaAgent"));
             });

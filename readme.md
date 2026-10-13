@@ -308,6 +308,39 @@ And the complete list of configurable properties:
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
  * (optional) `enableAlwaysPreTouch()` adds the `-XX:+AlwaysPreTouch` and `-XX:+UseTransparentHugePages` JVM options.
  * (optional) `extraFiles` a collection of additional files (CopySpecs) to be included in the distribution.
+ * (optional) `javaLauncher` replaces the `go-java-launcher` and `go-init` binaries with a JVM based launcher, see
+   [below](#jvm-based-launcher).
+
+#### JVM based launcher
+
+By default, distributions package the native [`go-java-launcher` and `go-init`](https://github.com/palantir/go-java-launcher) binaries.
+It is possible to replace these launcher binaries by Java-based implementations (which are not provided):
+
+```gradle
+dependencies {
+    javaLauncher 'my.launcher:java-launcher:1.2.3'
+}
+distribution {
+    javaLauncher {
+        launcherMainClass 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
+        initMainClass 'my.launcher.JavaInit'         // equivalent of the go-init binary
+    }
+}
+```
+
+When configured this way:
+
+* the go binaries are neither resolved nor packaged.
+* the launcher library and its runtime dependencies are packaged into `service/lib`.
+* the launcher's dependencies are resolved together with the main service's.
+* `service/bin/init.sh` invokes the configured main classes with `java -cp <launcher classpath> <main class>`, passing
+  through the same `launcher-static.yml`, `launcher-custom.yml` and `launcher-check.yml` arguments the go binaries
+  receive.
+
+Requirements:
+* JDKs must be bundled through `distribution { jdks.put() }`.
+  * The JDK corresponding to the service's runtime version will be used to run the launcher as well.
+* Both `launcherMainClass` and `initMainClass` must be set.
 
 #### JVM Options
 
