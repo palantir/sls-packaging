@@ -70,7 +70,13 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
 
     @Override
-    @SuppressWarnings({"RawTypes", "checkstyle:methodlength", "deprecation", "for-rollout:TaskDependsOn"})
+    @SuppressWarnings({
+        "RawTypes",
+        "checkstyle:methodlength",
+        "deprecation",
+        "for-rollout:TaskDependsOn",
+        "CyclomaticComplexity"
+    })
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(AssetDistributionPlugin.class)) {
@@ -259,7 +265,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                         task.getJavaHome().set(distributionExtension.getJavaHome());
                         task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
                         task.getInitMainClass().set(javaLauncher.getInitMainClass());
-                        // TODO: check whether this properly wires up deps
                         task.getLauncherClasspath().from(javaLauncherConfig);
                     }
                 });

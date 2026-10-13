@@ -1831,6 +1831,12 @@ class JavaServiceDistributionPluginTests {
                 """);
         }
 
+        private static String initScript(RootProject rootProject) {
+            return rootProject
+                    .file("dist/service-name-0.0.1/service/bin/init.sh")
+                    .text();
+        }
+
         private static void verifyJavaLauncherIsUsed(RootProject rootProject) throws IOException, InterruptedException {
             // the launcher jars are packaged in the lib directory
             rootProject
@@ -1849,15 +1855,13 @@ class JavaServiceDistributionPluginTests {
                     .doesNotExist();
 
             // ...nor referenced by init.sh, which runs the configured main classes with java instead
-            String initScript = rootProject
-                    .file("dist/service-name-0.0.1/service/bin/init.sh")
-                    .text();
+            String initScript = initScript(rootProject);
             assertThat(initScript).doesNotContain("go-java-launcher");
             assertThat(initScript)
                     .contains("LAUNCHER_CMD=\"$LAUNCHER_JAVA_CMD -cp $LAUNCHER_CLASSPATH launcher.FakeLauncher\"");
             assertThat(initScript)
                     .contains("INIT_CMD=\"$LAUNCHER_JAVA_CMD -cp $LAUNCHER_CLASSPATH launcher.FakeInit\"");
-            assertThat(initScript).contains("LAUNCHER_CLASSPATH=\"service/lib/launcher.jar\"");
+            assertThat(initScript).contains("LAUNCHER_CLASSPATH=\"service/lib/launcher.jar");
         }
 
         @Test
@@ -1884,6 +1888,76 @@ class JavaServiceDistributionPluginTests {
             gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
 
             verifyJavaLauncherIsUsed(rootProject);
+
+            // Run init.sh as a sanity check that things are correctly wired up
+            assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .contains("fake-init start");
+        }
+
+        @Test
+        void launcher_classpath_gets_resolved_with_main_dependencies(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+
+            launcher.buildGradle().append("""
+                repositories {
+                    mavenCentral()
+                }
+
+                dependencies {
+                    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+                }
+                """);
+
+            rootProject.buildGradle().plugins().add("com.palantir.consistent-versions");
+            rootProject.buildGradle().append("""
+                buildscript {
+                    repositories {
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+
+                    dependencies {
+                        classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:3.21.0'
+                    }
+                }
+                """);
+
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher project(':launcher')
+
+                    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+                }
+
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            gradle.withArgs("--write-locks").buildsSuccessfully();
+
+            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+            verifyJavaLauncherIsUsed(rootProject);
+
+            assertThat(initScript(rootProject))
+                    .contains("LAUNCHER_CLASSPATH=\"service/lib/launcher.jar:service/lib/jackson-databind-2.22.3.jar:"
+                            + "service/lib/jackson-core-2.22.3.jar:"
+                            + "service/lib/jackson-annotations-2.22.jar\"");
+
+            // Verify we are only bundling the 2.22.3 version, which is what gets resolved by GCV above
+            assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.3.jar"))
+                    .exists();
+            assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.1.jar"))
+                    .doesNotExist();
 
             // Run init.sh as a sanity check that things are correctly wired up
             assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))

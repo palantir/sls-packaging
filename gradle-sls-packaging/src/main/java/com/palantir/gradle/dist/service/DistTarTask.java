@@ -84,6 +84,8 @@ final class DistTarTask {
 
             if (distributionExtension.getJavaLauncher().configured().get()) {
                 root.into("service/lib", t -> {
+                    // Ignore dupes that are already added from the runtime classpath
+                    t.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
                     t.from(project.getConfigurations()
                             .named(JavaServiceDistributionPlugin.JAVA_LAUNCHER_CONFIGURATION));
                 });
