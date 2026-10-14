@@ -21,6 +21,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.palantir.gradle.dist.artifacts.ArtifactLocator;
+import com.palantir.gradle.dist.artifacts.ManifestOciArtifacts;
 import com.palantir.gradle.dist.pdeps.ProductDependencies;
 import com.palantir.logsafe.SafeArg;
 import com.palantir.logsafe.exceptions.SafeRuntimeException;
@@ -37,6 +38,8 @@ import org.gradle.api.Action;
 import org.gradle.api.DomainObjectSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
@@ -142,6 +145,21 @@ public class BaseDistributionExtension {
 
     public final DomainObjectSet<ArtifactLocator> getArtifacts() {
         return artifacts;
+    }
+
+    /** Adds a dependency whose published OCI artifacts are included in the manifest. */
+    public final Dependency manifestOciArtifacts(Object dependencyNotation) {
+        return project.getDependencies().add(ManifestOciArtifacts.DEPENDENCY_SCOPE, dependencyNotation);
+    }
+
+    /** Adds a project dependency and selects one named OCI coordinates artifact. */
+    public final ModuleDependency manifestOciArtifacts(Project dependencyProject, String artifactName) {
+        ModuleDependency dependency = (ModuleDependency) manifestOciArtifacts(dependencyProject);
+        dependency.artifact(artifact -> {
+            artifact.setName(artifactName);
+            artifact.setType("json");
+        });
+        return dependency;
     }
 
     /** Lazily configures and adds a {@link ArtifactLocator}. */
