@@ -1,4 +1,2 @@
-LAUNCHER_JAVA_CMD="@javaHome@/bin/java"
-LAUNCHER_CLASSPATH="@launcherClasspath@"
-LAUNCHER_CMD="$LAUNCHER_JAVA_CMD -cp $LAUNCHER_CLASSPATH @launcherMainClass@"
-INIT_CMD="$LAUNCHER_JAVA_CMD -cp $LAUNCHER_CLASSPATH @initMainClass@"
+LAUNCHER_CMD="service/bin/java-launcher"
+INIT_CMD="service/bin/java-init"
