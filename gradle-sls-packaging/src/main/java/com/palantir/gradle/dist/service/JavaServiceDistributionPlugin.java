@@ -98,7 +98,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
-        Provider<Launchers.Contribution> launcher = Launchers.configure(project, distributionExtension);
+        Provider<Launchers.LauncherFiles> launcher = Launchers.configure(project, distributionExtension);
 
         TaskProvider<Jar> manifestClassPathTask = project.getTasks()
                 .register("manifestClasspathJar", Jar.class, task -> {
@@ -198,7 +198,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
-                    task.getLauncherType().set(Launchers.type(distributionExtension));
+                    task.getLauncherType().set(Launchers.type(project));
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()

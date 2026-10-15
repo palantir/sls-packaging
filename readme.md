@@ -308,23 +308,26 @@ And the complete list of configurable properties:
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
  * (optional) `enableAlwaysPreTouch()` adds the `-XX:+AlwaysPreTouch` and `-XX:+UseTransparentHugePages` JVM options.
  * (optional) `extraFiles` a collection of additional files (CopySpecs) to be included in the distribution.
- * (optional) `javaLauncher` replaces the `go-java-launcher` and `go-init` binaries with a JVM based launcher, see
-   [below](#jvm-based-launcher).
-
 #### JVM based launcher
 
 By default, distributions package the native [`go-java-launcher` and `go-init`](https://github.com/palantir/go-java-launcher) binaries.
-It is possible to replace these launcher binaries by Java-based implementations (which are not provided):
+They are replaced by a Java-based implementation (which is not provided) as soon as one is declared in the
+`javaLauncher` configuration, e.g. by a plugin providing it:
 
 ```gradle
 dependencies {
     javaLauncher 'my.launcher:java-launcher:1.2.3'
 }
-distribution {
-    javaLauncher {
-        launcherMainClass 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
-        initMainClass 'my.launcher.JavaInit'         // equivalent of the go-init binary
-    }
+```
+
+The launcher jar declares its main classes in its manifest:
+
+```gradle
+// in the launcher's build
+jar {
+    manifest.attributes(
+            'Sls-Launcher-Main-Class': 'my.launcher.JavaLauncher', // equivalent of the go-java-launcher binary
+            'Sls-Init-Main-Class': 'my.launcher.JavaInit')         // equivalent of the go-init binary
 }
 ```
 
@@ -332,14 +335,14 @@ When configured this way:
 
 * the go binaries are neither resolved nor packaged.
 * the launcher library and its runtime dependencies are packaged into `service/lib`, deduplicated with the runtime classpath's libraries.
-* `service/bin/java-launcher` and `service/bin/java-init` run the configured main classes with the bundled JDK, and
+* `service/bin/java-launcher` and `service/bin/java-init` run the declared main classes with the bundled JDK, and
   receive the same arguments as the go binaries. `init.sh` uses them as `LAUNCHER_CMD` and `INIT_CMD`.
 
 Requirements:
 * JDKs must be bundled through `distribution { jdks.put() }`.
   * The JDK corresponding to the service's runtime version is used to run the launcher as well, so the launcher must
     be compatible with the service's `javaVersion`.
-* Both `launcherMainClass` and `initMainClass` must be set.
+* The launcher jar must declare both `Sls-Launcher-Main-Class` and `Sls-Init-Main-Class` manifest attributes.
 
 #### JVM Options
 

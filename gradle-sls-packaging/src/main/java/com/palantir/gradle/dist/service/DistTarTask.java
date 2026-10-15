@@ -35,7 +35,7 @@ final class DistTarTask {
             Tar distTarTask,
             JavaServiceDistributionExtension distributionExtension,
             TaskProvider<Jar> jarTask,
-            Provider<Launchers.Contribution> launcher) {
+            Provider<Launchers.LauncherFiles> launcher) {
         Provider<String> serviceName = distributionExtension.getDistributionServiceName();
         distTarTask.getArchiveBaseName().set(serviceName);
 
@@ -87,7 +87,7 @@ final class DistTarTask {
             root.into("service/lib", t -> {
                 // The launcher resolves consistently with the runtime classpath, so shared jars are identical
                 t.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
-                t.from(launcher.map(Launchers.Contribution::lib));
+                t.from(launcher.map(Launchers.LauncherFiles::serviceLibs));
             });
 
             root.into("service/lib/agent", t -> {
@@ -97,7 +97,7 @@ final class DistTarTask {
             root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
                 // Also copy binaries from the launcher (e.g. go launchers, or java init scripts)
-                t.from(launcher.map(Launchers.Contribution::bin));
+                t.from(launcher.map(Launchers.LauncherFiles::serviceBin));
                 t.filePermissions(permissions -> permissions.unix(0755));
             });
 
