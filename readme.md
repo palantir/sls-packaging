@@ -314,22 +314,24 @@ And the complete list of configurable properties:
 #### JVM based launcher
 
 By default, distributions package the native [`go-java-launcher` and `go-init`](https://github.com/palantir/go-java-launcher) binaries.
-Plugins can replace them with Java-based implementations (which are not provided by sls-packaging), by adding the
-launcher to the `javaLauncher` configuration and configuring its main classes:
+It is possible to replace these launcher binaries by Java-based implementations (which are not provided):
 
-```java
-project.getDependencies().add(JavaServiceDistributionPlugin.JAVA_LAUNCHER_CONFIGURATION, "my.launcher:java-launcher:1.2.3");
-project.getExtensions().getByType(JavaServiceDistributionExtension.class).javaLauncher(launcher -> {
-    launcher.getLauncherMainClass().set("my.launcher.JavaLauncher"); // equivalent of the go-java-launcher binary
-    launcher.getInitMainClass().set("my.launcher.JavaInit");         // equivalent of the go-init binary
-});
+```gradle
+dependencies {
+    javaLauncher 'my.launcher:java-launcher:1.2.3'
+}
+distribution {
+    javaLauncher {
+        launcherMainClass 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
+        initMainClass 'my.launcher.JavaInit'         // equivalent of the go-init binary
+    }
+}
 ```
 
 When configured this way:
 
 * the go binaries are neither resolved nor packaged.
-* the launcher library and its runtime dependencies are packaged into `service/lib`. Dependencies shared with the
-  service resolve to the service's versions.
+* the launcher library and its runtime dependencies are packaged into `service/lib`, deduplicated with the runtime classpath's libraries.
 * `service/bin/java-launcher` and `service/bin/java-init` run the configured main classes with the bundled JDK, and
   receive the same arguments as the go binaries. `init.sh` uses them as `LAUNCHER_CMD` and `INIT_CMD`.
 

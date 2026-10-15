@@ -31,7 +31,7 @@ STATIC_LAUNCHER_CHECK_CONFIG="service/bin/launcher-check.yml"
 DEPRECATION_MESSAGE="Command is deprecated: the next major release of sls-packaging will only support start/status/stop"
 
 function print_help() {
-    echo "$0 forwards commands to go-init with the following usage."
+    echo "$0 forwards commands to the launcher's init with the following usage."
     echo ""
 }
 

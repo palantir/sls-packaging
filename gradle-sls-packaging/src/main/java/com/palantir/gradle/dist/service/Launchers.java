@@ -25,9 +25,7 @@ import java.util.Set;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.Bundling;
 import org.gradle.api.attributes.Category;
-import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.attributes.java.TargetJvmVersion;
 import org.gradle.api.file.FileCollection;
@@ -47,6 +45,10 @@ import org.gradle.api.tasks.TaskProvider;
  * use the selected launcher, so the other one is never resolved nor built.
  */
 final class Launchers {
+    // Used as fallback version if no higher version is specified in 'versions.props'.
+    private static final String FALLBACK_GO_JAVA_VERSION = "1.215.0";
+    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
+    private static final String GO_INIT = "com.palantir.launching:go-init";
 
     /** Files a launcher contributes to the distribution. */
     record Contribution(FileCollection bin, FileCollection lib) {}
@@ -65,11 +67,13 @@ final class Launchers {
     }
 
     private static Contribution configureGo(Project project) {
-        NamedDomainObjectProvider<Configuration> launcherConfig = registerGoConfiguration(
-                project, "goJavaLauncherBinary", JavaServiceDistributionPlugin.GO_JAVA_LAUNCHER);
-        NamedDomainObjectProvider<Configuration> initConfig =
-                registerGoConfiguration(project, "goInitBinary", JavaServiceDistributionPlugin.GO_INIT);
+        NamedDomainObjectProvider<Configuration> launcherConfig =
+                registerGoConfiguration(project, "goJavaLauncherBinary", GO_JAVA_LAUNCHER);
+        NamedDomainObjectProvider<Configuration> initConfig = registerGoConfiguration(project, "goInitBinary", GO_INIT);
 
+        // Note: we were previously using a Copy task, which was copying the binaries directly into the scripts
+        // directory. This is a bit better, as we now have a dedicated directory, which we then copy into the scripts
+        // directory in the DistTar task
         TaskProvider<Sync> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Sync.class, task -> {
                     task.from(untar(project, launcherConfig));
@@ -103,7 +107,7 @@ final class Launchers {
                             .lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
                     return versionOverride;
                 })
-                .orElse(JavaServiceDistributionPlugin.FALLBACK_GO_JAVA_VERSION);
+                .orElse(FALLBACK_GO_JAVA_VERSION);
     }
 
     private static Provider<List<FileTree>> untar(
@@ -116,28 +120,20 @@ final class Launchers {
     }
 
     private static Contribution configureJava(Project project, JavaServiceDistributionExtension distributionExtension) {
-        NamedDomainObjectProvider<Configuration> runtimeClasspath =
-                project.getConfigurations().named("runtimeClasspath");
         ObjectFactory objects = project.getObjects();
 
         // Populated by plugins providing a java-based launcher
         NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
                 .register(JavaServiceDistributionPlugin.JAVA_LAUNCHER_CONFIGURATION, conf -> {
                     conf.setDescription(
-                            "Java-based replacement for go-java-launcher/go-init, see " + "distribution.javaLauncher.");
+                            "Java-based replacement for go-java-launcher/go-init, see `distribution.javaLauncher`.");
                     conf.setCanBeConsumed(false);
-                    // Libraries shared with the service are packaged once, with the service's version
-                    conf.shouldResolveConsistentlyWith(runtimeClasspath.get());
                     conf.attributes(attributes -> {
                         attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME));
+                        // The below attributes are used to ensure the provided launcher is compatible with the
+                        // provided jdk runtime version
                         attributes.attribute(
                                 Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.LIBRARY));
-                        attributes.attribute(
-                                LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                                objects.named(LibraryElements.class, LibraryElements.JAR));
-                        attributes.attribute(
-                                Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.class, Bundling.EXTERNAL));
-                        // The launcher runs on the service's jdk
                         attributes.attributeProvider(
                                 TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE,
                                 distributionExtension

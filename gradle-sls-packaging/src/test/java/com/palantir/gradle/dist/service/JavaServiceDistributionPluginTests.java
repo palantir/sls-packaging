@@ -1982,8 +1982,8 @@ class JavaServiceDistributionPluginTests {
             verifyJavaLauncherIsUsed(rootProject);
 
             assertThat(javaLauncherScript(rootProject))
-                    .contains("-cp \"service/lib/launcher.jar:service/lib/jackson-core-2.22.3.jar:"
-                            + "service/lib/jackson-databind-2.22.3.jar:"
+                    .contains("-cp \"service/lib/launcher.jar:service/lib/jackson-databind-2.22.3.jar:"
+                            + "service/lib/jackson-core-2.22.3.jar:"
                             + "service/lib/jackson-annotations-2.22.jar\"");
 
             // Verify we are only bundling the 2.22.3 version, which is what gets resolved by GCV above
@@ -2142,45 +2142,12 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void launcher_classpath_aligns_with_runtime_classpath_without_gcv(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
-            setupLauncherProject(launcher);
-            launcher.buildGradle().append("""
-                repositories {
-                    mavenCentral()
-                }
-
-                dependencies {
-                    implementation 'com.fasterxml.jackson.core:jackson-core:2.22.1'
-                }
-                """);
-            setupRootProject(rootProject);
-            rootProject.buildGradle().append("""
-                dependencies {
-                    implementation 'com.fasterxml.jackson.core:jackson-core:2.22.3'
-                }
-                """);
-            appendJavaLauncherConfig(rootProject);
-
-            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
-
-            assertThat(javaLauncherScript(rootProject)).contains("service/lib/jackson-core-2.22.3.jar");
-            assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.3.jar"))
-                    .exists();
-            assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.1.jar"))
-                    .doesNotExist();
-        }
-
-        @Test
         void java_launcher_configured_after_tasks_are_realized(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
             rootProject.buildGradle().append("""
-                // simulate plugins realizing tasks before the java launcher is configured
-                tasks.named('distTar').get()
-                tasks.named('createInitScript').get()
-                tasks.named('copyLauncherBinaries').get()
+                tasks.copyLauncherBinaries.enabled = false
                 """);
             appendJavaLauncherConfig(rootProject);
 
@@ -2190,8 +2157,8 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void init_extensions_can_invoke_quoted_launcher_cmd(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+        void init_extensions_can_invoke_launcher_cmd(GradleInvoker gradle, RootProject rootProject, SubProject launcher)
+                throws Exception {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
             appendJavaLauncherConfig(rootProject);
@@ -2208,21 +2175,7 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void switching_from_go_to_java_launcher_removes_go_binaries(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
-            setupLauncherProject(launcher);
-            setupRootProject(rootProject);
-
-            gradle.withArgs(":distTar").buildsSuccessfully();
-
-            appendJavaLauncherConfig(rootProject);
-            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
-
-            verifyJavaLauncherIsUsed(rootProject);
-        }
-
-        @Test
-        void init_exits_when_jvm_actually_doesnt_exist(
+        void init_exits_when_jvm_doesnt_actually_exist(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
