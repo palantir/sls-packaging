@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.service.tasks;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import com.palantir.gradle.dist.service.LauncherType;
 import com.palantir.gradle.dist.service.util.EmitFiles;
 import java.io.InputStream;
 import org.gradle.api.file.RegularFileProperty;

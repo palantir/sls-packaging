@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.service.tasks;
+package com.palantir.gradle.dist.service;
 
 /** The launcher used by {@code service/bin/init.sh} to start, stop and check the service. */
 public enum LauncherType {

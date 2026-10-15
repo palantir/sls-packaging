@@ -79,8 +79,7 @@ public final class CreateJavaLauncherScripts {
 
         if (classpath.isEmpty()) {
             throw new GradleException("Java-based launcher has been configured, but no jars were resolved for it."
-                    + " Configure a launcher with the " + JavaServiceDistributionPlugin.JAVA_LAUNCHER_CONFIGURATION
-                    + " configuration.");
+                    + " Configure a launcher with the javaLauncher configuration.");
         }
 
         File outputDir = params.getOutputDir().get().getAsFile();

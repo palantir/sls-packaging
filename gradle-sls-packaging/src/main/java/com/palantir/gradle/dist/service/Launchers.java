@@ -17,7 +17,6 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
-import com.palantir.gradle.dist.service.tasks.LauncherType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +123,7 @@ final class Launchers {
 
         // Populated by plugins providing a java-based launcher
         NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
-                .register(JavaServiceDistributionPlugin.JAVA_LAUNCHER_CONFIGURATION, conf -> {
+                .register("javaLauncher", conf -> {
                     conf.setDescription(
                             "Java-based replacement for go-java-launcher/go-init, see `distribution.javaLauncher`.");
                     conf.setCanBeConsumed(false);

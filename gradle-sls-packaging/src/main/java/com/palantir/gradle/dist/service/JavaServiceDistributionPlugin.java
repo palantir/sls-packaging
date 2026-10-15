@@ -56,8 +56,6 @@ import org.gradle.process.CommandLineArgumentProvider;
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
 
-    public static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
-
     @VisibleForTesting
     static final String TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE = "testOnlyGoJavaLauncherFallbackVersion";
 
