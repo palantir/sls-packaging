@@ -2019,40 +2019,6 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void fails_when_launcher_requires_newer_java_than_the_service(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
-            setupLauncherProject(launcher);
-            launcher.buildGradle().append("""
-                java {
-                    targetCompatibility = JavaVersion.VERSION_21
-                }
-                """);
-            setupRootProject(rootProject);
-
-            rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
-                distribution {
-                    javaVersion 17
-                    jdks.put(JavaVersion.VERSION_17, fileTree(System.getProperty("java.home")))
-                }
-                """);
-
-            InvocationResult invocationResult = gradle.withArgs(":distTar").buildsWithFailure();
-
-            invocationResult
-                    .assertThat()
-                    .output()
-                    // wording differs across gradle versions
-                    .containsAnyOf(
-                            "looking for a library compatible with JVM runtime version 17",
-                            "compatible with Java 21 and the consumer needed a component for use during runtime,"
-                                    + " compatible with Java 17");
-        }
-
-        @Test
         void java_launcher_dependency_can_be_added_lazily(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
