@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -44,10 +43,8 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RelativePath;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.application.CreateStartScripts;
@@ -57,10 +54,6 @@ import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.process.CommandLineArgumentProvider;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
-    // Used as fallback version if no higher version is specified in 'versions.props'.
-    private static final String FALLBACK_GO_JAVA_VERSION = "1.215.0";
-    private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
-    private static final String GO_INIT = "com.palantir.launching:go-init";
     public static final String GROUP_NAME = "Distribution";
 
     @VisibleForTesting
@@ -105,25 +98,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
-        // Create configuration to load executable dependencies
-        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
-        Configuration launcherConfig = project.getConfigurations().create("goJavaLauncherBinary");
-        project.getDependencies().add(launcherConfig.getName(), getGoJavaLauncherCoordinate(project, GO_JAVA_LAUNCHER));
-        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
-        Configuration initConfig = project.getConfigurations().create("goInitBinary");
-        project.getDependencies().add(initConfig.getName(), getGoJavaLauncherCoordinate(project, GO_INIT));
-
-        TaskProvider<Copy> copyLauncherBinaries = project.getTasks()
-                .register("copyLauncherBinaries", Copy.class, task -> {
-                    task.from(project.provider(() -> project.tarTree(launcherConfig.getSingleFile())));
-                    task.from(project.provider(() -> project.tarTree(initConfig.getSingleFile())));
-                    task.into(project.getLayout().getBuildDirectory().dir("scripts"));
-                    task.eachFile(fcd -> {
-                        String[] segments = fcd.getRelativePath().getSegments();
-                        fcd.setRelativePath(new RelativePath(
-                                !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
-                    });
-                });
+        Provider<Launchers.Contribution> launcher = Launchers.configure(project, distributionExtension);
 
         TaskProvider<Jar> manifestClassPathTask = project.getTasks()
                 .register("manifestClasspathJar", Jar.class, task -> {
@@ -223,6 +198,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
+                    task.getLauncherType().set(Launchers.type(distributionExtension));
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()
@@ -241,7 +217,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
             task.from(launchConfigTask.flatMap(LaunchConfigTask::getStaticLauncher), copySpec -> {
                 copySpec.into(DistTarTask.SCRIPTS_DIST_LOCATION);
             });
-            task.dependsOn(manifest, launchConfigTask, startScripts, copyLauncherBinaries);
+            task.dependsOn(manifest, launchConfigTask, startScripts);
         });
 
         @SuppressWarnings("for-rollout:TaskDependsOn")
@@ -282,7 +258,6 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     startScripts,
                     initScript,
                     checkScript,
-                    copyLauncherBinaries,
                     launchConfigTask,
                     manifest,
                     manifestClassPathTask,
@@ -303,7 +278,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         project.afterEvaluate(_proj -> distTar.configure(task -> {
-            DistTarTask.configure(project, task, distributionExtension, jarTask);
+            DistTarTask.configure(project, task, distributionExtension, jarTask, launcher);
         }));
 
         project.getArtifacts().add(SlsBaseDistPlugin.SLS_CONFIGURATION_NAME, distTar);
@@ -346,16 +321,5 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                         "$1%APP_HOME%\\\\lib\\\\" + manifestClassPathArchiveFileName + "$2");
 
         Files.writeString(windowsScript, cleanedText);
-    }
-
-    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher fallback version. */
-    private static String getGoJavaLauncherCoordinate(Project project, String coordinate) {
-        if (!project.hasProperty(TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)) {
-            return coordinate + ":" + FALLBACK_GO_JAVA_VERSION;
-        }
-        String versionOverride = project.property(TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)
-                .toString();
-        project.getLogger().lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
-        return coordinate + ":" + versionOverride;
     }
 }
