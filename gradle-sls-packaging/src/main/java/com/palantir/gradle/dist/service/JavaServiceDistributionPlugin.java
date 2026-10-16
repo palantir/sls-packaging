@@ -198,7 +198,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
-                    task.getLauncherType().set(Launchers.type(project));
+                    task.getLauncherType().set(distributionExtension.getLauncherType());
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()

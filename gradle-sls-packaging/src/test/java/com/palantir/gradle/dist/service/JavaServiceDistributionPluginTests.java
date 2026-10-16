@@ -2019,6 +2019,71 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
+        void exposes_the_launcher_type(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                tasks.register('printLauncherType') {
+                    def launcherType = distribution.launcherType
+                    doLast { println "launcherType=" + launcherType.get() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printLauncherType")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("launcherType=GO");
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher project(':launcher')
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printLauncherType")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("launcherType=JAVA");
+        }
+
+        @Test
+        void exposes_the_java_launcher_command(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                }
+
+                tasks.register('printJavaLauncherCommand') {
+                    // read as a task input, like a docker plugin would, so the producing task runs first
+                    def command = distribution.javaLauncherCommand
+                    inputs.property('command', command.orElse([]))
+                    doLast { println "javaLauncherCommand=" + command.getOrNull() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherCommand")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("javaLauncherCommand=null");
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher project(':launcher')
+                }
+                """);
+
+            InvocationResult result =
+                    gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully();
+            assertThat(result).task(":createJavaLauncherScripts").succeeded();
+            assertThat(result.output())
+                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp,"
+                            + " service/lib/launcher.jar, launcher.FakeLauncher]");
+        }
+
+        @Test
         void java_launcher_dependency_can_be_added_lazily(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);

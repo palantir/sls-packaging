@@ -17,6 +17,10 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +52,7 @@ final class Launchers {
     record LauncherFiles(FileCollection serviceBin, FileCollection serviceLibs) {}
 
     /** Declaring a java-based launcher dependency replaces the go binaries; checked without resolving it. */
-    static Provider<LauncherType> type(Project project) {
+    private static Provider<LauncherType> type(Project project) {
         return project.getConfigurations()
                 .named(JAVA_LAUNCHER_CONFIGURATION)
                 .map(conf -> conf.getAllDependencies().isEmpty() ? LauncherType.GO : LauncherType.JAVA);
@@ -57,7 +61,22 @@ final class Launchers {
     static Provider<LauncherFiles> configure(Project project, JavaServiceDistributionExtension distributionExtension) {
         LauncherFiles go = configureGo(project);
         LauncherFiles java = configureJava(project, distributionExtension);
-        return type(project).map(type -> type == LauncherType.JAVA ? java : go);
+        distributionExtension.setLauncherType(type(project));
+        return distributionExtension.getLauncherType().map(type -> type == LauncherType.JAVA ? java : go);
+    }
+
+    /** Reads the command written by createJavaLauncherScripts; carries the dependency on that task. */
+    private static Provider<List<String>> javaLauncherCommand(
+            TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts) {
+        return createJavaLauncherScripts
+                .flatMap(CreateJavaLauncherScriptsTask::getLauncherCommandFile)
+                .map(file -> {
+                    try {
+                        return Files.readAllLines(file.getAsFile().toPath(), StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException("Failed to read " + file, e);
+                    }
+                });
     }
 
     private static LauncherFiles configureGo(Project project) {
@@ -135,7 +154,16 @@ final class Launchers {
                     task.getClasspath().from(javaLauncherConfig);
                 });
 
-        return new LauncherFiles(project.files(createJavaLauncherScripts), project.files(javaLauncherConfig));
+        // Absent unless the java launcher is used, so consumers never trigger createJavaLauncherScripts otherwise
+        distributionExtension.setJavaLauncherCommand(distributionExtension
+                .getLauncherType()
+                .flatMap(type -> type == LauncherType.JAVA
+                        ? javaLauncherCommand(createJavaLauncherScripts)
+                        : project.getProviders().provider(() -> null)));
+
+        return new LauncherFiles(
+                project.files(createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir)),
+                project.files(javaLauncherConfig));
     }
 
     private Launchers() {}

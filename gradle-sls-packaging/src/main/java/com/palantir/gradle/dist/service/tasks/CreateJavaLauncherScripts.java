@@ -23,6 +23,8 @@ import com.palantir.gradle.dist.service.util.EmitFiles;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -34,10 +36,12 @@ import javax.lang.model.SourceVersion;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.OutputFile;
 
 /**
  * Generates the {@code java-launcher} and {@code java-init} scripts which replace the go-java-launcher and go-init
@@ -65,8 +69,16 @@ public final class CreateJavaLauncherScripts {
         @Classpath
         ConfigurableFileCollection getClasspath();
 
+        /** The {@code java-launcher} and {@code java-init} scripts, packaged into {@code service/bin}. */
         @OutputDirectory
         DirectoryProperty getOutputDir();
+
+        /**
+         * The command the {@code java-launcher} script runs, one argument per line, for consumers starting the
+         * launcher without a shell (e.g. as a container's command). Not packaged.
+         */
+        @OutputFile
+        RegularFileProperty getLauncherCommandFile();
     }
 
     static void action(Params params) {
@@ -92,6 +104,9 @@ public final class CreateJavaLauncherScripts {
         String javaHome = params.getJavaHome().get();
         writeScript(new File(outputDir, LAUNCHER_SCRIPT), javaHome, classpath, launcherMainClass);
         writeScript(new File(outputDir, INIT_SCRIPT), javaHome, classpath, initMainClass);
+        writeCommand(
+                params.getLauncherCommandFile().get().getAsFile(),
+                List.of(javaHome + "/bin/java", "-cp", String.join(":", classpath), launcherMainClass));
     }
 
     /** The main class declared by the launcher jar's manifest. */
@@ -138,6 +153,15 @@ public final class CreateJavaLauncherScripts {
                                 "@mainClass@", mainClass))
                 .toFile()
                 .setExecutable(true);
+    }
+
+    private static void writeCommand(File file, List<String> command) {
+        try {
+            Files.createDirectories(file.toPath().getParent());
+            Files.write(file.toPath(), command, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to write " + file, e);
+        }
     }
 
     private CreateJavaLauncherScripts() {}

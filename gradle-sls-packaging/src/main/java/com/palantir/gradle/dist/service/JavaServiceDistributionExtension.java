@@ -56,6 +56,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final MapProperty<String, String> env;
     private final MapProperty<JavaVersion, Object> jdks;
     private final CopySpec extraFiles;
+    private final Property<LauncherType> launcherType;
+    private final ListProperty<String> javaLauncherCommand;
 
     private final ObjectFactory objectFactory;
 
@@ -107,6 +109,37 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
         extraFiles = project.copySpec();
+        launcherType = objectFactory.property(LauncherType.class);
+        javaLauncherCommand = objectFactory.listProperty(String.class);
+    }
+
+    /**
+     * The launcher used to start the service: the go-java-launcher binaries, or a java-based launcher when one is
+     * declared in the {@code javaLauncher} configuration.
+     */
+    public final Provider<LauncherType> getLauncherType() {
+        return launcherType;
+    }
+
+    /** Set once by {@link Launchers}, which owns the rule deciding which launcher is used. */
+    final void setLauncherType(Provider<LauncherType> type) {
+        launcherType.set(type);
+        launcherType.disallowChanges();
+    }
+
+    /**
+     * The command running the java-based launcher ({@code java -cp <launcher classpath> <main class>}), relative to
+     * the distribution root. Only present when {@link #getLauncherType()} is {@link LauncherType#JAVA}. The launcher
+     * configuration files are passed as further arguments, as for go-java-launcher.
+     */
+    public final Provider<List<String>> getJavaLauncherCommand() {
+        return javaLauncherCommand;
+    }
+
+    /** Set once by {@link Launchers}. */
+    final void setJavaLauncherCommand(Provider<List<String>> command) {
+        javaLauncherCommand.set(command);
+        javaLauncherCommand.disallowChanges();
     }
 
     public final CopySpec getExtraFiles() {
