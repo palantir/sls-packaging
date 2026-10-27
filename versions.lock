@@ -2,17 +2,17 @@
 
 com.fasterxml.jackson.core:jackson-annotations:2.22 (5 constraints: dc54589c)
 
-com.fasterxml.jackson.core:jackson-core:2.22.3 (5 constraints: 626e8ad0)
+com.fasterxml.jackson.core:jackson-core:2.22.4 (5 constraints: 676e09d3)
 
-com.fasterxml.jackson.core:jackson-databind:2.22.3 (5 constraints: 1461ca9b)
+com.fasterxml.jackson.core:jackson-databind:2.22.4 (5 constraints: 1961499e)
 
-com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.3 (3 constraints: c351e9e8)
+com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.4 (3 constraints: c351e9e8)
 
-com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3 (1 constraints: 3b053c3b)
+com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.4 (1 constraints: 3c053d3b)
 
-com.fasterxml.jackson.datatype:jackson-datatype-guava:2.22.3 (3 constraints: cb3b7adc)
+com.fasterxml.jackson.datatype:jackson-datatype-guava:2.22.4 (3 constraints: cc3b10dd)
 
-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.22.3 (1 constraints: a51a8b21)
+com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.22.4 (1 constraints: a51a8b21)
 
 com.fasterxml.woodstox:woodstox-core:7.2.0 (1 constraints: 3d174b26)
 
