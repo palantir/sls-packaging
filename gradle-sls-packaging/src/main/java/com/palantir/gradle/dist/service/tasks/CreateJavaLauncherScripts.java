@@ -16,20 +16,28 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.service.util.EmitFiles;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import javax.lang.model.SourceVersion;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 
 /**
@@ -41,20 +49,10 @@ public final class CreateJavaLauncherScripts {
     static final String LAUNCHER_SCRIPT = "java-launcher";
     static final String INIT_SCRIPT = "java-init";
 
+    static final String LAUNCHER_MAIN_CLASS_ATTRIBUTE = "Sls-Launcher-Main-Class";
+    static final String INIT_MAIN_CLASS_ATTRIBUTE = "Sls-Init-Main-Class";
+
     interface Params {
-        /** Main class equivalent to the go-java-launcher binary. */
-        @Input
-        @Optional
-        Property<String> getLauncherMainClass();
-
-        /** Main class equivalent to the go-init binary. */
-        @Input
-        @Optional
-        Property<String> getInitMainClass();
-
-        @Input
-        ListProperty<String> getJvmArgs();
-
         @Input
         Property<String> getJavaHome();
 
@@ -62,29 +60,43 @@ public final class CreateJavaLauncherScripts {
         @Input
         Property<Boolean> getBundledJdk();
 
-        /** Distribution relative paths of the launcher jars. */
+        /**
+         * Extra arguments to pass to the jvm, e.g. -Xmx options.
+         */
         @Input
-        ListProperty<String> getClasspath();
+        ListProperty<String> getJvmArgs();
+
+        /**
+         * The launcher jars and their runtime dependencies. They are expected to be located under {@code service/lib}.
+         */
+        @Classpath
+        ConfigurableFileCollection getClasspath();
 
         @OutputDirectory
         DirectoryProperty getOutputDir();
     }
 
     static void action(Params params) {
-        String launcherMainClass = mainClass(params.getLauncherMainClass().getOrNull(), "launcherMainClass");
-        String initMainClass = mainClass(params.getInitMainClass().getOrNull(), "initMainClass");
-        List<String> jvmArgs = params.getJvmArgs().getOrElse(List.of());
-        List<String> classpath = params.getClasspath().get();
-
         if (!params.getBundledJdk().get()) {
             throw new GradleException(
                     "Jdks must be configured and included in the distribution to configure a java-based launcher.");
         }
 
-        if (classpath.isEmpty()) {
+        Set<File> jars = params.getClasspath().getFiles();
+        if (jars.isEmpty()) {
             throw new GradleException("Java-based launcher has been configured, but no jars were resolved for it."
                     + " Configure a launcher with the javaLauncher configuration.");
         }
+
+        List<String> jvmArgs = params.getJvmArgs().getOrElse(List.of());
+
+        List<String> classpath =
+                jars.stream().map(jar -> "service/lib/" + jar.getName()).toList();
+
+        // equivalent to the go-java-launcher binary
+        String launcherMainClass = mainClass(jars, LAUNCHER_MAIN_CLASS_ATTRIBUTE, "launcher main class");
+        // equivalent to the go-init binary
+        String initMainClass = mainClass(jars, INIT_MAIN_CLASS_ATTRIBUTE, "init main class");
 
         File outputDir = params.getOutputDir().get().getAsFile();
         String javaHome = params.getJavaHome().get();
@@ -92,16 +104,41 @@ public final class CreateJavaLauncherScripts {
         writeScript(new File(outputDir, INIT_SCRIPT), javaHome, jvmArgs, classpath, initMainClass);
     }
 
-    private static String mainClass(String mainClass, String property) {
-        if (Strings.isNullOrEmpty(mainClass)) {
-            throw new GradleException("'distribution.javaLauncher." + property
-                    + "' must be specified when a java-based launcher is configured");
+    /**
+     * The main class declared by the launcher jar's manifest.
+     * The attribute must be defined exactly once in the classpath.
+     */
+    private static String mainClass(Collection<File> jars, String attribute, String description) {
+        Set<String> declared = jars.stream()
+                .map(jar -> manifestAttribute(jar, attribute))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (declared.isEmpty()) {
+            throw new GradleException("The java-based launcher must declare its " + description + " with the '"
+                    + attribute + "' manifest attribute");
         }
+        if (declared.size() > 1) {
+            throw new GradleException("Multiple jars of the java-based launcher declare the '" + attribute
+                    + "' manifest attribute: " + declared);
+        }
+        String mainClass = declared.iterator().next();
         if (!SourceVersion.isName(mainClass)) {
             throw new GradleException(
-                    "'distribution.javaLauncher." + property + "' must be a valid class name: " + mainClass);
+                    "The '" + attribute + "' manifest attribute must be a valid class name: " + mainClass);
         }
         return mainClass;
+    }
+
+    private static String manifestAttribute(File jar, String attribute) {
+        if (!jar.isFile()) {
+            return null;
+        }
+        try (JarFile jarFile = new JarFile(jar)) {
+            Manifest manifest = jarFile.getManifest();
+            return manifest == null ? null : manifest.getMainAttributes().getValue(attribute);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read the manifest of " + jar, e);
+        }
     }
 
     private static void writeScript(

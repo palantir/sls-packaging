@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.asset.AssetDistributionPlugin;
+import com.palantir.gradle.dist.service.Launchers.LauncherConfiguration;
 import com.palantir.gradle.dist.service.tasks.CreateCheckScriptTask;
 import com.palantir.gradle.dist.service.tasks.CreateInitScriptTask;
 import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
@@ -98,7 +99,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                 .getMainClass()
                 .orElse(project.provider(() -> MainClassResolver.resolveMainClass(project)));
 
-        Provider<Launchers.Contribution> launcher = Launchers.configure(project, distributionExtension);
+        Provider<LauncherConfiguration> launcher = Launchers.configure(project, distributionExtension);
 
         TaskProvider<Jar> manifestClassPathTask = project.getTasks()
                 .register("manifestClasspathJar", Jar.class, task -> {
@@ -198,7 +199,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates daemonizing init.sh script.");
                     task.getServiceName().set(distributionExtension.getDistributionServiceName());
-                    task.getLauncherType().set(Launchers.type(distributionExtension));
+                    task.getLauncherType().set(launcher.map(LauncherConfiguration::type));
                 });
 
         TaskProvider<CreateCheckScriptTask> checkScript = project.getTasks()
