@@ -6,11 +6,11 @@ com.fasterxml.jackson.core:jackson-core:2.22.4 (5 constraints: 676e09d3)
 
 com.fasterxml.jackson.core:jackson-databind:2.22.4 (5 constraints: 1961499e)
 
-com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.4 (3 constraints: c351e9e8)
+com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.4 (3 constraints: c4517fe9)
 
 com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.4 (1 constraints: 3c053d3b)
 
-com.fasterxml.jackson.datatype:jackson-datatype-guava:2.22.4 (3 constraints: cc3b10dd)
+com.fasterxml.jackson.datatype:jackson-datatype-guava:2.22.4 (3 constraints: cd3b5bdd)
 
 com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.22.4 (1 constraints: a51a8b21)
 
@@ -20,7 +20,7 @@ com.google.errorprone:error_prone_annotations:2.50.0 (5 constraints: db48a699)
 
 com.google.guava:failureaccess:1.0.3 (1 constraints: 160ae3b4)
 
-com.google.guava:guava:33.7.2-jre (7 constraints: 729ec652)
+com.google.guava:guava:33.7.2-jre (7 constraints: 739ede53)
 
 com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava (1 constraints: bd17c918)
 
@@ -28,7 +28,7 @@ com.google.j2objc:j2objc-annotations:3.1 (1 constraints: b809f1a0)
 
 com.palantir.gradle.auto-parallelizable:auto-parallelizable-annotations:1.6.0 (1 constraints: 09050236)
 
-com.palantir.gradle.consistentversions:gradle-consistent-versions:3.21.0 (1 constraints: 38053c3b)
+com.palantir.gradle.consistentversions:gradle-consistent-versions:3.22.0 (1 constraints: 39053f3b)
 
 com.palantir.gradle.failure-reports:gradle-failure-reports-common:1.18.0 (1 constraints: f21c3bc2)
 
