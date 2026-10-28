@@ -1928,6 +1928,51 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
+        void can_pass_jvm_options_to_launcher(GradleInvoker gradle, RootProject rootProject, SubProject launcher)
+                throws Exception {
+            setupLauncherProject(launcher);
+            // Replace the FakeInit class to print max heap
+            launcher.mainSourceSet().java().writeClass("""
+                package launcher;
+                public class FakeInit {
+                    public static void main(String[] args) {
+                        System.out.println("fake-init " + String.join(" ", args));
+                        System.out.println("Max heap: " + Runtime.getRuntime().maxMemory());
+                    }
+                }
+                """);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher project(':launcher')
+                }
+
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                        jvmArg '-Xmx8m'
+                    }
+                }
+                """);
+
+            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+            verifyJavaLauncherIsUsed(rootProject);
+
+            assertThat(javaLauncherScript(rootProject)).contains("-Xmx8m");
+            assertThat(javaInitScript(rootProject)).contains("-Xmx8m");
+
+            // Verify the max memory is actually wired up
+            assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .contains("fake-init start")
+                    .contains("Max heap: " + 8 * 1024 * 1024);
+        }
+
+        @Test
         void launcher_classpath_gets_resolved_with_main_dependencies(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);

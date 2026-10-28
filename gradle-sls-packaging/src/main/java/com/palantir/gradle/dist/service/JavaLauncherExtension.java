@@ -19,6 +19,7 @@ package com.palantir.gradle.dist.service;
 import com.google.common.base.Strings;
 import com.palantir.logsafe.Preconditions;
 import javax.lang.model.SourceVersion;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 
@@ -39,6 +40,9 @@ public abstract class JavaLauncherExtension {
 
     /** Main class which behaves like the {@code go-init} binary. */
     public abstract Property<String> getInitMainClass();
+
+    /** Options to pass to the jvm when starting the launcher. */
+    public abstract ListProperty<String> getJvmArgs();
 
     /**
      * Returns whether the launcher extension has been configured (i.e. either class is set).
@@ -61,5 +65,9 @@ public abstract class JavaLauncherExtension {
     public final void initMainClass(String initMainClass) {
         Preconditions.checkArgument(SourceVersion.isName(initMainClass), "initMainClass must be a valid class name");
         getInitMainClass().set(initMainClass);
+    }
+
+    public final void jvmArg(String jvmArg) {
+        getJvmArgs().add(jvmArg);
     }
 }

@@ -149,6 +149,7 @@ final class Launchers {
                     task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
                     task.getInitMainClass().set(javaLauncher.getInitMainClass());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
+                    task.getJvmArgs().set(javaLauncher.getJvmArgs());
                     task.getBundledJdk()
                             .set(distributionExtension
                                     .getJdks()

@@ -53,6 +53,9 @@ public final class CreateJavaLauncherScripts {
         Property<String> getInitMainClass();
 
         @Input
+        ListProperty<String> getJvmArgs();
+
+        @Input
         Property<String> getJavaHome();
 
         /** Whether the jdk for the service's java version is bundled in the distribution. */
@@ -70,6 +73,7 @@ public final class CreateJavaLauncherScripts {
     static void action(Params params) {
         String launcherMainClass = mainClass(params.getLauncherMainClass().getOrNull(), "launcherMainClass");
         String initMainClass = mainClass(params.getInitMainClass().getOrNull(), "initMainClass");
+        List<String> jvmArgs = params.getJvmArgs().getOrElse(List.of());
         List<String> classpath = params.getClasspath().get();
 
         if (!params.getBundledJdk().get()) {
@@ -84,8 +88,8 @@ public final class CreateJavaLauncherScripts {
 
         File outputDir = params.getOutputDir().get().getAsFile();
         String javaHome = params.getJavaHome().get();
-        writeScript(new File(outputDir, LAUNCHER_SCRIPT), javaHome, classpath, launcherMainClass);
-        writeScript(new File(outputDir, INIT_SCRIPT), javaHome, classpath, initMainClass);
+        writeScript(new File(outputDir, LAUNCHER_SCRIPT), javaHome, jvmArgs, classpath, launcherMainClass);
+        writeScript(new File(outputDir, INIT_SCRIPT), javaHome, jvmArgs, classpath, initMainClass);
     }
 
     private static String mainClass(String mainClass, String property) {
@@ -100,14 +104,20 @@ public final class CreateJavaLauncherScripts {
         return mainClass;
     }
 
-    private static void writeScript(File script, String javaHome, List<String> classpath, String mainClass) {
+    private static void writeScript(
+            File script, String javaHome, List<String> jvmArgs, List<String> classpath, String mainClass) {
         EmitFiles.replaceVars(
                         JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/java-launcher.sh"),
                         script.toPath(),
                         ImmutableMap.of(
-                                "@javaHome@", javaHome,
-                                "@classpath@", String.join(":", classpath),
-                                "@mainClass@", mainClass))
+                                "@javaHome@",
+                                javaHome,
+                                "@jvmArgs@",
+                                String.join(" ", jvmArgs),
+                                "@classpath@",
+                                String.join(":", classpath),
+                                "@mainClass@",
+                                mainClass))
                 .toFile()
                 .setExecutable(true);
     }
