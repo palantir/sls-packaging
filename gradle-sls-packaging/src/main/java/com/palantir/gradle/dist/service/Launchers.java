@@ -17,6 +17,10 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -156,8 +160,33 @@ final class Launchers {
                     task.getClasspath().from(javaLauncherConfig);
                 });
 
+        // Absent unless the java launcher is used, so consumers never trigger createJavaLauncherScripts otherwise
+        distributionExtension
+                .getJavaLauncher()
+                .setJavaLauncherCommand(type(project)
+                        .flatMap(type -> type == LauncherType.JAVA
+                                ? javaLauncherCommand(createJavaLauncherScripts)
+                                : project.getProviders().provider(() -> null)));
+
         return new LauncherConfiguration(
-                LauncherType.JAVA, project.files(createJavaLauncherScripts), project.files(javaLauncherConfig));
+                LauncherType.JAVA,
+                // Only the output dir files get packages
+                project.files(createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir)),
+                project.files(javaLauncherConfig));
+    }
+
+    /** Reads the command written by createJavaLauncherScripts; carries the dependency on that task. */
+    private static Provider<List<String>> javaLauncherCommand(
+            TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts) {
+        return createJavaLauncherScripts
+                .flatMap(CreateJavaLauncherScriptsTask::getLauncherCommandFile)
+                .map(file -> {
+                    try {
+                        return Files.readAllLines(file.getAsFile().toPath(), StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException("Failed to read " + file, e);
+                    }
+                });
     }
 
     private Launchers() {}

@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
@@ -23,6 +24,8 @@ import com.palantir.gradle.dist.service.util.EmitFiles;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -34,11 +37,13 @@ import javax.lang.model.SourceVersion;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.OutputFile;
 
 /**
  * Generates the {@code java-launcher} and {@code java-init} scripts which replace the go-java-launcher and go-init
@@ -74,6 +79,13 @@ public final class CreateJavaLauncherScripts {
 
         @OutputDirectory
         DirectoryProperty getOutputDir();
+
+        /**
+         * The command the {@code java-launcher} script runs, one argument per line, for consumers starting the
+         * launcher without a shell (e.g. as a container's command). Not packaged.
+         */
+        @OutputFile
+        RegularFileProperty getLauncherCommandFile();
     }
 
     static void action(Params params) {
@@ -102,6 +114,15 @@ public final class CreateJavaLauncherScripts {
         String javaHome = params.getJavaHome().get();
         writeScript(new File(outputDir, LAUNCHER_SCRIPT), javaHome, jvmArgs, classpath, launcherMainClass);
         writeScript(new File(outputDir, INIT_SCRIPT), javaHome, jvmArgs, classpath, initMainClass);
+
+        List<String> command = ImmutableList.<String>builder()
+                .add(javaHome + "/bin/java")
+                .addAll(jvmArgs)
+                .add("-cp")
+                .add(String.join(":", classpath))
+                .add(launcherMainClass)
+                .build();
+        writeCommand(params.getLauncherCommandFile().get().getAsFile(), command);
     }
 
     /**
@@ -157,6 +178,15 @@ public final class CreateJavaLauncherScripts {
                                 mainClass))
                 .toFile()
                 .setExecutable(true);
+    }
+
+    private static void writeCommand(File file, List<String> command) {
+        try {
+            Files.createDirectories(file.toPath().getParent());
+            Files.write(file.toPath(), command, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to write " + file, e);
+        }
     }
 
     private CreateJavaLauncherScripts() {}

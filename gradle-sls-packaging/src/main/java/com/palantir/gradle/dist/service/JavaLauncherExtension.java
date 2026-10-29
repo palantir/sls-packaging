@@ -16,7 +16,9 @@
 
 package com.palantir.gradle.dist.service;
 
+import java.util.List;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Provider;
 
 /**
  * Configures a jvm based replacement for the <a href="https://github.com/palantir/go-java-launcher">go-java-launcher and go-init binaries</a>
@@ -30,7 +32,22 @@ public abstract class JavaLauncherExtension {
     /** Options to pass to the jvm when starting the launcher. */
     public abstract ListProperty<String> getJvmArgs();
 
+    /**
+     * The command used to run the launcher main class.
+     * <p>
+     * No equivalent is currently provided for the cli main class - use the init scripts instead.
+     * <p>
+     * This is expected to be set exactly once by {@link Launchers}.
+     */
+    public abstract ListProperty<String> getLauncherCommand();
+
     public final void jvmArg(String jvmArg) {
         getJvmArgs().add(jvmArg);
+    }
+
+    /** Set once by {@link Launchers}. */
+    final void setJavaLauncherCommand(Provider<List<String>> command) {
+        getLauncherCommand().set(command);
+        getLauncherCommand().disallowChanges();
     }
 }
