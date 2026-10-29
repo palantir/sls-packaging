@@ -349,8 +349,7 @@ Requirements:
 You can optionally configure JVM options and arguments to be passed to the launcher with:
 ```gradle
 javaLauncher {
-    jvmArg '-Xms4m'
-    jvmArg '-Xmx8m'
+    getJvmArgs().addAll(['-Xms4m', '-Xmx8m'])
 }
 ```
 

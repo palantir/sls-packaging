@@ -33,20 +33,25 @@ public abstract class JavaLauncherExtension {
     public abstract ListProperty<String> getJvmArgs();
 
     /**
-     * The command used to run the launcher main class.
+     * The command used to run the launcher, provided as:
+     * <ul>
+     *     <li>The Java binary path, relative to the distribution root (using the unix binary)</li>
+     *     <li>The Java command line arguments (e.g. options from {@link #getJvmArgs()}, and the classpath)</li>
+     *     <li>The class to execute (the launcher main class)</li>
+     *     <li>The arguments to the launcher ({@code} service/bin/launcher-static.yml}
+     *         and {@code "var/conf/launcher-custom.yml"})</li>
+     * </ul>
+     * This can be consumed by external plugins which may repackage the distribution and don't want to rebuild the
+     * expected command line themselves.
      * <p>
-     * No equivalent is currently provided for the cli main class - use the init scripts instead.
+     * No equivalent is currently provided for the cli main class - use the provided init.sh script instead.
      * <p>
      * This is expected to be set exactly once by {@link Launchers}.
      */
     public abstract ListProperty<String> getLauncherCommand();
 
-    public final void jvmArg(String jvmArg) {
-        getJvmArgs().add(jvmArg);
-    }
-
     /** Set once by {@link Launchers}. */
-    final void setJavaLauncherCommand(Provider<List<String>> command) {
+    final void launcherCommand(Provider<List<String>> command) {
         getLauncherCommand().set(command);
         getLauncherCommand().disallowChanges();
     }

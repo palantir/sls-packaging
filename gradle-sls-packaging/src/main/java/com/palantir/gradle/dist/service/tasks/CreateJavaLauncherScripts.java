@@ -28,10 +28,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import javax.lang.model.SourceVersion;
 import org.gradle.api.GradleException;
@@ -102,6 +101,7 @@ public final class CreateJavaLauncherScripts {
 
         List<String> jvmArgs = params.getJvmArgs().getOrElse(List.of());
 
+        // The classpath is bundled in DistTar under service/lib, so we rebuild the classpath using this information
         List<String> classpath =
                 jars.stream().map(jar -> "service/lib/" + jar.getName()).toList();
 
@@ -116,11 +116,15 @@ public final class CreateJavaLauncherScripts {
         writeScript(new File(outputDir, INIT_SCRIPT), javaHome, jvmArgs, classpath, initMainClass);
 
         List<String> command = ImmutableList.<String>builder()
+                // Expected location of the java binary, relative to the distribution
                 .add(javaHome + "/bin/java")
                 .addAll(jvmArgs)
                 .add("-cp")
                 .add(String.join(":", classpath))
                 .add(launcherMainClass)
+                // Same expected relative locations as for init.sh
+                .add("service/bin/launcher-static.yml")
+                .add("var/conf/launcher-custom.yml")
                 .build();
         writeCommand(params.getLauncherCommandFile().get().getAsFile(), command);
     }
@@ -132,7 +136,7 @@ public final class CreateJavaLauncherScripts {
     private static String mainClass(Collection<File> jars, String attribute, String description) {
         Set<String> declared = jars.stream()
                 .map(jar -> manifestAttribute(jar, attribute))
-                .filter(Objects::nonNull)
+                .<String>mapMulti(Optional::ifPresent)
                 .collect(Collectors.toSet());
         if (declared.isEmpty()) {
             throw new GradleException("The java-based launcher must declare its " + description + " with the '"
@@ -150,13 +154,13 @@ public final class CreateJavaLauncherScripts {
         return mainClass;
     }
 
-    private static String manifestAttribute(File jar, String attribute) {
+    private static Optional<String> manifestAttribute(File jar, String attribute) {
         if (!jar.isFile()) {
-            return null;
+            return Optional.empty();
         }
         try (JarFile jarFile = new JarFile(jar)) {
-            Manifest manifest = jarFile.getManifest();
-            return manifest == null ? null : manifest.getMainAttributes().getValue(attribute);
+            return Optional.ofNullable(jarFile.getManifest())
+                    .map(manifest -> manifest.getMainAttributes().getValue(attribute));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read the manifest of " + jar, e);
         }

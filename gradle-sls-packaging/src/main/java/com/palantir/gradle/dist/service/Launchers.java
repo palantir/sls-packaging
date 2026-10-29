@@ -27,13 +27,9 @@ import java.util.Map;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.Category;
-import org.gradle.api.attributes.Usage;
-import org.gradle.api.attributes.java.TargetJvmVersion;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.RelativePath;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.TaskProvider;
@@ -113,37 +109,18 @@ final class Launchers {
                 .orElse(FALLBACK_GO_JAVA_VERSION);
     }
 
-    private static Provider<List<FileTree>> untar(
-            Project project, NamedDomainObjectProvider<Configuration> configuration) {
-        return configuration
-                .flatMap(Configuration::getElements)
-                .map(files -> files.stream()
-                        .map(file -> project.tarTree(file.getAsFile()))
-                        .toList());
+    private static Provider<FileTree> untar(Project project, NamedDomainObjectProvider<Configuration> configuration) {
+        return configuration.map(conf -> project.tarTree(conf.getSingleFile()));
     }
 
     private static LauncherConfiguration configureJava(
             Project project, JavaServiceDistributionExtension distributionExtension) {
-        ObjectFactory objects = project.getObjects();
-
         // Populated by plugins providing a java-based launcher
         NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
                 .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
                     conf.setDescription("Java-based replacement for go-java-launcher/go-init. Its main classes are"
                             + " declared by the launcher jar's manifest.");
                     conf.setCanBeConsumed(false);
-                    conf.attributes(attributes -> {
-                        attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME));
-                        // The below attributes are used to ensure the provided launcher is compatible with the
-                        // provided jdk runtime version
-                        attributes.attribute(
-                                Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.LIBRARY));
-                        attributes.attributeProvider(
-                                TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE,
-                                distributionExtension
-                                        .getJavaVersion()
-                                        .map(javaVersion -> Integer.parseInt(javaVersion.getMajorVersion())));
-                    });
                 });
 
         TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts = project.getTasks()
@@ -163,7 +140,7 @@ final class Launchers {
         // Absent unless the java launcher is used, so consumers never trigger createJavaLauncherScripts otherwise
         distributionExtension
                 .getJavaLauncher()
-                .setJavaLauncherCommand(type(project)
+                .launcherCommand(type(project)
                         .flatMap(type -> type == LauncherType.JAVA
                                 ? javaLauncherCommand(createJavaLauncherScripts)
                                 : project.getProviders().provider(() -> null)));

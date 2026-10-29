@@ -1955,7 +1955,7 @@ class JavaServiceDistributionPluginTests {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
-                        jvmArg '-Xmx8m'
+                        getJvmArgs().add('-Xmx8m')
                     }
                 }
                 """);
@@ -2062,40 +2062,6 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void fails_when_launcher_requires_newer_java_than_the_service(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
-            setupLauncherProject(launcher);
-            launcher.buildGradle().append("""
-                java {
-                    targetCompatibility = JavaVersion.VERSION_21
-                }
-                """);
-            setupRootProject(rootProject);
-
-            rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
-                distribution {
-                    javaVersion 17
-                    jdks.put(JavaVersion.VERSION_17, fileTree(System.getProperty("java.home")))
-                }
-                """);
-
-            InvocationResult invocationResult = gradle.withArgs(":distTar").buildsWithFailure();
-
-            invocationResult
-                    .assertThat()
-                    .output()
-                    // wording differs across gradle versions
-                    .containsAnyOf(
-                            "looking for a library compatible with JVM runtime version 17",
-                            "compatible with Java 21 and the consumer needed a component for use during runtime,"
-                                    + " compatible with Java 17");
-        }
-
-        @Test
         void java_launcher_dependency_can_be_added_lazily(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
@@ -2192,6 +2158,44 @@ class JavaServiceDistributionPluginTests {
                     .isThrownBy(() -> ExecUtils.execWithOutput(
                             rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
                     .withMessageContaining("service-name-jdks/jdk25/bin/java: No such file or directory");
+        }
+
+        @Test
+        void exposes_the_java_launcher_command(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                }
+
+                tasks.register('printJavaLauncherCommand') {
+                    // read as a task input, like a docker plugin would, so the producing task runs first
+                    def command = distribution.javaLauncher.launcherCommand
+                    inputs.property('command', command.orElse([]))
+                    doLast { println "javaLauncherCommand=" + command.getOrNull() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherCommand")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("javaLauncherCommand=null");
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher project(':launcher')
+                }
+                """);
+
+            InvocationResult result =
+                    gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully();
+            assertThat(result).task(":createJavaLauncherScripts").succeeded();
+            assertThat(result.output())
+                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp, "
+                            + "service/lib/launcher.jar, launcher.FakeLauncher, "
+                            + "service/bin/launcher-static.yml, var/conf/launcher-custom.yml]");
         }
     }
 
