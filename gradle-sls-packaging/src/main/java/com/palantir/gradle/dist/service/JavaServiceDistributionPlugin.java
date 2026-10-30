@@ -257,8 +257,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     launchConfigTask,
                     manifest,
                     manifestClassPathTask,
-                    javaAgentConfiguration,
-                    launcher.flatMap(LauncherConfiguration::copyTask));
+                    javaAgentConfiguration);
         });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {

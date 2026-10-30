@@ -88,7 +88,7 @@ final class DistTarTask {
             root.into("service/lib", t -> {
                 // The launcher resolves consistently with the runtime classpath, so shared jars are identical
                 t.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
-                t.from(launcher.map(LauncherConfiguration::lib));
+                t.from(launcher.flatMap(LauncherConfiguration::lib));
             });
 
             root.into("service/lib/agent", t -> {
@@ -98,7 +98,7 @@ final class DistTarTask {
             root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
                 // Also copy binaries from the launcher (e.g. go launchers, or java init scripts)
-                t.from(launcher.map(LauncherConfiguration::bin));
+                t.from(launcher.flatMap(LauncherConfiguration::bin));
                 t.filePermissions(permissions -> permissions.unix(0755));
             });
 
