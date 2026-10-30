@@ -18,6 +18,7 @@ package com.palantir.gradle.dist.service;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.palantir.gradle.dist.GcvUtils;
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
 import java.util.Arrays;
 import java.util.List;
