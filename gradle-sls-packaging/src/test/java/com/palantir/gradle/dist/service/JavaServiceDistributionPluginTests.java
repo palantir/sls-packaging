@@ -1856,8 +1856,8 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -1906,8 +1906,8 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -1943,8 +1943,8 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                         getJvmArgs().add('-Xmx8m')
                     }
                 }
@@ -2004,8 +2004,8 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -2043,8 +2043,8 @@ class JavaServiceDistributionPluginTests {
                     javaVersion 25
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -2067,7 +2067,7 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
                         launcher project(':launcher')
-                        initMainClass 'launcher.FakeInit'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -2093,7 +2093,7 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
+                        launcherMainClass = 'launcher.FakeLauncher'
                     }
                 }
                 """);
@@ -2118,8 +2118,8 @@ class JavaServiceDistributionPluginTests {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -2148,8 +2148,8 @@ class JavaServiceDistributionPluginTests {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);
@@ -2208,8 +2208,8 @@ class JavaServiceDistributionPluginTests {
                     jdks.put(JavaVersion.VERSION_25, fileTree("fake-java"))
                     javaLauncher {
                         launcher project(':launcher')
-                        launcherMainClass 'launcher.FakeLauncher'
-                        initMainClass 'launcher.FakeInit'
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
                     }
                 }
                 """);

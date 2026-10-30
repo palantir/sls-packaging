@@ -320,8 +320,8 @@ It is possible to replace these launcher binaries by Java-based implementations 
 distribution {
     javaLauncher {
         launcher 'my.launcher:java-launcher:1.2.3'  // any dependency notation, e.g. project(':launcher')
-        launcherMainClass 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
-        initMainClass 'my.launcher.JavaInit'         // equivalent of the go-init binary
+        launcherMainClass = 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
+        initMainClass = 'my.launcher.JavaInit'         // equivalent of the go-init binary
     }
 }
 ```
