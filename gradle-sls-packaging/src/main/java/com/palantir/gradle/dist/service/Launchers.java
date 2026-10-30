@@ -21,7 +21,6 @@ import java.util.Arrays;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.provider.Provider;
@@ -41,14 +40,8 @@ final class Launchers {
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
 
-    /**
-     * Files a launcher contributes to the distribution.
-     * <p>
-     * Also provides the task used to generate these files, so it can be wired (this appears to not always be working
-     * properly from just using the file collections, seemingly due to the use of
-     * {@link Provider#zip} in {@link JavaLauncherExtension#javaLauncherConfigured}).
-     */
-    record LauncherConfiguration(LauncherType type, FileCollection bin, FileCollection lib, TaskProvider<?> copyTask) {}
+    /** Files a launcher contributes to the distribution. */
+    record LauncherConfiguration(LauncherType type, Provider<?> bin, Provider<?> lib) {}
 
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
@@ -80,7 +73,7 @@ final class Launchers {
                 });
 
         return new LauncherConfiguration(
-                LauncherType.GO, project.files(copyLauncherBinaries), project.files(), copyLauncherBinaries);
+                LauncherType.GO, copyLauncherBinaries.map(Sync::getDestinationDir), project.provider(project::files));
     }
 
     private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
@@ -135,9 +128,8 @@ final class Launchers {
 
         return new LauncherConfiguration(
                 LauncherType.JAVA,
-                project.files(createJavaLauncherScripts),
-                project.files(javaLauncherConfig),
-                createJavaLauncherScripts);
+                createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir),
+                javaLauncherConfig);
     }
 
     private Launchers() {}
