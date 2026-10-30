@@ -30,7 +30,7 @@ import org.gradle.api.tasks.TaskProvider;
 
 /**
  * Wires the launcher used by {@code init.sh}: the go-java-launcher binaries (default), or a java-based replacement
- * configured through {@link JavaLauncherConfiguration}.
+ * configured through {@link JavaLauncherExtension}.
  * <p>
  * Both launchers are registered, and {@link #configure} returns a provider selecting one of them. Consumers only
  * use the selected launcher, so the other one is never resolved nor built.
@@ -46,7 +46,7 @@ final class Launchers {
      * <p>
      * Also provides the task used to generate these files, so it can be wired (this appears to not always be working
      * properly from just using the file collections, seemingly due to the use of
-     * {@link Provider#zip} in {@link JavaLauncherConfiguration#javaLauncherConfigured}).
+     * {@link Provider#zip} in {@link JavaLauncherExtension#javaLauncherConfigured}).
      */
     record LauncherConfiguration(LauncherType type, FileCollection bin, FileCollection lib, TaskProvider<?> copyTask) {}
 
@@ -55,7 +55,7 @@ final class Launchers {
         LauncherConfiguration go = configureGo(project);
         LauncherConfiguration java = configureJava(project, distributionExtension);
 
-        return JavaLauncherConfiguration.javaLauncherConfigured(project, distributionExtension)
+        return JavaLauncherExtension.javaLauncherConfigured(project, distributionExtension)
                 .map(javaLauncherConfigured -> javaLauncherConfigured ? java : go);
     }
 
@@ -112,7 +112,7 @@ final class Launchers {
             Project project, JavaServiceDistributionExtension distributionExtension) {
         // Populated by plugins providing a java-based launcher
         NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
-                .register(JavaLauncherConfiguration.JAVA_LAUNCHER_CONFIGURATION, conf -> {
+                .register(JavaLauncherExtension.JAVA_LAUNCHER_CONFIGURATION, conf -> {
                     conf.setDescription(
                             "Java-based replacement for go-java-launcher/go-init, see `distribution.javaLauncher`.");
                     conf.setCanBeConsumed(false);
@@ -127,7 +127,7 @@ final class Launchers {
 
                     task.getClasspath().from(javaLauncherConfig);
 
-                    JavaLauncherConfiguration javaLauncher = distributionExtension.getJavaLauncher();
+                    JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
                     task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
                     task.getInitMainClass().set(javaLauncher.getInitMainClass());
                     task.getJvmArgs().set(javaLauncher.getJvmArgs());

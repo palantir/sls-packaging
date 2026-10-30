@@ -42,7 +42,7 @@ import org.gradle.api.provider.Provider;
  * This requires the runtime JDK to be bundled by being provided in {@link JavaServiceDistributionExtension#getJdks()}.
  * If it is not provided, and this extension is configured, an exception will be thrown.
  */
-public abstract class JavaLauncherConfiguration {
+public abstract class JavaLauncherExtension {
     /** The name of the Gradle configuration used to provide the java launcher libraries. */
     static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
 
@@ -78,7 +78,7 @@ public abstract class JavaLauncherConfiguration {
         Provider<Configuration> javaLauncherConfig =
                 project.getConfigurations().named(JAVA_LAUNCHER_CONFIGURATION).orElse((Configuration) null);
 
-        JavaLauncherConfiguration javaLauncher = extension.getJavaLauncher();
+        JavaLauncherExtension javaLauncher = extension.getJavaLauncher();
         Provider<String> launcherMainClass = javaLauncher.getLauncherMainClass().orElse("");
         Provider<String> initMainClass = javaLauncher.getInitMainClass().orElse("");
 
@@ -128,12 +128,12 @@ public abstract class JavaLauncherConfiguration {
     }
 
     /**
-     * Builds the command to run the {@link JavaLauncherConfiguration#getLauncherMainClass()} java launcher,
+     * Builds the command to run the {@link JavaLauncherExtension#getLauncherMainClass()} java launcher,
      * using locations relative to the distribution root directory.
      */
     public static Provider<List<String>> buildLauncherCommand(
             Project project, JavaServiceDistributionExtension distributionExtension) {
-        JavaLauncherConfiguration javaLauncher = distributionExtension.getJavaLauncher();
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
         Provider<String> javaHome = distributionExtension.getJavaHome();
         Provider<List<String>> jvmArgs = javaLauncher.getJvmArgs();
         Provider<Set<File>> classpath =
