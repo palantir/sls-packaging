@@ -320,16 +320,11 @@ It is possible to replace these launcher binaries by Java-based implementations 
 dependencies {
     javaLauncher 'my.launcher:java-launcher:1.2.3'
 }
-```
-
-The launcher jar must declare its main classes in its manifest:
-
-```gradle
-// in the launcher's build
-jar {
-    manifest.attributes(
-        'Sls-Launcher-Main-Class': 'my.launcher.JavaLauncher', // equivalent of the go-java-launcher binary
-        'Sls-Init-Main-Class': 'my.launcher.JavaInit')         // equivalent of the go-init binary
+distribution {
+    javaLauncher {
+        launcherMainClass 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
+        initMainClass 'my.launcher.JavaInit'         // equivalent of the go-init binary
+    }
 }
 ```
 
@@ -337,14 +332,14 @@ When configured this way:
 
 * the go binaries are neither resolved nor packaged.
 * the launcher library and its runtime dependencies are packaged into `service/lib`, deduplicated with the runtime classpath's libraries.
-* `service/bin/java-launcher` and `service/bin/java-init` run the declared main classes with the bundled JDK, and
+* `service/bin/java-launcher` and `service/bin/java-init` run the configured main classes with the bundled JDK, and
   receive the same arguments as the go binaries. `init.sh` uses them as `LAUNCHER_CMD` and `INIT_CMD`.
 
 Requirements:
 * JDKs must be bundled through `distribution { jdks.put() }`.
   * The JDK corresponding to the service's runtime version is used to run the launcher as well, so the launcher must
     be compatible with the service's `javaVersion`.
-* The launcher jar must declare both `Sls-Launcher-Main-Class` and `Sls-Init-Main-Class` manifest attributes.
+* Both `launcherMainClass` and `initMainClass` must be set.
 
 You can optionally configure JVM options and arguments to be passed to the launcher with:
 ```gradle

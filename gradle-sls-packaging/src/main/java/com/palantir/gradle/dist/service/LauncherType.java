@@ -20,6 +20,6 @@ package com.palantir.gradle.dist.service;
 public enum LauncherType {
     /** The native go-java-launcher and go-init binaries. */
     GO,
-    /** A java-based replacement, declared in the {@code javaLauncher} configuration. */
+    /** A java-based replacement, see {@code distribution.javaLauncher}. */
     JAVA
 }

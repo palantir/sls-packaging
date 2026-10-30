@@ -19,7 +19,5 @@ package com.palantir.gradle.dist.service.tasks;
 public abstract class CreateJavaLauncherScriptsTask extends CreateJavaLauncherScriptsTaskImpl {
     public CreateJavaLauncherScriptsTask() {
         getOutputDir().set(getProject().getLayout().getBuildDirectory().dir("launcher/java"));
-        getLauncherCommandFile()
-                .set(getProject().getLayout().getBuildDirectory().file("launcher/java-launcher-command.txt"));
     }
 }

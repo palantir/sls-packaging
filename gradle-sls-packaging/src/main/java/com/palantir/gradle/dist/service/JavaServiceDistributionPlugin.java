@@ -185,12 +185,7 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     task.getJavaHome().set(distributionExtension.getJavaHome());
                     task.getJavaVersion().set(distributionExtension.getJavaVersion());
                     task.getAlwaysPreTouch().set(distributionExtension.getAlwaysPreTouch());
-                    task.getBundledJdks()
-                            .set(distributionExtension
-                                    .getJdks()
-                                    .map(javaVersionObjectMap -> javaVersionObjectMap.containsKey(distributionExtension
-                                            .getJavaVersion()
-                                            .get())));
+                    task.getBundledJdks().set(distributionExtension.isJdkBundled());
                     task.getEnv().set(userConfiguredEnvWithJdkEnvVars(distributionExtension));
                 });
 
@@ -262,7 +257,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
                     launchConfigTask,
                     manifest,
                     manifestClassPathTask,
-                    javaAgentConfiguration);
+                    javaAgentConfiguration,
+                    launcher.flatMap(LauncherConfiguration::copyTask));
         });
 
         project.afterEvaluate(_p -> launchConfigTask.configure(task -> {

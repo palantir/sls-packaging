@@ -56,7 +56,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
     private final MapProperty<String, String> env;
     private final MapProperty<JavaVersion, Object> jdks;
     private final CopySpec extraFiles;
-    private final JavaLauncherExtension javaLauncher;
+    private final JavaLauncherConfiguration javaLauncher;
 
     private final ObjectFactory objectFactory;
 
@@ -108,7 +108,7 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
         extraFiles = project.copySpec();
-        javaLauncher = objectFactory.newInstance(JavaLauncherExtension.class);
+        javaLauncher = objectFactory.newInstance(JavaLauncherConfiguration.class);
     }
 
     public final CopySpec getExtraFiles() {
@@ -255,6 +255,10 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         return jdks;
     }
 
+    public final Provider<Boolean> isJdkBundled() {
+        return getJdks().zip(getJavaVersion(), Map::containsKey);
+    }
+
     public final Provider<GcProfile> getGc() {
         return gc;
     }
@@ -284,11 +288,11 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         gc(type, null);
     }
 
-    public final JavaLauncherExtension getJavaLauncher() {
+    public final JavaLauncherConfiguration getJavaLauncher() {
         return javaLauncher;
     }
 
-    public final void javaLauncher(Action<? super JavaLauncherExtension> action) {
+    public final void javaLauncher(Action<? super JavaLauncherConfiguration> action) {
         action.execute(javaLauncher);
     }
 

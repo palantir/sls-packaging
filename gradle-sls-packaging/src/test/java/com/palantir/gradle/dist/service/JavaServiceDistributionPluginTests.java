@@ -1804,17 +1804,6 @@ class JavaServiceDistributionPluginTests {
     @Nested
     class JavaLauncher {
         private static void setupLauncherProject(SubProject launcher) {
-            writeLauncherClasses(launcher);
-            launcher.buildGradle().append("""
-                tasks.named('jar') {
-                    manifest.attributes(
-                            'Sls-Launcher-Main-Class': 'launcher.FakeLauncher',
-                            'Sls-Init-Main-Class': 'launcher.FakeInit')
-                }
-                """);
-        }
-
-        private static void writeLauncherClasses(SubProject launcher) {
             launcher.buildGradle().plugins().add("java");
             launcher.mainSourceSet().java().writeClass("""
                 package launcher;
@@ -1869,6 +1858,10 @@ class JavaServiceDistributionPluginTests {
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
                 }
                 """);
         }
@@ -1918,6 +1911,10 @@ class JavaServiceDistributionPluginTests {
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
                 }
                 """);
 
@@ -1955,6 +1952,8 @@ class JavaServiceDistributionPluginTests {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
                         getJvmArgs().add('-Xmx8m')
                     }
                 }
@@ -2014,6 +2013,10 @@ class JavaServiceDistributionPluginTests {
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
                 }
                 """);
 
@@ -2052,6 +2055,10 @@ class JavaServiceDistributionPluginTests {
 
                 distribution {
                     javaVersion 25
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
                 }
                 """);
 
@@ -2062,43 +2069,83 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void java_launcher_dependency_can_be_added_lazily(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+        void fails_when_missing_main_launcher_class(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
+
             rootProject.buildGradle().append("""
-                // as a plugin providing the launcher would
-                dependencies.addProvider('javaLauncher', provider { dependencies.project(path: ':launcher') })
+                dependencies {
+                    javaLauncher project(':launcher')
+                }
 
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        initMainClass 'launcher.FakeInit'
+                    }
                 }
                 """);
 
-            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
-
-            verifyJavaLauncherIsUsed(rootProject);
-
-            // Run init.sh as a sanity check that things are correctly wired up
-            assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
-                    .contains("fake-init start");
-        }
-
-        @Test
-        void fails_when_launcher_jar_does_not_declare_main_classes(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
-            writeLauncherClasses(launcher);
-            setupRootProject(rootProject);
-            appendJavaLauncherConfig(rootProject);
-
-            InvocationResult invocationResult = gradle.withArgs(":distTar").buildsWithFailure();
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
 
             invocationResult
                     .assertThat()
                     .output()
-                    .contains("The java-based launcher must declare its launcher main class with the"
-                            + " 'Sls-Launcher-Main-Class' manifest attribute");
+                    .contains("'distribution.javaLauncher.launcherMainClass' must be specified");
+        }
+
+        @Test
+        void fails_when_missing_init_launcher_class(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher project(':launcher')
+                }
+
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult
+                    .assertThat()
+                    .output()
+                    .contains("'distribution.javaLauncher.initMainClass' must be specified");
+        }
+
+        @Test
+        void fails_when_missing_launcher_config(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult.assertThat().output().contains("Configure a launcher with the javaLauncher configuration");
         }
 
         @Test
@@ -2148,6 +2195,10 @@ class JavaServiceDistributionPluginTests {
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree("fake-java"))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
                 }
                 """);
 
@@ -2158,44 +2209,6 @@ class JavaServiceDistributionPluginTests {
                     .isThrownBy(() -> ExecUtils.execWithOutput(
                             rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
                     .withMessageContaining("service-name-jdks/jdk25/bin/java: No such file or directory");
-        }
-
-        @Test
-        void exposes_the_java_launcher_command(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
-            setupLauncherProject(launcher);
-            setupRootProject(rootProject);
-            rootProject.buildGradle().append("""
-                distribution {
-                    javaVersion 25
-                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
-                }
-
-                tasks.register('printJavaLauncherCommand') {
-                    // read as a task input, like a docker plugin would, so the producing task runs first
-                    def command = distribution.javaLauncher.launcherCommand
-                    inputs.property('command', command.orElse([]))
-                    doLast { println "javaLauncherCommand=" + command.getOrNull() }
-                }
-                """);
-
-            assertThat(gradle.withArgs(":printJavaLauncherCommand")
-                            .buildsSuccessfully()
-                            .output())
-                    .contains("javaLauncherCommand=null");
-
-            rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-                """);
-
-            InvocationResult result =
-                    gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully();
-            assertThat(result).task(":createJavaLauncherScripts").succeeded();
-            assertThat(result.output())
-                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp, "
-                            + "service/lib/launcher.jar, launcher.FakeLauncher, "
-                            + "service/bin/launcher-static.yml, var/conf/launcher-custom.yml]");
         }
     }
 

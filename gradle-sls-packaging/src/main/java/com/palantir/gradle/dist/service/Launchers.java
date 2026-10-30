@@ -17,13 +17,7 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -36,7 +30,7 @@ import org.gradle.api.tasks.TaskProvider;
 
 /**
  * Wires the launcher used by {@code init.sh}: the go-java-launcher binaries (default), or a java-based replacement
- * when a dependency is declared in the {@value #JAVA_LAUNCHER_CONFIGURATION} configuration.
+ * configured through {@link JavaLauncherConfiguration}.
  * <p>
  * Both launchers are registered, and {@link #configure} returns a provider selecting one of them. Consumers only
  * use the selected launcher, so the other one is never resolved nor built.
@@ -46,23 +40,23 @@ final class Launchers {
     private static final String FALLBACK_GO_JAVA_VERSION = "1.215.0";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
-    static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
 
-    /** Files a launcher contributes to the distribution. */
-    record LauncherConfiguration(LauncherType type, FileCollection serviceBin, FileCollection serviceLib) {}
-
-    /** Declaring a java-based launcher dependency replaces the go binaries; checked without resolving it. */
-    private static Provider<LauncherType> type(Project project) {
-        return project.getConfigurations()
-                .named(JAVA_LAUNCHER_CONFIGURATION)
-                .map(conf -> conf.getAllDependencies().isEmpty() ? LauncherType.GO : LauncherType.JAVA);
-    }
+    /**
+     * Files a launcher contributes to the distribution.
+     * <p>
+     * Also provides the task used to generate these files, so it can be wired (this appears to not always be working
+     * properly from just using the file collections, seemingly due to the use of
+     * {@link Provider#zip} in {@link JavaLauncherConfiguration#javaLauncherConfigured}).
+     */
+    record LauncherConfiguration(LauncherType type, FileCollection bin, FileCollection lib, TaskProvider<?> copyTask) {}
 
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
         LauncherConfiguration go = configureGo(project);
         LauncherConfiguration java = configureJava(project, distributionExtension);
-        return type(project).map(type -> type == LauncherType.JAVA ? java : go);
+
+        return JavaLauncherConfiguration.javaLauncherConfigured(project, distributionExtension)
+                .map(javaLauncherConfigured -> javaLauncherConfigured ? java : go);
     }
 
     private static LauncherConfiguration configureGo(Project project) {
@@ -85,7 +79,8 @@ final class Launchers {
                     });
                 });
 
-        return new LauncherConfiguration(LauncherType.GO, project.files(copyLauncherBinaries), project.files());
+        return new LauncherConfiguration(
+                LauncherType.GO, project.files(copyLauncherBinaries), project.files(), copyLauncherBinaries);
     }
 
     private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
@@ -117,9 +112,9 @@ final class Launchers {
             Project project, JavaServiceDistributionExtension distributionExtension) {
         // Populated by plugins providing a java-based launcher
         NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
-                .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
-                    conf.setDescription("Java-based replacement for go-java-launcher/go-init. Its main classes are"
-                            + " declared by the launcher jar's manifest.");
+                .register(JavaLauncherConfiguration.JAVA_LAUNCHER_CONFIGURATION, conf -> {
+                    conf.setDescription(
+                            "Java-based replacement for go-java-launcher/go-init, see `distribution.javaLauncher`.");
                     conf.setCanBeConsumed(false);
                 });
 
@@ -127,43 +122,22 @@ final class Launchers {
                 .register("createJavaLauncherScripts", CreateJavaLauncherScriptsTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
                     task.setDescription("Generates scripts running the java-based launcher.");
+                    task.getBundledJdk().set(distributionExtension.isJdkBundled());
                     task.getJavaHome().set(distributionExtension.getJavaHome());
-                    JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
-                    task.getJvmArgs().set(javaLauncher.getJvmArgs());
-                    task.getBundledJdk()
-                            .set(distributionExtension
-                                    .getJdks()
-                                    .zip(distributionExtension.getJavaVersion(), Map::containsKey));
-                    task.getClasspath().from(javaLauncherConfig);
-                });
 
-        // Absent unless the java launcher is used, so consumers never trigger createJavaLauncherScripts otherwise
-        distributionExtension
-                .getJavaLauncher()
-                .launcherCommand(type(project)
-                        .flatMap(type -> type == LauncherType.JAVA
-                                ? javaLauncherCommand(createJavaLauncherScripts)
-                                : project.getProviders().provider(() -> null)));
+                    task.getClasspath().from(javaLauncherConfig);
+
+                    JavaLauncherConfiguration javaLauncher = distributionExtension.getJavaLauncher();
+                    task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
+                    task.getInitMainClass().set(javaLauncher.getInitMainClass());
+                    task.getJvmArgs().set(javaLauncher.getJvmArgs());
+                });
 
         return new LauncherConfiguration(
                 LauncherType.JAVA,
-                // Only the output dir files get packages
-                project.files(createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir)),
-                project.files(javaLauncherConfig));
-    }
-
-    /** Reads the command written by createJavaLauncherScripts; carries the dependency on that task. */
-    private static Provider<List<String>> javaLauncherCommand(
-            TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts) {
-        return createJavaLauncherScripts
-                .flatMap(CreateJavaLauncherScriptsTask::getLauncherCommandFile)
-                .map(file -> {
-                    try {
-                        return Files.readAllLines(file.getAsFile().toPath(), StandardCharsets.UTF_8);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException("Failed to read " + file, e);
-                    }
-                });
+                project.files(createJavaLauncherScripts),
+                project.files(javaLauncherConfig),
+                createJavaLauncherScripts);
     }
 
     private Launchers() {}
