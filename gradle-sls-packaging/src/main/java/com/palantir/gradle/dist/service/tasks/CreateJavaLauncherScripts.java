@@ -79,8 +79,8 @@ public final class CreateJavaLauncherScripts {
         }
 
         if (params.getClasspath().isEmpty()) {
-            throw new GradleException("Java-based launcher has been configured, but no jars were resolved for it."
-                    + " Configure a launcher with the javaLauncher configuration.");
+            throw new GradleException("The java-based launcher is enabled, but no jars were resolved for it."
+                    + " Check 'distribution.javaLauncher.launcher'.");
         }
 
         String launcherMainClass = mainClass(params.getLauncherMainClass().getOrNull(), "launcherMainClass");

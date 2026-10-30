@@ -317,11 +317,9 @@ By default, distributions package the native [`go-java-launcher` and `go-init`](
 It is possible to replace these launcher binaries by Java-based implementations (which are not provided):
 
 ```gradle
-dependencies {
-    javaLauncher 'my.launcher:java-launcher:1.2.3'
-}
 distribution {
     javaLauncher {
+        launcher 'my.launcher:java-launcher:1.2.3'  // any dependency notation, e.g. project(':launcher')
         launcherMainClass 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
         initMainClass 'my.launcher.JavaInit'         // equivalent of the go-init binary
     }
@@ -339,12 +337,18 @@ Requirements:
 * JDKs must be bundled through `distribution { jdks.put() }`.
   * The JDK corresponding to the service's runtime version is used to run the launcher as well, so the launcher must
     be compatible with the service's `javaVersion`.
-* Both `launcherMainClass` and `initMainClass` must be set.
+* Setting `launcher` enables the java-based launcher, and both main classes must then be set.
+* The launcher is resolved through the `javaLauncher` configuration. With
+  [gradle-consistent-versions](https://github.com/palantir/gradle-consistent-versions), it is locked like the rest of
+  the production dependencies, so the version can be left out (`launcher 'my.launcher:java-launcher'`) and come
+  from `versions.props`.
 
 You can optionally configure JVM options and arguments to be passed to the launcher with:
 ```gradle
-javaLauncher {
-    getJvmArgs().addAll(['-Xms4m', '-Xmx8m'])
+distribution {
+    javaLauncher {
+        jvmArgs.addAll(['-Xms4m', '-Xmx8m'])
+    }
 }
 ```
 

@@ -1851,14 +1851,11 @@ class JavaServiceDistributionPluginTests {
 
         private static void appendJavaLauncherConfig(RootProject rootProject) {
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                         initMainClass 'launcher.FakeInit'
                     }
@@ -1904,14 +1901,11 @@ class JavaServiceDistributionPluginTests {
             setupRootProject(rootProject);
 
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                         initMainClass 'launcher.FakeInit'
                     }
@@ -1944,14 +1938,11 @@ class JavaServiceDistributionPluginTests {
             setupRootProject(rootProject);
 
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                         initMainClass 'launcher.FakeInit'
                         getJvmArgs().add('-Xmx8m')
@@ -2005,8 +1996,6 @@ class JavaServiceDistributionPluginTests {
 
             rootProject.buildGradle().append("""
                 dependencies {
-                    javaLauncher project(':launcher')
-
                     implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
                 }
 
@@ -2014,6 +2003,7 @@ class JavaServiceDistributionPluginTests {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                         initMainClass 'launcher.FakeInit'
                     }
@@ -2049,13 +2039,10 @@ class JavaServiceDistributionPluginTests {
             setupRootProject(rootProject);
 
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                         initMainClass 'launcher.FakeInit'
                     }
@@ -2075,14 +2062,11 @@ class JavaServiceDistributionPluginTests {
             setupRootProject(rootProject);
 
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcher project(':launcher')
                         initMainClass 'launcher.FakeInit'
                     }
                 }
@@ -2104,14 +2088,11 @@ class JavaServiceDistributionPluginTests {
             setupRootProject(rootProject);
 
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                     }
                 }
@@ -2127,7 +2108,8 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void fails_when_missing_launcher_config(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+        void main_classes_alone_do_not_enable_the_java_launcher(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
 
@@ -2142,10 +2124,43 @@ class JavaServiceDistributionPluginTests {
                 }
                 """);
 
-            InvocationResult invocationResult =
-                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
 
-            invocationResult.assertThat().output().contains("Configure a launcher with the javaLauncher configuration");
+            rootProject
+                    .file("dist/service-name-0.0.1/service/bin/linux-amd64/go-java-launcher")
+                    .assertThat()
+                    .exists();
+            assertThat(initScript(rootProject)).contains("go-java-launcher");
+        }
+
+        @Test
+        void java_launcher_dependency_alone_does_not_enable_the_java_launcher(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher(project(':launcher'))
+                }
+
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass 'launcher.FakeLauncher'
+                        initMainClass 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
+
+            rootProject
+                    .file("dist/service-name-0.0.1/service/bin/linux-amd64/go-java-launcher")
+                    .assertThat()
+                    .exists();
+            assertThat(initScript(rootProject)).contains("go-java-launcher");
         }
 
         @Test
@@ -2188,14 +2203,11 @@ class JavaServiceDistributionPluginTests {
             setupRootProject(rootProject);
 
             rootProject.buildGradle().append("""
-                dependencies {
-                    javaLauncher project(':launcher')
-                }
-
                 distribution {
                     javaVersion 25
                     jdks.put(JavaVersion.VERSION_25, fileTree("fake-java"))
                     javaLauncher {
+                        launcher project(':launcher')
                         launcherMainClass 'launcher.FakeLauncher'
                         initMainClass 'launcher.FakeInit'
                     }

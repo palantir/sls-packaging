@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.asset;
 
 import com.palantir.gradle.dist.DeploymentDirInclusion;
+import com.palantir.gradle.dist.GcvUtils;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
@@ -46,7 +47,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         project.getPluginManager().apply(ProductDependencyIntrospectionPlugin.class);
 
         project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
-            GcvUtils.lockConfigurationInGcv(project);
+            GcvUtils.lockConfigurationInGcv(project, ASSET_CONFIGURATION);
         });
 
         @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")

@@ -16,17 +16,23 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.palantir.gradle.dist.GcvUtils;
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.TaskProvider;
+import org.immutables.value.Value.Immutable;
 
 /**
  * Wires the launcher used by {@code init.sh}: the go-java-launcher binaries (default), or a java-based replacement
@@ -40,25 +46,119 @@ final class Launchers {
     private static final String FALLBACK_GO_JAVA_VERSION = "1.215.0";
     private static final String GO_JAVA_LAUNCHER = "com.palantir.launching:go-java-launcher";
     private static final String GO_INIT = "com.palantir.launching:go-init";
+    /** The name of the Gradle configuration used to provide the java launcher libraries. */
+    private static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
 
-    /**
-     * Files a launcher contributes to the distribution.
-     * <p>
-     * Also provides the task used to generate these files, so it can be wired (this appears to not always be working
-     * properly from just using the file collections, seemingly due to the use of
-     * {@link Provider#zip} in {@link JavaLauncherExtension#fullyConfigured()}).
-     */
-    record LauncherConfiguration(LauncherType type, FileCollection bin, FileCollection lib) {}
+    /** Files a launcher contributes to the distribution. */
+    record LauncherConfiguration(LauncherType type, Provider<?> bin, Provider<?> lib) {}
 
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
-        LauncherConfiguration go = configureGo(project);
-        LauncherConfiguration java = configureJava(project, distributionExtension);
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
+        NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
+                .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
+                    conf.setDescription(
+                            "Resolves the java-based launcher set by `distribution.javaLauncher.launcher`.");
+                    conf.setCanBeConsumed(false);
+                    conf.getDependencies()
+                            .addAllLater(javaLauncher
+                                    .getLauncher()
+                                    .map(notation ->
+                                            List.of(project.getDependencies().create(notation))));
+                });
+        // Resolve the launcher with the rest of the dependencies, as for the asset configuration
+        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
+            GcvUtils.lockConfigurationInGcv(project, JAVA_LAUNCHER_CONFIGURATION);
+        });
 
-        return distributionExtension.getJavaLauncher().fullyConfigured().map(configured -> configured ? java : go);
-        // This instead of a .map allows to properly wire up task dependencies using the file collection outputs
-        //        return project.provider(
-        //                () -> distributionExtension.getJavaLauncher().fullyConfigured().get() ? java : go);
+        LauncherConfiguration go = configureGo(project);
+        LauncherConfiguration java = configureJava(project, distributionExtension, javaLauncherConfig);
+
+        Provider<Boolean> enabled = javaLauncherEnabled(distributionExtension);
+
+        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, enabled, javaLauncherConfig));
+        javaLauncher.getLauncherCommand().disallowChanges();
+
+        // Consumers flatMap into the selected launcher's providers, which carry the tasks producing its files
+        return enabled.map(useJavaLauncher -> useJavaLauncher ? java : go);
+    }
+
+    @Immutable
+    interface JavaLauncherInputs {
+        boolean launcherSet();
+
+        boolean jdkBundled();
+
+        String launcherMainClass();
+
+        String initMainClass();
+    }
+
+    /**
+     * Whether the java-based launcher is enabled, which is the case when a launcher is set.
+     * <p>
+     * Throws upon misconfiguration (e.g. missing main classes).
+     */
+    private static Provider<Boolean> javaLauncherEnabled(JavaServiceDistributionExtension distributionExtension) {
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
+        return javaLauncher
+                .getLauncher()
+                .map(_notation -> true)
+                .orElse(false)
+                .map(launcherSet -> ImmutableJavaLauncherInputs.builder().launcherSet(launcherSet))
+                .zip(
+                        distributionExtension.isJdkBundled().orElse(false),
+                        ImmutableJavaLauncherInputs.Builder::jdkBundled)
+                .zip(
+                        javaLauncher.getLauncherMainClass().orElse(""),
+                        ImmutableJavaLauncherInputs.Builder::launcherMainClass)
+                .zip(javaLauncher.getInitMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::initMainClass)
+                .map(ImmutableJavaLauncherInputs.Builder::build)
+                .map(Launchers::validate);
+    }
+
+    private static boolean validate(JavaLauncherInputs inputs) {
+        if (!inputs.launcherSet()) {
+            return false;
+        }
+        if (!inputs.jdkBundled()) {
+            throw new GradleException(
+                    "Jdks must be configured and included in the distribution to use the java-based launcher.");
+        }
+        if (Strings.isNullOrEmpty(inputs.launcherMainClass())) {
+            throw new GradleException("'distribution.javaLauncher.launcherMainClass' must be specified when the"
+                    + " java-based launcher is set");
+        }
+        if (Strings.isNullOrEmpty(inputs.initMainClass())) {
+            throw new GradleException("'distribution.javaLauncher.initMainClass' must be specified when the"
+                    + " java-based launcher is set");
+        }
+        return true;
+    }
+
+    /**
+     * The command running the launcher main class, using locations relative to the distribution root directory.
+     * Absent unless the java-based launcher is enabled.
+     */
+    private static Provider<List<String>> launcherCommand(
+            JavaServiceDistributionExtension distributionExtension,
+            Provider<Boolean> enabled,
+            NamedDomainObjectProvider<Configuration> javaLauncherConfig) {
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
+        Provider<String> classpath = javaLauncherConfig
+                .flatMap(Configuration::getElements)
+                .map(files -> files.stream()
+                        .map(file -> "service/lib/" + file.getAsFile().getName())
+                        .collect(Collectors.joining(":")));
+        return enabled
+                // A null mapping result makes the provider absent
+                .map(useJavaLauncher -> useJavaLauncher ? ImmutableList.<String>builder() : null)
+                .zip(distributionExtension.getJavaHome(), (command, javaHome) -> command.add(javaHome + "/bin/java"))
+                .zip(javaLauncher.getJvmArgs(), ImmutableList.Builder::addAll)
+                .zip(classpath, (command, cp) -> command.add("-cp", cp))
+                .zip(
+                        javaLauncher.getLauncherMainClass(),
+                        (command, mainClass) -> command.add(mainClass).build());
     }
 
     private static LauncherConfiguration configureGo(Project project) {
@@ -81,7 +181,8 @@ final class Launchers {
                     });
                 });
 
-        return new LauncherConfiguration(LauncherType.GO, project.files(copyLauncherBinaries), project.files());
+        return new LauncherConfiguration(
+                LauncherType.GO, copyLauncherBinaries.map(Sync::getDestinationDir), project.provider(project::files));
     }
 
     private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
@@ -110,15 +211,9 @@ final class Launchers {
     }
 
     private static LauncherConfiguration configureJava(
-            Project project, JavaServiceDistributionExtension distributionExtension) {
-        // Populated by plugins providing a java-based launcher
-        NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
-                .register(JavaLauncherExtension.JAVA_LAUNCHER_CONFIGURATION, conf -> {
-                    conf.setDescription(
-                            "Java-based replacement for go-java-launcher/go-init, see `distribution.javaLauncher`.");
-                    conf.setCanBeConsumed(false);
-                });
-
+            Project project,
+            JavaServiceDistributionExtension distributionExtension,
+            NamedDomainObjectProvider<Configuration> javaLauncherConfig) {
         TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts = project.getTasks()
                 .register("createJavaLauncherScripts", CreateJavaLauncherScriptsTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
@@ -135,7 +230,9 @@ final class Launchers {
                 });
 
         return new LauncherConfiguration(
-                LauncherType.JAVA, project.files(createJavaLauncherScripts), project.files(javaLauncherConfig));
+                LauncherType.JAVA,
+                createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir),
+                javaLauncherConfig);
     }
 
     private Launchers() {}
