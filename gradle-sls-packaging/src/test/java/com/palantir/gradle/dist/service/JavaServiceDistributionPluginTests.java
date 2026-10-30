@@ -775,6 +775,44 @@ class JavaServiceDistributionPluginTests {
     }
 
     @Test
+    void trims_native_heap_for_jdk_17(GradleInvoker gradle, RootProject rootProject) throws Exception {
+        assertThat(staticJvmOptsForJavaVersion(gradle, rootProject, 17)).contains("-XX:TrimNativeHeapInterval=5000");
+    }
+
+    @Test
+    void does_not_trim_native_heap_for_jdk_11(GradleInvoker gradle, RootProject rootProject) throws Exception {
+        assertThat(staticJvmOptsForJavaVersion(gradle, rootProject, 11))
+                .noneMatch(opt -> opt.startsWith("-XX:TrimNativeHeapInterval"));
+    }
+
+    private List<String> staticJvmOptsForJavaVersion(GradleInvoker gradle, RootProject rootProject, int javaVersion)
+            throws Exception {
+        createUntarBuildFile(rootProject);
+        rootProject.buildGradle().append("""
+            dependencies { implementation files("%s") }
+            tasks.jar.archiveBaseName = "internal"
+            distribution {
+                javaVersion %d
+            }
+            """, EXTERNAL_JAR, javaVersion);
+        rootProject.mainSourceSet().java().writeClass("""
+            package test;
+            public class Test {}
+            """);
+
+        gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+        return OBJECT_MAPPER
+                .readValue(
+                        rootProject
+                                .file("dist/service-name-0.0.1/service/bin/launcher-static.yml")
+                                .path()
+                                .toFile(),
+                        LaunchConfig.LaunchConfigInfo.class)
+                .jvmOpts();
+    }
+
+    @Test
     void uses_generational_zgc_for_jdk_21(GradleInvoker gradle, RootProject rootProject) throws Exception {
         createUntarBuildFile(rootProject);
         rootProject.buildGradle().append("""

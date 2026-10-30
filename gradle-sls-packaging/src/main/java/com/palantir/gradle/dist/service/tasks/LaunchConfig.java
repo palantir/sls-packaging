@@ -60,6 +60,9 @@ public final class LaunchConfig {
             "-verbose:gc");
     private static final ImmutableList<String> java14PlusOptions =
             ImmutableList.of("-XX:+ShowCodeDetailsInExceptionMessages");
+    // Periodically return memory freed into glibc malloc arenas to the OS, see
+    // https://bugs.openjdk.org/browse/JDK-8293114
+    private static final ImmutableList<String> java17PlusOptions = ImmutableList.of("-XX:TrimNativeHeapInterval=5000");
     private static final ImmutableList<String> java15Options =
             ImmutableList.of("-XX:+UnlockDiagnosticVMOptions", "-XX:+ExpandSubTypeCheckAtParseTime");
     private static final ImmutableList<String> disableBiasedLocking = ImmutableList.of("-XX:-UseBiasedLocking");
@@ -184,6 +187,10 @@ public final class LaunchConfig {
                         .addAllJvmOpts(
                                 javaVersion.compareTo(JavaVersion.toVersion("14")) >= 0
                                         ? java14PlusOptions
+                                        : ImmutableList.of())
+                        .addAllJvmOpts(
+                                javaVersion.compareTo(JavaVersion.toVersion("17")) >= 0
+                                        ? java17PlusOptions
                                         : ImmutableList.of())
                         .addAllJvmOpts(
                                 javaVersion.compareTo(JavaVersion.toVersion("15")) == 0
