@@ -28,7 +28,6 @@ import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
@@ -96,7 +95,7 @@ public class BaseDistributionExtension {
         projectName = project.getName();
     }
 
-    public final Provider<String> getDistributionServiceGroup() {
+    public final Property<String> getDistributionServiceGroup() {
         return serviceGroup;
     }
 
@@ -114,7 +113,7 @@ public class BaseDistributionExtension {
         this.serviceGroup.set(serviceGroup);
     }
 
-    public final Provider<String> getDistributionServiceName() {
+    public final Property<String> getDistributionServiceName() {
         return serviceName;
     }
 
@@ -132,7 +131,7 @@ public class BaseDistributionExtension {
         this.serviceName.set(serviceName);
     }
 
-    public final Provider<ProductType> getProductType() {
+    public final Property<ProductType> getProductType() {
         return productType;
     }
 
@@ -234,7 +233,7 @@ public class BaseDistributionExtension {
         }));
     }
 
-    public final Provider<Set<ProductId>> getOptionalProductDependencies() {
+    public final SetProperty<ProductId> getOptionalProductDependencies() {
         return optionalProductDependencies;
     }
 
@@ -246,7 +245,7 @@ public class BaseDistributionExtension {
         this.optionalProductDependencies.add(new ProductId(optionalProductId));
     }
 
-    public final Provider<Set<ProductId>> getIgnoredProductDependencies() {
+    public final SetProperty<ProductId> getIgnoredProductDependencies() {
         return ignoredProductDependencies;
     }
 
