@@ -108,7 +108,8 @@ public class JavaServiceDistributionExtension extends BaseDistributionExtension 
         env = objectFactory.mapProperty(String.class, String.class);
         setProductType(ProductType.SERVICE_V1);
         extraFiles = project.copySpec();
-        javaLauncher = objectFactory.newInstance(JavaLauncherExtension.class);
+        //        javaLauncher = objectFactory.newInstance(JavaLauncherExtension.class);
+        javaLauncher = new JavaLauncherExtension(project, this);
     }
 
     public final CopySpec getExtraFiles() {

@@ -46,17 +46,19 @@ final class Launchers {
      * <p>
      * Also provides the task used to generate these files, so it can be wired (this appears to not always be working
      * properly from just using the file collections, seemingly due to the use of
-     * {@link Provider#zip} in {@link JavaLauncherExtension#javaLauncherConfigured}).
+     * {@link Provider#zip} in {@link JavaLauncherExtension#fullyConfigured()}).
      */
-    record LauncherConfiguration(LauncherType type, FileCollection bin, FileCollection lib, TaskProvider<?> copyTask) {}
+    record LauncherConfiguration(LauncherType type, FileCollection bin, FileCollection lib) {}
 
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
         LauncherConfiguration go = configureGo(project);
         LauncherConfiguration java = configureJava(project, distributionExtension);
 
-        return JavaLauncherExtension.javaLauncherConfigured(project, distributionExtension)
-                .map(javaLauncherConfigured -> javaLauncherConfigured ? java : go);
+        return distributionExtension.getJavaLauncher().fullyConfigured().map(configured -> configured ? java : go);
+        // This instead of a .map allows to properly wire up task dependencies using the file collection outputs
+        //        return project.provider(
+        //                () -> distributionExtension.getJavaLauncher().fullyConfigured().get() ? java : go);
     }
 
     private static LauncherConfiguration configureGo(Project project) {
@@ -79,8 +81,7 @@ final class Launchers {
                     });
                 });
 
-        return new LauncherConfiguration(
-                LauncherType.GO, project.files(copyLauncherBinaries), project.files(), copyLauncherBinaries);
+        return new LauncherConfiguration(LauncherType.GO, project.files(copyLauncherBinaries), project.files());
     }
 
     private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
@@ -134,10 +135,7 @@ final class Launchers {
                 });
 
         return new LauncherConfiguration(
-                LauncherType.JAVA,
-                project.files(createJavaLauncherScripts),
-                project.files(javaLauncherConfig),
-                createJavaLauncherScripts);
+                LauncherType.JAVA, project.files(createJavaLauncherScripts), project.files(javaLauncherConfig));
     }
 
     private Launchers() {}

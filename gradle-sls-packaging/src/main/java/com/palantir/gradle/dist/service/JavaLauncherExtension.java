@@ -17,20 +17,20 @@
 package com.palantir.gradle.dist.service;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.palantir.logsafe.Preconditions;
-import groovy.lang.Tuple;
-import java.io.File;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.lang.model.SourceVersion;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.DependencySet;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.immutables.value.Value.Immutable;
 
 /**
  * Configures a jvm based replacement for the <a href="https://github.com/palantir/go-java-launcher">go-java-launcher and go-init binaries</a>
@@ -42,28 +42,82 @@ import org.gradle.api.provider.Provider;
  * This requires the runtime JDK to be bundled by being provided in {@link JavaServiceDistributionExtension#getJdks()}.
  * If it is not provided, and this extension is configured, an exception will be thrown.
  */
-public abstract class JavaLauncherExtension {
+public class JavaLauncherExtension {
     /** The name of the Gradle configuration used to provide the java launcher libraries. */
     static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
 
-    /** Main class which behaves like the {@code go-java-launcher} binary. */
-    public abstract Property<String> getLauncherMainClass();
+    private final Provider<Boolean> isJdkBundled;
+    private final Provider<String> javaHome;
+    private final Provider<Configuration> javaLauncherConfiguration;
 
-    /** Main class which behaves like the {@code go-init} binary. */
-    public abstract Property<String> getInitMainClass();
+    private final Property<String> launcherMainClass;
+    private final Property<String> initMainClass;
+    private final ListProperty<String> jvmArgs;
 
-    /** Options to pass to the jvm when starting the launcher. */
-    public abstract ListProperty<String> getJvmArgs();
+    public JavaLauncherExtension(Project project, JavaServiceDistributionExtension distributionExtension) {
+        ObjectFactory objectFactory = project.getObjects();
 
-    public final void launcherMainClass(String launcherMainClass) {
-        Preconditions.checkArgument(
-                SourceVersion.isName(launcherMainClass), "launcherMainClass must be a valid class name");
-        getLauncherMainClass().set(launcherMainClass);
+        //        JavaServiceDistributionExtension distributionExtension =
+        //                project.getExtensions().findByType(JavaServiceDistributionExtension.class);
+        Preconditions.checkNotNull(distributionExtension, "Could not find Java service distribution extension");
+        javaHome = distributionExtension.getJavaHome();
+        isJdkBundled = distributionExtension.isJdkBundled();
+
+        // Hack for this to be lazy?
+        javaLauncherConfiguration = project.provider(
+                        () -> project.getConfigurations().named(JAVA_LAUNCHER_CONFIGURATION))
+                .map(Provider::get);
+
+        launcherMainClass = objectFactory.property(String.class);
+        initMainClass = objectFactory.property(String.class);
+
+        jvmArgs = objectFactory.listProperty(String.class).empty();
     }
 
-    public final void initMainClass(String initMainClass) {
-        Preconditions.checkArgument(SourceVersion.isName(initMainClass), "initMainClass must be a valid class name");
-        getInitMainClass().set(initMainClass);
+    /** Main class which behaves like the {@code go-java-launcher} binary. */
+    public Provider<String> getLauncherMainClass() {
+        return launcherMainClass;
+    }
+
+    public final void launcherMainClass(String clazz) {
+        Preconditions.checkArgument(SourceVersion.isName(clazz), "launcherMainClass must be a valid class name");
+        launcherMainClass.set(launcherMainClass);
+    }
+
+    /** Main class which behaves like the {@code go-init} binary. */
+    public Provider<String> getInitMainClass() {
+        return initMainClass;
+    }
+
+    public final void initMainClass(String clazz) {
+        Preconditions.checkArgument(SourceVersion.isName(clazz), "initMainClass must be a valid class name");
+        initMainClass.set(clazz);
+    }
+
+    /** Options to pass to the jvm when starting the launcher. */
+    public Provider<List<String>> getJvmArgs() {
+        return jvmArgs;
+    }
+
+    public final void jvmArgs(List<String> args) {
+        jvmArgs.addAll(args);
+    }
+
+    public final Provider<List<String>> classpath() {
+        return javaLauncherConfiguration
+                .map(Configuration::getFiles)
+                .map(cp -> cp.stream().map(f -> "service/lib/" + f.getName()).collect(Collectors.toList()));
+    }
+
+    @Immutable
+    interface JavaLauncherConfig {
+        boolean isJdkBundled();
+
+        DependencySet dependencies();
+
+        String launcherMainClass();
+
+        String initMainClass();
     }
 
     /**
@@ -71,91 +125,72 @@ public abstract class JavaLauncherExtension {
      * <p>
      * Throws upon misconfiguration (e.g. partial configuration of the java-based launcher).
      */
-    public static Provider<Boolean> javaLauncherConfigured(
-            Project project, JavaServiceDistributionExtension extension) {
-        Provider<Boolean> bundledJdk = extension.isJdkBundled().orElse(false);
+    public final Provider<Boolean> fullyConfigured() {
+        Provider<ImmutableJavaLauncherConfig.Builder> builder = isJdkBundled
+                .orElse(false)
+                .map(b -> ImmutableJavaLauncherConfig.builder().isJdkBundled(b));
 
-        Provider<Configuration> javaLauncherConfig =
-                project.getConfigurations().named(JAVA_LAUNCHER_CONFIGURATION).orElse((Configuration) null);
+        builder = builder.zip(javaLauncherConfiguration, (b, c) -> {
+            // It seems under certain conditions the configuration inherits dependencies like project(:)
+            // This makes getAllDependencies not be empty
+            // What we mostly care about here is whether javaLauncher was directly configured
+            // so we use getDependencies (which does not resolve the configuration)
+            return b.dependencies(c.getDependencies());
+        });
 
-        JavaLauncherExtension javaLauncher = extension.getJavaLauncher();
-        Provider<String> launcherMainClass = javaLauncher.getLauncherMainClass().orElse("");
-        Provider<String> initMainClass = javaLauncher.getInitMainClass().orElse("");
+        builder = builder.zip(launcherMainClass.orElse(""), ImmutableJavaLauncherConfig.Builder::launcherMainClass);
+        builder = builder.zip(initMainClass.orElse(""), ImmutableJavaLauncherConfig.Builder::initMainClass);
 
-        return bundledJdk
-                .zip(javaLauncherConfig, Tuple::tuple)
-                .zip(launcherMainClass, (t, s) -> Tuple.tuple(t.getV1(), t.getV2(), s))
-                .zip(initMainClass, (t, s) -> Tuple.tuple(t.getV1(), t.getV2(), t.getV3(), s))
-                .map(t -> {
-                    boolean jdkIsBundled = t.getV1();
-                    Configuration config = t.getV2();
+        return builder.map(ImmutableJavaLauncherConfig.Builder::build).map(config -> {
+            boolean jarConfigured = !config.dependencies().isEmpty();
+            boolean launcherMainClassConfigured = !Strings.isNullOrEmpty(config.launcherMainClass());
+            boolean initMainClassConfigured = !Strings.isNullOrEmpty(config.initMainClass());
+            if (jarConfigured) {
+                if (!config.isJdkBundled()) {
+                    throw new GradleException(
+                            "Jdks must be configured and included in the distribution to configure a java-based"
+                                    + " launcher.");
+                }
+                if (!launcherMainClassConfigured) {
+                    throw new GradleException(
+                            "'distribution.javaLauncher.launcherMainClass' must be specified when a java-based"
+                                    + " launcher is configured");
+                }
+                if (!initMainClassConfigured) {
+                    throw new GradleException(
+                            "'distribution.javaLauncher.initMainClass' must be specified when a java-based"
+                                    + " launcher is configured");
+                }
+            } else if (launcherMainClassConfigured || initMainClassConfigured) {
+                throw new GradleException(
+                        "Java-based launcher main classes have been configured, but no library was defined for"
+                                + " it. Configure a launcher with the " + JAVA_LAUNCHER_CONFIGURATION
+                                + " configuration.");
+            }
 
-                    // It seems under certain conditions the configuration inherits dependencies like project(:)
-                    // This makes getAllDependencies not be empty
-                    // What we mostly care about here is whether javaLauncher was directly configured
-                    // so we use getDependencies (which does not resolve the configuration)
-                    boolean jarConfigured =
-                            config != null && !config.getDependencies().isEmpty();
-                    boolean launcherMainClassConfigured = !Strings.isNullOrEmpty(t.getV3());
-                    boolean initMainClassConfigured = !Strings.isNullOrEmpty(t.getV4());
-                    if (jarConfigured) {
-                        if (!jdkIsBundled) {
-                            throw new GradleException(
-                                    "Jdks must be configured and included in the distribution to configure a java-based"
-                                            + " launcher.");
-                        }
-                        if (!launcherMainClassConfigured) {
-                            throw new GradleException(
-                                    "'distribution.javaLauncher.launcherMainClass' must be specified when a java-based"
-                                            + " launcher is configured");
-                        }
-                        if (!initMainClassConfigured) {
-                            throw new GradleException(
-                                    "'distribution.javaLauncher.initMainClass' must be specified when a java-based"
-                                            + " launcher is configured");
-                        }
-                    } else if (launcherMainClassConfigured || initMainClassConfigured) {
-                        throw new GradleException(
-                                "Java-based launcher main classes have been configured, but no library was defined for"
-                                        + " it. Configure a launcher with the " + JAVA_LAUNCHER_CONFIGURATION
-                                        + " configuration.");
-                    }
-
-                    // At this point, we know launcher and init are set iff config is set
-                    // but adding all three to be clear we want all three to be set
-                    return jarConfigured && launcherMainClassConfigured && initMainClassConfigured;
-                });
+            // At this point, we know launcher and init are set iff config is set
+            // but adding all three to be clear we want all three to be set
+            return jarConfigured && launcherMainClassConfigured && initMainClassConfigured;
+        });
     }
 
     /**
      * Builds the command to run the {@link JavaLauncherExtension#getLauncherMainClass()} java launcher,
      * using locations relative to the distribution root directory.
      */
-    public static Provider<List<String>> buildLauncherCommand(
-            Project project, JavaServiceDistributionExtension distributionExtension) {
-        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
-        Provider<String> javaHome = distributionExtension.getJavaHome();
-        Provider<List<String>> jvmArgs = javaLauncher.getJvmArgs();
-        Provider<Set<File>> classpath =
-                project.getConfigurations().named(JAVA_LAUNCHER_CONFIGURATION).map(Configuration::getFiles);
-        Provider<String> mainClass = javaLauncher.getLauncherMainClass();
+    public final Provider<List<String>> launcherCommand() {
+        Provider<ImmutableList.Builder<String>> result =
+                javaHome.map(jh -> ImmutableList.<String>builder().add(jh + "/bin/java"));
 
-        Provider<Stream<String>> command = javaHome.map(jh -> Stream.of(jh + "/bin/java"));
+        result = result.zip(jvmArgs, ImmutableList.Builder::addAll);
+        result = result.zip(classpath(), (b, cp) -> {
+            b.add("-cp");
+            b.add(String.join(":", cp));
+            return b;
+        });
 
-        command = command.zip(jvmArgs, (cmd, args) -> Stream.concat(cmd, args.stream()));
+        result = result.zip(launcherMainClass, ImmutableList.Builder::add);
 
-        command = command.zip(
-                classpath,
-                (cmd, cp) -> Stream.concat(
-                        cmd,
-                        Stream.of(
-                                "-cp",
-                                cp.stream()
-                                        .map(f -> "service/lib/" + f.getName())
-                                        .collect(Collectors.joining(":")))));
-
-        command = command.zip(mainClass, (cmd, clazz) -> Stream.concat(cmd, Stream.of(clazz)));
-
-        return command.map(Stream::toList);
+        return result.map(ImmutableList.Builder::build);
     }
 }
