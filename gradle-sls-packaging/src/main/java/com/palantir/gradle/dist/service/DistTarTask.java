@@ -17,6 +17,7 @@
 package com.palantir.gradle.dist.service;
 
 import com.palantir.gradle.dist.DeploymentDirInclusion;
+import com.palantir.gradle.dist.service.Launchers.LauncherConfiguration;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.gradle.api.JavaVersion;
@@ -34,7 +35,8 @@ final class DistTarTask {
             Project project,
             Tar distTarTask,
             JavaServiceDistributionExtension distributionExtension,
-            TaskProvider<Jar> jarTask) {
+            TaskProvider<Jar> jarTask,
+            Provider<LauncherConfiguration> launcher) {
         Provider<String> serviceName = distributionExtension.getDistributionServiceName();
         distTarTask.getArchiveBaseName().set(serviceName);
 
@@ -82,12 +84,21 @@ final class DistTarTask {
                 });
             }
 
+            // Copy launcher-related libraries (e.g. for java-based launchers)
+            root.into("service/lib", t -> {
+                // The launcher resolves consistently with the runtime classpath, so shared jars are identical
+                t.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
+                t.from(launcher.map(LauncherConfiguration::lib));
+            });
+
             root.into("service/lib/agent", t -> {
                 t.from(project.getConfigurations().named("javaAgent"));
             });
 
             root.into(SCRIPTS_DIST_LOCATION, t -> {
                 t.from(project.getLayout().getBuildDirectory().dir("scripts"));
+                // Also copy binaries from the launcher (e.g. go launchers, or java init scripts)
+                t.from(launcher.map(LauncherConfiguration::bin));
                 t.filePermissions(permissions -> permissions.unix(0755));
             });
 
