@@ -269,6 +269,43 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
     }
 
+    def '#gradleVersionNumber: lazily configures matching artifacts'() {
+        setup:
+        gradleVersion = gradleVersionNumber
+
+        buildFile << """
+        distribution {
+            artifact {
+                type = "oci"
+                uri = "registry.example.io/foo/bar:v1.3.0"
+            }
+            artifact {
+                type = "other"
+                uri = "registry.example.io/foo/baz:v1.3.0"
+            }
+        }
+
+        distribution.configureArtifacts { artifact ->
+            if (artifact.type.getOrNull() == "oci") {
+                artifact.uri.set("transformed." + artifact.uri.get())
+            }
+        }
+        """.stripIndent(true)
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted('createManifest')
+        readArtifactsExtension().toSet() == [
+            JsonArtifactLocator.from("oci", "transformed.registry.example.io/foo/bar:v1.3.0"),
+            JsonArtifactLocator.from("other", "registry.example.io/foo/baz:v1.3.0")
+        ].toSet()
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
     def '#gradleVersionNumber: fails if invalid'() {
         setup:
         gradleVersion = gradleVersionNumber
@@ -329,6 +366,7 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
                     uri = artifactOutput.flatMap { it.output }.map { Files.readString(it.getAsFile().toPath())}
                 }
             }
+
         """.stripIndent(true)
 
         when:
@@ -336,6 +374,49 @@ class CreateManifestTaskIntegrationSpec extends IntegrationSpec {
         println buildResult.standardOutput
 
         then:
+        readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
+
+        where:
+        gradleVersionNumber << GradleTestVersions.GRADLE_VERSIONS
+    }
+
+    def "#gradleVersionNumber: createManifest lazily consumes task-produced artifacts added via a provider"() {
+        given:
+        gradleVersion = gradleVersionNumber
+        buildFile << """
+            import com.palantir.gradle.dist.artifacts.ArtifactLocator
+            import org.gradle.api.file.RegularFileProperty
+            import org.gradle.api.tasks.OutputFile
+            import org.gradle.api.tasks.TaskAction
+            import java.nio.file.Files
+
+            abstract class ProduceArtifactsTask extends DefaultTask {
+                @OutputFile
+                abstract RegularFileProperty getOutput();
+
+                @TaskAction
+                final void action() throws Exception {
+                    Files.writeString(getOutput().getAsFile().get().toPath(), "registry.example.io/foo/bar:v1.3.0")
+                }
+            }
+
+            def produceArtifacts = tasks.register('produceArtifacts', ProduceArtifactsTask) {
+                output.fileValue(file("build/artifact-url"))
+            }
+
+            distribution.artifacts.addAll(produceArtifacts.map { producer ->
+                def locator = project.objects.newInstance(ArtifactLocator)
+                locator.type.set("oci")
+                locator.uri.set(Files.readString(producer.output.getAsFile().get().toPath()))
+                return [locator]
+            })
+        """.stripIndent(true)
+
+        when:
+        def buildResult = runTasksSuccessfully('createManifest')
+
+        then:
+        buildResult.wasExecuted(':produceArtifacts')
         readArtifactsExtension() == [JsonArtifactLocator.from("oci", "registry.example.io/foo/bar:v1.3.0")]
 
         where:
