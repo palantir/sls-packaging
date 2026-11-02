@@ -33,6 +33,13 @@ import org.gradle.api.provider.Provider;
  */
 public abstract class JavaLauncherExtension {
 
+    /**
+     * Whether the java-based launcher is enabled.
+     * <p>
+     * Set by {@link Launchers}, read-only for consumers.
+     */
+    public abstract Property<Boolean> getEnabled();
+
     /** Dependency notation of the launcher library, see {@link #launcher(Object)}. */
     public abstract Property<Object> getLauncher();
 

@@ -2216,6 +2216,86 @@ class JavaServiceDistributionPluginTests {
                             rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
                     .withMessageContaining("service-name-jdks/jdk25/bin/java: No such file or directory");
         }
+
+        @Test
+        void exposes_java_launcher_enabled(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                }
+
+                tasks.register('printJavaLauncherEnabled') {
+                    // read as a task input, like a docker plugin would, so the producing task runs first
+                    def javaLauncherEnabled = distribution.javaLauncher.enabled
+                    inputs.property('javaLauncherEnabled', javaLauncherEnabled)
+                    doLast { println "javaLauncherEnabled=" + javaLauncherEnabled.get() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherEnabled")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("javaLauncherEnabled=false");
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherEnabled")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("javaLauncherEnabled=true");
+        }
+
+        @Test
+        void exposes_the_java_launcher_command(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                }
+
+                tasks.register('printJavaLauncherCommand') {
+                    // read as a task input, like a docker plugin would, so the producing task runs first
+                    def command = distribution.javaLauncher.launcherCommand
+                    inputs.property('command', command.orElse([]))
+                    doLast { println "javaLauncherCommand=" + command.getOrNull() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherCommand")
+                            .buildsSuccessfully()
+                            .output())
+                    .contains("javaLauncherCommand=null");
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            InvocationResult result =
+                    gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully();
+            assertThat(result.output())
+                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp, "
+                            + "service/lib/launcher.jar, launcher.FakeLauncher, "
+                            + "service/bin/launcher-static.yml, var/conf/launcher-custom.yml]");
+        }
     }
 
     @Test

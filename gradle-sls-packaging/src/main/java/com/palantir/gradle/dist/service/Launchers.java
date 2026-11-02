@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.GcvUtils;
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
@@ -63,6 +64,103 @@ final class Launchers {
 
         // Consumers flatMap into the selected launcher's providers, which carry the tasks producing its files
         return enabled.map(useJavaLauncher -> useJavaLauncher ? java : go);
+    }
+
+    private static LauncherConfiguration configureGo(Project project) {
+        NamedDomainObjectProvider<Configuration> launcherConfig =
+                registerGoConfiguration(project, "goJavaLauncherBinary", GO_JAVA_LAUNCHER);
+        NamedDomainObjectProvider<Configuration> initConfig = registerGoConfiguration(project, "goInitBinary", GO_INIT);
+
+        // Note: we were previously using a Copy task, which was copying the binaries directly into the scripts
+        // directory. This is a bit better, as we now have a dedicated directory, which we then copy into the scripts
+        // directory in the DistTar task
+        TaskProvider<Sync> copyLauncherBinaries = project.getTasks()
+                .register("copyLauncherBinaries", Sync.class, task -> {
+                    task.from(untar(project, launcherConfig));
+                    task.from(untar(project, initConfig));
+                    task.into(project.getLayout().getBuildDirectory().dir("launcher/go"));
+                    task.eachFile(fcd -> {
+                        String[] segments = fcd.getRelativePath().getSegments();
+                        fcd.setRelativePath(new RelativePath(
+                                !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
+                    });
+                });
+
+        return new LauncherConfiguration(
+                LauncherType.GO, copyLauncherBinaries.map(Sync::getDestinationDir), project.provider(project::files));
+    }
+
+    private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
+            Project project, String name, String coordinate) {
+        NamedDomainObjectProvider<Configuration> configuration =
+                project.getConfigurations().register(name);
+        project.getDependencies()
+                .addProvider(name, goJavaLauncherVersion(project).map(v -> coordinate + ":" + v));
+        return configuration;
+    }
+
+    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher fallback version. */
+    private static Provider<String> goJavaLauncherVersion(Project project) {
+        return project.getProviders()
+                .gradleProperty(JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)
+                .map(versionOverride -> {
+                    project.getLogger()
+                            .lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
+                    return versionOverride;
+                })
+                .orElse(FALLBACK_GO_JAVA_VERSION);
+    }
+
+    private static Provider<FileTree> untar(Project project, NamedDomainObjectProvider<Configuration> configuration) {
+        return configuration.map(conf -> project.tarTree(conf.getSingleFile()));
+    }
+
+    private static LauncherConfiguration configureJava(
+            Project project,
+            JavaServiceDistributionExtension distributionExtension,
+            JavaLauncherExtension javaLauncher,
+            Provider<Boolean> enabled) {
+        NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
+                .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
+                    conf.setDescription(
+                            "Resolves the java-based launcher set by `distribution.javaLauncher.launcher`.");
+                    conf.setCanBeConsumed(false);
+                    conf.getDependencies()
+                            .addAllLater(javaLauncher
+                                    .getLauncher()
+                                    .map(notation ->
+                                            List.of(project.getDependencies().create(notation)))
+                                    .orElse(Collections.emptyList()));
+                });
+        // Resolve the launcher with the rest of the dependencies, as for the asset configuration
+        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
+            GcvUtils.lockConfigurationInGcv(project, JAVA_LAUNCHER_CONFIGURATION);
+        });
+
+        TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts = project.getTasks()
+                .register("createJavaLauncherScripts", CreateJavaLauncherScriptsTask.class, task -> {
+                    task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
+                    task.setDescription("Generates scripts running the java-based launcher.");
+                    task.getBundledJdk().set(distributionExtension.isJdkBundled());
+                    task.getJavaHome().set(distributionExtension.getJavaHome());
+
+                    task.getClasspath().from(javaLauncherConfig);
+
+                    task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
+                    task.getInitMainClass().set(javaLauncher.getInitMainClass());
+                    task.getJvmArgs().set(javaLauncher.getJvmArgs());
+                });
+
+        javaLauncher.getEnabled().set(enabled);
+        javaLauncher.getEnabled().disallowChanges();
+
+        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, enabled, javaLauncherConfig));
+        javaLauncher.getLauncherCommand().disallowChanges();
+
+        return new LauncherConfiguration(
+                LauncherType.JAVA,
+                createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir),
+                javaLauncherConfig);
     }
 
     @Immutable
@@ -146,6 +244,7 @@ final class Launchers {
                 .map(files -> files.stream()
                         .map(file -> "service/lib/" + file.getAsFile().getName())
                         .collect(Collectors.joining(":")));
+
         return enabled
                 // A null mapping result makes the provider absent
                 .map(useJavaLauncher -> useJavaLauncher ? ImmutableList.<String>builder() : null)
@@ -154,100 +253,10 @@ final class Launchers {
                 .zip(classpath, (command, cp) -> command.add("-cp", cp))
                 .zip(
                         javaLauncher.getLauncherMainClass(),
-                        (command, mainClass) -> command.add(mainClass).build());
-    }
-
-    private static LauncherConfiguration configureGo(Project project) {
-        NamedDomainObjectProvider<Configuration> launcherConfig =
-                registerGoConfiguration(project, "goJavaLauncherBinary", GO_JAVA_LAUNCHER);
-        NamedDomainObjectProvider<Configuration> initConfig = registerGoConfiguration(project, "goInitBinary", GO_INIT);
-
-        // Note: we were previously using a Copy task, which was copying the binaries directly into the scripts
-        // directory. This is a bit better, as we now have a dedicated directory, which we then copy into the scripts
-        // directory in the DistTar task
-        TaskProvider<Sync> copyLauncherBinaries = project.getTasks()
-                .register("copyLauncherBinaries", Sync.class, task -> {
-                    task.from(untar(project, launcherConfig));
-                    task.from(untar(project, initConfig));
-                    task.into(project.getLayout().getBuildDirectory().dir("launcher/go"));
-                    task.eachFile(fcd -> {
-                        String[] segments = fcd.getRelativePath().getSegments();
-                        fcd.setRelativePath(new RelativePath(
-                                !fcd.getFile().isDirectory(), Arrays.copyOfRange(segments, 3, segments.length)));
-                    });
-                });
-
-        return new LauncherConfiguration(
-                LauncherType.GO, copyLauncherBinaries.map(Sync::getDestinationDir), project.provider(project::files));
-    }
-
-    private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
-            Project project, String name, String coordinate) {
-        NamedDomainObjectProvider<Configuration> configuration =
-                project.getConfigurations().register(name);
-        project.getDependencies()
-                .addProvider(name, goJavaLauncherVersion(project).map(v -> coordinate + ":" + v));
-        return configuration;
-    }
-
-    /** To make our unit-test setup simpler, we allow hard-coding a specific go-java-launcher fallback version. */
-    private static Provider<String> goJavaLauncherVersion(Project project) {
-        return project.getProviders()
-                .gradleProperty(JavaServiceDistributionPlugin.TEST_GO_JAVA_LAUNCHER_FALLBACK_VERSION_OVERRIDE)
-                .map(versionOverride -> {
-                    project.getLogger()
-                            .lifecycle("using test only version override for go-java-launcher: {}", versionOverride);
-                    return versionOverride;
-                })
-                .orElse(FALLBACK_GO_JAVA_VERSION);
-    }
-
-    private static Provider<FileTree> untar(Project project, NamedDomainObjectProvider<Configuration> configuration) {
-        return configuration.map(conf -> project.tarTree(conf.getSingleFile()));
-    }
-
-    private static LauncherConfiguration configureJava(
-            Project project,
-            JavaServiceDistributionExtension distributionExtension,
-            JavaLauncherExtension javaLauncher,
-            Provider<Boolean> enabled) {
-        NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
-                .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
-                    conf.setDescription(
-                            "Resolves the java-based launcher set by `distribution.javaLauncher.launcher`.");
-                    conf.setCanBeConsumed(false);
-                    conf.getDependencies()
-                            .addAllLater(javaLauncher
-                                    .getLauncher()
-                                    .map(notation ->
-                                            List.of(project.getDependencies().create(notation))));
-                });
-        // Resolve the launcher with the rest of the dependencies, as for the asset configuration
-        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
-            GcvUtils.lockConfigurationInGcv(project, JAVA_LAUNCHER_CONFIGURATION);
-        });
-
-        TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts = project.getTasks()
-                .register("createJavaLauncherScripts", CreateJavaLauncherScriptsTask.class, task -> {
-                    task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
-                    task.setDescription("Generates scripts running the java-based launcher.");
-                    task.getBundledJdk().set(distributionExtension.isJdkBundled());
-                    task.getJavaHome().set(distributionExtension.getJavaHome());
-
-                    task.getClasspath().from(javaLauncherConfig);
-
-                    task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
-                    task.getInitMainClass().set(javaLauncher.getInitMainClass());
-                    task.getJvmArgs().set(javaLauncher.getJvmArgs());
-                });
-
-        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, enabled, javaLauncherConfig));
-        javaLauncher.getLauncherCommand().disallowChanges();
-
-        return new LauncherConfiguration(
-                LauncherType.JAVA,
-                createJavaLauncherScripts.flatMap(CreateJavaLauncherScriptsTask::getOutputDir),
-                javaLauncherConfig);
+                        (command, mainClass) -> command.add(mainClass)
+                                .add("service/bin/launcher-static.yml")
+                                .add("var/conf/launcher-custom.yml")
+                                .build());
     }
 
     private Launchers() {}
