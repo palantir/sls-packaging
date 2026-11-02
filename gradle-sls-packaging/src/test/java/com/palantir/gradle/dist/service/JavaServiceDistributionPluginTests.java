@@ -1945,7 +1945,7 @@ class JavaServiceDistributionPluginTests {
                         launcher project(':launcher')
                         launcherMainClass = 'launcher.FakeLauncher'
                         initMainClass = 'launcher.FakeInit'
-                        getJvmArgs().add('-Xmx8m')
+                        jvmArgs.add('-Xmx8m')
                     }
                 }
                 """);
