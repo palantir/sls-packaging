@@ -38,20 +38,11 @@ import org.immutables.value.Value.Immutable;
  */
 public abstract class JavaLauncherExtension {
 
-    private final Provider<Boolean> isJdkBundled;
+    private final Provider<Boolean> isEnabled;
 
     @Inject
     public JavaLauncherExtension(Provider<Boolean> isJdkBundled) {
-        this.isJdkBundled = isJdkBundled;
-    }
-
-    /**
-     * Whether the java-based launcher is enabled.
-     * <p>
-     * Set by {@link Launchers}, read-only for consumers.
-     */
-    public final Provider<Boolean> getEnabled() {
-        return getLauncher()
+        this.isEnabled = getLauncher()
                 .map(_notation -> true)
                 .orElse(false)
                 .map(launcherSet -> ImmutableJavaLauncherInputs.builder().launcherSet(launcherSet))
@@ -60,6 +51,13 @@ public abstract class JavaLauncherExtension {
                 .zip(getInitMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::initMainClass)
                 .map(ImmutableJavaLauncherInputs.Builder::build)
                 .map(JavaLauncherInputs::javaLauncherConfigured);
+    }
+
+    /**
+     * Whether the java-based launcher is enabled and properly configured.
+     */
+    public final Provider<Boolean> getEnabled() {
+        return isEnabled;
     }
 
     /** Dependency notation of the launcher library, see {@link #launcher(Object)}. */
