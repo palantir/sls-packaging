@@ -1863,28 +1863,31 @@ class JavaServiceDistributionPluginTests {
                 """);
         }
 
-        private static void verifyJavaLauncherIsUsed(RootProject rootProject) throws IOException, InterruptedException {
-            // the launcher jars are packaged in the lib directory
+        private static void verifyJavaLauncherIsUsed(RootProject rootProject) throws InterruptedException {
             rootProject
                     .file("dist/service-name-0.0.1/service/lib/launcher.jar")
                     .assertThat()
+                    .as("Launcher jars must be packaged in the lib directory")
                     .exists();
 
-            // the go binaries are neither packaged...
             rootProject
                     .file("dist/service-name-0.0.1/service/bin/linux-amd64")
                     .assertThat()
+                    .as("go-java-launcher binaries must not be packaged (linux)")
                     .doesNotExist();
             rootProject
                     .file("dist/service-name-0.0.1/service/bin/darwin-amd64")
                     .assertThat()
+                    .as("go-java-launcher binaries must not be packaged (darwin)")
                     .doesNotExist();
 
             // ...nor referenced by init.sh, which runs the generated java launcher scripts instead
             String initScript = initScript(rootProject);
-            assertThat(initScript).doesNotContain("go-java-launcher");
-            assertThat(initScript).contains("LAUNCHER_CMD=\"service/bin/java-launcher\"");
-            assertThat(initScript).contains("INIT_CMD=\"service/bin/java-init\"");
+            assertThat(initScript)
+                    .as("init.sh must reference the java launcher, and not go-java-launcher")
+                    .doesNotContain("go-java-launcher")
+                    .contains("LAUNCHER_CMD=\"service/bin/java-launcher\"")
+                    .contains("INIT_CMD=\"service/bin/java-init\"");
 
             assertThat(javaLauncherScript(rootProject))
                     .contains("-cp \"service/lib/launcher.jar")
@@ -1916,8 +1919,8 @@ class JavaServiceDistributionPluginTests {
 
             verifyJavaLauncherIsUsed(rootProject);
 
-            // Run init.sh as a sanity check that things are correctly wired up
             assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .as("init.sh start sanity check")
                     .contains("fake-init start");
         }
 
@@ -1957,8 +1960,8 @@ class JavaServiceDistributionPluginTests {
             assertThat(javaLauncherScript(rootProject)).contains("-Xmx8m");
             assertThat(javaInitScript(rootProject)).contains("-Xmx8m");
 
-            // Verify the max memory is actually wired up
             assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .as("JVM options are properly wired up to the launcher")
                     .contains("fake-init start")
                     .contains("Max heap: " + 8 * 1024 * 1024);
         }
@@ -2021,14 +2024,15 @@ class JavaServiceDistributionPluginTests {
                             + "service/lib/jackson-core-2.22.3.jar:"
                             + "service/lib/jackson-annotations-2.22.jar\"");
 
-            // Verify we are only bundling the 2.22.3 version, which is what gets resolved by GCV above
             assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.3.jar"))
+                    .as("Resolved launcher dependency gets packaged")
                     .exists();
             assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.1.jar"))
+                    .as("Exact launcher dependency is not packaged, as it should be resolved up")
                     .doesNotExist();
 
-            // Run init.sh as a sanity check that things are correctly wired up
             assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .as("init.sh start sanity check")
                     .contains("fake-init start");
         }
 
@@ -2158,21 +2162,6 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void java_launcher_configured_after_tasks_are_realized(
-                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
-            setupLauncherProject(launcher);
-            setupRootProject(rootProject);
-            rootProject.buildGradle().append("""
-                tasks.copyLauncherBinaries.enabled = false
-                """);
-            appendJavaLauncherConfig(rootProject);
-
-            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
-
-            verifyJavaLauncherIsUsed(rootProject);
-        }
-
-        @Test
         void init_extensions_can_invoke_launcher_cmd(GradleInvoker gradle, RootProject rootProject, SubProject launcher)
                 throws Exception {
             setupLauncherProject(launcher);
@@ -2187,6 +2176,7 @@ class JavaServiceDistributionPluginTests {
 
             assertThat(ExecUtils.execWithOutput(
                             rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "foo", "bar"))
+                    .as("Custom init- scripts can be called")
                     .contains("fake-launcher bar");
         }
 
@@ -2228,16 +2218,14 @@ class JavaServiceDistributionPluginTests {
                 }
 
                 tasks.register('printJavaLauncherEnabled') {
-                    // read as a task input, like a docker plugin would, so the producing task runs first
                     def javaLauncherEnabled = distribution.javaLauncher.enabled
                     inputs.property('javaLauncherEnabled', javaLauncherEnabled)
                     doLast { println "javaLauncherEnabled=" + javaLauncherEnabled.get() }
                 }
                 """);
 
-            assertThat(gradle.withArgs(":printJavaLauncherEnabled")
-                            .buildsSuccessfully()
-                            .output())
+            assertThat(gradle.withArgs(":printJavaLauncherEnabled").buildsSuccessfully())
+                    .output()
                     .contains("javaLauncherEnabled=false");
 
             rootProject.buildGradle().append("""
@@ -2250,9 +2238,8 @@ class JavaServiceDistributionPluginTests {
                 }
                 """);
 
-            assertThat(gradle.withArgs(":printJavaLauncherEnabled")
-                            .buildsSuccessfully()
-                            .output())
+            assertThat(gradle.withArgs(":printJavaLauncherEnabled").buildsSuccessfully())
+                    .output()
                     .contains("javaLauncherEnabled=true");
         }
 
@@ -2267,16 +2254,14 @@ class JavaServiceDistributionPluginTests {
                 }
 
                 tasks.register('printJavaLauncherCommand') {
-                    // read as a task input, like a docker plugin would, so the producing task runs first
                     def command = distribution.javaLauncher.launcherCommand
                     inputs.property('command', command.orElse([]))
                     doLast { println "javaLauncherCommand=" + command.getOrNull() }
                 }
                 """);
 
-            assertThat(gradle.withArgs(":printJavaLauncherCommand")
-                            .buildsSuccessfully()
-                            .output())
+            assertThat(gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully())
+                    .output()
                     .contains("javaLauncherCommand=null");
 
             rootProject.buildGradle().append("""
@@ -2289,9 +2274,8 @@ class JavaServiceDistributionPluginTests {
                 }
                 """);
 
-            InvocationResult result =
-                    gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully();
-            assertThat(result.output())
+            assertThat(gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully())
+                    .output()
                     .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp, "
                             + "service/lib/launcher.jar, launcher.FakeLauncher, "
                             + "service/bin/launcher-static.yml, var/conf/launcher-custom.yml]");

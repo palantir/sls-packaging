@@ -326,10 +326,20 @@ distribution {
 }
 ```
 
+The high-level contract for these is:
+* They 
+* `launcherMainClass`
+  * Must take two file paths arguments, pointing to a `launcher-static.yml` and `launcher-custom.yml` files.
+  * Must replace itself (through `execve`) by the newly launched Java process.
+* `initMainClass`
+  * Accepts one command argument, either `start`, `status` or `stop`, as well as `--help`.
+  * Starts a separate process, looking for files located at `service/bin/launcher-static.yml` and `var/conf/launcher-custom.yml`.
+  * Writes the new process' pid under a pid file located in `var/run`, which is used by the other commands.
+
 When configured this way:
 
 * the go binaries are neither resolved nor packaged.
-* the launcher library and its runtime dependencies are packaged into `service/lib`, deduplicated with the runtime classpath's libraries.
+* the launcher library and its runtime dependencies are packaged into `service/lib`, resolved with the runtime classpath's libraries.
 * `service/bin/java-launcher` and `service/bin/java-init` run the configured main classes with the bundled JDK, and
   receive the same arguments as the go binaries. `init.sh` uses them as `LAUNCHER_CMD` and `INIT_CMD`.
 
