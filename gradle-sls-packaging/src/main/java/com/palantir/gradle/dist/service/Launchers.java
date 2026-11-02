@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist.service;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.palantir.gradle.dist.GcvUtils;
 import com.palantir.gradle.dist.service.tasks.CreateJavaLauncherScriptsTask;
@@ -24,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -33,8 +31,6 @@ import org.gradle.api.file.RelativePath;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.TaskProvider;
-import org.immutables.value.Value;
-import org.immutables.value.Value.Immutable;
 
 /**
  * Wires the launcher used by {@code init.sh}: the go-java-launcher binaries (default), or a java-based replacement
@@ -56,14 +52,12 @@ final class Launchers {
 
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
-        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
-        Provider<Boolean> enabled = javaLauncherEnabled(distributionExtension);
 
         LauncherConfiguration go = configureGo(project);
-        LauncherConfiguration java = configureJava(project, distributionExtension, javaLauncher, enabled);
+        LauncherConfiguration java = configureJava(project, distributionExtension);
 
         // Consumers flatMap into the selected launcher's providers, which carry the tasks producing its files
-        return enabled.map(useJavaLauncher -> useJavaLauncher ? java : go);
+        return distributionExtension.getJavaLauncher().getEnabled().map(useJavaLauncher -> useJavaLauncher ? java : go);
     }
 
     private static LauncherConfiguration configureGo(Project project) {
@@ -113,10 +107,8 @@ final class Launchers {
     }
 
     private static LauncherConfiguration configureJava(
-            Project project,
-            JavaServiceDistributionExtension distributionExtension,
-            JavaLauncherExtension javaLauncher,
-            Provider<Boolean> enabled) {
+            Project project, JavaServiceDistributionExtension distributionExtension) {
+        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
         NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
                 .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
                     conf.setDescription(
@@ -148,10 +140,7 @@ final class Launchers {
                     task.getJvmArgs().set(javaLauncher.getJvmArgs());
                 });
 
-        javaLauncher.getEnabled().set(enabled);
-        javaLauncher.getEnabled().disallowChanges();
-
-        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, enabled, javaLauncherConfig));
+        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, javaLauncherConfig));
         javaLauncher.getLauncherCommand().disallowChanges();
 
         return new LauncherConfiguration(
@@ -160,80 +149,12 @@ final class Launchers {
                 javaLauncherConfig);
     }
 
-    @Immutable
-    interface JavaLauncherInputs {
-        boolean launcherSet();
-
-        boolean jdkBundled();
-
-        String launcherMainClass();
-
-        String initMainClass();
-
-        @Value.Derived
-        default boolean launcherMainClassSet() {
-            return !Strings.isNullOrEmpty(launcherMainClass());
-        }
-
-        @Value.Derived
-        default boolean initMainClassSet() {
-            return !Strings.isNullOrEmpty(initMainClass());
-        }
-    }
-
-    /**
-     * Whether the java-based launcher is enabled, which is the case when a launcher is set.
-     * <p>
-     * Throws upon misconfiguration (e.g. missing main classes).
-     */
-    private static Provider<Boolean> javaLauncherEnabled(JavaServiceDistributionExtension distributionExtension) {
-        JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
-        return javaLauncher
-                .getLauncher()
-                .map(_notation -> true)
-                .orElse(false)
-                .map(launcherSet -> ImmutableJavaLauncherInputs.builder().launcherSet(launcherSet))
-                .zip(
-                        distributionExtension.isJdkBundled().orElse(false),
-                        ImmutableJavaLauncherInputs.Builder::jdkBundled)
-                .zip(
-                        javaLauncher.getLauncherMainClass().orElse(""),
-                        ImmutableJavaLauncherInputs.Builder::launcherMainClass)
-                .zip(javaLauncher.getInitMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::initMainClass)
-                .map(ImmutableJavaLauncherInputs.Builder::build)
-                .map(Launchers::validate);
-    }
-
-    private static boolean validate(JavaLauncherInputs inputs) {
-        if (!inputs.launcherSet()) {
-            if (inputs.launcherMainClassSet() || inputs.initMainClassSet()) {
-                throw new GradleException("'distribution.javaLauncher.launcher' must be specified when the"
-                        + "java-based launcher is configured.");
-            }
-            return false;
-        }
-        if (!inputs.jdkBundled()) {
-            throw new GradleException(
-                    "Jdks must be configured and included in the distribution to use the java-based launcher.");
-        }
-        if (!inputs.launcherMainClassSet()) {
-            throw new GradleException("'distribution.javaLauncher.launcherMainClass' must be specified when the"
-                    + " java-based launcher is configured.");
-        }
-        if (!inputs.initMainClassSet()) {
-            throw new GradleException("'distribution.javaLauncher.initMainClass' must be specified when the"
-                    + " java-based launcher is configured.");
-        }
-        return true;
-    }
-
     /**
      * The command running the launcher main class, using locations relative to the distribution root directory.
      * Absent unless the java-based launcher is enabled.
      */
     private static Provider<List<String>> launcherCommand(
             JavaServiceDistributionExtension distributionExtension,
-            Provider<Boolean> enabled,
             NamedDomainObjectProvider<Configuration> javaLauncherConfig) {
         JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
         Provider<String> classpath = javaLauncherConfig
@@ -242,7 +163,8 @@ final class Launchers {
                         .map(file -> "service/lib/" + file.getAsFile().getName())
                         .collect(Collectors.joining(":")));
 
-        return enabled
+        return javaLauncher
+                .getEnabled()
                 // A null mapping result makes the provider absent
                 .map(useJavaLauncher -> useJavaLauncher ? ImmutableList.<String>builder() : null)
                 .zip(distributionExtension.getJavaHome(), (command, javaHome) -> command.add(javaHome + "/bin/java"))

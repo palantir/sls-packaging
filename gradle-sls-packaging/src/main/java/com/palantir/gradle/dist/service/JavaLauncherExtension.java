@@ -16,9 +16,14 @@
 
 package com.palantir.gradle.dist.service;
 
+import com.google.common.base.Strings;
+import javax.inject.Inject;
+import org.gradle.api.GradleException;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
 /**
  * Configures a jvm based replacement for the <a href="https://github.com/palantir/go-java-launcher">go-java-launcher and go-init binaries</a>
@@ -33,12 +38,79 @@ import org.gradle.api.provider.Provider;
  */
 public abstract class JavaLauncherExtension {
 
+    private final Provider<Boolean> isJdkBundled;
+
+    @Inject
+    public JavaLauncherExtension(Provider<Boolean> isJdkBundled) {
+        this.isJdkBundled = isJdkBundled;
+    }
+
+    @Immutable
+    interface JavaLauncherInputs {
+        boolean launcherSet();
+
+        boolean jdkBundled();
+
+        String launcherMainClass();
+
+        String initMainClass();
+
+        @Value.Derived
+        default boolean launcherMainClassSet() {
+            return !Strings.isNullOrEmpty(launcherMainClass());
+        }
+
+        @Value.Derived
+        default boolean initMainClassSet() {
+            return !Strings.isNullOrEmpty(initMainClass());
+        }
+
+        @Value.Derived
+        default boolean javaLauncherConfigured() {
+            // Note: it would be enough to check if launcherSet is true here, but this is a bit clearer as to the intent
+            return launcherSet() && launcherMainClassSet() && initMainClassSet();
+        }
+
+        @Value.Check
+        default void check() {
+            if (!launcherSet()) {
+                if (launcherMainClassSet() || initMainClassSet()) {
+                    throw new GradleException("'distribution.javaLauncher.launcher' must be specified when the"
+                            + "java-based launcher is configured.");
+                }
+                return;
+            }
+            if (!jdkBundled()) {
+                throw new GradleException(
+                        "Jdks must be configured and included in the distribution to use the java-based launcher.");
+            }
+            if (!launcherMainClassSet()) {
+                throw new GradleException("'distribution.javaLauncher.launcherMainClass' must be specified when the"
+                        + " java-based launcher is configured.");
+            }
+            if (!initMainClassSet()) {
+                throw new GradleException("'distribution.javaLauncher.initMainClass' must be specified when the"
+                        + " java-based launcher is configured.");
+            }
+        }
+    }
+
     /**
      * Whether the java-based launcher is enabled.
      * <p>
      * Set by {@link Launchers}, read-only for consumers.
      */
-    public abstract Property<Boolean> getEnabled();
+    public final Provider<Boolean> getEnabled() {
+        return getLauncher()
+                .map(_notation -> true)
+                .orElse(false)
+                .map(launcherSet -> ImmutableJavaLauncherInputs.builder().launcherSet(launcherSet))
+                .zip(isJdkBundled.orElse(false), ImmutableJavaLauncherInputs.Builder::jdkBundled)
+                .zip(getLauncherMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::launcherMainClass)
+                .zip(getInitMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::initMainClass)
+                .map(ImmutableJavaLauncherInputs.Builder::build)
+                .map(JavaLauncherInputs::javaLauncherConfigured);
+    }
 
     /** Dependency notation of the launcher library, see {@link #launcher(Object)}. */
     public abstract Property<Object> getLauncher();
