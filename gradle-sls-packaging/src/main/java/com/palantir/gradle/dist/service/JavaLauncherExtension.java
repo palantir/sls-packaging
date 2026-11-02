@@ -45,56 +45,6 @@ public abstract class JavaLauncherExtension {
         this.isJdkBundled = isJdkBundled;
     }
 
-    @Immutable
-    interface JavaLauncherInputs {
-        boolean launcherSet();
-
-        boolean jdkBundled();
-
-        String launcherMainClass();
-
-        String initMainClass();
-
-        @Value.Derived
-        default boolean launcherMainClassSet() {
-            return !Strings.isNullOrEmpty(launcherMainClass());
-        }
-
-        @Value.Derived
-        default boolean initMainClassSet() {
-            return !Strings.isNullOrEmpty(initMainClass());
-        }
-
-        @Value.Derived
-        default boolean javaLauncherConfigured() {
-            // Note: it would be enough to check if launcherSet is true here, but this is a bit clearer as to the intent
-            return launcherSet() && launcherMainClassSet() && initMainClassSet();
-        }
-
-        @Value.Check
-        default void check() {
-            if (!launcherSet()) {
-                if (launcherMainClassSet() || initMainClassSet()) {
-                    throw new GradleException("'distribution.javaLauncher.launcher' must be specified when the"
-                            + "java-based launcher is configured.");
-                }
-                return;
-            }
-            if (!jdkBundled()) {
-                throw new GradleException(
-                        "Jdks must be configured and included in the distribution to use the java-based launcher.");
-            }
-            if (!launcherMainClassSet()) {
-                throw new GradleException("'distribution.javaLauncher.launcherMainClass' must be specified when the"
-                        + " java-based launcher is configured.");
-            }
-            if (!initMainClassSet()) {
-                throw new GradleException("'distribution.javaLauncher.initMainClass' must be specified when the"
-                        + " java-based launcher is configured.");
-            }
-        }
-    }
-
     /**
      * Whether the java-based launcher is enabled.
      * <p>
@@ -144,6 +94,56 @@ public abstract class JavaLauncherExtension {
             getLauncher().set(provider);
         } else {
             getLauncher().set(dependencyNotation);
+        }
+    }
+
+    @Immutable
+    interface JavaLauncherInputs {
+        boolean launcherSet();
+
+        boolean jdkBundled();
+
+        String launcherMainClass();
+
+        String initMainClass();
+
+        @Value.Derived
+        default boolean launcherMainClassSet() {
+            return !Strings.isNullOrEmpty(launcherMainClass());
+        }
+
+        @Value.Derived
+        default boolean initMainClassSet() {
+            return !Strings.isNullOrEmpty(initMainClass());
+        }
+
+        @Value.Derived
+        default boolean javaLauncherConfigured() {
+            // Note: it would be enough to check if launcherSet is true here, but this is a bit clearer as to the intent
+            return launcherSet() && launcherMainClassSet() && initMainClassSet();
+        }
+
+        @Value.Check
+        default void check() {
+            if (!launcherSet()) {
+                if (launcherMainClassSet() || initMainClassSet()) {
+                    throw new GradleException("'distribution.javaLauncher.launcher' must be specified when the"
+                            + "java-based launcher is configured.");
+                }
+                return;
+            }
+            if (!jdkBundled()) {
+                throw new GradleException(
+                        "Jdks must be configured and included in the distribution to use the java-based launcher.");
+            }
+            if (!launcherMainClassSet()) {
+                throw new GradleException("'distribution.javaLauncher.launcherMainClass' must be specified when the"
+                        + " java-based launcher is configured.");
+            }
+            if (!initMainClassSet()) {
+                throw new GradleException("'distribution.javaLauncher.initMainClass' must be specified when the"
+                        + " java-based launcher is configured.");
+            }
         }
     }
 }
