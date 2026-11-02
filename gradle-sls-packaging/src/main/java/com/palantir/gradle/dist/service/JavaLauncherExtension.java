@@ -58,7 +58,6 @@ public abstract class JavaLauncherExtension {
      * <p>
      * Set by {@link Launchers}, read-only for consumers.
      */
-    // TODO: verify we can grab it and the contents are as expected
     public abstract ListProperty<String> getLauncherCommand();
 
     /**
