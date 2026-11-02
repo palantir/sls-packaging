@@ -56,29 +56,10 @@ final class Launchers {
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
         JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
-        NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
-                .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
-                    conf.setDescription(
-                            "Resolves the java-based launcher set by `distribution.javaLauncher.launcher`.");
-                    conf.setCanBeConsumed(false);
-                    conf.getDependencies()
-                            .addAllLater(javaLauncher
-                                    .getLauncher()
-                                    .map(notation ->
-                                            List.of(project.getDependencies().create(notation))));
-                });
-        // Resolve the launcher with the rest of the dependencies, as for the asset configuration
-        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
-            GcvUtils.lockConfigurationInGcv(project, JAVA_LAUNCHER_CONFIGURATION);
-        });
-
-        LauncherConfiguration go = configureGo(project);
-        LauncherConfiguration java = configureJava(project, distributionExtension, javaLauncherConfig);
-
         Provider<Boolean> enabled = javaLauncherEnabled(distributionExtension);
 
-        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, enabled, javaLauncherConfig));
-        javaLauncher.getLauncherCommand().disallowChanges();
+        LauncherConfiguration go = configureGo(project);
+        LauncherConfiguration java = configureJava(project, distributionExtension, javaLauncher, enabled);
 
         // Consumers flatMap into the selected launcher's providers, which carry the tasks producing its files
         return enabled.map(useJavaLauncher -> useJavaLauncher ? java : go);
@@ -228,7 +209,24 @@ final class Launchers {
     private static LauncherConfiguration configureJava(
             Project project,
             JavaServiceDistributionExtension distributionExtension,
-            NamedDomainObjectProvider<Configuration> javaLauncherConfig) {
+            JavaLauncherExtension javaLauncher,
+            Provider<Boolean> enabled) {
+        NamedDomainObjectProvider<Configuration> javaLauncherConfig = project.getConfigurations()
+                .register(JAVA_LAUNCHER_CONFIGURATION, conf -> {
+                    conf.setDescription(
+                            "Resolves the java-based launcher set by `distribution.javaLauncher.launcher`.");
+                    conf.setCanBeConsumed(false);
+                    conf.getDependencies()
+                            .addAllLater(javaLauncher
+                                    .getLauncher()
+                                    .map(notation ->
+                                            List.of(project.getDependencies().create(notation))));
+                });
+        // Resolve the launcher with the rest of the dependencies, as for the asset configuration
+        project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
+            GcvUtils.lockConfigurationInGcv(project, JAVA_LAUNCHER_CONFIGURATION);
+        });
+
         TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts = project.getTasks()
                 .register("createJavaLauncherScripts", CreateJavaLauncherScriptsTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
@@ -238,11 +236,13 @@ final class Launchers {
 
                     task.getClasspath().from(javaLauncherConfig);
 
-                    JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
                     task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
                     task.getInitMainClass().set(javaLauncher.getInitMainClass());
                     task.getJvmArgs().set(javaLauncher.getJvmArgs());
                 });
+
+        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, enabled, javaLauncherConfig));
+        javaLauncher.getLauncherCommand().disallowChanges();
 
         return new LauncherConfiguration(
                 LauncherType.JAVA,
