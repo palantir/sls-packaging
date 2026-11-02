@@ -32,6 +32,7 @@ import org.gradle.api.file.RelativePath;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.TaskProvider;
+import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
 
 /**
@@ -92,6 +93,16 @@ final class Launchers {
         String launcherMainClass();
 
         String initMainClass();
+
+        @Value.Derived
+        default boolean launcherMainClassSet() {
+            return !Strings.isNullOrEmpty(launcherMainClass());
+        }
+
+        @Value.Derived
+        default boolean initMainClassSet() {
+            return !Strings.isNullOrEmpty(initMainClass());
+        }
     }
 
     /**
@@ -119,19 +130,23 @@ final class Launchers {
 
     private static boolean validate(JavaLauncherInputs inputs) {
         if (!inputs.launcherSet()) {
+            if (inputs.launcherMainClassSet() || inputs.initMainClassSet()) {
+                throw new GradleException("'distribution.javaLauncher.launcher' must be specified when the"
+                        + "java-based launcher is configured.");
+            }
             return false;
         }
         if (!inputs.jdkBundled()) {
             throw new GradleException(
                     "Jdks must be configured and included in the distribution to use the java-based launcher.");
         }
-        if (Strings.isNullOrEmpty(inputs.launcherMainClass())) {
+        if (!inputs.launcherMainClassSet()) {
             throw new GradleException("'distribution.javaLauncher.launcherMainClass' must be specified when the"
-                    + " java-based launcher is set");
+                    + " java-based launcher is configured.");
         }
-        if (Strings.isNullOrEmpty(inputs.initMainClass())) {
+        if (!inputs.initMainClassSet()) {
             throw new GradleException("'distribution.javaLauncher.initMainClass' must be specified when the"
-                    + " java-based launcher is set");
+                    + " java-based launcher is configured.");
         }
         return true;
     }

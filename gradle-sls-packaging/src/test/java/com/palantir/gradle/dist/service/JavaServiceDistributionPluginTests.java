@@ -2108,7 +2108,7 @@ class JavaServiceDistributionPluginTests {
         }
 
         @Test
-        void main_classes_alone_do_not_enable_the_java_launcher(
+        void fails_when_missing_java_launcher_dependency(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
@@ -2124,17 +2124,14 @@ class JavaServiceDistributionPluginTests {
                 }
                 """);
 
-            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
 
-            rootProject
-                    .file("dist/service-name-0.0.1/service/bin/linux-amd64/go-java-launcher")
-                    .assertThat()
-                    .exists();
-            assertThat(initScript(rootProject)).contains("go-java-launcher");
+            invocationResult.assertThat().output().contains("'distribution.javaLauncher.launcher' must be specified");
         }
 
         @Test
-        void java_launcher_dependency_alone_does_not_enable_the_java_launcher(
+        void java_launcher_dependency_must_be_defined_in_launcher_extension(
                 GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
             setupLauncherProject(launcher);
             setupRootProject(rootProject);
@@ -2154,13 +2151,10 @@ class JavaServiceDistributionPluginTests {
                 }
                 """);
 
-            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
 
-            rootProject
-                    .file("dist/service-name-0.0.1/service/bin/linux-amd64/go-java-launcher")
-                    .assertThat()
-                    .exists();
-            assertThat(initScript(rootProject)).contains("go-java-launcher");
+            invocationResult.assertThat().output().contains("'distribution.javaLauncher.launcher' must be specified");
         }
 
         @Test
