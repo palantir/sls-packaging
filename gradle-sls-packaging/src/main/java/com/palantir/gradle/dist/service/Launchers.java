@@ -64,7 +64,9 @@ final class Launchers {
                             .addAllLater(javaLauncher
                                     .getLauncher()
                                     .map(notation ->
-                                            List.of(project.getDependencies().create(notation))));
+                                            List.of(project.getDependencies().create(notation)))
+                                    // addAllLater fails on absent providers, which is the case for the go launcher
+                                    .orElse(List.of()));
                 });
         // Resolve the launcher with the rest of the dependencies, as for the asset configuration
         project.getRootProject().getPlugins().withId("com.palantir.consistent-versions", _plugin -> {
