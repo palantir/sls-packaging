@@ -16,7 +16,6 @@
 
 package com.palantir.gradle.dist.service.tasks;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
@@ -83,9 +82,9 @@ public final class CreateJavaLauncherScripts {
                     + " Check 'distribution.javaLauncher.launcher'.");
         }
 
-        String launcherMainClass = mainClass(params.getLauncherMainClass().getOrNull(), "launcherMainClass");
-        String initMainClass = mainClass(params.getInitMainClass().getOrNull(), "initMainClass");
-        List<String> jvmArgs = params.getJvmArgs().getOrElse(List.of());
+        String launcherMainClass = mainClass(params.getLauncherMainClass().get(), "launcherMainClass");
+        String initMainClass = mainClass(params.getInitMainClass().get(), "initMainClass");
+        List<String> jvmArgs = params.getJvmArgs().get();
         Set<File> jars = params.getClasspath().getFiles();
 
         // The classpath is bundled in DistTar under service/lib, so we rebuild the classpath using this information
@@ -99,7 +98,7 @@ public final class CreateJavaLauncherScripts {
     }
 
     private static String mainClass(String mainClass, String property) {
-        if (Strings.isNullOrEmpty(mainClass)) {
+        if (mainClass.isEmpty()) {
             throw new GradleException("'distribution.javaLauncher." + property
                     + "' must be specified when a java-based launcher is configured");
         }

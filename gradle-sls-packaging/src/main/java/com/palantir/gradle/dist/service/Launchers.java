@@ -71,9 +71,6 @@ final class Launchers {
                 registerGoConfiguration(project, "goJavaLauncherBinary", GO_JAVA_LAUNCHER);
         NamedDomainObjectProvider<Configuration> initConfig = registerGoConfiguration(project, "goInitBinary", GO_INIT);
 
-        // Note: we were previously using a Copy task, which was copying the binaries directly into the scripts
-        // directory. This is a bit better, as we now have a dedicated directory, which we then copy into the scripts
-        // directory in the DistTar task
         TaskProvider<Sync> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Sync.class, task -> {
                     task.from(untar(project, launcherConfig));
