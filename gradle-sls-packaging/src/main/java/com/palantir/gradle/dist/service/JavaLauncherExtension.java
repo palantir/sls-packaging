@@ -49,6 +49,7 @@ public abstract class JavaLauncherExtension {
                 .zip(isJdkBundled.orElse(false), ImmutableJavaLauncherInputs.Builder::jdkBundled)
                 .zip(getLauncherMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::launcherMainClass)
                 .zip(getInitMainClass().orElse(""), ImmutableJavaLauncherInputs.Builder::initMainClass)
+                // This also runs validation checks on the various inputs
                 .map(ImmutableJavaLauncherInputs.Builder::build)
                 .map(JavaLauncherInputs::javaLauncherConfigured);
     }
