@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.dist.asset;
+package com.palantir.gradle.dist;
 
 import com.palantir.gradle.versions.VersionsLockExtension;
 import org.gradle.api.Project;
@@ -23,16 +23,16 @@ import org.gradle.api.Project;
  * Things that access GCV classes are done here in a separate class, so it doesn't prevent groovy from loading and
  * decorating the plugin class.
  */
-final class GcvUtils {
+public final class GcvUtils {
     /**
-     * If GCV is applied, we want to lock the asset configuration.
+     * If GCV is applied, we want to lock configurations whose dependencies get packaged (e.g. assets, java launcher).
      * This is to work around a bug where during --write-locks, the locks from locked configurations don't get
      * exposed to consumers (as constraints) and so non-locked configurations get different versions than when
      * running without {@code --write-locks}.
      */
-    public static void lockConfigurationInGcv(Project project) {
+    public static void lockConfigurationInGcv(Project project, String configurationName) {
         project.getExtensions().configure(VersionsLockExtension.class, lockExt -> {
-            lockExt.production(prod -> prod.from(AssetDistributionPlugin.ASSET_CONFIGURATION));
+            lockExt.production(prod -> prod.from(configurationName));
         });
     }
 

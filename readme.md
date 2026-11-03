@@ -308,6 +308,59 @@ And the complete list of configurable properties:
  * (optional) `addJava8GcLogging` add java 8 specific gc logging options.
  * (optional) `enableAlwaysPreTouch()` adds the `-XX:+AlwaysPreTouch` and `-XX:+UseTransparentHugePages` JVM options.
  * (optional) `extraFiles` a collection of additional files (CopySpecs) to be included in the distribution.
+ * (optional) `javaLauncher` replaces the `go-java-launcher` and `go-init` binaries with a JVM based launcher, see
+   [below](#jvm-based-launcher).
+
+#### JVM based launcher
+
+By default, distributions package the native [`go-java-launcher` and `go-init`](https://github.com/palantir/go-java-launcher) binaries.
+It is possible to replace these launcher binaries by Java-based implementations (which are not provided):
+
+```gradle
+distribution {
+    javaLauncher {
+        launcher 'my.launcher:java-launcher:1.2.3'  // any dependency notation, e.g. project(':launcher')
+        launcherMainClass = 'my.launcher.JavaLauncher' // equivalent of the go-java-launcher binary
+        initMainClass = 'my.launcher.JavaInit'         // equivalent of the go-init binary
+    }
+}
+```
+
+The high-level contract for these is:
+* They 
+* `launcherMainClass`
+  * Must take two file paths arguments, pointing to a `launcher-static.yml` and `launcher-custom.yml` files.
+  * Must replace itself (through `execve`) by the newly launched Java process.
+* `initMainClass`
+  * Accepts one command argument, either `start`, `status` or `stop`, as well as `--help`.
+  * Starts a separate process, looking for files located at `service/bin/launcher-static.yml` and `var/conf/launcher-custom.yml`.
+  * Writes the new process' pid under a pid file located in `var/run`, which is used by the other commands.
+
+When configured this way:
+
+* the go binaries are neither resolved nor packaged.
+* the launcher library and its runtime dependencies are packaged into `service/lib`, resolved with the runtime classpath's libraries.
+* `service/bin/java-launcher` and `service/bin/java-init` run the configured main classes with the bundled JDK, and
+  receive the same arguments as the go binaries. `init.sh` uses them as `LAUNCHER_CMD` and `INIT_CMD`.
+
+Requirements:
+* JDKs must be bundled through `distribution { jdks.put() }`.
+  * The JDK corresponding to the service's runtime version is used to run the launcher as well, so the launcher must
+    be compatible with the service's `javaVersion`.
+* Setting `launcher` enables the java-based launcher, and both main classes must then be set.
+* The launcher is resolved through the `javaLauncher` configuration. With
+  [gradle-consistent-versions](https://github.com/palantir/gradle-consistent-versions), it is locked like the rest of
+  the production dependencies, so the version can be left out (`launcher 'my.launcher:java-launcher'`) and come
+  from `versions.props`.
+
+You can optionally configure JVM options and arguments to be passed to the launcher with:
+```gradle
+distribution {
+    javaLauncher {
+        jvmArgs.addAll(['-Xms4m', '-Xmx8m'])
+    }
+}
+```
 
 #### JVM Options
 

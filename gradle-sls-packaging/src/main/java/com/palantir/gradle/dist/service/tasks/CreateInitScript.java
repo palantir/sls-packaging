@@ -19,7 +19,9 @@ package com.palantir.gradle.dist.service.tasks;
 import com.google.common.collect.ImmutableMap;
 import com.palantir.gradle.autoparallelizable.AutoParallelizable;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
+import com.palantir.gradle.dist.service.LauncherType;
 import com.palantir.gradle.dist.service.util.EmitFiles;
+import java.io.InputStream;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -31,17 +33,33 @@ public final class CreateInitScript {
         @Input
         Property<String> getServiceName();
 
+        @Input
+        Property<LauncherType> getLauncherType();
+
         @OutputFile
         RegularFileProperty getOutputFile();
     }
 
     static void action(Params params) {
+        String launcherSetup = EmitFiles.replaceVars(
+                resource(
+                        switch (params.getLauncherType().get()) {
+                            case GO -> "/sls-packaging/init-launcher-go.sh";
+                            case JAVA -> "/sls-packaging/init-launcher-java.sh";
+                        }),
+                ImmutableMap.of());
+
         EmitFiles.replaceVars(
-                        JavaServiceDistributionPlugin.class.getResourceAsStream("/sls-packaging/init.sh"),
+                        resource("/sls-packaging/init.sh"),
                         params.getOutputFile().get().getAsFile().toPath(),
-                        ImmutableMap.of("@serviceName@", params.getServiceName().get()))
+                        ImmutableMap.of(
+                                "@serviceName@", params.getServiceName().get(), "@launcherSetup@", launcherSetup))
                 .toFile()
                 .setExecutable(true);
+    }
+
+    private static InputStream resource(String resource) {
+        return JavaServiceDistributionPlugin.class.getResourceAsStream(resource);
     }
 
     private CreateInitScript() {}

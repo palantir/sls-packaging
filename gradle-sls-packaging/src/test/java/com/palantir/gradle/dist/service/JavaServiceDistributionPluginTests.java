@@ -17,6 +17,7 @@ package com.palantir.gradle.dist.service;
 
 import static com.palantir.gradle.testing.assertion.GradlePluginTestAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipOutputStream;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -1799,6 +1801,487 @@ class JavaServiceDistributionPluginTests {
                 .exists();
     }
 
+    @Nested
+    class JavaLauncher {
+        private static void setupLauncherProject(SubProject launcher) {
+            launcher.buildGradle().plugins().add("java");
+            launcher.mainSourceSet().java().writeClass("""
+                package launcher;
+                public class FakeLauncher {
+                    public static void main(String[] args) {
+                        System.out.println("fake-launcher " + String.join(" ", args));
+                    }
+                }
+                """);
+            launcher.mainSourceSet().java().writeClass("""
+                package launcher;
+                public class FakeInit {
+                    public static void main(String[] args) {
+                        System.out.println("fake-init " + String.join(" ", args));
+                    }
+                }
+                """);
+        }
+
+        private static void setupRootProject(RootProject rootProject) {
+            createUntarBuildFile(rootProject);
+            rootProject.mainSourceSet().java().writeClass("""
+                package test;
+                public class Test {}
+                """);
+        }
+
+        private static String initScript(RootProject rootProject) {
+            return rootProject
+                    .file("dist/service-name-0.0.1/service/bin/init.sh")
+                    .text();
+        }
+
+        private static String javaLauncherScript(RootProject rootProject) {
+            return rootProject
+                    .file("dist/service-name-0.0.1/service/bin/java-launcher")
+                    .text();
+        }
+
+        private static String javaInitScript(RootProject rootProject) {
+            return rootProject
+                    .file("dist/service-name-0.0.1/service/bin/java-init")
+                    .text();
+        }
+
+        private static void appendJavaLauncherConfig(RootProject rootProject) {
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+        }
+
+        private static void verifyJavaLauncherIsUsed(RootProject rootProject) throws InterruptedException {
+            rootProject
+                    .file("dist/service-name-0.0.1/service/lib/launcher.jar")
+                    .assertThat()
+                    .as("Launcher jars must be packaged in the lib directory")
+                    .exists();
+
+            rootProject
+                    .file("dist/service-name-0.0.1/service/bin/linux-amd64")
+                    .assertThat()
+                    .as("go-java-launcher binaries must not be packaged (linux)")
+                    .doesNotExist();
+            rootProject
+                    .file("dist/service-name-0.0.1/service/bin/darwin-amd64")
+                    .assertThat()
+                    .as("go-java-launcher binaries must not be packaged (darwin)")
+                    .doesNotExist();
+
+            // ...nor referenced by init.sh, which runs the generated java launcher scripts instead
+            String initScript = initScript(rootProject);
+            assertThat(initScript)
+                    .as("init.sh must reference the java launcher, and not go-java-launcher")
+                    .doesNotContain("go-java-launcher")
+                    .contains("LAUNCHER_CMD=\"service/bin/java-launcher\"")
+                    .contains("INIT_CMD=\"service/bin/java-init\"");
+
+            assertThat(javaLauncherScript(rootProject))
+                    .contains("-cp \"service/lib/launcher.jar")
+                    .contains(" launcher.FakeLauncher \"$@\"");
+            assertThat(javaInitScript(rootProject))
+                    .contains("-cp \"service/lib/launcher.jar")
+                    .contains(" launcher.FakeInit \"$@\"");
+        }
+
+        @Test
+        void jvm_based_launcher_replaces_the_go_binaries(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+            verifyJavaLauncherIsUsed(rootProject);
+
+            assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .as("init.sh start sanity check")
+                    .contains("fake-init start");
+        }
+
+        @Test
+        void can_pass_jvm_options_to_launcher(GradleInvoker gradle, RootProject rootProject, SubProject launcher)
+                throws Exception {
+            setupLauncherProject(launcher);
+            // Replace the FakeInit class to print max heap
+            launcher.mainSourceSet().java().writeClass("""
+                package launcher;
+                public class FakeInit {
+                    public static void main(String[] args) {
+                        System.out.println("fake-init " + String.join(" ", args));
+                        System.out.println("Max heap: " + Runtime.getRuntime().maxMemory());
+                    }
+                }
+                """);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                        jvmArgs.add('-Xmx8m')
+                    }
+                }
+                """);
+
+            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+            verifyJavaLauncherIsUsed(rootProject);
+
+            assertThat(javaLauncherScript(rootProject)).contains("-Xmx8m");
+            assertThat(javaInitScript(rootProject)).contains("-Xmx8m");
+
+            assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .as("JVM options are properly wired up to the launcher")
+                    .contains("fake-init start")
+                    .contains("Max heap: " + 8 * 1024 * 1024);
+        }
+
+        @Test
+        void launcher_classpath_gets_resolved_with_main_dependencies(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+
+            launcher.buildGradle().append("""
+                repositories {
+                    mavenCentral()
+                }
+
+                dependencies {
+                    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+                }
+                """);
+
+            rootProject.buildGradle().plugins().add("com.palantir.consistent-versions");
+            rootProject.buildGradle().append("""
+                buildscript {
+                    repositories {
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+
+                    dependencies {
+                        classpath 'com.palantir.gradle.consistentversions:gradle-consistent-versions:3.21.0'
+                    }
+                }
+                """);
+
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+                }
+
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            gradle.withArgs("--write-locks").buildsSuccessfully();
+
+            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+            verifyJavaLauncherIsUsed(rootProject);
+
+            assertThat(javaLauncherScript(rootProject))
+                    .contains("-cp \"service/lib/launcher.jar:service/lib/jackson-databind-2.22.3.jar:"
+                            + "service/lib/jackson-core-2.22.3.jar:"
+                            + "service/lib/jackson-annotations-2.22.jar\"");
+
+            assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.3.jar"))
+                    .as("Resolved launcher dependency gets packaged")
+                    .exists();
+            assertThat(rootProject.file("dist/service-name-0.0.1/service/lib/jackson-core-2.22.1.jar"))
+                    .as("Exact launcher dependency is not packaged, as it should be resolved up")
+                    .doesNotExist();
+
+            assertThat(ExecUtils.execWithOutput(rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .as("init.sh start sanity check")
+                    .contains("fake-init start");
+        }
+
+        @Test
+        void fails_when_java_launcher_configured_but_jdks_not_bundled(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult.assertThat().output().contains("Jdks must be configured");
+        }
+
+        @Test
+        void fails_when_missing_main_launcher_class(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult
+                    .assertThat()
+                    .output()
+                    .contains("'distribution.javaLauncher.launcherMainClass' must be specified");
+        }
+
+        @Test
+        void fails_when_missing_init_launcher_class(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult
+                    .assertThat()
+                    .output()
+                    .contains("'distribution.javaLauncher.initMainClass' must be specified");
+        }
+
+        @Test
+        void fails_when_missing_java_launcher_dependency(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult.assertThat().output().contains("'distribution.javaLauncher.launcher' must be specified");
+        }
+
+        @Test
+        void java_launcher_dependency_must_be_defined_in_launcher_extension(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                dependencies {
+                    javaLauncher(project(':launcher'))
+                }
+
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                    javaLauncher {
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            InvocationResult invocationResult =
+                    gradle.withArgs(":build", ":distTar", ":untar").buildsWithFailure();
+
+            invocationResult.assertThat().output().contains("'distribution.javaLauncher.launcher' must be specified");
+        }
+
+        @Test
+        void init_extensions_can_invoke_launcher_cmd(GradleInvoker gradle, RootProject rootProject, SubProject launcher)
+                throws Exception {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            appendJavaLauncherConfig(rootProject);
+            rootProject.file("service/bin/init-foo.sh").overwrite("""
+                #!/bin/bash
+                "$LAUNCHER_CMD" "$@"
+                """);
+
+            gradle.withArgs(":distTar", ":untar").buildsSuccessfully();
+
+            assertThat(ExecUtils.execWithOutput(
+                            rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "foo", "bar"))
+                    .as("Custom init- scripts can be called")
+                    .contains("fake-launcher bar");
+        }
+
+        @Test
+        void init_exits_when_jvm_doesnt_actually_exist(
+                GradleInvoker gradle, RootProject rootProject, SubProject launcher) throws Exception {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree("fake-java"))
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+
+            verifyJavaLauncherIsUsed(rootProject);
+            assertThatRuntimeException()
+                    .isThrownBy(() -> ExecUtils.execWithOutput(
+                            rootProject, "dist/service-name-0.0.1/service/bin/init.sh", "start"))
+                    .withMessageContaining("service-name-jdks/jdk25/bin/java: No such file or directory");
+        }
+
+        @Test
+        void exposes_java_launcher_enabled(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                }
+
+                tasks.register('printJavaLauncherEnabled') {
+                    def javaLauncherEnabled = distribution.javaLauncher.enabled
+                    inputs.property('javaLauncherEnabled', javaLauncherEnabled)
+                    doLast { println "javaLauncherEnabled=" + javaLauncherEnabled.get() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherEnabled").buildsSuccessfully())
+                    .output()
+                    .contains("javaLauncherEnabled=false");
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherEnabled").buildsSuccessfully())
+                    .output()
+                    .contains("javaLauncherEnabled=true");
+        }
+
+        @Test
+        void exposes_the_java_launcher_command(GradleInvoker gradle, RootProject rootProject, SubProject launcher) {
+            setupLauncherProject(launcher);
+            setupRootProject(rootProject);
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaVersion 25
+                    jdks.put(JavaVersion.VERSION_25, fileTree(System.getProperty("java.home")))
+                }
+
+                tasks.register('printJavaLauncherCommand') {
+                    def command = distribution.javaLauncher.launcherCommand
+                    inputs.property('command', command.orElse([]))
+                    doLast { println "javaLauncherCommand=" + command.getOrNull() }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully())
+                    .output()
+                    .contains("javaLauncherCommand=null");
+
+            rootProject.buildGradle().append("""
+                distribution {
+                    javaLauncher {
+                        launcher project(':launcher')
+                        launcherMainClass = 'launcher.FakeLauncher'
+                        initMainClass = 'launcher.FakeInit'
+                    }
+                }
+                """);
+
+            assertThat(gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully())
+                    .output()
+                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp, "
+                            + "service/lib/launcher.jar, launcher.FakeLauncher, "
+                            + "service/bin/launcher-static.yml, var/conf/launcher-custom.yml]");
+        }
+    }
+
     @Test
     void enable_always_pre_touch(GradleInvoker gradle, RootProject rootProject) throws Exception {
         createUntarBuildFile(rootProject);
@@ -1858,7 +2341,7 @@ class JavaServiceDistributionPluginTests {
                 .exists();
     }
 
-    private void createUntarBuildFile(GradleProject gradleProject) {
+    private static void createUntarBuildFile(GradleProject gradleProject) {
         gradleProject.buildGradle().plugins().add("java").add("com.palantir.sls-java-service-distribution");
 
         gradleProject.buildGradle().append("""
@@ -1887,7 +2370,7 @@ class JavaServiceDistributionPluginTests {
         createUntarTask(gradleProject);
     }
 
-    private void createUntarTask(GradleProject project) {
+    private static void createUntarTask(GradleProject project) {
         project.buildGradle().append("""
             // most convenient way to untar the dist is to use gradle
             task untar (type: Copy) {
