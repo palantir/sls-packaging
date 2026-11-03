@@ -29,7 +29,6 @@ import com.palantir.gradle.dist.service.utils.ExecUtils;
 import com.palantir.gradle.dist.service.utils.TestUtils;
 import com.palantir.gradle.testing.execution.GradleInvoker;
 import com.palantir.gradle.testing.execution.InvocationResult;
-import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.GradleProject;
 import com.palantir.gradle.testing.project.RootProject;
@@ -53,7 +52,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @GradlePluginTests
-@DisabledConfigurationCache
 class JavaServiceDistributionPluginTests {
     private static final ObjectMapper OBJECT_MAPPER =
             new ObjectMapper(new YAMLFactory()).registerModule(new GuavaModule());
