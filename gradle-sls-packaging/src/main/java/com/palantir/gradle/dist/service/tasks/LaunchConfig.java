@@ -44,6 +44,8 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.immutables.value.Value;
 
 @AutoParallelizable
@@ -137,6 +139,7 @@ public final class LaunchConfig {
         @Input
         MapProperty<String, String> getEnv();
 
+        @PathSensitive(PathSensitivity.ABSOLUTE)
         @InputFiles
         ConfigurableFileCollection getClasspath();
 
@@ -146,9 +149,11 @@ public final class LaunchConfig {
          * JAR. Full Classpath on the other hand is always going to be the full set of JARs which may
          * be the same as classpath if manifest classpath JARs are not used.
          */
+        @PathSensitive(PathSensitivity.ABSOLUTE)
         @InputFiles
         ConfigurableFileCollection getFullClasspath();
 
+        @PathSensitive(PathSensitivity.ABSOLUTE)
         @InputFiles
         ConfigurableFileCollection getJavaAgents();
 

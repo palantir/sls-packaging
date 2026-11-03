@@ -63,11 +63,15 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.process.ExecOperations;
+import org.gradle.work.DisableCachingByDefault;
 
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7")
 public abstract class CreateManifestTask extends DefaultTask {
 
     public static final String CREATE_MANIFEST_TASK_NAME = "createManifest";
@@ -90,6 +94,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @Nested
     public abstract SetProperty<ArtifactLocator> getArtifacts();
 
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     @InputFile
     public abstract RegularFileProperty getProductDependenciesFile();
 
@@ -109,6 +114,7 @@ public abstract class CreateManifestTask extends DefaultTask {
      * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
      * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
      */
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     @InputFile
     @org.gradle.api.tasks.Optional
     final File getLockfileIfExists() {
@@ -123,6 +129,7 @@ public abstract class CreateManifestTask extends DefaultTask {
      * Intentionally checking whether file exists as gradle's {@link org.gradle.api.tasks.Optional} only operates on
      * whether the method returns null or not. Otherwise, it will fail when the file doesn't exist.
      */
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     @InputFile
     @org.gradle.api.tasks.Optional
     final File getSchemaLockfileIfExists() {
