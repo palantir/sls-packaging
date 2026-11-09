@@ -17,12 +17,19 @@
 package com.palantir.gradle.dist.artifacts;
 
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderConvertible;
 import org.gradle.api.tasks.Input;
 
-public interface ArtifactLocator {
+public interface ArtifactLocator extends ProviderConvertible<ArtifactLocator> {
     @Input
     Property<String> getType();
 
     @Input
     Property<String> getUri();
+
+    @Override
+    default Provider<ArtifactLocator> asProvider() {
+        return getType().zip(getUri(), (_type, _uri) -> this);
+    }
 }
