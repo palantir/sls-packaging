@@ -55,6 +55,18 @@ subprojects {
     tasks.withType(JavaCompile) {
         options.compilerArgs += ['-Werror']
     }
+
+    // Groovy joint compilation runs javac, which loads suppressible-error-prone's javac plugins (built for Java 21+),
+    // so it must use the same JDK as JavaCompile rather than the library target JDK.
+    tasks.withType(GroovyCompile).configureEach {
+        JavaCompile compileJava = tasks.named('compileJava', JavaCompile).get()
+        javaLauncher = compileJava.javaCompiler.flatMap { compiler ->
+            javaToolchains.launcherFor { languageVersion = compiler.metadata.languageVersion }
+        }
+        sourceCompatibility = compileJava.sourceCompatibility
+        targetCompatibility = compileJava.targetCompatibility
+        options.release = compileJava.options.release
+    }
 }
 
 javaVersions {
