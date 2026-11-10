@@ -19,6 +19,7 @@ package com.palantir.gradle.dist;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Splitter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -56,15 +57,21 @@ public final class ProductDependencyLockFile {
     public static String asString(
             ProductId productId, List<ProductDependency> deps, Set<ProductId> servicesDeclaredInProject) {
         return deps.stream()
-                .map(dep -> String.format(
-                        "%s:%s (%s, %s)%s",
-                        dep.getProductGroup(),
-                        dep.getProductName(),
-                        renderDepMinimumVersion(servicesDeclaredInProject, dep),
-                        dep.getMaximumVersion(),
-                        dep.getOptional() ? " optional" : ""))
-                .sorted()
+                // Required dependencies are listed before optional ones; each group is sorted alphabetically.
+                .sorted(Comparator.comparing(ProductDependency::getOptional)
+                        .thenComparing(dep -> renderLine(dep, servicesDeclaredInProject)))
+                .map(dep -> renderLine(dep, servicesDeclaredInProject))
                 .collect(Collectors.joining("\n", HEADER + PRODUCT_ID_PREFIX + productId + "\n", "\n"));
+    }
+
+    private static String renderLine(ProductDependency dep, Set<ProductId> servicesDeclaredInProject) {
+        return String.format(
+                "%s:%s (%s, %s)%s",
+                dep.getProductGroup(),
+                dep.getProductName(),
+                renderDepMinimumVersion(servicesDeclaredInProject, dep),
+                dep.getMaximumVersion(),
+                dep.getOptional() ? " optional" : "");
     }
 
     /**
