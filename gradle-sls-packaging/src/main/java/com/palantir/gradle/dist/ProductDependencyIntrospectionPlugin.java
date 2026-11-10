@@ -41,8 +41,7 @@ public abstract class ProductDependencyIntrospectionPlugin implements Plugin<Pro
     @Inject
     protected abstract ProviderFactory getProviderFactory();
 
-    @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
-    @Override
+        @Override
     public final void apply(Project project) {
         createGetMinimumProductVersion(project);
 

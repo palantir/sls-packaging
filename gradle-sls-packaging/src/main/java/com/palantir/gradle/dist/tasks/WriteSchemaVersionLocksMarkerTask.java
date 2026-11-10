@@ -26,8 +26,7 @@ public abstract class WriteSchemaVersionLocksMarkerTask extends DefaultTask {
 
     public static final String NAME = "writeSchemaVersionLocks";
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    @TaskAction
+        @TaskAction
     public final void checkWriteLocksShouldBeRunning() {
         // Check that our task name matcher for writeSchemaVersionLocks is actually matching up the Gradle one;
         // if this task is running but we didn't actually write locks, error out.
