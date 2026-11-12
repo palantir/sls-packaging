@@ -52,7 +52,7 @@ com.palantir.sls.versions:sls-versions:1.21.0 (1 constraints: 3605303b)
 
 one.util:streamex:0.9.0 (1 constraints: bd1b2c46)
 
-org.apache.commons:commons-lang3:3.21.0 (1 constraints: 38053c3b)
+org.apache.commons:commons-lang3:3.22.0 (1 constraints: 39053f3b)
 
 org.codehaus.woodstox:stax2-api:4.3.0 (2 constraints: 682760d2)
 
