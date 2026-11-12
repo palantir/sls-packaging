@@ -41,8 +41,7 @@ public class SlsBaseDistPlugin implements Plugin<Project> {
                 SafeArg.of("currentVersion", GradleVersion.current()),
                 SafeArg.of("minimumVersion", MINIMUM_GRADLE));
 
-        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
-        Configuration slsConf = project.getConfigurations().create(SLS_CONFIGURATION_NAME);
+                Configuration slsConf = project.getConfigurations().create(SLS_CONFIGURATION_NAME);
         slsConf.setCanBeResolved(false);
         // Make it export a custom usage, to allow resolving it via variant-aware resolution.
         slsConf.getAttributes()

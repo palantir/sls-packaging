@@ -37,7 +37,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String ASSET_CONFIGURATION = "assetBundle";
 
     @Override
-    @SuppressWarnings({"RawTypes", "for-rollout:TaskDependsOn"})
+    @SuppressWarnings("RawTypes")
     public void apply(Project project) {
         project.getPluginManager().apply(SlsBaseDistPlugin.class);
         if (project.getPlugins().hasPlugin(JavaServiceDistributionPlugin.class)) {
@@ -50,21 +50,18 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
             GcvUtils.lockConfigurationInGcv(project, ASSET_CONFIGURATION);
         });
 
-        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
-        Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
+                Configuration assetConfiguration = project.getConfigurations().create(ASSET_CONFIGURATION, conf -> {
             conf.setCanBeConsumed(false);
         });
 
-        @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
-        AssetDistributionExtension distributionExtension =
+                AssetDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
         distributionExtension.setProductDependenciesConfig(assetConfiguration);
 
         TaskProvider<CreateManifestTask> manifest =
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
-        @SuppressWarnings("for-rollout:TaskDependsOn")
-        TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
+                TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);
