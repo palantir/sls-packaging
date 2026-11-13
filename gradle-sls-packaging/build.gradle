@@ -18,6 +18,7 @@ dependencies {
     api 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
     api "com.fasterxml.jackson.datatype:jackson-datatype-guava"
     api 'com.palantir.safe-logging:preconditions'
+    implementation 'org.apache.commons:commons-compress'
     implementation 'org.apache.commons:commons-lang3'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     implementation 'com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions'
