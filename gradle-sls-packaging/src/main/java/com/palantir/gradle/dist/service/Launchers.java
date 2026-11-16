@@ -46,6 +46,15 @@ final class Launchers {
     private static final String GO_INIT = "com.palantir.launching:go-init";
     /** The name of the Gradle configuration used to provide the java launcher libraries. */
     private static final String JAVA_LAUNCHER_CONFIGURATION = "javaLauncher";
+    /**
+     * Options always passed to the jvm running the java-based launcher, ahead of the user-provided
+     * {@link JavaLauncherExtension#getJvmArgs() jvmArgs}.
+     * <p>
+     * The launcher calls restricted methods (e.g. the Foreign Function API to exec into the service), which print
+     * warnings on every run unless native access is enabled, and will be blocked by default in a future JDK. The
+     * launcher runs from the classpath, so it can only be enabled for all unnamed modules.
+     */
+    private static final List<String> REQUIRED_JAVA_LAUNCHER_JVM_ARGS = List.of("--enable-native-access=ALL-UNNAMED");
 
     /** Files a launcher contributes to the distribution. */
     record LauncherConfiguration(LauncherType type, Provider<?> bin, Provider<?> lib) {}
@@ -126,6 +135,13 @@ final class Launchers {
             GcvUtils.lockConfigurationInGcv(project, JAVA_LAUNCHER_CONFIGURATION);
         });
 
+        Provider<List<String>> jvmArgs = javaLauncher
+                .getJvmArgs()
+                .map(userJvmArgs -> ImmutableList.<String>builder()
+                        .addAll(REQUIRED_JAVA_LAUNCHER_JVM_ARGS)
+                        .addAll(userJvmArgs)
+                        .build());
+
         TaskProvider<CreateJavaLauncherScriptsTask> createJavaLauncherScripts = project.getTasks()
                 .register("createJavaLauncherScripts", CreateJavaLauncherScriptsTask.class, task -> {
                     task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
@@ -137,10 +153,10 @@ final class Launchers {
 
                     task.getLauncherMainClass().set(javaLauncher.getLauncherMainClass());
                     task.getInitMainClass().set(javaLauncher.getInitMainClass());
-                    task.getJvmArgs().set(javaLauncher.getJvmArgs());
+                    task.getJvmArgs().set(jvmArgs);
                 });
 
-        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, javaLauncherConfig));
+        javaLauncher.getLauncherCommand().set(launcherCommand(distributionExtension, javaLauncherConfig, jvmArgs));
         javaLauncher.getLauncherCommand().disallowChanges();
 
         return new LauncherConfiguration(
@@ -155,7 +171,8 @@ final class Launchers {
      */
     private static Provider<List<String>> launcherCommand(
             JavaServiceDistributionExtension distributionExtension,
-            NamedDomainObjectProvider<Configuration> javaLauncherConfig) {
+            NamedDomainObjectProvider<Configuration> javaLauncherConfig,
+            Provider<List<String>> jvmArgs) {
         JavaLauncherExtension javaLauncher = distributionExtension.getJavaLauncher();
         Provider<String> classpath = javaLauncherConfig
                 .flatMap(Configuration::getElements)
@@ -168,7 +185,7 @@ final class Launchers {
                 // A null mapping result makes the provider absent
                 .map(useJavaLauncher -> useJavaLauncher ? ImmutableList.<String>builder() : null)
                 .zip(distributionExtension.getJavaHome(), (command, javaHome) -> command.add(javaHome + "/bin/java"))
-                .zip(javaLauncher.getJvmArgs(), ImmutableList.Builder::addAll)
+                .zip(jvmArgs, ImmutableList.Builder::addAll)
                 .zip(classpath, (command, cp) -> command.add("-cp", cp))
                 .zip(
                         javaLauncher.getLauncherMainClass(),

@@ -1890,9 +1890,11 @@ class JavaServiceDistributionPluginTests {
                     .contains("INIT_CMD=\"service/bin/java-init\"");
 
             assertThat(javaLauncherScript(rootProject))
+                    .contains("/bin/java\" --enable-native-access=ALL-UNNAMED ")
                     .contains("-cp \"service/lib/launcher.jar")
                     .contains(" launcher.FakeLauncher \"$@\"");
             assertThat(javaInitScript(rootProject))
+                    .contains("/bin/java\" --enable-native-access=ALL-UNNAMED ")
                     .contains("-cp \"service/lib/launcher.jar")
                     .contains(" launcher.FakeInit \"$@\"");
         }
@@ -2276,7 +2278,8 @@ class JavaServiceDistributionPluginTests {
 
             assertThat(gradle.withArgs(":printJavaLauncherCommand").buildsSuccessfully())
                     .output()
-                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, -cp, "
+                    .contains("javaLauncherCommand=[service/service-name-jdks/jdk25/bin/java, "
+                            + "--enable-native-access=ALL-UNNAMED, -cp, "
                             + "service/lib/launcher.jar, launcher.FakeLauncher, "
                             + "service/bin/launcher-static.yml, var/conf/launcher-custom.yml]");
         }

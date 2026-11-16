@@ -342,6 +342,8 @@ When configured this way:
 * the launcher library and its runtime dependencies are packaged into `service/lib`, resolved with the runtime classpath's libraries.
 * `service/bin/java-launcher` and `service/bin/java-init` run the configured main classes with the bundled JDK, and
   receive the same arguments as the go binaries. `init.sh` uses them as `LAUNCHER_CMD` and `INIT_CMD`.
+* the launcher jvm always runs with `--enable-native-access=ALL-UNNAMED` (ahead of any `jvmArgs`), since exec'ing
+  into the service requires native access.
 
 Requirements:
 * JDKs must be bundled through `distribution { jdks.put() }`.
