@@ -40,16 +40,14 @@ import org.gradle.work.DisableCachingByDefault;
 @DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7")
 public abstract class ConfigureProductDependenciesTask extends DefaultTask {
 
-    @SuppressWarnings("for-rollout:GradleTypesAsFields")
-    private final SetProperty<ProductDependency> productDependencies =
+        private final SetProperty<ProductDependency> productDependencies =
             getProject().getObjects().setProperty(ProductDependency.class);
 
     public ConfigureProductDependenciesTask() {
         setDescription("Configures the 'jar' task to write the input product dependencies into its manifest");
     }
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    @TaskAction
+        @TaskAction
     final void action() {
         getProject()
                 .getTasks()

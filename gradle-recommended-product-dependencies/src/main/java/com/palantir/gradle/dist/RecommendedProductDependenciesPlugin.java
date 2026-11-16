@@ -30,8 +30,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
 
     @Override
     public final void apply(Project project) {
-        @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
-        RecommendedProductDependenciesExtension ext = project.getExtensions()
+                RecommendedProductDependenciesExtension ext = project.getExtensions()
                 .create("recommendedProductDependencies", RecommendedProductDependenciesExtension.class, project);
 
         project.getPluginManager().withPlugin("java", _plugin -> {
@@ -40,8 +39,7 @@ public class RecommendedProductDependenciesPlugin implements Plugin<Project> {
         });
     }
 
-    @SuppressWarnings("for-rollout:TaskDependsOn")
-    private void configureManifest(Project project, RecommendedProductDependenciesExtension ext) {
+        private void configureManifest(Project project, RecommendedProductDependenciesExtension ext) {
         TaskProvider<ConfigureProductDependenciesTask> configureProductDependenciesTask = project.getTasks()
                 .register("configureProductDependencies", ConfigureProductDependenciesTask.class, cmt -> {
                     cmt.setProductDependencies(ext.getRecommendedProductDependenciesProvider());
