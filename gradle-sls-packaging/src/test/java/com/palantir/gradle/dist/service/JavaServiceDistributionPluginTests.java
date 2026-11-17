@@ -804,15 +804,42 @@ class JavaServiceDistributionPluginTests {
                 .containsAll(List.of("-XX:+UseZGC", "-XX:+ZGenerational", "-XX:+ExplicitGCInvokesConcurrent"));
     }
 
+    // update nov2026: we have observed some instabilities with avx512 that are still being investigated
+    // we should re-enable this test when we re-enable avx512
+    //    @Test
+    //    void jdk_21_uses_default_avx_level(GradleInvoker gradle, RootProject rootProject) throws Exception {
+    //        createUntarBuildFile(rootProject);
+    //        rootProject.buildGradle().append("""
+    //            dependencies { implementation files("%s") }
+    //            tasks.jar.archiveBaseName = "internal"
+    //            distribution {
+    //                javaVersion 21
+    //            }
+    //            """, EXTERNAL_JAR);
+    //        rootProject.mainSourceSet().java().writeClass("""
+    //            package test;
+    //            public class Test {}
+    //            """);
+    //
+    //        gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+    //
+    //        LaunchConfig.LaunchConfigInfo actualStaticConfig = OBJECT_MAPPER.readValue(
+    //                rootProject
+    //                        .file("dist/service-name-0.0.1/service/bin/launcher-static.yml")
+    //                        .path()
+    //                        .toFile(),
+    //                LaunchConfig.LaunchConfigInfo.class);
+    //        assertThat(actualStaticConfig.jvmOpts().stream().noneMatch(opt -> opt.contains("UseAVX")))
+    //                .isTrue();
+    //    }
+    // update nov2026: we have observed some instabilities with avx512 that are still being investigated
+    // we should remove this test when we re-enable avx512
     @Test
-    void jdk_21_uses_default_avx_level(GradleInvoker gradle, RootProject rootProject) throws Exception {
+    void uses_avx2(GradleInvoker gradle, RootProject rootProject) throws Exception {
         createUntarBuildFile(rootProject);
         rootProject.buildGradle().append("""
             dependencies { implementation files("%s") }
             tasks.jar.archiveBaseName = "internal"
-            distribution {
-                javaVersion 21
-            }
             """, EXTERNAL_JAR);
         rootProject.mainSourceSet().java().writeClass("""
             package test;
@@ -827,7 +854,7 @@ class JavaServiceDistributionPluginTests {
                         .path()
                         .toFile(),
                 LaunchConfig.LaunchConfigInfo.class);
-        assertThat(actualStaticConfig.jvmOpts().stream().noneMatch(opt -> opt.contains("UseAVX")))
+        assertThat(actualStaticConfig.jvmOpts().stream().anyMatch(opt -> opt.contains("UseAVX=2")))
                 .isTrue();
     }
 
