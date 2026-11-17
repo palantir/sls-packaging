@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -239,11 +238,9 @@ public final class LaunchConfig {
     // we will allow avx-512 instructions initially only for jdk21+ to build confidence,
     // and align rollout with the new jdk. Assuming this goes well, we may allow jdk17
     // to use avx-512 instructions in a future sls-packaging release.
-    private static List<String> getAvxOptions(Params params) {
-        JavaVersion javaVersion = params.getJavaVersion().get();
-        if (javaVersion.compareTo(JavaVersion.toVersion("21")) >= 0) {
-            return Collections.emptyList();
-        }
+    // Update nov2026: AVX-512 has some demonstrated instabilities that we're still tracking down;
+    // disable again until we have had more time to investigate.
+    private static List<String> getAvxOptions(Params _params) {
         return disableAvx512;
     }
 
