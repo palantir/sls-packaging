@@ -55,7 +55,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
      * gradle has all these jars and resources, it can use the right TransformAction to bridge the gap.
      */
     @Override
-    @SuppressWarnings({"RawTypes", "for-rollout:TaskDependsOn"})
+    @SuppressWarnings("RawTypes")
     public void apply(Project project) {
         configureDiagnosticsTransform(project);
 
@@ -114,8 +114,7 @@ public final class DiagnosticsManifestPlugin implements Plugin<Project> {
     }
 
     private static Configuration createConsumableRuntimeConfiguration(Project project) {
-        @SuppressWarnings("for-rollout:ConfigurationAvoidanceRegistration")
-        Configuration consumable = project.getConfigurations().create("runtimeClasspathForDiagnostics", conf -> {
+                Configuration consumable = project.getConfigurations().create("runtimeClasspathForDiagnostics", conf -> {
             conf.extendsFrom(project.getConfigurations().getByName("runtimeClasspath"));
             conf.setDescription("DiagnosticsManifestPlugin uses this configuration to extract single file");
             conf.setCanBeConsumed(true);
