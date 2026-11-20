@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import org.gradle.api.GradleException;
 
 public final class ObjectMappers {
-    @SuppressWarnings("for-rollout:deprecation")
     public static final ObjectMapper jsonMapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategies.KEBAB_CASE)
