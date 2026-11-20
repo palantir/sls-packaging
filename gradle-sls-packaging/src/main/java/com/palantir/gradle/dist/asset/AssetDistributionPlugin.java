@@ -23,6 +23,7 @@ import com.palantir.gradle.dist.SlsBaseDistPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.tasks.SlsDistTar;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -30,7 +31,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Compression;
-import org.gradle.api.tasks.bundling.Tar;
 
 public final class AssetDistributionPlugin implements Plugin<Project> {
     public static final String GROUP_NAME = "Distribution";
@@ -64,7 +64,8 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
                 CreateManifestTask.createManifestTask(project, distributionExtension);
 
         @SuppressWarnings("for-rollout:TaskDependsOn")
-        TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
+        TaskProvider<SlsDistTar> distTar = project.getTasks().register("distTar", SlsDistTar.class, task -> {
+            SlsDistTar.configureConventions(project, task);
             task.setGroup(AssetDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required static assets.");
             task.setCompression(Compression.GZIP);

@@ -28,6 +28,7 @@ import com.palantir.gradle.dist.service.tasks.LaunchConfigTask;
 import com.palantir.gradle.dist.service.util.MainClassResolver;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
+import com.palantir.gradle.dist.tasks.SlsDistTar;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -51,7 +52,6 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.application.CreateStartScripts;
 import org.gradle.api.tasks.bundling.Compression;
 import org.gradle.api.tasks.bundling.Jar;
-import org.gradle.api.tasks.bundling.Tar;
 import org.gradle.process.CommandLineArgumentProvider;
 
 public final class JavaServiceDistributionPlugin implements Plugin<Project> {
@@ -244,7 +244,8 @@ public final class JavaServiceDistributionPlugin implements Plugin<Project> {
         }));
 
         @SuppressWarnings("for-rollout:TaskDependsOn")
-        TaskProvider<Tar> distTar = project.getTasks().register("distTar", Tar.class, task -> {
+        TaskProvider<SlsDistTar> distTar = project.getTasks().register("distTar", SlsDistTar.class, task -> {
+            SlsDistTar.configureConventions(project, task);
             task.setGroup(JavaServiceDistributionPlugin.GROUP_NAME);
             task.setDescription("Creates a compressed, gzipped tar file that contains required runtime resources.");
             // Set compression in constructor so that task output has the right name from the start.
