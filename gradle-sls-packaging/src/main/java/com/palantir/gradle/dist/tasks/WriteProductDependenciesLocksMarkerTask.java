@@ -26,8 +26,7 @@ public abstract class WriteProductDependenciesLocksMarkerTask extends DefaultTas
 
     public static final String NAME = "writeProductDependenciesLocks";
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    @TaskAction
+        @TaskAction
     public final void checkWriteLocksShouldBeRunning() {
         // Check that our task name matcher for writeProductDependenciesLocks is actually matching up the Gradle one;
         // if this task is running but we didn't actually write locks, error out.
