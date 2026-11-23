@@ -1940,9 +1940,19 @@ class JavaServiceDistributionPluginTests {
                         initMainClass = 'launcher.FakeInit'
                     }
                 }
+
+                // We also want to verify that the go-java-launcher and go-init configurations are empty
+                // This lets us clearly identify unused constraints in versions.props
+                tasks.register('verifyNoGoLauncherDependencies') {
+                    doLast {
+                        assert configurations.goJavaLauncherBinary.allDependencies.toList().isEmpty()
+                        assert configurations.goInitBinary.allDependencies.toList().isEmpty()
+                    }
+                }
                 """);
 
-            gradle.withArgs(":build", ":distTar", ":untar").buildsSuccessfully();
+            gradle.withArgs(":build", ":distTar", ":untar", ":verifyNoGoLauncherDependencies")
+                    .buildsSuccessfully();
 
             verifyJavaLauncherIsUsed(rootProject);
 

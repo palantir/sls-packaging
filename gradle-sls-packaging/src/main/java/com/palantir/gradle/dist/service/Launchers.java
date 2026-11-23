@@ -53,17 +53,21 @@ final class Launchers {
     static Provider<LauncherConfiguration> configure(
             Project project, JavaServiceDistributionExtension distributionExtension) {
 
-        LauncherConfiguration go = configureGo(project);
+        Provider<Boolean> javaLauncherEnabled =
+                distributionExtension.getJavaLauncher().getEnabled();
+        LauncherConfiguration go = configureGo(project, javaLauncherEnabled);
         LauncherConfiguration java = configureJava(project, distributionExtension);
 
         // Consumers flatMap into the selected launcher's providers, which carry the tasks producing its files
-        return distributionExtension.getJavaLauncher().getEnabled().map(useJavaLauncher -> useJavaLauncher ? java : go);
+        return javaLauncherEnabled.map(useJavaLauncher -> useJavaLauncher ? java : go);
     }
 
-    private static LauncherConfiguration configureGo(Project project) {
+    private static LauncherConfiguration configureGo(Project project, Provider<Boolean> javaLauncherEnabled) {
+
         NamedDomainObjectProvider<Configuration> launcherConfig =
-                registerGoConfiguration(project, "goJavaLauncherBinary", GO_JAVA_LAUNCHER);
-        NamedDomainObjectProvider<Configuration> initConfig = registerGoConfiguration(project, "goInitBinary", GO_INIT);
+                registerGoConfiguration(project, "goJavaLauncherBinary", GO_JAVA_LAUNCHER, javaLauncherEnabled);
+        NamedDomainObjectProvider<Configuration> initConfig =
+                registerGoConfiguration(project, "goInitBinary", GO_INIT, javaLauncherEnabled);
 
         TaskProvider<Sync> copyLauncherBinaries = project.getTasks()
                 .register("copyLauncherBinaries", Sync.class, task -> {
@@ -82,11 +86,15 @@ final class Launchers {
     }
 
     private static NamedDomainObjectProvider<Configuration> registerGoConfiguration(
-            Project project, String name, String coordinate) {
+            Project project, String name, String coordinate, Provider<Boolean> javaLauncherEnabled) {
         NamedDomainObjectProvider<Configuration> configuration =
                 project.getConfigurations().register(name);
-        project.getDependencies()
-                .addProvider(name, goJavaLauncherVersion(project).map(v -> coordinate + ":" + v));
+
+        // We only register the go dependency if the java launcher is not in use
+        Provider<String> dependency = javaLauncherEnabled.zip(
+                goJavaLauncherVersion(project).map(v -> coordinate + ":" + v), (enabled, dep) -> enabled ? null : dep);
+
+        project.getDependencies().addProvider(name, dependency);
         return configuration;
     }
 
