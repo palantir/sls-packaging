@@ -29,11 +29,33 @@ class ProductDependencyLockFileTest extends Specification {
         ]
 
         then:
+        // The required dependency comes first even though the optional one sorts earlier alphabetically.
         ProductDependencyLockFile.asString(new ProductId("com.palantir.test", "my-service"), sample, [] as Set<ProductId>) == """\
         # Run ./gradlew writeProductDependenciesLocks to regenerate this file
         product-id: com.palantir.test:my-service
-        com.palantir.other:bar (0.2.0, 0.x.x) optional
         com.palantir.product:foo (1.20.0, 1.x.x)
+        com.palantir.other:bar (0.2.0, 0.x.x) optional
+        """.stripIndent(true)
+    }
+
+    def 'serialize lists all required dependencies before optional ones'() {
+        when:
+        List<ProductDependency> sample = [
+                new ProductDependency("com.example", "product-a", "1.0.0", "1.x.x", null, true),
+                new ProductDependency("com.example", "product-b", "2.0.0", "2.x.x", null),
+                new ProductDependency("com.example", "product-c", "3.0.0", "3.x.x", null, true),
+                new ProductDependency("com.example", "product-d", "4.0.0", "4.x.x", null),
+        ]
+
+        then:
+        // Required product-b and product-d come first, then optional product-a and product-c; each group is alphabetical.
+        ProductDependencyLockFile.asString(new ProductId("com.example", "my-service"), sample, [] as Set<ProductId>) == """\
+        # Run ./gradlew writeProductDependenciesLocks to regenerate this file
+        product-id: com.example:my-service
+        com.example:product-b (2.0.0, 2.x.x)
+        com.example:product-d (4.0.0, 4.x.x)
+        com.example:product-a (1.0.0, 1.x.x) optional
+        com.example:product-c (3.0.0, 3.x.x) optional
         """.stripIndent(true)
     }
 
