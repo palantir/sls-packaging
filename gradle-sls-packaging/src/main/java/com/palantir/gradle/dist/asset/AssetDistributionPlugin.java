@@ -20,6 +20,7 @@ import com.palantir.gradle.dist.DeploymentDirInclusion;
 import com.palantir.gradle.dist.GcvUtils;
 import com.palantir.gradle.dist.ProductDependencyIntrospectionPlugin;
 import com.palantir.gradle.dist.SlsBaseDistPlugin;
+import com.palantir.gradle.dist.artifacts.ManifestOciArtifactsPlugin;
 import com.palantir.gradle.dist.service.JavaServiceDistributionPlugin;
 import com.palantir.gradle.dist.tasks.ConfigTarTask;
 import com.palantir.gradle.dist.tasks.CreateManifestTask;
@@ -58,6 +59,7 @@ public final class AssetDistributionPlugin implements Plugin<Project> {
         @SuppressWarnings({"for-rollout:GradleTypesAsFields", "for-rollout:NonAbstractGradleType"})
         AssetDistributionExtension distributionExtension =
                 project.getExtensions().create("distribution", AssetDistributionExtension.class, project);
+        project.getPluginManager().apply(ManifestOciArtifactsPlugin.class);
         distributionExtension.setProductDependenciesConfig(assetConfiguration);
 
         TaskProvider<CreateManifestTask> manifest =

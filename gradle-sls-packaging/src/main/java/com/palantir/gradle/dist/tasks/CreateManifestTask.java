@@ -180,6 +180,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                         .putExtensions(
                                 "artifacts",
                                 getArtifacts().get().stream()
+                                        .filter(ArtifactLocator::isPublished)
                                         .map(JsonArtifactLocator::from)
                                         .collect(Collectors.toList()))
                         .build());
