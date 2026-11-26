@@ -61,7 +61,6 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -91,7 +90,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @Input
     public abstract MapProperty<String, Object> getManifestExtensions();
 
-    @Nested
+    @Input
     public abstract SetProperty<ArtifactLocator> getArtifacts();
 
     @PathSensitive(PathSensitivity.ABSOLUTE)
@@ -349,7 +348,7 @@ public abstract class CreateManifestTask extends DefaultTask {
                             .set(resolveProductDependenciesTask.flatMap(
                                     ResolveProductDependenciesTask::getManifestFile));
                     task.getManifestExtensions().set(ext.getManifestExtensions());
-                    task.getArtifacts().addAll(ext.getArtifacts());
+                    task.getArtifacts().set(ext.getConfiguredArtifacts());
                     task.getInRepoProductIds()
                             .set(project.provider(() -> ProductDependencyIntrospectionPlugin.getInRepoProductIds(
                                             project.getRootProject())
