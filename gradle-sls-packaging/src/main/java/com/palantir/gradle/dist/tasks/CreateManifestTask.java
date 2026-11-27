@@ -101,8 +101,7 @@ public abstract class CreateManifestTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getManifestFile();
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    @Input
+        @Input
     final String getProjectVersion() {
         return getProject().getVersion().toString();
     }
@@ -201,10 +200,8 @@ public abstract class CreateManifestTask extends DefaultTask {
         return ObjectMappers.jsonMapper.convertValue(raw, new TypeReference<>() {});
     }
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    private void requireAbsentLockfile(String writeLocksTaskName, File lockfile) {
-        @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
+        private void requireAbsentLockfile(String writeLocksTaskName, File lockfile) {
+                Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
 
         if (!lockfile.exists()) {
             return;
@@ -222,8 +219,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    private File getProductDependenciesLockfile() {
+        private File getProductDependenciesLockfile() {
         return getProject().file(ProductDependencyLockFile.LOCK_FILE);
     }
 
@@ -244,11 +240,9 @@ public abstract class CreateManifestTask extends DefaultTask {
         ensureFileIsUpToDate(WriteProductDependenciesLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    private void ensureFileIsUpToDate(String writeLocksTaskName, File lockfile, String upToDateContents)
+        private void ensureFileIsUpToDate(String writeLocksTaskName, File lockfile, String upToDateContents)
             throws IOException {
-        @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-        Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
+                Path relativePath = getProject().getRootDir().toPath().relativize(lockfile.toPath());
         boolean lockfileExists = lockfile.exists();
 
         if (shouldWriteLocks(getProject(), writeLocksTaskName)) {
@@ -304,8 +298,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    private File getSchemaVersionLockfile() {
+        private File getSchemaVersionLockfile() {
         return getProject().file(SchemaVersionLockFile.LOCK_FILE);
     }
 
@@ -315,8 +308,7 @@ public abstract class CreateManifestTask extends DefaultTask {
         ensureFileIsUpToDate(WriteSchemaVersionLocksMarkerTask.NAME, lockfile, upToDateContents);
     }
 
-    @SuppressWarnings("for-rollout:IllegalMethodCalledDuringTaskExecution")
-    private void validateProjectVersion() {
+        private void validateProjectVersion() {
         String stringVersion = getProjectVersion();
         Preconditions.checkArgument(
                 SlsVersion.check(stringVersion),
@@ -332,13 +324,11 @@ public abstract class CreateManifestTask extends DefaultTask {
         }
     }
 
-    @SuppressWarnings("for-rollout:TaskDependsOn")
-    public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
+        public static TaskProvider<CreateManifestTask> createManifestTask(Project project, BaseDistributionExtension ext) {
         TaskProvider<ResolveProductDependenciesTask> resolveProductDependenciesTask =
                 ProductDependencies.registerProductDependencyTasks(project, ext);
 
-        @SuppressWarnings("for-rollout:TaskDependsOn")
-        TaskProvider<CreateManifestTask> createManifest = project.getTasks()
+                TaskProvider<CreateManifestTask> createManifest = project.getTasks()
                 .register(CREATE_MANIFEST_TASK_NAME, CreateManifestTask.class, task -> {
                     task.getServiceName().set(ext.getDistributionServiceName());
                     task.getServiceGroup().set(ext.getDistributionServiceGroup());
