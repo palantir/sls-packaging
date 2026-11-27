@@ -102,7 +102,7 @@ org.apiguardian:apiguardian-api:1.1.2 (7 constraints: cc761de9)
 
 org.assertj:assertj-core:3.27.7 (2 constraints: 62276bd1)
 
-org.awaitility:awaitility:4.3.0 (1 constraints: 09050836)
+org.awaitility:awaitility:4.4.0 (1 constraints: 0a050b36)
 
 org.hamcrest:hamcrest:3.0 (2 constraints: 3f189f6e)
 
